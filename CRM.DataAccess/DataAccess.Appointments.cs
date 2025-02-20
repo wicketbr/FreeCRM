@@ -473,7 +473,7 @@ public partial class DataAccess
         bool newRecord = false;
         DateTime now = DateTime.UtcNow;
 
-        var rec = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == output.AppointmentId); ;
+        var rec = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == output.AppointmentId);
 
         if(rec != null && rec.Deleted) {
             if(AdminUser(CurrentUser)) {
