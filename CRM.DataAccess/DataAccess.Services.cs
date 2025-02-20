@@ -168,7 +168,7 @@ public partial class DataAccess
         bool newRecord = false;
         DateTime now = DateTime.UtcNow;
 
-        var rec = await data.Services.FirstOrDefaultAsync(x => x.ServiceId == output.ServiceId); ;
+        var rec = await data.Services.FirstOrDefaultAsync(x => x.ServiceId == output.ServiceId);
 
         if (rec != null && rec.Deleted) {
             if (AdminUser(CurrentUser)) {

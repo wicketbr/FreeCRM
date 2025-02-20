@@ -153,7 +153,7 @@ public partial class DataAccess
         bool newRecord = false;
         DateTime now = DateTime.UtcNow;
 
-        var rec = await data.Locations.FirstOrDefaultAsync(x => x.LocationId == output.LocationId); ;
+        var rec = await data.Locations.FirstOrDefaultAsync(x => x.LocationId == output.LocationId);
 
         if (rec != null && rec.Deleted) {
             if (AdminUser(CurrentUser)) {
