@@ -1,0 +1,285 @@
+﻿@page "/Settings/DeletedRecords"
+@page "/{TenantCode}/Settings/DeletedRecords"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    @if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="PendingDeletedRecords" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        if (Model.HaveDeletedRecords) {
+            var deletedRecordTypes = new List<string> {
+                "Appointment",
+                "AppointmentNote",
+                "AppointmentService",
+                "Department",
+                "DepartmentGroup",
+                "EmailTemplate",
+                "FileStorage",
+                "Location",
+                "Service",
+                "Tag",
+                "User",
+                "UserGroup"
+            };
+
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="PendingDeletedRecords" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+
+                <div class="alert alert-danger">
+                    <div class="mb-2">
+                        <Language Tag="DeletedRecordsInfo" />
+                    </div>
+
+                    <DeleteConfirmation OnConfirmed="DeleteAllImmediately" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDeleteAll" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                </div>
+            </div>
+
+            @foreach (var deletedRecordType in deletedRecordTypes) {
+                // For most types the title is just the type plus "s"
+                string deletedRecordTypeLanguageTag = deletedRecordType + "s";
+                List<DataObjects.DeletedRecordItem>? deletedRecords = null;
+
+                switch (deletedRecordType) {
+                    case "Appointment":
+                        deletedRecords = _DeletedRecords.Appointments;
+                        break;
+
+                    case "AppointmentNote":
+                        deletedRecords = _DeletedRecords.AppointmentNotes;
+                        break;
+
+                    case "AppointmentService":
+                        deletedRecordTypeLanguageTag = "AppointmentServicesFull";
+                        deletedRecords = _DeletedRecords.AppointmentServices;
+                        break;
+
+                    case "Department":
+                        deletedRecords = _DeletedRecords.Departments;
+                        break;
+
+                    case "DepartmentGroup":
+                        deletedRecords = _DeletedRecords.DepartmentGroups;
+                        break;
+
+                    case "EmailTemplate":
+                        deletedRecords = _DeletedRecords.EmailTemplates;
+                        break;
+
+                    case "FileStorage":
+                        deletedRecords = _DeletedRecords.FileStorage;
+                        deletedRecordTypeLanguageTag = "Files";
+                        break;
+
+                    case "Location":
+                        deletedRecords = _DeletedRecords.Locations;
+                        break;
+
+                    case "Service":
+                        deletedRecords = _DeletedRecords.Services;
+                        break;
+
+                    case "Tag":
+                        deletedRecords = _DeletedRecords.Tags;
+                        break;
+
+                    case "User":
+                        deletedRecords = _DeletedRecords.Users;
+                        break;
+
+                    case "UserGroup":
+                        deletedRecords = _DeletedRecords.UserGroups;
+                        break;
+                }
+
+                if (deletedRecords != null && deletedRecords.Any()) {
+                    <div class="mb-4">
+                        <h2 class="subtitle">
+                            <Language Tag="@deletedRecordTypeLanguageTag" IncludeIcon="true" />
+                        </h2>
+                        @foreach (var item in deletedRecords) {
+                            <div class="deleted-record">
+                                <div class="item-title">
+                                    <button type="button" class="btn btn-xs btn-success" @onclick="@(() => UndeleteRecord(deletedRecordType, item.ItemId))">
+                                        <Language Tag="Undelete" IncludeIcon="true" />
+                                    </button>
+                                    <DeleteConfirmation ButtonSize="xs" OnConfirmed="@(() => DeleteRecord(deletedRecordType, item.ItemId))" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                                    <div>@item.Display</div>
+                                </div>
+                                <div class="deleted-info">
+                                    <Language Tag="Deleted" />
+                                    <span>@Helpers.FormatDateTime(item.DeletedAt, false, true)</span>
+                                    <Language Tag="DeletedBy" />
+                                    <span>@item.DeletedAt</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        } else {
+            <h1 class="page-title">
+                <Language Tag="NoPendingDeletedRecords" IncludeIcon="true" />
+            </h1>
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected DataObjects.DeletedRecords _DeletedRecords = new DataObjects.DeletedRecords();
+
+    protected string _pageName = "deletedrecords";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task DeleteAllImmediately()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteAllPendingDeletedRecords");
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if(deleted.Result){
+                await LoadData();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task DeleteRecord(string type, Guid ItemId)
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        DataObjects.SimplePost post = new DataObjects.SimplePost { SingleItem = type };
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteRecordImmediately/" + ItemId.ToString(), post);
+
+        Model.ClearMessages();
+
+        if (deleted != null) {
+            if (deleted.Result) {
+                await LoadData();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+
+        var deletedRecords = await Helpers.GetOrPost<DataObjects.DeletedRecords>("api/Data/GetDeletedRecords");
+        if(deletedRecords != null) {
+            _DeletedRecords = deletedRecords;
+
+            // Also update the counts on the Main Model
+            Model.DeletedRecordCounts = new DataObjects.DeletedRecordCounts {
+                AppointmentNotes = _DeletedRecords.AppointmentNotes.Count(),
+                Appointments = _DeletedRecords.Appointments.Count(),
+                AppointmentServices = _DeletedRecords.AppointmentServices.Count(),
+                DepartmentGroups = _DeletedRecords.DepartmentGroups.Count(),
+                Departments = _DeletedRecords.Departments.Count(),
+                EmailTemplates = _DeletedRecords.EmailTemplates.Count(),
+                FileStorage = _DeletedRecords.FileStorage.Count(),
+                Locations = _DeletedRecords.Locations.Count(),
+                Services = _DeletedRecords.Services.Count(),
+                Tags = _DeletedRecords.Tags.Count(),
+                UserGroups = _DeletedRecords.UserGroups.Count(),
+                Users = _DeletedRecords.Users.Count(),
+            };
+
+            _loading = false;
+        } else {
+            Model.UnknownError();
+        }
+
+        StateHasChanged();
+    }
+
+    protected async Task UndeleteRecord(string type, Guid ItemId)
+    {
+        Model.ClearMessages();
+        Model.Message_Processing();
+
+        DataObjects.SimplePost post = new DataObjects.SimplePost { SingleItem = type };
+
+        var undeleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/UndeleteRecord/" + ItemId.ToString(), post);
+
+        Model.ClearMessages();
+
+        if (undeleted != null) {
+            if (undeleted.Result) {
+                await LoadData();
+            } else {
+                Model.ErrorMessages(undeleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+}

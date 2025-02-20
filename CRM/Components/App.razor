@@ -1,0 +1,279 @@
+﻿@inject IDataAccess data
+@inject IConfigurationHelper ConfigurationHelper
+@{
+    string unique = data.UniqueId;
+    string applicationUrl = data.ApplicationURL;
+    string basePath = !String.IsNullOrWhiteSpace(ConfigurationHelper.BasePath) ? ConfigurationHelper.BasePath : "/";
+    string favicon = applicationUrl + "favicon.png";
+    string appVersion = data.Version;
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta name="app:server" content="@System.Environment.MachineName" />
+    <meta name="app:version" content="@data.Version" />
+    <meta name="app:released" content="@data.Released" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="@favicon" />
+    <base href="@basePath" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="@(applicationUrl + "_content/Blazor.Bootstrap/blazor.bootstrap.css?v=" + appVersion)" />
+    <link rel="stylesheet" href="@(applicationUrl + "_content/FreeBlazor/styles.css?v=" + appVersion)" />
+    <link rel="stylesheet" href="@(applicationUrl + "_content/MudBlazor/MudBlazor.min.css?v=" + appVersion)" />
+    <link rel="stylesheet" href="@(applicationUrl + "_content/Radzen.Blazor/css/material-base.css?v=" + appVersion)" />
+    <link rel="stylesheet" href="@Assets["fontawesome/css/fontawesome.css"]" />
+    <link rel="stylesheet" href="@Assets["fontawesome/css/regular.css"]" />
+    <link rel="stylesheet" href="@Assets["fontawesome/css/solid.css"]" />
+    <link rel="stylesheet" href="@Assets["js/bootstrap/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="@Assets["css/app.css"]" />
+    <link rel="stylesheet" href="@Assets["css/themes.css"]" />
+    <link rel="stylesheet" href="@Assets["css/tags.css"]" />
+    <ImportMap />
+    <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
+</head>
+
+<body id="body-element" data-bs-theme="" class="loading">
+    <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
+    <script src="_framework/blazor.web.js"></script>
+    <script src="@(applicationUrl + "_content/Blazor.Bootstrap/blazor.bootstrap.js?v=" + appVersion)"></script>
+    <script src="@(applicationUrl + "_content/MudBlazor/MudBlazor.min.js?v=" + appVersion)"></script>
+    <script src="@(applicationUrl + "_content/Radzen.Blazor/Radzen.Blazor.js?v=" + (typeof(Radzen.Colors).Assembly.GetName().Version))"></script>
+    <script src="@("_content/BlazorSortableList/SortableList.razor.js?v=" + appVersion)"></script>
+    <script src="@Assets["js/sortablejs/sortable.min.js"]"></script>
+    <script src="@Assets["js/jquery/jquery-3.7.0.min.js"]"></script>
+    <script src="@Assets["js/bootstrap/js/bootstrap.bundle.min.js"]"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@thumbmarkjs/thumbmarkjs/dist/thumbmark.umd.js"></script>
+
+    <script type="text/javascript">
+        var dotNetHelper;
+
+        $(function () {
+            SetPreferredColorScheme("");
+        });
+
+        function ConsoleLog(message, objects) {
+            if (objects != undefined && objects != null) {
+                if (message != undefined && message != null && message != "") {
+                    console.log(message, objects);
+                } else {
+                    console.log(objects);
+                }
+            } else if (message != undefined && message != null && message != "") {
+                console.log(message);
+            }
+        }
+
+        function CookieRead(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+
+            return "";
+        }
+
+        function CookieWrite(name, value, days) {
+            var expires;
+
+            if (days == undefined || days == null || days < 1) {
+                days = 14;
+            }
+
+            if (days) {
+                var date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toGMTString();
+            } else {
+                expires = "";
+            }
+
+            document.cookie = name + "=" + value + expires + "; path=/";
+        }
+
+        function CopyToClipboard(value) {
+            navigator.clipboard.writeText(value);
+        }
+
+        function DelayedFocus(element) {
+            setTimeout(() => DelayedFocusInternal(element, 0), 0);
+        }
+
+        function DelayedFocusInternal(element, safety) {
+            if (safety > 20) { return; }
+            safety++;
+
+            if ($("#" + element).is(":visible") == true) {
+                // See if the element is a <div>. If so, find the first child that is an input.
+                if ($("#" + element).is("div") || $("#" + element).is("table")) {
+                    var input = $("#" + element).find('input,textarea,select').filter(":visible:first");
+                    if (input != null) {
+                        input.trigger("focus");
+                    }
+                } else {
+                    $("#" + element).trigger("focus");
+                }
+            } else {
+                setTimeout(() => DelayedFocusInternal(element, safety), 20);
+            }
+        }
+
+        function DelayedSelect(element) {
+            setTimeout(() => DelayedSelectInternal(element, 0), 0);
+        }
+
+        function DelayedSelectInternal(element, safety) {
+            if (safety > 20) { return; }
+            safety++;
+
+            if ($("#" + element).is(":visible") == true) {
+                $("#" + element).trigger("select");
+            } else {
+                setTimeout(() => DelayedSelectInternal(element, safety), 20);
+            }
+        }
+
+        async function DownloadFileFromStream(fileName, contentStreamReference) {
+            const arrayBuffer = await contentStreamReference.arrayBuffer();
+            const blob = new Blob([arrayBuffer]);
+            const url = URL.createObjectURL(blob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function GetFingerprint(){
+            ThumbmarkJS.setOption('exclude', ['permissions']);
+            // ThumbmarkJS.getFingerprint(includeData = true).then(
+            //     function(fp) {
+            //         console.log("FP", fp.hash);
+            //         console.log("FP DATA", JSON.stringify(fp.data, null, 2));
+            //         dotNetHelper.invokeMethod("SetFingerprint", fp.hash);
+            //     }
+            // );
+
+            ThumbmarkJS.getFingerprint().then(
+                function(fp) {
+                    dotNetHelper.invokeMethod("SetFingerprint", fp);
+                }
+            );
+        }
+
+        function HideMenu() {
+            let bsOffcanvasUserMenu = bootstrap.Offcanvas.getInstance("#offcanvasUserMenu");
+            if (bsOffcanvasUserMenu != undefined && bsOffcanvasUserMenu != null && bsOffcanvasUserMenu._isShown) {
+                bsOffcanvasUserMenu.hide();
+            }
+
+            let bsOffcanvasQuickActionMenu = bootstrap.Offcanvas.getInstance("#offcanvasQuickAction");
+            if (bsOffcanvasQuickActionMenu != undefined && bsOffcanvasQuickActionMenu != null && bsOffcanvasQuickActionMenu._isShown) {
+                bsOffcanvasQuickActionMenu.hide();
+            }
+        }
+
+        function HighlightElementByClass(c) {
+            $("." + c).off("click");
+            $("." + c).on("click", function () {
+                RemoveElementHighlightByClass(c);
+            });
+            $("." + c).addClass("highlight");
+
+            $("." + c).fadeOut(200)
+                .fadeIn(200)
+                .fadeOut(200)
+                .fadeIn(200)
+                .fadeOut(200)
+                .fadeIn(200);
+        }
+
+        function InsertAtCursor(field, value) {
+            var $txt = jQuery("#" + field);
+            var caretPos = $txt[0].selectionStart;
+            var textAreaTxt = $txt.val();
+            $txt.val(textAreaTxt.substring(0, caretPos) + value + textAreaTxt.substring(caretPos));
+        }
+
+        function Loaded() {
+            $("#body-element").removeClass("loading");
+        }
+
+        function NavigateTo(url) {
+            window.location.href = url;
+        }
+
+        function ReloadCurrentPage() {
+            window.location.href = window.location.href;
+        }
+
+        function RemoveElementHighlightByClass(c) {
+            $("." + c).off("click");
+            $("." + c).removeClass("highlight");
+        }
+
+        function SetDotNetHelper(value) {
+            dotNetHelper = value;
+        }
+
+        function SetPreferredColorScheme(preferred) {
+            if (preferred == undefined || preferred == null) {
+                preferred = "light";
+            }
+
+            if (preferred == "auto") {
+                var colorScheme = getComputedStyle(document.body, ':after').content;
+                var preferred = colorScheme.indexOf("dark") > -1 ? "dark" : "light";
+            }
+
+            var setTheme = "";
+            var setClass = "";
+
+            if (preferred == "dark") {
+                setTheme = "dark";
+                setClass = "dark";
+            } else if (preferred == "light") {
+                setTheme = "";
+                setClass = "light";
+            } else {
+                setTheme = preferred;
+                setClass = preferred;
+            }
+
+            // Only update if this has changed.
+            if ($("#body-element").hasClass(setClass)) {
+                // Already up-to-date
+            } else {
+                $("#body-element").attr("data-bs-theme", setTheme);
+                $("#body-element").removeClass();
+                $("#body-element").addClass(setClass);
+            }
+        }
+
+        function ShowQuickActionMenu() {
+            HideMenu();
+
+            const bsOffcanvasQuickActionMenu = new bootstrap.Offcanvas("#offcanvasQuickAction");
+            if (bsOffcanvasQuickActionMenu != undefined && bsOffcanvasQuickActionMenu != null) {
+                bsOffcanvasQuickActionMenu.show();
+            }
+        }
+
+        function SetElementValue(id, value) {
+            $("#" + id).val(value);
+        }
+    </script>
+</body>
+</html>

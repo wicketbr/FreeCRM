@@ -1,0 +1,133 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@typeparam UploadType
+<div class="@(_uploading ? "hidden" : "mt-3")">
+    <MudBlazor.MudStack Style="width: 100%;">
+        <MudBlazor.MudFileUpload T="UploadType" OnFilesChanged="UploaderOnInputFileChanged" Hidden="false"
+            Accept="@SupportedFileTypesList" AppendMultipleFiles="true" MaximumFileCount="10"
+            Class="flex-1" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20" InputStyle="opacity:0"
+            @ondragenter="@UploaderSetDragClass" @ondragleave="@UploaderClearDragClass" @ondragend="@UploaderClearDragClass">
+            <ActivatorContent>
+                <MudBlazor.MudPaper Height="200px" Outlined="true" Class="@UploaderDragClass">
+                    @if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
+                        <div class="drag-and-drop-instructions">@((MarkupString)UploadInstructions)</div>
+                    }
+                    @if (!String.IsNullOrWhiteSpace(SupportedFileTypesList)) {
+                        <div class="drag-and-drop-instructions-file-types">
+                            <Language Tag="SupportedFileTypes" />:
+                            @((MarkupString)SupportedFileTypesList.ToUpper())
+                        </div>
+                    }
+                </MudBlazor.MudPaper>
+            </ActivatorContent>
+        </MudBlazor.MudFileUpload>
+    </MudBlazor.MudStack>
+</div>
+@if (_uploading) {
+    <div class="mt-3 mb-2">
+        <Language Tag="UploadingWait" IncludeIcon="true" />
+    </div>
+}
+@code {
+    [Parameter]
+    public bool? AllowMultipleUploads { get; set; } = false;
+
+    [Parameter]
+    public Delegate? OnUploadComplete { get; set; }
+
+    [Parameter]
+    public List<string>? SupportedFileTypes { get; set; }
+
+    [Parameter]
+    public string? UploadInstructions { get; set; }
+
+    private static string UploaderDefaultDragClass = "drag-and-drop-upload";
+    private string UploaderDragClass = UploaderDefaultDragClass;
+
+    protected bool _uploading = false;
+
+    public void Dispose() { }
+
+    protected string SupportedFileTypesList
+    {
+        get {
+            string output = String.Empty;
+
+            if(SupportedFileTypes != null && SupportedFileTypes.Any()) {
+                for(int x = 0; x < SupportedFileTypes.Count(); x++) {
+                    if(x > 0) {
+                        output += ", ";
+                    }
+
+                    string extension = SupportedFileTypes[x];
+                    if (!extension.StartsWith(".")) {
+                        extension = "." + extension;
+                    }
+
+                    output += extension.ToUpper();
+                }
+            }
+
+            return output;
+        }
+    }
+
+    private void UploaderClearDragClass()
+    {
+        UploaderDragClass = UploaderDefaultDragClass;
+    }
+
+    private async Task UploaderOnInputFileChanged(InputFileChangeEventArgs e)
+    {
+        UploaderClearDragClass();
+        Model.ClearMessages();
+
+        _uploading = true;
+
+        List<DataObjects.FileStorage> output = new List<DataObjects.FileStorage>();
+
+        try {
+            foreach (var file in e.GetMultipleFiles()) {
+                string extension = System.IO.Path.GetExtension(file.Name);
+
+                var byteData = new byte[file.Size];
+                await file.OpenReadStream(52428800).ReadAsync(byteData);
+
+                DataObjects.FileStorage fileStorage = new DataObjects.FileStorage {
+                    Bytes = file.Size,
+                    FileName = file.Name,
+                    Extension = extension,
+                    TenantId = Model.TenantId,
+                    Value = byteData,
+                };
+
+                output.Add(fileStorage);
+            }
+        }catch (Exception ex) {
+            if(ex != null) {
+
+            }
+        }
+
+        DialogService.Close();
+
+        if (output.Any()) {
+            if(OnUploadComplete != null) {
+                if(AllowMultipleUploads.HasValue && (bool)AllowMultipleUploads == true) {
+                    OnUploadComplete.DynamicInvoke(output);
+                } else {
+                    OnUploadComplete.DynamicInvoke(output[0]);
+                }
+            }
+        }
+
+        _uploading = false;
+        StateHasChanged();
+    }
+
+    private void UploaderSetDragClass()
+    {
+        UploaderDragClass = $"{UploaderDefaultDragClass} drag-highlight";
+    }
+}

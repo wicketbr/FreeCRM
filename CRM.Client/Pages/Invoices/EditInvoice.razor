@@ -1,0 +1,567 @@
+﻿@page "/CreateInvoice"
+@page "/{TenantCode}/CreateInvoice"
+@page "/CreateInvoice/{userid}"
+@page "/{TenantCode}/CreateInvoice/{userid}"
+@page "/EditInvoice/{id}"
+@page "/{TenantCode}/EditInvoice/{id}"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    <h1 class="page-title">
+        <Language Tag="@(_newInvoice ? "CreateInvoice" : "EditInvoice")" IncludeIcon="true" />@((MarkupString)(_newInvoice && _user.ActionResponse.Result ? " " + Helpers.Text("ForUser") + " " + _user.DisplayName : ""))
+    </h1>
+
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        <div class="mb-2">
+            <button type="button" class="btn btn-dark" @onclick="Back">
+                <Icon Name="Back" />
+                <Language Tag="Cancel" />
+            </button>
+
+            @if (!_newInvoice || _user.ActionResponse.Result) {
+                <button type="button" class="btn btn-success" @onclick="Save">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-secondary" @onclick="Preview">
+                    <Language Tag="Preview" IncludeIcon="true" />
+                </button>
+            }
+
+            @if (_newInvoice) {
+                if (_showInfo) {
+                    <button type="button" class="btn btn-primary" @onclick="ToggleShowInfo">
+                        <Language Tag="HideHelp" IncludeIcon="true" />
+                    </button>
+                } else {
+                    <button type="button" class="btn btn-primary" @onclick="ToggleShowInfo">
+                        <Language Tag="ShowHelp" IncludeIcon="true" />
+                    </button>
+                }
+            }
+        </div>
+
+        @if (_showInfo) {
+            <div class="alert alert-info">
+                <Language Tag="CreateInvoiceInfo" />
+            </div>
+        }
+
+        @if (_newInvoice && !_user.ActionResponse.Result) {
+            <div class="mb-2">
+                <AutoComplete Class="form-control"
+                    Disabled="false"
+                    GetAutoCompleteItems="UserLookup"
+                    HighlightFirstMatch="true"
+                    Id="edit-invoice-LookupUser"
+                    LookupDelay="300"
+                    MatchParentWidth="true"
+                    MinimumCharacters="1"
+                    OnSelected="UserLookupItemSelected"
+                    PlaceholderText="@UserLookupPlaceholderText" />
+            </div>
+        } else {
+            <RequiredIndicator />
+
+            <div class="row">
+                <div class="col col-sm-4 mb-2">
+                    <label for="edit-invoice-Title">
+                        <Language Tag="InvoiceTitle" Required="true" />
+                    </label>
+                    <input type="text" id="edit-invoice-Title" class="@Helpers.MissingValue(_invoice.Title, "form-control")"
+                           @bind="_invoice.Title" @bind:event="oninput" />
+                </div>
+                <div class="col col-sm-2 mb-2">
+                    <label for="edit-invoice-InvoiceSendDate">
+                        <Language Tag="InvoiceSendDate" Required="true" />
+                    </label>
+                    <br />
+                    <RadzenDatePicker TValue="DateTime?" Value="@_invoice.InvoiceSendDate" id="edit-invoice-InvoiceSendDate"
+                        class="@ClassSendDate"
+                        Change="@(args => _invoice.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                </div>
+                <div class="col col-sm-2 mb-2">
+                    <label for="edit-invoice-InvoiceDueDate">
+                        <Language Tag="InvoiceDue" Required="true" />
+                    </label>
+                    <br />
+                    <RadzenDatePicker TValue="DateTime?" Value="@_invoice.InvoiceDueDate" id="edit-invoice-InvoiceDueDate"
+                        class="@ClassDueDate"
+                        Change="@(args => _invoice.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                </div>
+                <div class="col col-sm-2">
+                    <label for="edit-invoice-InvoiceNumber">
+                        <Language Tag="InvoiceNumber" />
+                    </label>
+                    <input type="text" class="form-control" id="edit-invoice-InvoiceNumber" @bind="_invoice.InvoiceNumber" />
+                </div>
+                <div class="col col-sm-2">
+                    <label for="edit-invoice-PONumber">
+                        <Language Tag="InvoicePO" />
+                    </label>
+                    <input type="text" class="form-control" id="edit-invoice-PONumber" @bind="_invoice.PONumber" />
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <h2 class="subtitle"><Language Tag="InvoiceItems" /></h2>
+                <button type="button" class="btn btn-sm btn-success" @onclick="AddItem">
+                    <Language Tag="InvoiceAddItem" IncludeIcon="true" />
+                </button>
+            </div>
+
+            @if (_invoice.InvoiceItems.Any()) {
+                <div class="mb-2">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr class="table-dark">
+                                <th style="width:1%;"></th>
+                                <th>
+                                    <Language Tag="InvoiceItemDescription" ReplaceSpaces="true" Required="true" />
+                                </th>
+                                <th style="width:120px;">
+                                    <Language Tag="InvoiceItemPrice" ReplaceSpaces="true" />
+                                </th>
+                                <th style="width:100px;">
+                                    <Language Tag="InvoiceItemQuantity" ReplaceSpaces="true" />
+                                </th>
+                                <th style="width:100px;" class="right">
+                                    <Language Tag="InvoiceItemTotal" ReplaceSpaces="true" />
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in _invoice.InvoiceItems) {
+                                string descId = "invoice-item-desc-" + item.Id.ToString();
+                                string priceId = "invoice-item-price-" + item.Id.ToString();
+                                string qtyId = "invoice-item-qty-" + item.Id.ToString();
+                                <tr>
+                                    <td>
+                                        @if (_invoice.InvoiceItems.Count() > 1) {
+                                            <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="(() => DeleteInvoiceItem(item.Id))">
+                                                <Language Tag="Delete" IncludeIcon="true" />
+                                            </button>
+                                        }
+                                    </td>
+                                    <td>
+                                        <input type="text" id="@descId"
+                                               class="@Helpers.MissingValue(item.Description, "form-control")"
+                                               @bind="item.Description" @bind:event="oninput" />
+                                    </td>
+                                    <td>
+                                        <input type="number" id="@priceId" min="0"
+                                               class="@Helpers.MissingValue(item.Price, "form-control")"
+                                               @bind="item.Price" @bind:event="oninput" />
+                                    </td>
+                                    <td>
+                                        <input type="number" id="@qtyId" min="0"
+                                               class="@Helpers.MissingValue(item.Quantity, "form-control")"
+                                               @bind="item.Quantity" @bind:event="oninput" />
+                                    </td>
+                                    <td class="right">
+                                        @((MarkupString)InvoiceItemTotal(item))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        @if (InvoiceTotal > 0) {
+                            <tfoot>
+                                <tr class="table-success right">
+                                    <td colspan="5">
+                                        <Language Tag="InvoiceTotal" />
+                                        <span>@((MarkupString)InvoiceTotal.ToString("C"))</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            } else {
+                <Language Tag="NoItemsToShow" />
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+    [Parameter] public string? userid { get; set; }
+
+    protected DataObjects.Invoice _invoice = new DataObjects.Invoice();
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newInvoice = false;
+    protected bool _showInfo = false;
+    protected DataObjects.User _user = new DataObjects.User();
+
+    protected string _pageName = "editinvoice";
+
+    public void Dispose() {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledInvoices || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void AddItem()
+    {
+        _invoice.InvoiceItems.Add(new DataObjects.InvoiceItem {
+            Id = Guid.NewGuid(),
+            Description = "",
+            Price = 0,
+            Quantity = 1,
+        });
+    }
+
+    protected void Back()
+    {
+        if (_user.ActionResponse.Result) {
+            Helpers.NavigateTo("Invoices/" + _user.UserId.ToString());
+        } else {
+            Helpers.NavigateTo("Invoices");
+        }
+    }
+
+    protected string ClassDueDate
+    {
+        get {
+            string output = "";
+            if (_invoice.InvoiceDueDate == null) {
+                output += Helpers.MissingValueClass;
+            }
+            return output;
+        }
+    }
+
+    protected string ClassSendDate
+    {
+        get {
+            string output = "";
+            if (_invoice.InvoiceSendDate == null) {
+                output += Helpers.MissingValueClass;
+            }
+            return output;
+        }
+    }
+
+    protected string ConfirmButtonTextCancel
+    {
+        get {
+            return Helpers.Text("Cancel");
+        }
+    }
+
+    protected string ConfirmButtonTextConfirmDelete
+    {
+        get {
+            return Helpers.Text("ConfirmDelete");
+        }
+    }
+
+    protected string ConfirmButtonTextDelete
+    {
+        get {
+            return Helpers.Text("Delete");
+        }
+    }
+
+    protected void CreateNewInvoice()
+    {
+        _invoice = new DataObjects.Invoice {
+                InvoiceId = Guid.Empty,
+                TenantId = Model.TenantId,
+                UserId = _user.UserId,
+            };
+        AddItem();
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteInvoice/" + id);
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Tags = Model.Tags.Where(x => x.TagId.ToString() != id).ToList();
+
+                Helpers.NavigateTo("Invoices");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void DeleteInvoiceItem(Guid Id)
+    {
+        _invoice.InvoiceItems = _invoice.InvoiceItems.Where(x => x.Id != Id).ToList();
+    }
+
+    protected string InvoiceItemTotal(DataObjects.InvoiceItem item)
+    {
+        string output = String.Empty;
+
+        if (item.Quantity > 0 && item.Price > 0) {
+            decimal total = item.Quantity * item.Price;
+            output = total.ToString("C");
+        }
+
+        return output;
+    }
+
+    protected decimal InvoiceTotal
+    {
+        get {
+            decimal output = 0;
+
+            if (_invoice.InvoiceItems.Any()) {
+                foreach (var item in _invoice.InvoiceItems) {
+                    if (item.Quantity > 0 && item.Price > 0) {
+                        output += item.Quantity * item.Price;
+                    }
+                }
+            }
+
+            _invoice.Total = output;
+
+            return output;
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        string focus = "";
+
+        string url = Helpers.CurrentUrl;
+        _newInvoice = url.ToLower().Contains("createinvoice");
+
+        if (!String.IsNullOrWhiteSpace(userid)) {
+            Model.NavigationId = userid;
+
+            _loading = true;
+
+            Guid userId = Guid.Empty;
+            try {
+                userId = new Guid(userid);
+            } catch { }
+
+            var getUser = await Helpers.GetUser(userId);
+            if (getUser != null) {
+                _user = getUser;
+            } else {
+                Model.UnknownError();
+            }
+
+            CreateNewInvoice();
+
+            focus = "edit-invoice-Title";
+        } else if (!String.IsNullOrWhiteSpace(id)) {
+            Model.NavigationId = id;
+            Model.ViewIsEditPage = true;
+
+            focus = "edit-invoice-Title";
+            _loading = true;
+
+            var getInvoice = await Helpers.GetOrPost<DataObjects.Invoice>("api/Data/GetInvoice/" + id);
+            if (getInvoice != null) {
+                _invoice = getInvoice;
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            focus = "edit-invoice-LookupUser";
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus(focus);
+    }
+
+    protected async Task Preview()
+    {
+        await Helpers.PreviewInvoice(_invoice);
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_invoice.Title)) {
+            errors.Add(Helpers.MissingRequiredField("InvoiceTitle"));
+            if (focus == "") { focus = "edit-invoice-Title"; }
+        }
+
+        if (_invoice.InvoiceSendDate == null) {
+            errors.Add(Helpers.MissingRequiredField("InvoiceSendDate"));
+            if (focus == "") { focus = "edit-invoice-InvoiceSendDate"; }
+        }
+
+        if (_invoice.InvoiceDueDate == null) {
+            errors.Add(Helpers.MissingRequiredField("InvoiceDue"));
+            if (focus == "") { focus = "edit-invoice-InvoiceDueDate"; }
+        }
+
+        if (!_invoice.InvoiceItems.Any()) {
+            errors.Add(Helpers.MissingRequiredField("InvoiceItems"));
+        } else {
+            // Check for missing elements
+            bool missingElements = false;
+            foreach (var item in _invoice.InvoiceItems) {
+                if (String.IsNullOrWhiteSpace(item.Description)) {
+                    missingElements = true;
+                    if (focus == "") { focus = "invoice-item-desc-" + item.Id.ToString(); }
+                }
+
+                if (item.Price < 0) {
+                    missingElements = true;
+                    if (focus == "") { focus = "invoice-item-price-" + item.Id.ToString(); }
+                }
+
+                if (item.Quantity <= 0) {
+                    missingElements = true;
+                    if (focus == "") { focus = "invoice-item-qty-" + item.Id.ToString(); }
+                }
+            }
+
+            if (missingElements) {
+                errors.Add(Helpers.MissingRequiredField("InvoiceItemsMissingElements"));
+            }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Invoice>("api/Data/SaveInvoice", _invoice);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Invoices");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.Invoice && update.ItemId == _invoice.InvoiceId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Invoices");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var invoice = Helpers.DeserializeObject<DataObjects.Invoice>(update.ObjectAsString);
+                    if (invoice != null) {
+                        _invoice = invoice;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected void ToggleShowInfo()
+    {
+        _showInfo = !_showInfo;
+    }
+
+    protected async Task<List<(string key, string label)>?> UserLookup(string search)
+    {
+        var output = await Helpers.UserLookupResults(search);
+
+        return output;
+    }
+
+    protected string UserLookupPlaceholderText
+    {
+        get {
+            return Helpers.Text("AutoCompleteUserLookupPlaceholder");
+        }
+    }
+
+    protected async Task UserLookupItemSelected((string key, string label) item)
+    {
+        Guid userId = Guid.Empty;
+        try {
+            userId = new Guid(item.key);
+        } catch { }
+
+        if (userId != Guid.Empty) {
+            var user = await Helpers.GetUser(userId);
+            if (user.ActionResponse.Result) {
+                _user = user;
+                CreateNewInvoice();
+                await Helpers.DelayedFocus("edit-invoice-Title");
+            }
+        }
+    }
+}

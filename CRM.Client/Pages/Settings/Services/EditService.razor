@@ -1,0 +1,345 @@
+﻿@page "/Settings/EditService/{id}"
+@page "/{TenantCode}/Settings/EditService/{id}"
+@page "/Settings/AddService"
+@page "/{TenantCode}/Settings/AddService"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        if (_service.Deleted) {
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+            </h1>
+            <UndeleteMessage DeletedAt="_service.DeletedAt" LastModifiedBy="@_service.LastModifiedBy" OnUndelete="(() => _service.Deleted = false)" />
+        }else{
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="@_title" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+                <div class="mb-2">
+                    <a href="@(Helpers.BuildUrl("Settings/Services"))" class="btn btn-dark">
+                        <Language Tag="Back" IncludeIcon="true" />
+                    </a>
+
+                    @if (!_service.Deleted) {
+                        <button type="button" class="btn btn-success" @onclick="Save">
+                            <Language Tag="Save" IncludeIcon="true" />
+                        </button>
+
+                        @if (!_newService) {
+                            <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                        }
+                    }
+                </div>
+            </div>
+
+            <RequiredIndicator />
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-service-Enabled" @bind="_service.Enabled" />
+                <label for="edit-service-Enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox" id="edit-service-default" class="form-check-input"
+                    @bind="_service.DefaultService" />
+                    <label for="edit-service-default" class="form-check-label"><Language Tag="ServiceDefaultService" /></label>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-service-code">
+                    <Language Tag="ServiceCode" Required="true" />
+                </label>
+                <input type="text" id="edit-service-code" @bind="_service.Code" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_service.Code, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-service-description">
+                    <Language Tag="ServiceDescription" Required="true" />
+                </label>
+                <input type="text" id="edit-service-description" @bind="_service.Description" @bind:event="oninput"
+                    class="@Helpers.MissingValue(_service.Description, "form-control")"/>
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-service-rate">
+                    <Language Tag="ServiceRate" />
+                </label>
+                <input type="number" min="0" class="form-control" id="edit-service-rate" @bind="_service.Rate" />
+            </div>
+
+            @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInServices == true)) {
+                <h2 class="subtitle"><Language Tag="Tags" /></h2>
+
+                <div class="mb-2">
+                    <select class="form-select" @onchange="AddTag" id="edit-service-addTag" disabled="@(AvailableTags.Any() == false)">
+                        <option value=""><Language Tag="AddTag" /></option>
+                        @foreach (var tag in AvailableTags) {
+                            <option value="@tag.TagId">@tag.Name</option>
+                        }
+                    </select>
+                </div>
+
+                @if (_service.Tags != null && _service.Tags.Any()) {
+                    foreach (var tagId in _service.Tags) {
+                        var tag = Model.Tags.FirstOrDefault(x => x.TagId == tagId);
+                        string thisTagId = tagId.ToString();
+                        if (tag != null) {
+                            <div class="mb-1">
+                                <button type="button" class="btn btn-xs btn-danger" @onclick="@(() => RemoveTag(thisTagId))">
+                                    <Language Tag="Remove" IncludeIcon="true" />
+                                </button>
+                                <span>@((MarkupString)Helpers.RenderTag(tag))</span>
+                            </div>
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newService = false;
+    protected string _title = "";
+    protected DataObjects.Service _service = new DataObjects.Service();
+
+    protected string _pageName = "editservice";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledServices || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
+                _loadedData = true;
+
+                if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
+                    await Helpers.LoadTags();
+                }
+
+                await LoadService();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task AddTag(ChangeEventArgs e)
+    {
+        Guid tagId = Guid.Empty;
+
+        if (e != null && e.Value != null) {
+            try {
+                string tagGuid = Helpers.StringValue(e.Value.ToString());
+                tagId = new Guid(tagGuid);
+            } catch { }
+        }
+
+        if (tagId != Guid.Empty) {
+            if (_service.Tags == null) {
+                _service.Tags = new List<Guid>();
+            }
+
+            if (!_service.Tags.Contains(tagId)) {
+                _service.Tags.Add(tagId);
+
+                await Helpers.SetElementValue("edit-service-addTag", "");
+            }
+        }
+    }
+
+    protected List<DataObjects.Tag> AvailableTags
+    {
+        get {
+            var output = Model.Tags.ToList();
+
+            if (_service.Tags != null && _service.Tags.Any()) {
+                output = output.Where(x => !_service.Tags.Contains(x.TagId)).ToList();
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteService/" + id);
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Services = Model.Services.Where(x => x.ServiceId.ToString() != id).ToList();
+
+                Helpers.NavigateTo("Settings/Services");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadService()
+    {
+        if (Model.FeatureEnabledServices && !Model.Services.Any()) {
+            await Helpers.LoadServices();
+        }
+
+        if (!String.IsNullOrWhiteSpace(id)) {
+            Model.NavigationId = id;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newService = false;
+            _title = "EditService";
+
+            var getService = await Helpers.GetOrPost<DataObjects.Service>("api/Data/GetService/" + id);
+            if (getService != null) {
+                _service = getService;
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newService = true;
+            _title = "AddNewService";
+
+            _service = new DataObjects.Service {
+                TenantId = Model.TenantId,    
+                ServiceId = Guid.Empty,
+                Enabled = true,
+            };
+
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-service-code");
+    }
+
+    protected void RemoveTag(string TagId)
+    {
+        if (_service.Tags != null && _service.Tags.Any()) {
+            _service.Tags = _service.Tags.Where(x => x.ToString() != TagId).ToList();
+        }
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_service.Code)) {
+            errors.Add(Helpers.MissingRequiredField("ServiceCode"));
+            if (focus == "") { focus = "edit-service-code"; }
+        }
+
+        if (String.IsNullOrWhiteSpace(_service.Description)) {
+            errors.Add(Helpers.MissingRequiredField("ServiceDescription"));
+            if (focus == "") { focus = "edit-service-description"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Service>("api/Data/SaveService", _service);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/Services");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.Service && update.ItemId == _service.ServiceId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/Services");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var svc = Helpers.DeserializeObject<DataObjects.Service>(update.ObjectAsString);
+                    if (svc != null) {
+                        _service = svc;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

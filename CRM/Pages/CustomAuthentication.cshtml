@@ -1,0 +1,149 @@
+﻿@page "/authorization/custom"
+@inject CRM.IDataAccess data
+@inject Microsoft.AspNetCore.Hosting.Server.IServer server
+
+@{
+    data.SetHttpRequest(Request);
+    data.SetHttpResponse(Response);
+
+    string strTenantId = "";
+
+    try {
+        strTenantId += data.Request("TenantId");
+    } catch { }
+
+    Guid tenantId = Guid.Empty;
+    try {
+        tenantId = new Guid(strTenantId);
+    } catch { }
+
+    if (tenantId == Guid.Empty) {
+        <h1>Error</h1>
+        <p>Unable to find a valid Tenant Id.</p>
+        return;
+    }
+
+    string serverUrl = data.ApplicationURL;
+    if (String.IsNullOrWhiteSpace(serverUrl)) {
+        <h1>Error</h1>
+        <p>Unable to read server URL.</p>
+        return;
+    }
+
+    string fingerprint = data.Request("Fingerprint");
+
+    if (!serverUrl.EndsWith("/")) {
+        serverUrl += "/";
+    }
+
+    string returnUrl = serverUrl + "Authorization/Custom?TenantId=" + strTenantId + "&Fingerprint=" + fingerprint;
+
+    // Now, make sure we can access this tenant and that this tenant has cutom auth configured.
+    var tenant = data.GetTenant(tenantId);
+    if (tenant == null || tenant.ActionResponse.Result == false || tenant.Enabled == false) {
+        <h1>Error</h1>
+        <p>The Tenant Id passed does not match a current active tenant.</p>
+        return;
+    }
+
+    // See if the custom auth is enabled on the Admin tenant.
+    string customCode = String.Empty;
+    string customCodeName = String.Empty;
+    bool allowCustomAuth = data.UseCustomAuthenticationProviderFromAdminAccount;
+    if (allowCustomAuth) {
+        // Using the Admin option
+        var customProvider = data.AdminCustomLoginProvider;
+        customCode = customProvider.Code;
+        customCodeName = customProvider.Name;
+    } else {
+        // If not enabled on the admin tenant see if this tenant has the custom options.
+        if (tenant.TenantSettings.LoginOptions != null && tenant.TenantSettings.LoginOptions.Contains("custom")) {
+            allowCustomAuth = true;
+            customCode = data.StringValue(tenant.TenantSettings.CustomAuthenticationCode);
+            customCodeName = data.StringValue(tenant.TenantSettings.CustomAuthenticationName);
+        }
+    }
+
+    if (!allowCustomAuth) {
+        <h1>Error</h1>
+        <p>The specified tenant is does not allow this authentication type.</p>
+        return;
+    }
+
+    if (String.IsNullOrWhiteSpace(customCode)) {
+        <h1>Error</h1>
+        <p>This tenant has not configured custom authentication.</p>
+        return;
+    }
+
+    if (String.IsNullOrWhiteSpace(customCodeName)) {
+        customCodeName = "Custom Authentication Provider";
+    }
+
+    var user = data.ExecuteDynamicCSharpCode<CRM.DataObjects.User>(customCode,
+        new object[] { data, returnUrl }, null, "CustomAuthenticationProvider", "Authentication", "Authenticate");
+
+    if (user != null && !String.IsNullOrWhiteSpace(user.Email)) {
+        Guid userId = Guid.Empty;
+
+        var exists = await data.GetUserByEmailAddress(tenantId, user.Email);
+
+        if (exists != null && exists.ActionResponse.Result) {
+            userId = exists.UserId;
+        } else {
+            // See if this tenant allows creating new users.
+            if (tenant.TenantSettings.RequirePreExistingAccountToLogIn) {
+                <h1>Error</h1>
+                <p>No local account configured. Please contact the application admin.</p>
+                return;
+            } else {
+                // Create the new account
+                var addUser = new CRM.DataObjects.User {
+                    UserId = Guid.Empty,
+                    TenantId = tenantId,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = user.Email,
+                    EmployeeId = user.EmployeeId,
+                    DepartmentName = user.DepartmentName,
+                    Title = user.Title,
+                    Username = user.Username,
+                    Admin = false,
+                    Enabled = true,
+                    Source = customCodeName
+                };
+
+                var savedUser = await data.SaveUser(addUser);
+
+                if (savedUser != null && savedUser.ActionResponse.Result) {
+                    userId = savedUser.UserId;
+                }
+            }
+        }
+
+        if (userId != Guid.Empty) {
+            string token = data.GetUserToken(tenantId, userId, fingerprint);
+
+            await data.UpdateUserFromPlugins(userId);
+
+            data.CookieWrite("user-token", token);
+            data.CookieWrite("Login-Method", "Custom");
+
+            await data.UpdateUserLastLoginTime(userId, customCodeName);
+
+            // Make sure if this is an AppAdmin they have accounts in all tenents.
+            var validatedAppAdmin = await data.GetUser(userId, true);
+
+            string requestedUrl = data.CookieRead("requested-url");
+
+            if (!String.IsNullOrWhiteSpace(requestedUrl)) {
+                data.CookieWrite("requested-url", "");
+                data.Redirect(requestedUrl);
+            } else {
+                data.Redirect(serverUrl);
+            }
+        } else {
+            <h1>Login Error</h1>
+        }
+    }
+}

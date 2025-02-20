@@ -1,0 +1,83 @@
+﻿@page "/InvalidTenantCode"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.View == _pageName) {
+    if (_loading) {
+        <LoadingMessage />
+    } else {
+        <h1>@((MarkupString)_pageTitle)</h1>
+        <p>@((MarkupString)_info)</p>
+
+        @if (Model.TenantList.Any(x => x.TenantId != Helpers.Guid1)) {
+            foreach (var item in Model.TenantList.Where(x => x.TenantId != Helpers.Guid1).OrderBy(x => x.Name)) {
+                var url = Model.ApplicationUrl + item.TenantCode;
+                <div>
+                    <a href="@url">@item.Name</a>
+                </div>
+            }
+        }
+    }
+}
+@code {
+    protected string _pageTitle = "";
+    protected string _info = "";
+    protected bool _loading = true;
+
+    protected string _pageName = "invalidtenantcode";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading) {
+            _loading = false;
+            _pageTitle = Helpers.Text("InvalidTenantCode");
+            _info = Helpers.Text("InvalidTenantCodeMessage");
+
+            if (_pageTitle == "INVALIDTENANTCODE"){
+                _pageTitle = "Invalid Tenant Code";
+            }
+
+            if (_info == "INVALIDTENANTCODEMESSAGE") {
+                _info = "Please check your URL and ensure a valid URL is used.";
+            }
+
+            if (Model.ShowTenantListingWhenMissingTenantCode) {
+                await GetTenantCodes();
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task GetTenantCodes()
+    {
+        if (!Model.TenantList.Any()) {
+            await Helpers.LoadTenantList();
+        }
+    }
+}

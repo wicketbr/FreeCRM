@@ -1,0 +1,632 @@
+﻿@page "/Settings/EditUser/{userid}"
+@page "/{TenantCode}/Settings/EditUser/{userid}"
+@page "/Settings/AddUser"
+@page "/{TenantCode}/Settings/AddUser"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        if (!InDialog){
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+            </h1>
+        }
+        <LoadingMessage />
+    }else{
+        <div class="@(InDialog ? "" : Model.StickyMenuClass)">
+            @if (!InDialog){
+                <h1 class="page-title">
+                    <Language Tag="@_title" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+            }
+
+            <div class="@(InDialog ? "mt-2 mb-2" : "mb-2")">
+                @if (InDialog){
+                    <button type="button" class="btn btn-dark" @onclick="Close">
+                        <Language Tag="Close" IncludeIcon="true" />
+                    </button>
+                } else {
+                    <button type="button" class="btn btn-dark" @onclick="Back">
+                        <Language Tag="Back" IncludeIcon="true" />
+                    </button>
+                }
+
+                @if (!_user.Deleted) {
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+
+                    @if (!_newUser && _user.UserId != Model.User.UserId) {
+                        <button type="button" class="btn btn-warning" @onclick="(() => ResetUserPassword(false))">
+                            <Language Tag="UpdatePassword" IncludeIcon="true" />
+                        </button>
+
+                        if (!InDialog && _user.UserId != Model.User.UserId && Model.User.AppAdmin && _user.UserAccounts.Count > 1) {
+                            <button type="button" class="btn btn-warning"
+                                    title="@Helpers.Text("UpdateAllPasswordsInfo")"
+                                    @onclick="(() => ResetUserPassword(true))">
+                                <Language Tag="UpdateAllPasswords" IncludeIcon="true" />
+                            </button>
+                        }
+                    }
+
+                    @if (!_newUser) {
+                        if (!InDialog){
+                            <DeleteConfirmation OnConfirmed="Delete"
+                                                CancelText="@Helpers.ConfirmButtonTextCancel"
+                                                DeleteText="@Helpers.ConfirmButtonTextDelete"
+                                                ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                        }
+
+                        if (!InDialog && Model.User.AppAdmin && _user.UserAccounts.Count > 1){
+                            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <Language Tag="MultiTenantUser" />
+                            </button>
+                            <ul class="dropdown-menu">
+                                @foreach(var item in _user.UserAccounts.Where(x => x.TenantId != _user.TenantId)) {
+                                    var tenantName = Helpers.TenantNameFromId(item.TenantId);
+                                    <li>
+                                        <a class="dropdown-item" 
+                                        href="javascript:void('0');"
+                                        @onclick="@(() => Helpers.EditUser(item.UserId))">
+                                            <Language Tag="Edit" IncludeIcon="true" />
+                                            <span>-</span>
+                                            <span>@item.FirstName @item.LastName</span>
+                                            @if (String.IsNullOrWhiteSpace(tenantName)){
+                                                <span>&nbsp;(@item.UserId)</span>
+                                            } else {
+                                                <span>&nbsp;(@tenantName)</span>
+                                            }
+                                            @if (!item.Enabled){
+                                                <span class="note"> - <Language Tag="Disabled" /></span>
+                                            }
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                }
+            </div>
+        </div>
+
+        if (_user.Deleted) {
+            <UndeleteMessage DeletedAt="_user.DeletedAt" LastModifiedBy="@_user.LastModifiedBy" OnUndelete="(() => _user.Deleted = false)" />
+        } else {
+            @if (_user.LastLockoutDate.HasValue) {
+                <div class="alert alert-warning">
+                    <div class="mb-2">@((MarkupString)UserAccountLockedMessage)</div>
+
+                    <button type="button" class="btn btn-warning" @onclick="UnlockUserAccount">
+                        <Language Tag="UnlockUserAccount" IncludeIcon="true" />
+                    </button>
+                </div>
+            }
+
+            <RequiredIndicator />
+
+            <table class="table table-sm first-column-small first-column-bold first-column-right">
+                <tbody>
+                    <tr>
+                        <td><label for="edit-user-firstName-@_user.UserId"><Language Tag="FirstName" Required="true" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-firstName-@_user.UserId" @bind="_user.FirstName" @bind:event="oninput" class="@Helpers.MissingValue(_user.FirstName, "form-control")" /></td>
+                    </tr>
+                    <tr>
+                        <td><label for="edit-user-lastName-@_user.UserId"><Language Tag="LastName" Required="true" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-lastName-@_user.UserId" @bind="_user.LastName" @bind:event="oninput" class="@Helpers.MissingValue(_user.LastName, "form-control")" /></td>
+                    </tr>
+                    <tr>
+                        <td><label for="edit-user-email-@_user.UserId"><Language Tag="Email" Required="true" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-email-@_user.UserId" @bind="_user.Email" @bind:event="oninput" class="@Helpers.MissingValue(_user.Email, "form-control")" /></td>
+                    </tr>
+                    <tr>
+                        <td><label for="edit-user-username-@_user.UserId"><Language Tag="Username" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-username-@_user.UserId" class="form-control" @bind="_user.Username" /></td>
+                    </tr>
+                    @if (Model.FeatureEnabledEmployeeId) {
+                        <tr>
+                            <td><label for="edit-user-employeeId-@_user.UserId"><Language Tag="EmployeeId" ReplaceSpaces="true" /></label></td>
+                            <td><input type="text" id="edit-user-employeeId-@_user.UserId" class="form-control" @bind="_user.EmployeeId" /></td>
+                        </tr>
+                    }
+                    <tr>
+                        <td><label for="edit-user-title-@_user.UserId"><Language Tag="Title" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-title-@_user.UserId" class="form-control" @bind="_user.Title" /></td>
+                    </tr>
+                    @if (Model.FeatureEnabledLocation) {
+                        <tr>
+                            <td><label for="edit-user-location-@_user.UserId"><Language Tag="Location" ReplaceSpaces="true" /></label></td>
+                            <td><input type="text" id="edit-user-location-@_user.UserId" class="form-control" @bind="_user.Location" /></td>
+                        </tr>
+                    }
+                    <tr>
+                        <td><label for="edit-user-phone-@_user.UserId"><Language Tag="PhoneNumber" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-phone-@_user.UserId" class="form-control" @bind="_user.Phone" /></td>
+                    </tr>
+                    @if (Model.FeatureEnabledDepartments) {
+                        <tr>
+                            <td><label for="edit-user-department-@_user.UserId"><Language Tag="Department" ReplaceSpaces="true" /></label></td>
+                            <td>
+                                <select id="edit-user-department-@_user.UserId" class="form-select" @bind="_user.DepartmentId">
+                                    <option value=""></option>
+                                    @foreach (var dept in Model.Departments) {
+                                        <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                    <tr>
+                        <td><label for="edit-user-source-@_user.UserId"><Language Tag="Source" ReplaceSpaces="true" /></label></td>
+                        <td><input type="text" id="edit-user-source-@_user.UserId" class="form-control" @bind="_user.Source" /></td>
+                    </tr>
+                    <UserDefinedFields Module="users" Id="edit-user-udf" Class="mt-2" Data="_user" />
+                    <tr>
+                        <td>
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-enabled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Enabled" />
+                            </div>
+                        </td>
+                        <td><label for="edit-user-enabled-@_user.UserId" class="form-check-label"><Language Tag="Enabled" /></label></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-preventPasswordChange-@_user.UserId" role="switch" class="form-check-input" @bind="_user.PreventPasswordChange" />
+                            </div>
+                        </td>
+                        <td><label for="edit-user-preventPasswordChange-@_user.UserId" class="form-check-label"><Language Tag="PreventPasswordChange" /></label></td>
+                    </tr>
+                    @if (Model.FeatureEnabledScheduling)
+                    {
+                        <tr>
+                            <td>
+                                <div class="form-check form-switch right">
+                                    <input type="checkbox" id="edit-user-CanBeScheduled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.CanBeScheduled" />
+                                </div>
+                            </td>
+                            <td><label for="edit-user-CanBeScheduled-@_user.UserId" class="form-check-label"><Language Tag="CanBeScheduled" /></label></td>
+                        </tr>
+                    }
+                    <tr>
+                        <td>
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-admin-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Admin" />
+                            </div>
+                        </td>
+                        <td><label for="edit-user-admin-@_user.UserId" class="form-check-label"><Language Tag="Admin" /></label></td>
+                    </tr>
+
+                    @if (!_user.Admin && Model.FeatureEnabledScheduling) {
+                        <tr>
+                            <td>
+                                <div class="form-check form-switch right">
+                                    <input type="checkbox" id="edit-user-ManageAppointments-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageAppointments" />
+                                </div>
+                            </td>
+                            <td><label for="edit-user-ManageAppointments-@_user.UserId" class="form-check-label"><Language Tag="ManageAppointments" /></label></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="form-check form-switch right">
+                                    <input type="checkbox" id="edit-user-ManageFiles-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageFiles" />
+                                </div>
+                            </td>
+                            <td><label for="edit-user-ManageFiles-@_user.UserId" class="form-check-label"><Language Tag="ManageFiles" /></label></td>
+                        </tr>
+                    }
+
+                    @if (!_newUser) {
+                        <tr>
+                            <td>
+                                <label><Language Tag="Photo" ReplaceSpaces="true" /></label>
+                            </td>
+                            <td>
+                                <div class="note mb-2"><Language Tag="ManageAvatarInfo" /></div>
+                                @if (_user.Photo.HasValue) {
+                                    <button type="button" class="btn btn-danger btn-sm mb-2" @onclick="DeleteUserPhoto">
+                                        <Language Tag="Delete" IncludeIcon="true" />
+                                    </button>
+                                }
+                                <button type="button" class="btn btn-success btn-sm mb-2" @onclick="UploadAvatarImage">
+                                    <Language Tag="UploadFile" IncludeIcon="true" />
+                                </button>
+                                @if (_user.Photo.HasValue) {
+                                    <div>
+                                        <img class="user-icon-small" src="@UserAvatarUrl" />
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (!_newUser) {
+                <div class="mt-2 mb-2">
+                    <LastModifiedMessage DataObject="_user" />
+                </div>
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public bool InDialog { get; set; }
+    [Parameter] public Delegate? OnSaved { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+    [Parameter] public string? userid { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newUser = false;
+    protected string _title = "";
+    protected DataObjects.User _user = new DataObjects.User();
+
+    protected string _pageName = "edituser";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            if (!InDialog) {
+                await Helpers.ValidateUrl(TenantCode);
+
+                if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(userid)) {
+                    _loadedData = true;
+                    await LoadUser();
+                }
+            } else {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await LoadUser();
+                }
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Settings/Users");
+    }
+
+    protected void Close(){
+        DialogService.Close();
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteUser/" + userid);
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Tenant.Users = Model.Tenant.Users.Where(x => x.UserId.ToString() != userid).ToList();
+
+                var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
+                if(tenantItem != null) {
+                    tenantItem.Users = tenantItem.Users.Where(x => x.UserId.ToString() != userid).ToList();
+                }
+
+                Done();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task DeleteUserPhoto()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteUserPhoto/" + _user.UserId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                _user.Photo = null;
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void Done() {
+        if (InDialog){
+            Close();
+            if (OnSaved != null) {
+                OnSaved.DynamicInvoke();
+            }
+        } else {
+            Back();
+        }
+    }
+
+    protected async Task LoadUser()
+    {
+        if (Model.FeatureEnabledDepartments && !Model.Departments.Any()) {
+            await Helpers.LoadDepartments();
+        }
+
+        if (!Model.udfLabels.Any()) {
+            await Helpers.LoadUdfLabels();
+        }
+
+        if (!String.IsNullOrWhiteSpace(userid)) {
+            if (!InDialog){
+                Model.NavigationId = userid;
+            }
+            
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newUser = false;
+            _title = "EditUser";
+
+            var getUser = await Helpers.GetOrPost<DataObjects.User>("api/Data/GetUser/" + userid);
+            if (getUser != null) {
+                _user = getUser;
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newUser = true;
+            _title = "AddNewUser";
+
+            _user = new DataObjects.User();
+            _user.TenantId = Model.TenantId;
+            _user.UserId = Guid.Empty;
+            _user.Enabled = true;
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-user-firstName");
+    }
+
+    protected async Task ResetUserPassword(bool allAccounts = false)
+    {
+        Action<string> onPasswordAccepted = async (string password) => {
+
+            await ResetUserPasswordGo(password, allAccounts);
+        };
+
+        await Helpers.GetNewPassword(onPasswordAccepted);
+    }
+
+    protected async Task ResetUserPasswordGo(string password, bool allAccounts)
+    {
+        Model.ClearMessages();
+        Model.Message_Processing();
+
+        DataObjects.UserPasswordReset reset = new DataObjects.UserPasswordReset {
+            TenantId = Model.TenantId,    
+            UserId = _user.UserId,
+            NewPassword = password,
+            AllAccounts = allAccounts,
+        };
+
+        var result = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/ResetUserPassword", reset);
+
+        Model.ClearMessages();
+
+        if(result != null) {
+            if (result.Result) {
+                Model.AddMessage(Helpers.Text("PasswordReset"), MessageType.Success);
+            } else {
+                Model.ErrorMessages(result.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_user.FirstName)) {
+            errors.Add(Helpers.MissingRequiredField("FirstName"));
+            if (focus == "") { focus = "edit-user-firstName"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.LastName)) {
+            errors.Add(Helpers.MissingRequiredField("LastName"));
+            if (focus == "") { focus = "edit-user-lastName"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.Email)) {
+            errors.Add(Helpers.MissingRequiredField("Email"));
+            if (focus == "") { focus = "edit-user-email"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/SaveUser", _user);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                await Helpers.ReloadTenantUsers();
+
+                Done();
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task UnlockUserAccount()
+    {
+        Model.ClearMessages();
+        Model.Message_Processing();
+
+        var unlock = await Helpers.GetOrPost<DataObjects.User>("api/Data/UnlockUserAccount/" + _user.UserId.ToString());
+
+        Model.ClearMessages();
+
+        if(unlock != null) {
+            if (unlock.ActionResponse.Result) {
+                _user = unlock;
+            } else {
+                Model.ErrorMessages(unlock.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task UploadAvatarImage()
+    {
+        Delegate onUploadComplete = async (DataObjects.FileStorage fileStorage) => {
+
+            await UploadedAvatarImage(fileStorage);
+        };
+
+        string title = "";
+        string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
+        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
+        List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
+
+        await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
+    }
+
+    protected async Task UploadedAvatarImage(DataObjects.FileStorage fileStorage)
+    {
+        if (fileStorage != null && !String.IsNullOrWhiteSpace(fileStorage.Extension)) {
+            bool allowedExtension = false;
+            string extension = fileStorage.Extension;
+
+            switch (extension.ToUpper()) {
+                case ".GIF":
+                case ".JPG":
+                case ".JPEG":
+                case ".PNG":
+                case ".SVG":
+                    allowedExtension = true;
+                    break;
+            }
+
+            if (allowedExtension) {
+                fileStorage.FileId = Guid.Empty;
+                fileStorage.UserId = _user.UserId;
+
+                Model.Message_Saving();
+                var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveUserPhoto", fileStorage);
+
+                Model.ClearMessages();
+
+                if (saved != null) {
+                    if (saved.Result) {
+                        // Update this user with the new photo id
+                        var photoId = await Helpers.GetOrPost<DataObjects.SimpleResponse>("api/Data/GetUserPhotoId/" + _user.UserId.ToString());
+                        if (photoId != null && photoId.Result) {
+                            Guid fileId = Guid.Empty;
+                            try {
+                                fileId = new Guid(Helpers.StringValue(photoId.Message));
+                                _user.Photo = fileId;
+
+                                if (_user.UserId == Model.User.UserId) {
+                                    Model.UpdateUserPhoto(_user.UserId, fileId);
+                                }
+                            } catch { }
+                        }
+                    } else {
+                        Model.ErrorMessages(saved.Messages);
+                    }
+                } else {
+                    Model.UnknownError();
+                }
+            } else {
+                string errorMessage = Helpers.Text("InvalidImageFileType") + " - " + fileStorage.FileName;
+                Model.ErrorMessage(errorMessage);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    protected string UserAccountLockedMessage
+    {
+        get {
+            string output = "";
+
+            if (_user.LastLockoutDate.HasValue) {
+                DateTime lockedOut = (DateTime)_user.LastLockoutDate;
+
+                output = Helpers.Text("UserLockedOut", false, new List<string> { lockedOut.ToString() });
+            }
+
+            return output;
+        }
+    }
+
+    protected string UserAvatarUrl
+    {
+        get {
+            string output = "";
+
+            if (_user.Photo.HasValue && _user.Photo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)_user.Photo).ToString();// + "?Random=" + Guid.NewGuid().ToString();
+            }
+
+            return output;
+        }
+    }
+}

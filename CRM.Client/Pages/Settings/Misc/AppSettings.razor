@@ -1,0 +1,411 @@
+﻿@page "/Settings/AppSettings"
+@page "/{TenantCode}/Settings/AppSettings"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="AppSettings" IncludeIcon="true" />
+        </h1>
+
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="AppSettings" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-success" @onclick="SaveSettings">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+            </div>
+        </div>
+
+        <RequiredIndicator />
+
+        <div class="alert @(_settings.MaintenanceMode ? "alert-danger": "alert-dark")">
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" id="edit-appsetting-MaintenanceMode" role="switch" class="form-check-input" @bind="_settings.MaintenanceMode" />
+                <label for="edit-appsetting-MaintenanceMode" class="form-check-label">
+                    <Language Tag="MaintenanceMode" />
+                </label>
+                <div class="note">
+                    <Language Tag="MaintenanceModeInfo" />
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <label for="edit-appsetting-applicationURL">
+                <Language Tag="AppUrl" Required="true" />
+            </label>
+            <input type="text" id="edit-appsetting-applicationURL"
+                   class="@Helpers.MissingValue(_settings.ApplicationURL, "form-control")"
+            @bind="_settings.ApplicationURL" @bind:event="oninput" />
+        </div>
+
+        <div class="card mb-2">
+            <div class="card-header">
+                <Language Tag="TenantCodes" />
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label for="edit-appsetting-DefaultTenantCode">
+                        <Language Tag="DefaultTenantCode" />
+                    </label>
+                    <select id="edit-appsetting-DefaultTenantCode" class="form-control" @bind="_settings.DefaultTenantCode">
+                        <option value=""></option>
+                        @foreach (var item in Model.TenantList.Where(x => x.TenantId != Helpers.Guid1).OrderBy(x => x.TenantCode)) {
+                            <option value="@item.TenantCode">@((MarkupString)item.TenantCode + " - " + item.Name)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-2 form-check form-switch">
+                    <input type="checkbox" id="edit-appsetting-UseTenantCodeInUrl" role="switch" class="form-check-input" @bind="_settings.UseTenantCodeInUrl" />
+                    <label for="edit-appsetting-UseTenantCodeInUrl" class="form-check-label">
+                        <Language Tag="UseTenantCodeInUrl" />
+                    </label>
+                </div>
+
+                <div class="mb-2 form-check form-switch">
+                    <input type="checkbox" id="edit-appsetting-ShowTenantListingWhenMissingTenantCode" role="switch" class="form-check-input" @bind="_settings.ShowTenantListingWhenMissingTenantCode" />
+                    <label for="edit-appsetting-ShowTenantListingWhenMissingTenantCode" class="form-check-label">
+                        <Language Tag="ShowTenantListingWhenMissingTenantCode" />
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-2">
+            <div class="card-header">
+                <Language Tag="MailServerConfiguration" />
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label for="edit-appsetting-defaultReplyToAddress">
+                        <Language Tag="DefaultReplyToAddress" />
+                    </label>
+                    <input type="text" id="edit-appsetting-defaultReplyToAddress" class="form-control" @bind="_settings.DefaultReplyToAddress" />
+                </div>
+
+                <div class="mb-2 form-check form-switch">
+                    <input type="checkbox" id="edit-appsetting-graphAllowSendingFromIndividualEmailAddresses" role="switch" class="form-check-input" @bind="_settings.MailServerConfig.AllowSendingFromIndividualEmailAddresses" />
+                    <label for="edit-appsetting-graphAllowSendingFromIndividualEmailAddresses" class="form-check-label">
+                        <Language Tag="GraphAllowSendingFromIndividualEmailAddresses" />
+                    </label>
+                    <div class="note">
+                        <Language Tag="GraphAllowSendingFromIndividualEmailAddressesInfo" />
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label for="edit-appsetting-MailServerConfigType">
+                        <Language Tag="MailServerOption" />
+                    </label>
+                    <select id="edit-appsetting-MailServerConfigType" class="form-select" @bind="_settings.MailServerConfig.Type">
+                        <option value=""></option>
+                        <option value="graph">Microsoft Graph API</option>
+                        <option value="smtp">SMTP</option>
+                    </select>
+                </div>
+
+                @if (!String.IsNullOrWhiteSpace(_settings.MailServerConfig.Type)) {
+                    switch (_settings.MailServerConfig.Type.ToUpper()) {
+                        case "GRAPH":
+                            <div class="mb-2">
+                                <label for="edit-appsetting-graphClientId">
+                                    <Language Tag="GraphClientId" />
+                                </label>
+                                <input type="text" id="edit-appsetting-graphClientId" class="form-control" @bind="_graph.ClientId" />
+                            </div>
+                            <div class="mb-2">
+                                <label for="edit-appsetting-graphTenantId">
+                                    <Language Tag="GraphTenantId" />
+                                </label>
+                                <input type="text" id="edit-appsetting-graphTenantId" class="form-control" @bind="_graph.TenantId" />
+                            </div>
+                            <div class="mb-2">
+                                <label for="edit-appsetting-graphClientSecret">
+                                    <Language Tag="GraphClientSecret" />
+                                </label>
+                                <input type="text" id="edit-appsetting-graphClientSecret" class="form-control" @bind="_graph.ClientSecret" />
+                            </div>
+                            break;
+
+                        case "SMTP":
+                            <div class="mb-2">
+                                <label for="edit-appsetting-smtpServer">
+                                    <Language Tag="MailServer" />
+                                </label>
+                                <input type="text" id="edit-appsetting-smtpServer" class="form-control" @bind="_smtp.Server" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="edit-appsetting-smtpUserName">
+                                    <Language Tag="MailServerUsername" />
+                                </label>
+                                <input type="text" id="edit-appsetting-smtpUserName" class="form-control" @bind="_smtp.Username" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="edit-appsetting-smtpPassword">
+                                    <Language Tag="MailServerPassword" />
+                                </label>
+                                <input type="text" id="edit-appsetting-smtpPassword" class="form-control" @bind="_smtp.Password" />
+                            </div>
+
+                            <div class="mb-2">
+                                <label for="edit-appsetting-smtpPort">
+                                    <Language Tag="MailServerPort" />
+                                </label>
+                                <input type="number" id="edit-appsetting-smtpPort" class="form-control" @bind="_smtp.Port" />
+                            </div>
+
+                            <div class="mb-2 form-check form-switch">
+                                <input type="checkbox" id="edit-appsetting-smtpUseSSL" role="switch" class="form-check-input" @bind="_smtp.UseSSL" />
+                                <label for="edit-appsetting-smtpUseSSL" class="form-check-label">
+                                    <Language Tag="MailServerUsesSSL" />
+                                </label>
+                            </div>
+                            break;
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="card mb-2">
+            <div class="card-header">
+                <Language Tag="EncryptionKey" />
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <Language Tag="EncryptionKeyWarning" />
+                </div>
+
+                <div class="mb-2">
+                    <label for="edit-appsetting-encryptionKey">
+                        <Language Tag="EncryptionKey" />
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="edit-appsetting-encryptionKey" class="form-control" @bind="_settings.EncryptionKey" />
+                        <span class="input-group-text pointer bg-warning text-bg-warning" @onclick="GetNewEncryptionKey">
+                            <Language Tag="New" />
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _lastKey = "";
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected DataObjects.ApplicationSettings _settings = new DataObjects.ApplicationSettings();
+
+    protected DataObjects.MailServerConfigMicrosoftGraph _graph = new DataObjects.MailServerConfigMicrosoftGraph();
+    protected DataObjects.MailServerConfigSMTP _smtp = new DataObjects.MailServerConfigSMTP();
+
+    protected string _pageName = "appsettings";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.AppAdmin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await GetSettings();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Decrypt(string field)
+    {
+        string value = "";
+
+        if (!String.IsNullOrWhiteSpace(field)) {
+            switch (field.ToLower()) {
+            }
+        }
+
+        Model.ClearMessages();
+        if (!String.IsNullOrWhiteSpace(value)) {
+            var response = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/Decrypt", new DataObjects.SimplePost { SingleItem = value });
+            if(response != null) {
+                if (response.Result) {
+                    string decrypted = Helpers.StringValue(response.Messages[0]);
+
+                    switch (field.ToLower()) {
+                    }
+                } else {
+                    Model.ErrorMessages(response.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        }
+    }
+
+    protected async Task Encrypt(string field)
+    {
+        string value = "";
+
+        if (!String.IsNullOrWhiteSpace(field)) {
+            switch (field.ToLower()) {
+            }
+        }
+
+        Model.ClearMessages();
+        if (!String.IsNullOrWhiteSpace(value)) {
+            var response = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/Encrypt", new DataObjects.SimplePost { SingleItem = value });
+            if (response != null) {
+                if (response.Result) {
+                    string encrypted = Helpers.StringValue(response.Messages[0]);
+
+                    switch (field.ToLower()) {
+                    }
+                } else {
+                    Model.ErrorMessages(response.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        }
+    }
+
+    protected async Task GetNewEncryptionKey()
+    {
+        Model.ClearMessages();
+
+        string currentKey = Helpers.StringValue(_settings.EncryptionKey);
+        if (!String.IsNullOrWhiteSpace(currentKey) && currentKey.Contains(",0x")) {
+            _lastKey = currentKey;
+        }
+
+        var newKey = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/GetNewEncryptionKey");
+        if(newKey != null) {
+            if (newKey.Result) {
+                string key = newKey.Messages[0];
+                _settings.EncryptionKey = key;
+                _lastKey = key;
+            } else {
+                Model.ErrorMessages(newKey.Messages);
+                _settings.EncryptionKey = _lastKey;
+            }
+        } else {
+            Model.UnknownError();
+            _settings.EncryptionKey = _lastKey;
+        }
+    }
+
+    protected async Task GetSettings()
+    {
+        _loading = true;
+
+        if (!Model.TenantList.Any()) {
+            await Helpers.LoadTenantList();
+        }
+
+        var getSettings = await Helpers.GetOrPost<DataObjects.ApplicationSettings>("api/Data/GetApplicationSettings");
+
+        if(getSettings != null) {
+            _settings = getSettings;
+
+            _graph = new DataObjects.MailServerConfigMicrosoftGraph();
+            _smtp = new DataObjects.MailServerConfigSMTP();
+
+            switch (_settings.MailServerConfig.Type.ToUpper()) {
+                case "GRAPH":
+                    var desGraph = Helpers.DeserializeObject<DataObjects.MailServerConfigMicrosoftGraph>(_settings.MailServerConfig.Config);
+                    if(desGraph != null) {
+                        _graph = desGraph;
+                    }
+                    break;
+
+                case "SMTP":
+                    var desSMTP = Helpers.DeserializeObject<DataObjects.MailServerConfigSMTP>(_settings.MailServerConfig.Config);
+                    if(desSMTP != null) {
+                        _smtp = desSMTP;
+                    }
+                    break;
+            }
+
+            _loading = false;
+            StateHasChanged();
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task SaveSettings()
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        switch (_settings.MailServerConfig.Type.ToUpper()) {
+            case "GRAPH":
+                _settings.MailServerConfig.Config = Helpers.SerializeObject(_graph);
+                break;
+
+            case "SMTP":
+                _settings.MailServerConfig.Config = Helpers.SerializeObject(_smtp);
+                break;
+        }
+
+        var saved = await Helpers.GetOrPost<DataObjects.ApplicationSettings>("api/Data/SaveApplicationSettings", _settings);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                _settings = saved;
+                Model.Message_Saved();
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+}

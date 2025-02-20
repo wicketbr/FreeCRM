@@ -1,0 +1,332 @@
+﻿@page "/Setup"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@switch (view) {
+    case "alreadyconfigured":
+        <div class="container-fluid">
+            <div class="alert alert-danger">
+                <h1 class="page-title">Error</h1>
+                The application has already been configured. Redirecting...
+            </div>
+        </div>
+        break;
+
+    case "loading":
+        <div class="container-fluid">
+            <LoadingMessage />
+        </div>
+        break;
+
+    case "setup":
+        <div class="container-fluid">
+            <h1 class="page-title">Setup</h1>
+
+            @if (errors.Any()) {
+                <div class="alert alert-danger">
+                    @if(errors.Count() == 1) {
+                        <div class="mb-2">
+                            The following error was encountered:
+                        </div>
+                        <div>@errors[0]</div>
+                    } else {
+                        <div class="mb-2">
+                            The following errors were encountered:
+                        </div>
+                        <ul>
+                            @foreach(string error in errors) {
+                                <li>@error</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+
+            <div class="mb-2">
+                Your backend database has not been configured.
+                You can either do this manually by editing the appsettings.json
+                file, or you can use this wizard to continue.
+            </div>
+
+            <div class="mb-2">
+                <h2 class="display-8">Database Type</h2>
+
+                <input type="radio" checked="@(databaseType == "InMemory")" id="database-type-InMemory"
+                       name="DatabaseType" @onchange="@(() => UpdateDatabaseType("InMemory"))" />
+                <label for="database-type-InMemory">In-Memory <span class="note">(for testing only)</span></label>
+
+                <br />
+                <input type="radio" checked="@(databaseType == "SQLServer")" id="database-type-SQLServer"
+                       name="DatabaseType" @onchange="@(() => UpdateDatabaseType("SQLServer"))" />
+                <label for="database-type-SQLServer">Microsoft SQL Server</label>
+
+                <br />
+                <input type="radio" checked="@(databaseType == "MySQL")" id="database-type-MySQL"
+                       name="DatabaseType" @onchange="@(() => UpdateDatabaseType("MySQL"))" />
+                <label for="database-type-MySQL">MySQL</label>
+
+                <br />
+                <input type="radio" checked="@(databaseType == "PostgreSQL")" id="database-type-PostgreSQL"
+                       name="DatabaseType" @onchange="@(() => UpdateDatabaseType("PostgreSQL"))" />
+                <label for="database-type-PostgreSQL">PostgreSQL</label>
+
+                <br />
+                <input type="radio" checked="@(databaseType == "SQLite")" id="database-type-SQLite"
+                       name="DatabaseType" @onchange="@(() => UpdateDatabaseType("SQLite"))" />
+                <label for="database-type-SQLite">SQLite</label>
+            </div>
+
+            @if (!String.IsNullOrWhiteSpace(databaseType)) {
+                <div class="mb-2 note">
+                    * indicates a required field
+                </div>
+            }
+
+            @switch (databaseType) {
+                case "InMemory":
+                    <div class="alert alert-danger">
+                        WARNING: The In-Memory option is for testing only.
+                        Any changes made will be lost as soon as the application pool
+                        on the web server restarts.
+                    </div>
+                    break;
+
+                case "SQLServer":
+                    <div class="mb-2">
+                        <label for="database-config-SqlServer_Server">*Server</label>
+                        <input id="database-config-SqlServer_Server" type="text" class="form-control" @bind="csConfig.SqlServer_Server" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-SqlServer_Database">*Database</label>
+                        <input id="database-config-SqlServer_Database" type="text" class="form-control" @bind="csConfig.SqlServer_Database" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-SqlServer_UserId">UserId</label>
+                        <input id="database-config-SqlServer_UserId" type="text" class="form-control" @bind="csConfig.SqlServer_UserId" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-SqlServer_Password">Password</label>
+                        <input id="database-config-SqlServer_Password" type="text" class="form-control" @bind="csConfig.SqlServer_Password" />
+                    </div>
+                    <div class="mb-2">
+                        <input type="checkbox" id="database-config-IntegratedSecurity" @bind-value="csConfig.SqlServer_IntegratedSecurity" />
+                        <label for="database-config-IntegratedSecurity">Integrated Security</label>
+                    </div>
+                    <div class="mb-2">
+                        <input type="checkbox" id="database-config-TrustServerCertificate" @bind-value="csConfig.SqlServer_TrustServerCertificate" />
+                        <label for="database-config-TrustServerCertificate">Trust Server Certificate</label>
+                    </div>
+                    <div class="mb-2">
+                        <input type="checkbox" id="database-config-PersistSecurityInfo" @bind-value="csConfig.SqlServer_PersistSecurityInfo" />
+                        <label for="database-config-PersistSecurityInfo">Persist Security Info</label>
+                    </div>
+                    break;
+
+                case "MySQL":
+                    <div class="mb-2">
+                        <label for="database-config-MySQL_Server">*Server</label>
+                        <input id="database-config-MySQL_Server" type="text" class="form-control" @bind="csConfig.MySQL_Server" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-MySQL_Database">*Database</label>
+                        <input id="database-config-MySQL_Database" type="text" class="form-control" @bind="csConfig.MySQL_Database" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-MySQL_User">*User</label>
+                        <input id="database-config-MySQL_User" type="text" class="form-control" @bind="csConfig.MySQL_User" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-MySQL_Password">*Password</label>
+                        <input id="database-config-MySQL_Password" type="text" class="form-control" @bind="csConfig.MySQL_Password" />
+                    </div>
+                    break;
+
+                case "PostgreSQL":
+                    <div class="mb-2">
+                        <label for="database-config-PostgreSql_Host">*Host</label>
+                        <input id="database-config-PostgreSql_Host" type="text" class="form-control" @bind="csConfig.PostgreSql_Host" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-PostgreSql_Database">*Database</label>
+                        <input id="database-config-PostgreSql_Database" type="text" class="form-control" @bind="csConfig.PostgreSql_Database" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-PostgreSql_Username">*Username</label>
+                        <input id="database-config-PostgreSql_Username" type="text" class="form-control" @bind="csConfig.PostgreSql_Username" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="database-config-PostgreSql_Password">*Password</label>
+                        <input id="database-config-PostgreSql_Password" type="text" class="form-control" @bind="csConfig.PostgreSql_Password" />
+                    </div>
+                    break;
+
+                case "SQLite":
+                    <div class="mb-2">
+                        <label for="database-config-SQLiteDatabase">*Database Path</label>
+                        <input id="database-config-SQLiteDatabase" type="text" class="form-control" @bind="csConfig.SQLiteDatabase" 
+                            placeholder="Path to the SQLite database file (eg: C:\Data\Database.db)"/>
+                    </div>
+                    break;
+            }
+
+            @if (!String.IsNullOrWhiteSpace(databaseType)) {
+                <div class="alert alert-info">
+                    NOTE: Continuing will update the appsettings.json file and cause the application to restart.
+                    If no errors are encountered you will be redirected back to the home page after the
+                    application restarts.
+                </div>
+                <div class="mb-2">
+                    <button type="button" class="btn btn-primary" @onclick="SaveDatabaseConfig">
+                        <Icon Name="Continue" /> Continue
+                    </button>
+                </div>
+            }
+        </div>
+        break;
+
+    case "saving":
+        <div class="container-fluid">
+            <h1 class="page-title">Saving, Please Wait...</h1>
+        </div>
+        break;
+}
+@code {
+    protected string databaseType = "";
+    protected string view = "loading";
+
+    protected List<string> errors = new List<string>();
+
+    protected DataObjects.ConnectionStringConfig csConfig = new DataObjects.ConnectionStringConfig();
+
+    public void Dispose() { }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            databaseType = "";
+        }
+
+        // Make sure that the database isn't already configured.
+        // This page can only be used when in the Startup Error state.
+        var startupState = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/GetStartupState");
+        if (startupState != null && startupState.Result) {
+            view = "alreadyconfigured";
+            StateHasChanged();
+
+            await System.Threading.Tasks.Task.Delay(5000);
+
+            Helpers.NavigateToRoot();
+            return;
+        }
+
+        view = "setup";
+        StateHasChanged();
+    }
+
+    protected async void SaveDatabaseConfig()
+    {
+        errors = new List<string>();
+
+        // Make sure all required fields have been completed before attempting to save.
+        string focus = "";
+
+        switch (databaseType) {
+            case "SQLServer":
+                if (String.IsNullOrWhiteSpace(csConfig.SqlServer_Server)) {
+                    focus = "database-config-SqlServer_Server";
+                } else if (String.IsNullOrEmpty(csConfig.SqlServer_Database)) {
+                    focus = "database-config-SqlServer_Database";
+                }
+                break;
+
+            case "MySQL":
+                if (String.IsNullOrWhiteSpace(csConfig.MySQL_Server)) {
+                    focus = "database-config-MySQL_Server";
+                } else if (String.IsNullOrWhiteSpace(csConfig.MySQL_Database)) {
+                    focus = "database-config-MySQL_Database";
+                } else if (String.IsNullOrWhiteSpace(csConfig.MySQL_User)) {
+                    focus = "database-config-MySQL_User";
+                } else if (String.IsNullOrWhiteSpace(csConfig.MySQL_Password)) {
+                    focus = "database-config-MySQL_Password";
+                }
+                break;
+
+            case "PostgreSQL":
+                if (String.IsNullOrWhiteSpace(csConfig.PostgreSql_Host)) {
+                    focus = "database-config-PostgreSql_Host";
+                } else if (String.IsNullOrWhiteSpace(csConfig.PostgreSql_Database)) {
+                    focus = "database-config-PostgreSql_Database";
+                } else if (String.IsNullOrWhiteSpace(csConfig.PostgreSql_Username)) {
+                    focus = "database-config-PostgreSql_Username";
+                } else if (String.IsNullOrWhiteSpace(csConfig.PostgreSql_Password)) {
+                    focus = "database-config-PostgreSql_Password";
+                }
+                break;
+
+            case "SQLite":
+                if (String.IsNullOrWhiteSpace(csConfig.SQLiteDatabase)) {
+                    focus = "database-config-SQLiteDatabase";
+                }
+                break;
+        }
+
+        if(focus != "") {
+            await jsRuntime.InvokeVoidAsync("DelayedFocus", focus);
+            return;
+        }
+
+        view = "saving";
+
+        csConfig.DatabaseType = databaseType;
+
+        var response = await Http.PostAsJsonAsync("api/Setup/SaveConnectionString/", csConfig);
+        if(response != null && response.IsSuccessStatusCode) {
+            var result = await response.Content.ReadFromJsonAsync<DataObjects.BooleanResponse>();
+            if(result != null) {
+                if (result.Result) {
+                    Helpers.NavigateTo("../", true);
+                    return;
+                } else {
+                    errors = result.Messages;
+                }
+            } else {
+                errors.Add("An unknown error occurred attempting to save the configuration. Please check the console for details.");
+            }
+        }
+
+        view = "setup";
+        this.StateHasChanged();
+    }
+
+    protected async void UpdateDatabaseType(string type)
+    {
+        csConfig = new DataObjects.ConnectionStringConfig();
+        databaseType = type;
+
+        string focus = "";
+
+        switch (type) {
+            case "SQLServer":
+                focus = "database-config-SqlServer_Server";
+                break;
+
+            case "MySQL":
+                focus = "database-config-MySQL_Server";
+                break;
+
+            case "PostgreSQL":
+                focus = "database-config-PostgreSql_Host";
+                break;
+
+            case "SQLite":
+                focus = "database-config-SQLiteDatabase";
+                break;
+        }
+
+        if(focus != "") {
+            await jsRuntime.InvokeVoidAsync("DelayedFocus", focus);
+        }
+    }
+}

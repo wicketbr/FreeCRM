@@ -1,0 +1,159 @@
+﻿@page "/Settings/EmailTemplates"
+@page "/{TenantCode}/Settings/EmailTemplates"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="EmailTemplates" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="EmailTemplates" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="btn-group mb-2" role="group">
+                <a class="btn btn-success" href="@(Helpers.BuildUrl("Settings/AddEmailTemplate"))">
+                    <Language Tag="AddNewEmailTemplate" IncludeIcon="true" />
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="files-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                <label for="files-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedItems" /></label>
+            </div>
+        </div>
+
+        if (Model.EmailTemplates.Any()) {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th class="nowrap"><Language Tag="EmailTemplateName" /></th>
+                        <th class="nowrap"><Language Tag="EmailTemplateSubject" /></th>
+                        <th style="width:1%;" class="center nowrap"><Language Tag="Enabled" ReplaceSpaces="true" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var item in Model.EmailTemplates) {
+                        var details = Helpers.EmailTemplateDetails(item.Template);
+
+                        if (!item.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            <tr class="@(item.Deleted ? "item-deleted": "")">
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditItem(item.EmailTemplateId))">
+                                        <Language Tag="Edit" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@item.Name</td>
+                                <td>@details.Subject</td>
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(item.Enabled))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected string _token = "";
+
+    protected string _pageName = "emailtemplates";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledEmailTemplates || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+
+                if (!Model.ImageFiles.Any()) {
+                    await Helpers.LoadImageFiles();
+                }
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditItem(Guid ItemId)
+    {
+        Helpers.NavigateTo("Settings/EditEmailTemplate/" + ItemId.ToString());
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+
+        var templates = await Helpers.GetOrPost<List<DataObjects.EmailTemplate>>("api/Data/GetEmailTemplates");
+        if(templates != null && templates.Any()) {
+            Model.EmailTemplates = templates;
+        } else {
+            Model.EmailTemplates = new List<DataObjects.EmailTemplate>();
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.EmailTemplate && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,60 @@
+﻿@implements IDisposable
+@if (!String.IsNullOrWhiteSpace(_addedBy) || (_lastModified.HasValue && _lastModified != DateTime.MinValue)) {
+    <div class="last-modified">
+        @if (!String.IsNullOrWhiteSpace(_addedBy)) {
+            <span class="added-text">
+                <Language Tag="Added" />
+            </span>
+            <span class="datetime-added">@((MarkupString)Helpers.FormatDateTime(_added))</span>
+            <span></span>
+            <span class="text-addedBy">
+                <Language Tag="AddedBy" />
+            </span>
+            <span class="added-by-user">@((MarkupString)_addedBy)</span>
+            <span> - </span>
+        }
+
+        <span class="text-lastModified">
+            <Language Tag="LastModified" />
+        </span>
+        <span class="datetime-lastModified">@((MarkupString)Helpers.FormatDateTime(_lastModified))</span>
+        @if (!String.IsNullOrWhiteSpace(_lastModifiedBy)) {
+            <span></span>
+            <span class="last-modified-by">
+                <Language Tag="DeletedBy" />
+            </span>
+            <span class="last-modified-by-user">@((MarkupString)_lastModifiedBy)</span>
+        }
+    </div>
+}
+@code {
+    protected DateTime? _added;
+    protected string? _addedBy;
+    protected DateTime? _lastModified;
+    protected string? _lastModifiedBy;
+
+    /// <summary>
+    /// The object containing the Added, AddedBy, LastModified, and LastModifiedBy properties (or UploadDate and UploadedBy for files.)
+    /// </summary>
+    [Parameter]
+    public Object? DataObject { get; set; }
+
+    public void Dispose() { }
+
+    protected override void OnParametersSet()
+    {
+        _added = Helpers.GetObjectPropertyValue<DateTime>(DataObject, "Added");
+        _addedBy = Helpers.GetObjectPropertyValue<string>(DataObject, "AddedBy");
+
+        if (!_added.HasValue || _added == DateTime.MinValue) {
+            _added = Helpers.GetObjectPropertyValue<DateTime>(DataObject, "UploadDate");
+            if (_added.HasValue) {
+                _addedBy = Helpers.GetObjectPropertyValue<string>(DataObject, "UploadedBy");
+            }
+        }
+        
+
+        _lastModified = Helpers.GetObjectPropertyValue<DateTime>(DataObject, "LastModified");
+        _lastModifiedBy = Helpers.GetObjectPropertyValue<string>(DataObject, "LastModifiedBy");
+    }
+}

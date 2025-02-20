@@ -1,0 +1,169 @@
+﻿@page "/ViewInvoice/{id}"
+@page "/{TenantCode}/ViewInvoice/{id}"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    <h1 class="page-title">
+        <Language Tag="ViewInvoice" IncludeIcon="true" />
+    </h1>
+
+    @if (_loading) {
+        <LoadingMessage />
+    }else{
+        if (_invoice.PDF != null) {
+            <div class="mb-2">
+                <button type="button" class="btn btn-primary" @onclick="DownloadPDF">
+                    <Language Tag="DownloadPDF" IncludeIcon="true" />
+                </button>
+            </div>
+        }
+
+        if (_invoice.Images != null && _invoice.Images.Any()) {
+            <div class="mb-2">
+                <Language Tag="InvoicePreview" />
+            </div>
+
+            @foreach(var image in _invoice.Images) {
+                string base64 = "data:image/jpg;base64," + Convert.ToBase64String(image);
+                <div class="mb-2">
+                    <img src="@base64" style="width:100%;" />
+                </div>
+            }
+        } else {
+            <Language Tag="InvoiceErrorRenderingPreview" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected DataObjects.Invoice _invoice = new DataObjects.Invoice();
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+
+    protected string _pageName = "editinvoice";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledInvoices) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Invoices");
+    }
+
+    protected string ConfirmButtonTextCancel
+    {
+        get {
+            return Helpers.Text("Cancel");
+        }
+    }
+
+    protected string ConfirmButtonTextConfirmDelete
+    {
+        get {
+            return Helpers.Text("ConfirmDelete");
+        }
+    }
+
+    protected string ConfirmButtonTextDelete
+    {
+        get {
+            return Helpers.Text("Delete");
+        }
+    }
+
+    protected async Task DownloadPDF()
+    {
+        string fileName = !String.IsNullOrWhiteSpace(_invoice.InvoiceNumber)
+            ? _invoice.InvoiceNumber
+            : _invoice.InvoiceId.ToString();
+
+        fileName = fileName.Replace(" ", "_") + ".pdf";
+
+        await Helpers.DownloadFileToBrowser(fileName, _invoice.PDF);
+    }
+
+    protected async Task LoadData()
+    {
+        if (!String.IsNullOrWhiteSpace(id)) {
+            _loading = true;
+
+            var getInvoice = await Helpers.GetOrPost<DataObjects.Invoice>("api/Data/GetInvoiceRendered/" + id);
+            if (getInvoice != null) {
+                _invoice = getInvoice;
+            } else {
+                Model.UnknownError();
+            }
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == "viewinvoice" && update.UpdateType == DataObjects.SignalRUpdateType.Invoice && update.ItemId == _invoice.InvoiceId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Back();
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    Model.Message_RecordUpdated("", update.UserDisplayName);
+                    break;
+            }
+        }
+    }
+}

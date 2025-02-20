@@ -1,0 +1,658 @@
+﻿@page "/Settings/Files"
+@page "/{TenantCode}/Settings/Files"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Files" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Files" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="btn-group mb-2" role="group">
+                <button type="button" class="btn btn-success" @onclick="UploadFile" disabled="@Filter.Loading">
+                    <Language Tag="UploadFile" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-warning" @onclick="ClearFilter" disabled="@Filter.Loading">
+                    <Language Tag="Clear" IncludeIcon="true" />
+                </button>
+
+                @if (Filter.ShowFilters) {
+                    <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                        <Language Tag="HideFilter" IncludeIcon="true" />
+                    </button>
+                } else {
+                    <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                        <Language Tag="ShowFilter" IncludeIcon="true" />
+                    </button>
+                }
+
+                <button type="button" class="btn btn-dark" @onclick="Refresh" disabled="@Filter.Loading">
+                    <Language Tag="Refresh" IncludeIcon="true" />
+                </button>
+            </div>
+        </div>
+
+        if (Filter.ShowFilters) {
+            <div class="row mb-2">
+                <div class="col col-lg-3 col-md-4 col-sm-4 col-12 mb-2">
+                    <label for="filter-files-Start">
+                        <Language Tag="FilterStart" />
+                    </label>
+                    <br />
+                    <DateTimePicker 
+                        Class="form-control full-width"
+                        OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "Start", v, LoadFilter))"
+                        TableClass="datetime-picker full-width"
+                        TValue="DateTime?"
+                        Value="Filter.Start"
+                    />
+                </div>
+
+                <div class="col col-lg-3 col-md-4 col-sm-4 col-12 mb-2">
+                    <label for="filter-files-Start">
+                        <Language Tag="FilterEnd" />
+                    </label>
+                    <br />
+                    <DateTimePicker 
+                        Class="form-control full-width"
+                        OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "End", v, LoadFilter))"
+                        TableClass="datetime-picker full-width"
+                        TValue="DateTime?"
+                        Value="Filter.End"
+                    />
+                </div>
+
+                @if (Filter.AvailableExtensions.Any()) {
+                    <div class="col col-lg-3 col-md-4 col-sm-4 col-12 mb-2">
+                        <label for="filter-files-Extensions">
+                            <Language Tag="Extension" />
+                        </label>
+                        <select class="form-select" id="filter-files-Extensions" multiple size="4" @bind="Filter.Extensions" @bind:after="LoadFilter">
+                            @foreach(var item in Filter.AvailableExtensions) {
+                                if(Filter.Extensions != null && Filter.Extensions.Contains(item)) {
+                                    <option value="@item" selected>@item</option>
+                                }else{
+                                    <option value="@item">@item</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                }
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox"
+                        id="files-IncludeDeletedRecords"
+                        class="form-check-input"
+                        @bind="Model.User.UserPreferences.IncludeDeletedItems" 
+                        @bind:after="LoadFilter"
+                    />
+                    <label for="files-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedItems" /></label>
+                </div>
+            </div>
+        }
+
+        if (Filter.Loading) {
+            <LoadingMessage />
+        } else {
+            if (Filter.RecordCount == 0) {
+                <Language Tag="NoItemsToShow" />
+            } else {
+                <PagedRecordset ActionHandlers="ActionHandlers"
+                    BooleanIcon="@Helpers.Icon("Ok", true)"
+                    Configuration="Config"
+                    Formatters="Formatters"
+                    NavigationCallbackHander="NavigationCallbackHander"
+                    NavigationLocation="PagedRecordset.NavLocation.Both"
+                    RecordData="Data"
+                    RowClasses="_rowClasses"
+                    UseBootstrap="true" />
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected string _token = "";
+
+    List<PagedRecordset.ActionHandler> ActionHandlers = new List<PagedRecordset.ActionHandler>();
+    PagedRecordset.Config Config = new PagedRecordset.Config();
+    PagedRecordset.Recordset Data = new PagedRecordset.Recordset();
+    DataObjects.FilterFileStorage Filter = new DataObjects.FilterFileStorage();
+    List<PagedRecordset.Formatter> Formatters = new List<PagedRecordset.Formatter>();
+    protected bool LoadedFilter = false;
+    protected List<string> _rowClasses = new List<string>();
+
+    protected string _pageName = "files";
+
+    public void Dispose() {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        Config = new PagedRecordset.Config {
+            TextFirstRecord = Helpers.Text("FirstRecord"),
+            TextLastRecord = Helpers.Text("LastRecord"),
+            TextNextRecord = Helpers.Text("NextRecord"),
+            TextOf = Helpers.Text("Of"),
+            TextPreviousRecord = Helpers.Text("PreviousRecord"),
+            TextRecord = Helpers.Text("Record"),
+            TextRecords = Helpers.Text("Records"),
+            TextRecordsPerPage = Helpers.Text("RecordsPerPage"),
+            TextShowing = Helpers.Text("Showing"),
+            TextShowingAllRecords = Helpers.Text("ShowingAllRecords"),
+        };
+
+        if (Model.Loaded && Model.LoggedIn){
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task ClearFilter()
+    {
+        Filter.CultureCode = Model.CultureCode;
+        Filter.End = null;
+        Filter.Extensions = new string[] { };
+        Filter.Keyword = null;
+        Filter.Sort = "FileName";
+        Filter.SortOrder = "ASC";
+        Filter.Start = null;
+        Filter.Page = 1;
+
+        Model.User.UserPreferences.IncludeDeletedItems = false;
+
+        await LoadFilter();
+    }
+
+    protected async Task DeleteFile(Guid fileId)
+    {
+        Model.ClearMessages();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteFileStorage/" + fileId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                await LoadData();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected string FormatDateTimeValue(string? value)
+    {
+        string output = "";
+
+        if (!String.IsNullOrWhiteSpace(value)) {
+            try {
+                var dt = Convert.ToDateTime(value);
+                output = dt.ToShortDateString() + " " + dt.ToShortTimeString();
+            } catch { }
+        }
+
+        return output;
+    }
+
+    protected async Task FilterUpdatedEnd(DateTime? end)
+    {
+        Filter.End = end;
+
+        await LoadFilter();
+    }
+
+    protected async Task FilterUpdatedStart(DateTime? start)
+    {
+        Filter.Start = start;
+
+        await LoadFilter();
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+
+        ActionHandlers = new List<PagedRecordset.ActionHandler> {
+            new PagedRecordset.ActionHandler {
+                CallbackHandler = OnRecordView,
+                ActionElement =
+                    "<button type=\"button\" class=\"btn btn-xs btn-primary nowrap action-button\">" +
+                    Helpers.IconAndText("View") +
+                    "</button>"
+            },
+            new PagedRecordset.ActionHandler {
+                CallbackHandler = OnRecordManage,
+                ActionElement =
+                    "<button type=\"button\" class=\"btn btn-xs btn-dark nowrap action-button\">" +
+                    Helpers.IconAndText("Manage") +
+                    "</button>"
+            },
+            new PagedRecordset.ActionHandler {
+                CallbackHandler = OnRecordUndelete,
+                ActionElement =
+                    "<button type=\"button\" class=\"btn btn-xs btn-success nowrap action-button\">" +
+                    Helpers.IconAndText("Undelete") +
+                    "</button>",
+                ShowIfElementHasValue = "Deleted",
+            }
+        };
+
+        Formatters = new List<PagedRecordset.Formatter> {
+            new PagedRecordset.Formatter {
+                DataType = "datetime",
+                CallbackHandler = FormatDateTimeValue,
+            },
+        };
+
+        if (String.IsNullOrWhiteSpace(_token)) {
+            _token = await Helpers.Token();
+        }
+
+        // Get the saved filter if it exists.
+        Filter = Model.User.UserPreferences.filterFileStorage;
+
+        await LoadFilter();
+    }
+
+    protected async Task LoadFilter()
+    {
+        if (Model.LoggedIn) {
+            Filter.Loading = true;
+            Filter.TenantId = Model.TenantId;
+
+            if (Filter.RecordsPerPage < 1) {
+                Filter.RecordsPerPage = 10;
+            }
+
+            Filter.IncludeDeletedItems = Model.User.UserPreferences.IncludeDeletedItems;
+
+            SaveFilter();
+
+            var results = await Helpers.GetOrPost<DataObjects.FilterFileStorage>("api/Data/GetFileStorageItems", Filter);
+            if (results != null) {
+                Filter = results;
+
+                Filter.Loading = false;
+
+                RenderFilesTable();
+
+                LoadedFilter = true;
+
+                _loading = false;
+
+                this.StateHasChanged();
+
+                if (Filter.ShowFilters) {
+                    await Helpers.DelayedFocus("users-filter-keyword");
+                }
+            } else {
+                Model.UnknownError();
+            }
+        }
+    }
+
+    protected async void NavigationCallbackHander(string action, object? o)
+    {
+        switch (action.ToLower()) {
+            case "count":
+                int recordsPerPage = -1;
+                try {
+                    recordsPerPage = Convert.ToInt32(o);
+                } catch { }
+                if (recordsPerPage > -1) {
+                    Filter.RecordsPerPage = recordsPerPage;
+                    await LoadFilter();
+                }
+                break;
+
+            case "page":
+                int page = -1;
+                try {
+                    page = Convert.ToInt32(o);
+                } catch { }
+                if (page > -1) {
+                    Filter.Page = page;
+                    await LoadFilter();
+                }
+                break;
+
+            case "sort":
+                string dataElementName = String.Empty;
+                try {
+                    dataElementName += Convert.ToString(o);
+                } catch { }
+                if (!String.IsNullOrWhiteSpace(dataElementName)) {
+                    string currentSort = Helpers.StringValue(Filter.Sort);
+                    string currentDirection = Helpers.StringValue(Filter.SortOrder);
+
+                    if (currentSort.ToLower() == dataElementName.ToLower()) {
+                        if (currentDirection.ToUpper() == "ASC") {
+                            Filter.SortOrder = "DESC";
+                        } else {
+                            Filter.SortOrder = "ASC";
+                        }
+                    } else {
+                        Filter.Sort = dataElementName;
+
+                        if (dataElementName.ToLower() == "lastlogin") {
+                            Filter.SortOrder = "DESC";
+                        } else {
+                            Filter.SortOrder = "ASC";
+                        }
+                    }
+                    await LoadFilter();
+                }
+
+                break;
+        }
+    }
+
+    protected async void OnRecordManage(object? record)
+    {
+        if (record != null) {
+            var file = (DataObjects.FileStorage)record;
+            if (file.FileId != Guid.Empty) {
+                Delegate onComplete = async (DataObjects.FileStorage file) => {
+                    await SaveFile(file);
+                };
+
+                Delegate onDelete = async (DataObjects.FileStorage file) => {
+                    await DeleteFile(file.FileId);
+                };
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
+                parameters.Add("FileId", file.FileId);
+                parameters.Add("OnComplete", onComplete);
+                parameters.Add("OnDelete", onDelete);
+
+                await DialogService.OpenAsync<ManageFile>(Helpers.IconAndText("ManageFile"), parameters, new Radzen.DialogOptions() {
+                    AutoFocusFirstElement = false,
+                    Draggable = false,    
+                    Resizable = false,
+                    ShowClose = false,
+                });
+            }
+        }
+    }
+
+    protected async void OnRecordUndelete(object? record)
+    {
+        if (record != null) {
+            var file = (DataObjects.FileStorage)record;
+
+            if (file.FileId != Guid.Empty) {
+                Model.ClearMessages();
+                Model.Message_Processing();
+
+                var result = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/UndeleteFileStorage/" + file.FileId.ToString());
+                Model.ClearMessages();
+
+                if (result != null) {
+                    if (result.Result) {
+                        await LoadFilter();
+                    } else {
+                        Model.ErrorMessages(result.Messages);
+                    }
+                } else {
+                    Model.UnknownError();
+                }
+            }
+        }
+    }
+
+    protected async void OnRecordView(object? record)
+    {
+        if (record != null) {
+            var file = (DataObjects.FileStorage)record;
+            if(file.FileId != Guid.Empty) {
+                string url = Helpers.BaseUri + "File/View/" + file.FileId.ToString() + "?TenantId=" + Model.TenantId.ToString() + "&Token=" + _token;
+                await jsRuntime.InvokeVoidAsync("open", url, "_blank");
+            }
+        }
+    }
+
+    protected async Task Refresh()
+    {
+        await LoadFilter();
+    }
+
+    protected void RenderFilesTable()
+    {
+        var columns = new List<PagedRecordset.Column>();
+        var updatedFilter = Helpers.UpdatePagedRecordsetColumnIcons(Filter);
+        if (updatedFilter.Columns != null && updatedFilter.Columns.Any()) {
+            foreach (var column in updatedFilter.Columns) {
+                columns.Add(new PagedRecordset.Column {
+                    Align = column.Align,
+                    BooleanIcon = column.BooleanIcon,
+                    Class = column.Class,
+                    DataElementName = column.DataElementName,
+                    DataType = column.DataType,
+                    Label = column.Label,
+                    Sortable = column.Sortable,
+                    TipText = column.TipText,
+                });
+            }
+        }
+
+        _rowClasses = new List<string>();
+        if (Model.User.AppAdmin) {
+            // May be showing deleted items, so add the class if needed.
+            if (Filter.Records != null && Filter.Records.Any()) {
+                foreach (var record in Filter.Records) {
+                    bool userDeleted = false;
+
+                    try {
+                        userDeleted = Helpers.GetObjectPropertyValue<Boolean>(record, "Deleted");
+                    } catch (Exception ex) {
+                        if (ex != null) { }
+                    }
+
+                    _rowClasses.Add(userDeleted ? "item-deleted" : "");
+                }
+            }
+        }
+
+        Data = new PagedRecordset.Recordset {
+            Columns = columns,
+            CurrentPage = Filter.Page,
+            TotalPages = Filter.PageCount,
+            TotalRecords = Filter.RecordCount,
+            Records = Filter.Records,
+            RecordsPerPage = Filter.RecordsPerPage,
+            Sort = Filter.Sort,
+            SortOrder = Filter.SortOrder,
+        };
+    }
+
+    protected void SaveFilter()
+    {
+        // Not all properties should be saved, so make a copy and clear out values that don't need to be saved.
+        DataObjects.FilterFileStorage saveFilter = new DataObjects.FilterFileStorage {
+                ActionResponse = new DataObjects.BooleanResponse { Result = true },
+                Columns = null,
+                CultureCode = Filter.CultureCode,
+                End = Filter.End,
+                Export = null,
+                ExecutionTime = 0,
+                Keyword = Filter.Keyword,
+                Loading = false,
+                Page = 1,
+                PageCount = 0,
+                RecordCount = 0,
+                Records = null,
+                RecordsPerPage = Filter.RecordsPerPage,
+                ShowFilters = Filter.ShowFilters,
+                Sort = Filter.Sort,
+                SortOrder = Filter.SortOrder,
+                Start = Filter.Start,
+                TenantId = Filter.TenantId,
+                Tenants = Filter.Tenants,
+                Extensions = Filter.Extensions,
+                Source = Filter.Source,
+            };
+
+        Model.User.UserPreferences.filterFileStorage = saveFilter;
+    }
+
+    protected async Task SaveFile(DataObjects.FileStorage fileStorage)
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/SaveFile", fileStorage);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                await LoadFilter();
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.File && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            await LoadFilter();
+        }
+    }
+
+    protected async Task ToggleShowFilter()
+    {
+        if (Filter.ShowFilters) {
+            Filter.ShowFilters = false;
+        } else {
+            Filter.ShowFilters = true;
+            await Helpers.DelayedFocus("files-filter-keyword");
+        }
+
+        SaveFilter();
+    }
+
+    protected async Task UploadFile()
+    {
+        Delegate onUploadComplete = async (List<DataObjects.FileStorage> files) => {
+
+            await UploadedFile(files);
+        };
+
+        string title = Helpers.Text("UploadFile");
+        string uploadInstructions = Helpers.Text("UploadFileInstructions");
+
+        await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, null, true);
+    }
+
+    protected async Task UploadedFile(List<DataObjects.FileStorage> files)
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+
+        if(files != null && files.Any()) {
+            foreach(var file in files) {
+                bool allowedExtension = true;
+                string extension =!String.IsNullOrWhiteSpace(file.Extension) ? file.Extension : String.Empty;
+
+                switch (extension.ToUpper()) {
+                    case ".EXE":
+                        allowedExtension = false;
+                        break;
+                }
+
+                if (allowedExtension) {
+                    file.FileId = Guid.Empty;
+
+                    Model.Message_Saving(Helpers.Text("Saving") + " &ldquo;" + file.FileName + "&rdquo;");
+                    var saved = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/SaveFile", file);
+
+                    if (saved != null) {
+                        if (saved.ActionResponse.Result) {
+                            // string fileName = Helpers.StringValue(saved.FileName);
+                            // _files = _files.Where(x => x.FileName != null && x.FileName.ToLower() != fileName.ToLower()).ToList();
+                            // _files.Add(saved);
+                        } else {
+                            foreach(var msg in saved.ActionResponse.Messages) {
+                                errors.Add(msg);
+                            }
+                        }
+                    }
+                } else {
+                    errors.Add(Helpers.Text("InvalidImageFileType") + " - " + file.FileName);
+                }
+            }
+        }
+
+        Model.ClearMessages();
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+        }
+
+        await LoadFilter();
+
+        StateHasChanged();
+    }
+}

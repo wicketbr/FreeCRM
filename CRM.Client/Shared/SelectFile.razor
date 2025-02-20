@@ -1,0 +1,154 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (_loading) {
+    <LoadingMessage />
+} else {
+    <div class="mt-2">
+        @if (_showCancelButton || _showRefreshButton) {
+            <div class="mb-2">
+                @if (_showCancelButton) {
+                    <button type="button" class="btn btn-dark" @onclick="Cancel">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                }
+
+                @if (_showRefreshButton) {
+                    <button type="button" class="btn btn-primary" @onclick="Refresh">
+                        <Language Tag="Refresh" IncludeIcon="true" />
+                    </button>
+                }
+            </div>
+        }
+        @if (_files.Any()) {
+            foreach(var file in _files) {
+                string thumbnail = Helpers.FileThumbnail(file.Extension);
+                string title = Helpers.BytesToFileSizeLabel(file.Bytes) + " - " + file.FileName;
+                bool imageFile = false;
+
+                switch (Helpers.StringValue(file.Extension).ToUpper()) {
+                    case ".GIF":
+                    case ".JPG":
+                    case ".PNG":
+                    case ".SVG":
+                        imageFile = true;
+                        break;
+                }
+
+                <div class="file-selector" @onclick="@(() => FileSelected(file.FileId))" title="@title">
+                    @if (imageFile) {
+                        <div class="file-thumbnail">
+                            <img src="@(Model.ApplicationUrl + "File/Embed/" + file.FileId.ToString())" />
+                        </div>
+                    } else {
+                        <div class="file-thumbnail">
+                            <img src="@(Model.ApplicationUrl + "images/file-icons/" + thumbnail)" />
+                        </div>
+                    }
+
+                    <div class="auto-overflow file-name">@file.FileName</div>
+                </div>
+            }
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    </div>
+}
+@code {
+    /// <summary>
+    /// The delegate that will receive the Guid of the selected file.
+    /// </summary>
+    [Parameter] public Action<Guid>? OnFileSelected { get; set; }
+
+    /// <summary>
+    /// Option to show only image files.
+    /// </summary>
+    [Parameter] public bool? ImagesOnly { get; set; }
+
+    /// <summary>
+    /// Option to show the cancel button.
+    /// </summary>
+    [Parameter] public bool? ShowCancelButton { get; set; }
+
+    /// <summary>
+    /// Options to show the refresh button.
+    /// </summary>
+    [Parameter] public bool? ShowRefreshButton { get; set; }
+
+    protected List<DataObjects.FileStorage> _files = new List<DataObjects.FileStorage>();
+    protected bool _imagesOnly = false;
+    protected bool _loading = true;
+    protected bool _showCancelButton = true;
+    protected bool _showRefreshButton = true;
+
+    public void Dispose() { }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ImagesOnly != null && ImagesOnly == true) {
+            _imagesOnly = true;
+        }
+
+        if (ShowCancelButton != null) {
+            _showCancelButton = (bool)ShowCancelButton;
+        }
+
+        if (ShowRefreshButton != null) {
+            _showRefreshButton = (bool)ShowRefreshButton;
+        }
+
+        await GetFiles();
+    }
+
+    protected void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    protected void FileSelected(Guid fileId)
+    {
+        DialogService.Close();
+        if(OnFileSelected != null) {
+            OnFileSelected.DynamicInvoke(fileId);
+        }
+    }
+
+    protected async Task GetFiles()
+    {
+        if (_imagesOnly) {
+            if (!Model.ImageFiles.Any()) {
+                await Helpers.LoadImageFiles();
+            }
+            _files = Model.ImageFiles;
+        } else {
+            var files = await Helpers.GetOrPost<List<DataObjects.FileStorage>>("api/Data/GetFileStorageItems");
+            if(files != null && files.Any()) {
+                _files = files;
+            } else {
+                _files = new List<DataObjects.FileStorage>();
+            }
+        }
+
+        _loading = false;
+    }
+
+    protected async Task Refresh()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        if (_imagesOnly) {
+            await Helpers.LoadImageFiles();
+        } else {
+            var files = await Helpers.GetOrPost<List<DataObjects.FileStorage>>("api/Data/GetFileStorageItems");
+            if (files != null && files.Any()) {
+                _files = files;
+            } else {
+                _files = new List<DataObjects.FileStorage>();
+            }
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+}

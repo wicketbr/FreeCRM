@@ -1,0 +1,463 @@
+﻿@page "/Settings/EditEmailTemplate/{id}"
+@page "/{TenantCode}/Settings/EditEmailTemplate/{id}"
+@page "/Settings/AddEmailTemplate"
+@page "/{TenantCode}/Settings/AddEmailTemplate"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }
+
+    <div hidden="@(_loading)">
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/EmailTemplates"))" class="btn btn-dark">
+                    <Icon Name="Back" />
+                    <Language Tag="Cancel" />
+                </a>
+
+                @if (!_template.Deleted) {
+                    <button type="button" class="btn btn-success" @onclick="Save" disabled="@(_allowSave == false)">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+
+                    <button type="button" class="btn btn-primary" @onclick="SendTestEmail" disabled="@(_allowSave == false)">
+                        <Language Tag="SendTestEmail" IncludeIcon="true" />
+                    </button>
+
+                    @if (!_newItem) {
+                        <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                    }
+                }
+            </div>
+        </div>
+
+        @if (_template.Deleted) {
+            <UndeleteMessage DeletedAt="_template.DeletedAt" LastModifiedBy="@_template.LastModifiedBy" OnUndelete="(() => _template.Deleted = false)" />
+        }
+
+        <div hidden="@(_template.Deleted)">
+            <RequiredIndicator />
+
+            <div class="mb-2">
+                <label for="edit-emailtemplate-name">
+                    <Language Tag="EmailTemplateName" Required="true" />
+                </label>
+                <input type="text" id="edit-emailtemplate-name" @bind="_template.Name" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_template.Name, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-emailtemplate-from">
+                    <Language Tag="EmailTemplateFrom" />
+                </label>
+                <input type="text" id="edit-emailtemplate-from" @bind="_details.From" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-emailtemplate-replyto">
+                    <Language Tag="EmailTemplateReplyTo" />
+                </label>
+                <input type="text" id="edit-emailtemplate-replyto" @bind="_details.ReplyTo" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-emailtemplate-subject">
+                    <Language Tag="EmailTemplateSubject" Required="true" />
+                </label>
+                <input type="text" id="edit-emailtemplate-subject" @bind="_details.Subject" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_details.Subject, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <div class="mb-2">
+                    <label for="edit-emailtemplate-body" @onclick="EditorFocus">
+                        <Language Tag="EmailTemplateBody" Required="true" />
+                    </label>
+                </div>
+
+                <div class="mb-2">
+                    <Language Tag="InsertFieldInfo" />
+                </div>
+
+                @if(_allowSave){
+                    <div class="input-group mb-2">
+                        <select id="edit-emailtemplate-insertvalue" class="form-select" @onchange="InsertField">
+                            <option value=""><Language Tag="InsertField" /></option>
+                            <optgroup label="@(Helpers.Text("InsertFieldGroupGeneral"))">
+                                <option value="{{FirstName}}"><Language Tag="InsertFieldFirstName" /></option>
+                                <option value="{{LastName}}"><Language Tag="InsertFieldLastName" /></option>
+                                <option value="{{Email}}"><Language Tag="InsertFieldEmail" /></option>
+
+                                @if (Model.FeatureEnabledEmployeeId) {
+                                    <option value="{{EmployeeId}}"><Language Tag="InsertFieldEmployeeId" /></option>
+                                }
+                            </optgroup>
+
+                            @if (Model.FeatureEnabledScheduling) {
+                                <optgroup label="@(Helpers.Text("InsertFieldGroupScheduling"))">
+                                    <option value="{{Appointment:Title}}"><Language Tag="InsertFieldAppointmentTitle" /></option>
+                                    <option value="{{Appointment:Start}}"><Language Tag="InsertFieldAppointmentStart" /></option>
+                                    <option value="{{Appointment:End}}"><Language Tag="InsertFieldAppointmentEnd" /></option>
+                                    <option value="{{Appointment:DatesAndTimes}}"><Language Tag="InsertFieldAppointmentDatesAndTimes" /></option>
+                                    <option value="{{Appointment:Note}}"><Language Tag="InsertFieldAppointmentNote" /></option>
+                                    if (Model.FeatureEnabledLocation) {
+                                    <option value="{{Appointment:Location}}"><Language Tag="InsertFieldAppointmentLocation" /></option>
+                                    }
+                                </optgroup>
+                            }
+
+                            @if (Model.FeatureEnabledServices) {
+                                <optgroup label="@(Helpers.Text("InsertFieldGroupServices"))">
+                                    <option value="{{Service:Code}}"><Language Tag="InsertFieldServiceCode" /></option>
+                                    <option value="{{Service:Description}}"><Language Tag="InsertFieldServiceDescription" /></option>
+                                    <option value="{{Service:Rate}}"><Language Tag="InsertFieldServiceRate" /></option>
+                                </optgroup>
+                            }
+                        </select>
+                        @if (Model.ImageFiles.Any()) {
+                            <span class="input-group-text pointer" @onclick="InsertImage">
+                                <Language Tag="InsertImage" IncludeIcon="true" />
+                            </span>
+                        }
+                    </div>
+                } else {
+                    <div class="alert alert-warning">
+                        <Language Tag="HtmlEditorInSourceViewWarning" />
+                    </div>
+                }
+                
+                <HtmlEditor @ref="_htmlEditor" OnModeChanged="HtmlEditorModeChanged" />
+
+                @* <RadzenHtmlEditor @ref=@htmlEditor @bind-Value=@_details.Body style="height:500px;" >
+                    <RadzenHtmlEditorUndo />
+                    <RadzenHtmlEditorRedo />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorBold />
+                    <RadzenHtmlEditorItalic />
+                    <RadzenHtmlEditorUnderline />
+                    <RadzenHtmlEditorStrikeThrough />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorAlignLeft />
+                    <RadzenHtmlEditorAlignCenter />
+                    <RadzenHtmlEditorAlignRight />
+                    <RadzenHtmlEditorJustify />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorIndent  />
+                    <RadzenHtmlEditorOutdent />
+                    <RadzenHtmlEditorUnorderedList />
+                    <RadzenHtmlEditorOrderedList />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorColor />
+                    <RadzenHtmlEditorBackground />
+                    <RadzenHtmlEditorRemoveFormat />
+                    <RadzenHtmlEditorSubscript />
+                    <RadzenHtmlEditorSuperscript />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorLink />
+                    <RadzenHtmlEditorUnlink />
+                    <RadzenHtmlEditorFontName />
+                    <RadzenHtmlEditorFontSize />
+                    <RadzenHtmlEditorFormatBlock />
+                    <RadzenHtmlEditorSeparator />
+                    <RadzenHtmlEditorSource />
+                </RadzenHtmlEditor> *@
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-emailtemplate-enabled" @bind="_template.Enabled" />
+                <label for="edit-emailtemplate-enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _allowSave = true;
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newItem = false;
+    protected string _title = "";
+    protected DataObjects.EmailTemplate _template = new DataObjects.EmailTemplate();
+    protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
+
+    //protected RadzenHtmlEditor htmlEditor;
+    HtmlEditor _htmlEditor;
+
+    protected string _pageName = "editemailtemplate";
+
+    public void Dispose() {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledEmailTemplates || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+
+                if (!Model.ImageFiles.Any()) {
+                    await Helpers.LoadImageFiles();
+                }
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteEmailTemplate/" + _template.EmailTemplateId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Helpers.NavigateTo("Settings/EmailTemplates");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task EditorFocus()
+    {
+        //await htmlEditor.FocusAsync();
+        await _htmlEditor.SetFocus();
+    }
+
+    protected void HtmlEditorModeChanged(string mode)
+    {
+        _allowSave = mode != "source";
+        StateHasChanged();
+    }
+
+    protected async Task InsertField(ChangeEventArgs e)
+    {
+        string value = String.Empty;
+        if(e.Value != null) {
+            value += e.Value.ToString();
+        }
+
+        if (!String.IsNullOrWhiteSpace(value)) {
+            await InsertText(value);
+        }
+
+        await Helpers.SetElementValue("edit-emailtemplate-insertvalue", "");
+    }
+
+    protected async Task InsertImage()
+    {
+        Action<Guid> onImageSelected = async(Guid fileId) => {
+            string img = "<img src=\"" + Model.ApplicationUrl + "File/Embed/" + fileId.ToString() + "\" height=\"50\" />";
+            await InsertText(img);
+        };
+
+        //await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
+
+        await Helpers.SelectFile(onImageSelected, Helpers.Text("SelectImageFile"), true);
+    }
+
+    protected async Task InsertText(string value)
+    {
+        //await htmlEditor.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, value);
+        await _htmlEditor.InsertText(value);
+    }
+
+    protected async Task LoadData()
+    {
+        await Helpers.LoadDepartments();
+
+        _details = new DataObjects.EmailTemplateDetails();
+
+        if (!String.IsNullOrWhiteSpace(id)) {
+            Model.NavigationId = id;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newItem = false;
+            _title = "EditEmailTemplate";
+
+            var getItem = await Helpers.GetOrPost<DataObjects.EmailTemplate>("api/Data/GetEmailTemplate/" + id);
+            if (getItem != null) {
+                if (getItem.ActionResponse.Result) {
+                    var details = Helpers.DeserializeObject<DataObjects.EmailTemplateDetails>(getItem.Template);
+                    if (details != null) {
+                        _details = details;
+                    }
+
+                    _template = getItem;
+                } else {
+                    Model.ErrorMessages(_template.ActionResponse.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newItem = true;
+            _title = "AddNewEmailTemplate";
+
+            _template = new DataObjects.EmailTemplate();
+            _template.TenantId = Model.TenantId;
+            _template.EmailTemplateId = Guid.Empty;
+            _template.Enabled = true;
+        }
+
+        _htmlEditor?.SetHTML(_details.Body);
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-emailtemplate-name");
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_template.Name)) {
+            errors.Add(Helpers.MissingRequiredField("EmailTemplateName"));
+            if (focus == "") { focus = "edit-emailtemplate-name"; }
+        }
+        if (String.IsNullOrWhiteSpace(_details.Subject)) {
+            errors.Add(Helpers.MissingRequiredField("EmailTemplateSubject"));
+            if (focus == "") { focus = "edit-emailtemplate-subject"; }
+        }
+        if (String.IsNullOrWhiteSpace(_details.Body)) {
+            errors.Add(Helpers.MissingRequiredField("EmailTemplateBody"));
+            if(focus == "") {
+                await EditorFocus();
+            }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        if(_htmlEditor != null) {
+            _details.Body = await _htmlEditor.GetHTML();
+        }
+
+        _template.Template = Helpers.SerializeObject(_details);
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Department>("api/Data/SaveEmailTemplate", _template);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/EmailTemplates");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task SendTestEmail()
+    {
+        Model.ClearMessages();
+        Model.Message_Sending();
+
+        if (_htmlEditor != null) {
+            _details.Body = await _htmlEditor.GetHTML();
+        }
+
+        _template.Template = Helpers.SerializeObject(_details);
+        
+        var sent = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SendTemplateEmailTest", _template);
+
+        Model.ClearMessages();
+
+        if(sent != null) {
+            if (sent.Result) {
+                Model.Message_Sent();
+            } else {
+                Model.ErrorMessages(sent.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.EmailTemplate && update.ItemId == _template.EmailTemplateId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/EmailTemplates");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var updateItem = Helpers.DeserializeObject<DataObjects.EmailTemplate>(update.ObjectAsString);
+                    if (updateItem != null) {
+                        _template = updateItem;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

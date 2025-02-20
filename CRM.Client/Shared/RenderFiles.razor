@@ -1,0 +1,93 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@if (_files.Any()) {
+    foreach (var file in _files) {
+        string thumbnail = Helpers.FileThumbnail(file.Extension);
+        string title = Helpers.BytesToFileSizeLabel(file.Bytes) + " - " + file.FileName;
+        bool imageFile = Helpers.IsImage(file);
+
+        <div class="item-file @(OnClick != null ? "item-file-clickable" : "")" title="@title">
+            @if (OnDelete != null) {
+                <div class="item-file-delete-button">
+                    @if (UseDeleteConfirmation) {
+                        <DeleteConfirmation OnConfirmed="@(() => DeleteFile(file.FileId))"
+                                            CancelText="@Helpers.ConfirmButtonTextCancel"
+                                            DeleteText="@Helpers.ConfirmButtonTextDelete"
+                                            ConfirmDeleteText="@Helpers.Text("Confirm")"
+                                            ButtonSize="xs" />
+                    } else {
+                        <button type="button" class="btn btn-xs btn-danger show-on-hover" @onclick="@(() => DeleteFile(file.FileId))">
+                            <Language Tag="Delete" IncludeIcon="true" />
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="center" @onclick="(() => OnFileClicked(file.FileId))">
+                <div class="item-file-image @(OnClick != null ? "pointer" : "")">
+                    @if (imageFile) {
+                        if (file.Value != null) {
+                            string extension = Helpers.StringValue(file.Extension).Replace(".", "").ToLower();
+                            string imageData = "data:image/" + extension + "; base64," + Convert.ToBase64String(file.Value);
+
+                            <img src="@imageData" />
+                        } else {
+                            <img src="@(Model.ApplicationUrl + "File/Embed/" + file.FileId.ToString())" />
+                        }
+                    } else {
+                        <img src="@(Model.ApplicationUrl + "images/file-icons/" + thumbnail)" />
+                    }
+                </div>
+
+                <div class="auto-overflow file-name">@file.FileName</div>
+            </div>
+        </div>
+    }
+} else {
+    <Language Tag="NoItemsToShow" />
+}
+@code {
+    /// <summary>
+    /// The collection of FileStorage objects.
+    /// </summary>
+    [Parameter] public List<DataObjects.FileStorage>? Files { get; set; }
+
+    /// <summary>
+    /// An optional callback handler to receive the FileId when the file item is clicked.
+    /// </summary>
+    [Parameter] public Delegate? OnClick { get; set; }
+
+    /// <summary>
+    /// An optional callback handler to receive the FileId when clicked for deleting a file.
+    /// </summary>
+    [Parameter] public Delegate? OnDelete { get; set; }
+
+    /// <summary>
+    /// When using the OnDelete callback handler, this option makes the delete button a confirmation toggle button. Defaults to True.
+    /// </summary>
+    [Parameter] public bool UseDeleteConfirmation { get; set; } = true;
+
+    protected List<DataObjects.FileStorage> _files = new List<DataObjects.FileStorage>();
+
+    public void Dispose() { }
+
+    protected override void OnParametersSet()
+    {
+        _files = Files != null && Files.Any() ? Files : new List<DataObjects.FileStorage>();
+        StateHasChanged();
+    }
+
+    protected void DeleteFile(Guid FileId)
+    {
+        if (OnDelete != null) {
+            OnDelete.DynamicInvoke(FileId);
+        }
+    }
+
+    protected void OnFileClicked(Guid FileId)
+    {
+        if (OnClick != null) {
+            OnClick.DynamicInvoke(FileId);
+        }
+    }
+}

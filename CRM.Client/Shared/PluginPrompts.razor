@@ -1,0 +1,969 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@using Plugins
+@if (_prompts != null && _prompts.Count > 0) {
+    var missingRequired = new List<string>();
+    int index = 0;
+
+    foreach (var prompt in _prompts) {
+        index++;
+
+        List<string> values = new List<string>();
+
+        string elementValue = String.Empty;
+        if (_promptValues != null && _promptValues.Count > 0) {
+            var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+
+            if (promptValue != null && promptValue.Values != null && promptValue.Values.Length > 0) {
+                values = promptValue.Values.ToList();
+                elementValue = values[0];
+            }
+        }
+
+        string elementId = "plugin-" + Plugin.Id.ToString() + "-prompt-" + index.ToString();
+        string elementName = prompt.Name.ToLower().Replace(" ", "-");
+
+        string fileName = String.Empty;
+        string fileBytes = String.Empty;
+        byte[]? bytes = null;
+        string requiredClass = prompt.Required ? "required" : "";
+        string elementClass = requiredClass;
+
+        string divClass = Helpers.StringValue(Class);
+        if (!String.IsNullOrWhiteSpace(prompt.ElementClass)) {
+            if (!String.IsNullOrEmpty(divClass)) {
+                divClass += " ";
+            }
+            divClass += prompt.ElementClass;
+        }
+
+        if (!prompt.Hidden) {
+            switch (prompt.Type) {
+                case PluginPromptType.Button:
+                    if (ButtonClickHandler.HasDelegate && !String.IsNullOrWhiteSpace(prompt.Function)) {
+                        // Only render a button if a function is defined.
+                        string buttonText = Helpers.PluginPromptOptionValue(prompt, "ButtonText");
+                        string buttonClass = Helpers.PluginPromptOptionValue(prompt, "ButtonClass");
+                        string buttonIcon = Helpers.PluginPromptOptionValue(prompt, "ButtonIcon");
+
+                        if (String.IsNullOrWhiteSpace(buttonText)) {
+                            buttonText += prompt.Name;
+                        }
+
+                        if (String.IsNullOrWhiteSpace(buttonClass)) {
+                            buttonClass = "btn btn-primary";
+                        }
+
+                        string icon = String.Empty;
+
+                        if (!String.IsNullOrWhiteSpace(buttonIcon)) {
+                            // See if a named icon was passed in.
+                            icon = Helpers.Icon(buttonIcon);
+
+                            if (String.IsNullOrWhiteSpace(icon)) {
+                                icon = buttonIcon;
+                            }
+                        }
+
+                        if (!String.IsNullOrWhiteSpace(icon) && !icon.Contains("<")) {
+                            icon = "<i class=\"" + icon + "\"></i>";
+                        }
+
+                        string buttonContents = String.Empty;
+
+                        if (!String.IsNullOrWhiteSpace(icon) && !String.IsNullOrWhiteSpace(buttonText)) {
+                            buttonContents = icon + " " + buttonText;
+                        } else if (!String.IsNullOrWhiteSpace(icon)) {
+                            buttonContents = icon;
+                        } else {
+                            buttonContents = buttonText;
+                        }
+
+                        <div class="prompt prompt-button @divClass">
+                            <div class="prompt-content">
+                                @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                    <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                                }
+                                <button type="button" class="@buttonClass" @onclick="@(() => ButtonClick(prompt))">
+                                    @((MarkupString)buttonContents)
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case PluginPromptType.Checkbox:
+                    if (prompt.Required && HighlightMissingRequiredFields && elementValue.ToLower() != "true") {
+                        missingRequired.Add(prompt.Name);
+                        elementClass += " m-r";
+                    }
+
+                    <div class="prompt prompt-checkbox @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <div class="@elementClass">
+                                <input type="checkbox"
+                                       id="@elementId"
+                                       checked="@(elementValue.ToLower() == "true")"
+                                       onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))" />
+                                <label for="@elementId">@prompt.Name</label>
+                                @if (prompt.Required) {
+                                    <i class="required-flag"></i>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.CheckboxList:
+                    if (prompt.Options != null && prompt.Options.Count > 0) {
+                        int counter = -1;
+
+                        if (prompt.Required && HighlightMissingRequiredFields && !values.Any(x => !String.IsNullOrWhiteSpace(x))) {
+                            elementClass += " m-r";
+                            missingRequired.Add(prompt.Name);
+                        }
+
+                        <div class="prompt prompt-checkboxlist @divClass">
+                            <div class="prompt-content">
+                                @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                    <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                                }
+                                <label>@prompt.Name</label>
+                                @if (prompt.Required) {
+                                    <i class="required-flag"></i>
+                                }
+                                <div class="@elementClass">
+                                    @foreach (var option in prompt.Options) {
+                                        counter++;
+                                        int currentCounter = counter;
+                                        var itemId = elementId + "-option-" + currentCounter.ToString();
+                                        var itemChecked = values.Contains(option.Value);
+
+                                        <div class="prompt-checkboxlist-item">
+                                            <input type="checkbox"
+                                                   id="@itemId"
+                                                   checked="@itemChecked"
+                                                   @onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt, currentCounter))" />
+                                            <label for="@itemId">@option.Label</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+
+                    break;
+
+                case PluginPromptType.Date:
+                    elementClass = requiredClass + " form-control prompt-date-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-date @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <div class="">
+                                <DateTimePicker TValue="DateOnly?"
+                                                Id="@elementId"
+                                                Class="@elementClass"
+                                                Value="@Helpers.DateTimeToDateOnly(elementValue)"
+                                                OnUpdate="@((DateOnly? d) => ValueChangeDateOnly(d, prompt))" />
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.DateTime:
+                    elementClass = requiredClass + " form-control prompt-datetime-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    DateTime? dt = null;
+                    if (!String.IsNullOrWhiteSpace(elementValue)) {
+                        try {
+                            dt = Convert.ToDateTime(elementValue);
+                        } catch { }
+                    }
+
+                    <div class="prompt prompt-datetime @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <DateTimePicker TValue="DateTime?"
+                                            Id="@elementId"
+                                            Class="@elementClass"
+                                            Value="@dt"
+                                            OnUpdate="@((DateTime? d) => ValueChangeDateTime(d, prompt))" />
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.File:
+                    if (values.Count > 1) {
+                        fileName = values[0];
+                        fileBytes = values[1];
+                    }
+
+                    if (!String.IsNullOrWhiteSpace(fileBytes)) {
+                        try {
+                            bytes = Convert.FromBase64String(fileBytes);
+                        } catch { }
+                    }
+
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-file @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <div class="@elementClass">
+                                <div>
+                                    <label>@prompt.Name</label>
+                                    @if (prompt.Required) {
+                                        <i class="required-flag"></i>
+                                    }
+                                </div>
+
+                                @if (String.IsNullOrWhiteSpace(elementValue)) {
+                                    <button type="button" class="btn btn-xs btn-dark" @onclick="@(() => UploadFile(prompt))">
+                                        <Language Tag="UploadFile" IncludeIcon="true" />
+                                    </button>
+                                } else {
+                                    <button type="button"
+                                            class="btn btn-xs btn-danger me-1"
+                                            title="@Helpers.Text("RemoveFile")"
+                                            @onclick="@(() => RemoveFile(prompt))">
+                                        <Icon Name="RemoveFile" />
+                                    </button>
+
+                                    <span class="prompt-file-item">
+                                        <span>@fileName</span>
+                                        @if (bytes != null) {
+                                            <span class="note">&nbsp;(@Helpers.BytesToFileSizeLabel(bytes.Length))</span>
+                                        }
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Files:
+                    elementClass = requiredClass;
+                    if (prompt.Required && HighlightMissingRequiredFields) {
+                        // To have a file we must have at least a single value.
+                        if (String.IsNullOrWhiteSpace(elementValue)) {
+                            elementClass += " m-r";
+                            missingRequired.Add(prompt.Name);
+                        }
+                    }
+
+                    <div class="prompt prompt-files @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <div class="@elementClass">
+                                <div>
+                                    <label>@prompt.Name</label>
+                                    @if (prompt.Required) {
+                                        <i class="required-flag"></i>
+                                    }
+                                </div>
+
+                                <button type="button" class="btn btn-xs btn-dark" @onclick="@(() => UploadFile(prompt))">
+                                    <Language Tag="UploadFiles" IncludeIcon="true" />
+                                </button>
+
+                                @if (values.Count > 0) {
+                                    for (int i = 0; i < values.Count; i += 2) {
+                                        fileName = String.Empty;
+                                        fileBytes = String.Empty;
+                                        bytes = null;
+
+                                        if (values.Count > i + 1) {
+                                            fileName = values[i];
+                                            fileBytes = values[i + 1];
+                                        }
+
+                                        if (!String.IsNullOrWhiteSpace(fileBytes)) {
+                                            try {
+                                                bytes = Convert.FromBase64String(fileBytes);
+                                            } catch { }
+                                        }
+
+                                        if (!String.IsNullOrWhiteSpace(fileName) && !String.IsNullOrWhiteSpace(fileBytes)) {
+                                            int currentIndex = i;
+
+                                            <div class="prompt-files-item">
+                                                <button type="button"
+                                                        class="btn btn-xs btn-danger me-1"
+                                                        title="@Helpers.Text("RemoveFile")"
+                                                        @onclick="@(() => RemoveFile(prompt, currentIndex))">
+                                                    <Icon Name="RemoveFile" />
+                                                </button>
+                                                <span>@fileName</span>
+                                                @if (bytes != null) {
+                                                    <span class="note">&nbsp;(@Helpers.BytesToFileSizeLabel(bytes.Length))</span>
+                                                }
+                                            </div>
+
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.HTML:
+                    if (!String.IsNullOrWhiteSpace(prompt.DefaultValue)) {
+                        <div class="prompt prompt-html @divClass">
+                            <div class="prompt-content">
+                                @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                    <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                                }
+
+                                <div id="@elementId" class="@elementClass">
+                                    @((MarkupString)prompt.DefaultValue)
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case PluginPromptType.Multiselect:
+                    if (prompt.Options != null && prompt.Options.Count > 0) {
+                        elementClass += " form-select prompt-multiselect-item";
+
+                        if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                            missingRequired.Add(prompt.Name);
+                            elementClass += " m-r";
+                        }
+
+                        <div class="prompt prompt-multiselect @divClass">
+                            <div class="prompt-content">
+                                @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                    <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                                }
+                                <label for="@elementId">@prompt.Name</label>
+                                @if (prompt.Required) {
+                                    <i class="required-flag"></i>
+                                }
+                                <select multiple
+                                        class="@elementClass"
+                                        id="@elementId"
+                                        name="@elementName"
+                                        onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))">
+                                    @if (prompt.Options != null && prompt.Options.Count > 0) {
+                                        foreach (var option in prompt.Options) {
+                                            <option value="@option.Value" selected="@(values.Contains(option.Value))">@option.Label</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    }
+                    break;
+
+                case PluginPromptType.Number:
+                    elementClass += " form-control prompt-number-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-number @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <input type="number"
+                                   class="@elementClass"
+                                   id="@elementId"
+                                   name="@elementName"
+                                   value="@elementValue"
+                                   onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))" />
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Password:
+                    elementClass += " form-control prompt-password-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-password @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <input type="password"
+                                   class="@elementClass"
+                                   id="@elementId"
+                                   name="@elementName"
+                                   value="@elementValue"
+                                   onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))" />
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Radio:
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-radio @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <div class="@elementClass">
+                                <label>@prompt.Name</label>
+                                @if (prompt.Required) {
+                                    <i class="required-flag"></i>
+                                }
+                                @if (prompt.Options != null && prompt.Options.Count > 0) {
+                                    int counter = -1;
+                                    foreach (var option in prompt.Options) {
+                                        counter++;
+                                        var itemId = elementId + "-option-" + counter.ToString();
+                                        <div class="prompt-radio-item">
+                                            <input type="radio"
+                                                   id="@itemId"
+                                                   name="@elementName"
+                                                   value="@option.Value"
+                                                   checked="@(option.Value == elementValue)"
+                                                   onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))" />
+                                            <label for="@itemId">@option.Label</label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Select:
+                    elementClass += " form-select prompt-select-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-select @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <select class="@elementClass"
+                                    id="@elementId"
+                                    name="@elementName"
+                                    onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))">
+                                <option value=""></option>
+                                @if (prompt.Options != null && prompt.Options.Count > 0) {
+                                    foreach (var option in prompt.Options) {
+                                        <option value="@option.Value" selected="@(option.Value == elementValue)">@option.Label</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Text:
+                    elementClass += " form-control prompt-text-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-text @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <input type="text"
+                                   class="@elementClass"
+                                   id="@elementId"
+                                   name="@elementName"
+                                   value="@elementValue"
+                                   onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))" />
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Textarea:
+                    elementClass += " form-control prompt-textarea-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    <div class="prompt prompt-textarea @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <textarea name="@elementName"
+                                      id="@elementId"
+                                      class="@elementClass"
+                                      onchange="@((ChangeEventArgs e) => ValueChanged(e, prompt))">
+                                @elementValue
+                                                </textarea>
+                        </div>
+                    </div>
+                    break;
+
+                case PluginPromptType.Time:
+                    elementClass += " form-control prompt-time-item";
+                    if (prompt.Required && HighlightMissingRequiredFields && String.IsNullOrWhiteSpace(elementValue)) {
+                        elementClass += " m-r";
+                        missingRequired.Add(prompt.Name);
+                    }
+
+                    TimeOnly? timeOnly = null;
+                    if (!String.IsNullOrWhiteSpace(elementValue)) {
+                        try {
+                            timeOnly = TimeOnly.Parse(elementValue);
+                        } catch { }
+                    }
+
+                    <div class="prompt prompt-time @divClass">
+                        <div class="prompt-content">
+                            @if (!String.IsNullOrWhiteSpace(prompt.Description)) {
+                                <div class="prompt-description">@((MarkupString)prompt.Description)</div>
+                            }
+                            <label for="@elementId">@prompt.Name</label>
+                            @if (prompt.Required) {
+                                <i class="required-flag"></i>
+                            }
+                            <DateTimePicker TValue="TimeOnly?"
+                                            Id="@elementId"
+                                            Class="@elementClass"
+                                            Value="@timeOnly"
+                                            OnUpdate="@((TimeOnly? t) => ValueChangeTimeOnly(t, prompt))" />
+                        </div>
+                    </div>
+                    break;
+            }
+        }
+    }
+
+    SetMissingRequiredValues(missingRequired);
+}
+@code {
+    /// <summary>
+    /// If you are going to use any buttons in the prompts, you must provide a method to handle the button click.
+    /// </summary>
+    [Parameter] public EventCallback<PluginExecuteResult> ButtonClickHandler { get; set; }
+
+    /// <summary>
+    /// An optional class for div around each individual prompt element.
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// If enabled, any fields marked as Required that do not have a value will be highlighted with the m-r class.
+    /// </summary>
+    [Parameter] public bool HighlightMissingRequiredFields { get; set; }
+
+    /// <summary>
+    /// The Plugin object.
+    /// </summary>
+    [Parameter] public Plugin Plugin { get; set; } = new Plugin();
+
+    /// <summary>
+    /// An optional Delegate to invoke when the values change. The method should accept a Dictionary&lt;string, object&gt; as a parameter.
+    /// </summary>
+    [Parameter] public Delegate? OnValuesChange { get; set; }
+
+    protected string _lastMissingRequired = String.Empty;
+    protected List<string> _missingRequired = new List<string>();
+    protected List<PluginPrompt>? _prompts;
+    protected List<PluginPromptValue> _promptValues = new List<PluginPromptValue>();
+
+    public void Dispose() { }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_prompts == null) {
+            var prompts = new List<PluginPrompt>();
+            _promptValues = new List<PluginPromptValue>();
+
+            if (Plugin.Prompts != null && Plugin.Prompts.Count > 0) {
+                int index = -1;
+
+                foreach (var prompt in Plugin.Prompts) {
+                    index++;
+                    var defaultValue = Helpers.GetPromptDefaultValue(prompt.Type);
+
+                    if (Plugin.PromptValues != null) {
+                        var pluginValue = Plugin.PromptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+                        if (pluginValue != null && pluginValue.Values != null) {
+                            defaultValue = pluginValue.Values;
+                        }
+                    }
+
+                    _promptValues.Add(new PluginPromptValue {
+                        Name = prompt.Name,
+                        Values = defaultValue,
+                    });
+
+                    var promptCopy = Helpers.DuplicateObject<PluginPrompt>(prompt);
+                    if (promptCopy != null) {
+                        if (!String.IsNullOrWhiteSpace(promptCopy.Function)) {
+                            // Call the function to get the values.
+                            // This function must return a List<PluginPromptOption>.
+                            var pluginCopy = Helpers.DuplicateObject<Plugin>(Plugin);
+                            if (pluginCopy != null) {
+                                pluginCopy.Invoker = promptCopy.Function;
+
+                                var result = await Helpers.ExecutePlugin(pluginCopy);
+                                if (result.Result && result.Objects != null) {
+                                    promptCopy.Options = Helpers.GetObjectAsType<List<PluginPromptOption>>(result.Objects);
+                                }
+                            }
+                        }
+
+                        prompts.Add(promptCopy);
+                    }
+                }
+
+                if (OnValuesChange != null) {
+                    OnValuesChange.DynamicInvoke(_promptValues);
+                }
+            }
+
+            _prompts = prompts;
+        }
+    }
+
+    protected async Task ButtonClick(PluginPrompt prompt)
+    {
+        if (ButtonClickHandler.HasDelegate) {
+            // Send a copy of the plugin with the current values.
+            var copy = Helpers.DuplicateObject<Plugin>(Plugin);
+            if (copy != null) {
+                copy.PromptValues = _promptValues;
+
+                var result = await Helpers.ExecutePlugin(copy);
+
+                await ButtonClickHandler.InvokeAsync(result);
+
+                await ValuesUpdated();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates if the plugin is configured to highlight missing required items and there are items highlighted.
+    /// </summary>
+    public List<string> MissingRequiredValues {
+        get {
+            return _missingRequired;
+        }
+    }
+
+    protected async Task RemoveFile(PluginPrompt prompt, int currentIndex = 0)
+    {
+        var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+        if (promptValue != null) {
+            if (prompt.Type == PluginPromptType.File) {
+                promptValue.Values = new string[] { "" };
+            } else if (prompt.Type == PluginPromptType.Files) {
+                var keepFiles = new List<string>();
+
+                for (int i = 0; i < promptValue.Values?.Length; i += 2) {
+                    if (i != currentIndex) {
+                        keepFiles.Add(promptValue.Values[i]);
+                        keepFiles.Add(promptValue.Values[i + 1]);
+                    }
+                }
+
+                promptValue.Values = keepFiles.ToArray();
+            }
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+
+            await ValuesUpdated();
+        }
+    }
+
+    protected void SetMissingRequiredValues(List<string> missingValues)
+    {
+        string lastJson = Helpers.SerializeObject(missingValues);
+        string currentJson = Helpers.SerializeObject(_missingRequired);
+
+        if (lastJson != currentJson) {
+            lastJson = currentJson;
+
+            _missingRequired = missingValues;
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+        }
+    }
+
+    protected async Task UploadFile(PluginPrompt prompt)
+    {
+        Delegate onUploadComplete = async(DataObjects.FileStorage fileStorage) => {
+            if (!String.IsNullOrWhiteSpace(fileStorage.FileName) && fileStorage.Value != null && fileStorage.Value.Length > 0) {
+                string bytesAsString = Convert.ToBase64String(fileStorage.Value);
+
+                var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+                if (promptValue != null) {
+                    promptValue.Values = new string[] { fileStorage.FileName, bytesAsString };
+
+                    if (OnValuesChange != null) {
+                        OnValuesChange.DynamicInvoke(_promptValues);
+                    }
+
+                    await ValuesUpdated();
+                }
+            }
+        };
+
+        Delegate onUploadsComplete = async(List<DataObjects.FileStorage> files) => {
+            foreach(var file in files) {
+                if (!String.IsNullOrWhiteSpace(file.FileName) && file.Value != null && file.Value.Length > 0) {
+                    string bytesAsString = Convert.ToBase64String(file.Value);
+
+                    var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+                    if (promptValue != null) {
+                        var existingValues = new List<string>();
+                        if (promptValue.Values != null && promptValue.Values.Length > 0) {
+                            existingValues = promptValue.Values.Where(x => !String.IsNullOrWhiteSpace(x)).ToList();
+                        }
+                        existingValues.Add(file.FileName);
+                        existingValues.Add(bytesAsString);
+
+                        promptValue.Values = existingValues.ToArray();
+
+                        if (OnValuesChange != null) {
+                            OnValuesChange.DynamicInvoke(_promptValues);
+                        }
+
+                        await ValuesUpdated();
+                    }
+                }
+            }
+        };
+
+        if (prompt.Type == PluginPromptType.File) {
+            await Helpers.UploadFile(onUploadComplete, Helpers.Text("UploadFile"), Helpers.Text("UploadFileInstructions"), null, false);
+        } else if (prompt.Type == PluginPromptType.Files) {
+            await Helpers.UploadFile(onUploadsComplete, Helpers.Text("UploadFiles"), Helpers.Text("UploadFilesInstructions"), null, true);
+        }
+    }
+
+    async Task ValueChanged(ChangeEventArgs e, PluginPrompt prompt, int index = 0)
+    {
+        if (_prompts != null) {
+            string valueAsString = String.Empty;
+            string[] values = new string[] { };
+
+            if (e != null && e.Value != null) {
+                try {
+                    valueAsString += e.Value.ToString();
+                } catch { }
+
+                switch (prompt.Type) {
+                    // For items that store multiple values, get the value as a string array.
+                    case PluginPromptType.Multiselect:
+                        try {
+                            values = (string[])e.Value;
+                        } catch {}
+                        break;
+                }
+            }
+
+            if (prompt.Type == PluginPromptType.Checkbox) {
+                if (valueAsString.ToLower() == "true") {
+                    valueAsString = "True";
+                } else {
+                    valueAsString = "False";
+                }
+            }
+
+            var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+            if (promptValue != null) {
+                var currentValues = new List<string>();
+                if (promptValue.Values != null && promptValue.Values.Length > 0) {
+                    currentValues = promptValue.Values.ToList();
+                }
+
+                switch (prompt.Type) {
+                    case PluginPromptType.CheckboxList:
+                        // If the item is checked, make sure it's included in the values. Otherwise, remove it.
+                        if (prompt.Options != null) {
+                            string checkboxValue = String.Empty;
+
+                            if (prompt.Options.Count > index) {
+                                checkboxValue += prompt.Options[index].Value;
+                            }
+
+                            if (valueAsString.ToLower() == "true") {
+                                if (!currentValues.Contains(checkboxValue)) {
+                                    currentValues.Add(checkboxValue);
+                                }
+                            } else {
+                                if (currentValues.Contains(checkboxValue)) {
+                                    currentValues.Remove(checkboxValue);
+                                }
+                            }
+                            var updatedValues = currentValues.Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
+
+                            // Keep the values in the order in which they appear in the prompt.
+                            var newValues = new List<string>();
+                            foreach (var option in prompt.Options) {
+                                if (updatedValues.Contains(option.Value)) {
+                                    newValues.Add(option.Value);
+                                }
+                            }
+                            promptValue.Values = newValues.ToArray();
+                        }
+                        break;
+
+                    case PluginPromptType.Multiselect:
+                        promptValue.Values = values;
+                        break;
+
+                    default:
+                        promptValue.Values = new string[] { valueAsString };
+                        break;
+                }
+            }
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+
+            await ValuesUpdated();
+        }
+    }
+
+    protected async Task ValueChangeDateOnly(DateOnly? dateOnly, PluginPrompt prompt)
+    {
+        string value = dateOnly.HasValue ? dateOnly.Value.ToShortDateString() : String.Empty;
+
+        var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+        if (promptValue != null) {
+            promptValue.Values = new string[] { value };
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+
+            await ValuesUpdated();
+        }
+    }
+
+    protected async Task ValueChangeDateTime(DateTime? dateTime, PluginPrompt prompt)
+    {
+        string value = dateTime.HasValue ? dateTime.Value.ToString() : String.Empty;
+
+        var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+        if (promptValue != null) {
+            promptValue.Values = new string[] { value };
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+
+            await ValuesUpdated();
+        }
+    }
+
+    protected async Task ValueChangeTimeOnly(TimeOnly? timeOnly, PluginPrompt prompt)
+    {
+        string value = timeOnly.HasValue ? timeOnly.Value.ToString() : String.Empty;
+
+        var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+        if (promptValue != null) {
+            promptValue.Values = new string[] { value };
+
+            if (OnValuesChange != null) {
+                OnValuesChange.DynamicInvoke(_promptValues);
+            }
+
+            await ValuesUpdated();
+        }
+    }
+
+    protected async Task ValuesUpdated()
+    {
+        if (!String.IsNullOrWhiteSpace(Plugin.PromptValuesOnUpdate)) {
+            var pluginCopy = Helpers.DuplicateObject<Plugin>(Plugin);
+            if (pluginCopy != null) {
+                pluginCopy.PromptValues = _promptValues;
+                pluginCopy.Invoker = Plugin.PromptValuesOnUpdate;
+
+                var result = await Helpers.ExecutePlugin(pluginCopy);
+
+                if (result.Result) {
+                    if (result.Objects != null) {
+                        var updatedPlugin = Helpers.GetObjectAsType<Plugin>(result.Objects.FirstOrDefault());
+                        if (updatedPlugin != null) {
+                            _prompts = updatedPlugin.Prompts;
+
+                            if (updatedPlugin.PromptValues != null){
+                                _promptValues = updatedPlugin.PromptValues;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        StateHasChanged();
+    }
+}

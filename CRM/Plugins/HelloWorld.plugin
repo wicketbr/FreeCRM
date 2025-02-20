@@ -1,0 +1,33 @@
+﻿using CRM;
+
+namespace TestPlugin;
+
+public class TestPlugin
+{
+    public Dictionary<string, object> Properties() =>
+        new Dictionary<string, object> {
+            { "Id", new Guid("ea03228c-be71-44fe-ad58-7d43cdeae420") },
+            { "Author", "Bradley R. Wickett" },
+            { "ContainsSensitiveData", false },
+            { "Name", "Hello World Plugin with DLL Reference" },
+            { "Type", "Example" },
+            { "Version", "1.0.0" },
+        };
+
+    public async Task<(bool Result, List<string>? Messages, IEnumerable<object>? Objects)> Execute(
+        DataAccess da,
+        Plugins.Plugin plugin,
+        DataObjects.User? currentUser
+    )
+    {
+        var messages = new List<string>();
+        
+        var helloWorld = Hello.World.SayHello();
+
+        messages.Add(helloWorld);
+
+        object[] output = new object[] { helloWorld };
+
+        return (Result: true, Messages: messages, Objects: output);
+    }
+}

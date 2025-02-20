@@ -1,0 +1,1242 @@
+﻿@page "/Login"
+@page "/{TenantCode}/Login"
+@implements IDisposable
+@using Blazored.LocalStorage
+@using Plugins
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.View == _pageName) {
+    <div class="login-page">
+        <div class="login-padding"></div>
+        <div class="login-content">
+            @switch (view) {
+                case "selectloginprovider":
+                    <h1 class="page-title"><Language Tag="LoginTitle" /></h1>
+                    @if (!String.IsNullOrWhiteSpace(loginIntro)) {
+                        <div class="mb-2">@((MarkupString)loginIntro)</div>
+                    }
+
+                    <MudBlazor.MudFocusTrap DefaultFocus="MudBlazor.DefaultFocus.FirstChild">
+                        @if (AllowLoginTypeLocal) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-local" class="btn btn-dark login-button" @onclick="@(() => DoLogin("local"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon"><Icon Name="LoginWithLocalAccount" /></div>
+                                        <div class="login-button-text"><Language Tag="LoginWithLocalAccount" /></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeApple) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-apple" class="btn btn-secondary login-button" @onclick="@(() => DoLogin("apple"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon"><img src="./images/apple.svg" /></div>
+                                        <div class="login-button-text"><Language Tag="LoginWithApple" /></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeFacebook) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-facebook" class="btn btn-secondary login-button" @onclick="@(() => DoLogin("facebook"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon"><img src="./images/facebook.svg" /></div>
+                                        <div class="login-button-text"><Language Tag="LoginWithFacebook" /></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeGoogle) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-google" class="btn btn-secondary login-button" @onclick="@(() => DoLogin("google"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon"><img src="./images/google.svg" /></div>
+                                        <div class="login-button-text"><Language Tag="LoginWithGoogle" /></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeMicrosoftAccount) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-microsoftaccount" class="btn btn-secondary login-button" @onclick="@(() => DoLogin("microsoftaccount"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon"><img src="./images/microsoft.svg" /></div>
+                                        <div class="login-button-text"><Language Tag="LoginWithMicrosoftAccount" /></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeOpenId) {
+                            string openIdButtonText = Helpers.Text("LoginWithOpenId");
+                            string openIdButtonClass = "btn btn-secondary";
+                            string openIdButtonIcon = "<img src=\"./images/openid.svg\" />";
+
+                            if (!String.IsNullOrWhiteSpace(Model.AuthenticationProviders.OpenIdButtonText)){
+                                openIdButtonText = Model.AuthenticationProviders.OpenIdButtonText;
+                            }
+
+                            if (!String.IsNullOrWhiteSpace(Model.AuthenticationProviders.OpenIdButtonClass)) {
+                                openIdButtonClass = Model.AuthenticationProviders.OpenIdButtonClass;
+                            }
+
+                            if (!String.IsNullOrWhiteSpace(Model.AuthenticationProviders.OpenIdButtonIcon)) {
+                                openIdButtonIcon = Model.AuthenticationProviders.OpenIdButtonIcon;
+
+                                if (!openIdButtonIcon.Contains("<")){
+                                    // This icon has no HTML wrapper, so it is likely just a class and needs to be part of an element.
+                                    openIdButtonIcon = "<i class=\"" + openIdButtonIcon + " icon\"></i>";
+                                }
+                            }
+
+                            <div class="mb-2">
+                                <button type="button" id="login-button-openid" class="@openIdButtonClass login-button" @onclick="@(() => DoLogin("openid"))">
+                                    <div class="login-button-contents">
+                                        <div class="login-button-icon">@((MarkupString)openIdButtonIcon)</div>
+                                        <div class="login-button-text">@((MarkupString)openIdButtonText)</div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypeCustom) {
+                            <div class="mb-2">
+                                <button type="button" id="login-button-custom" class="@(CustomLoginButtonClass + " login-button")" @onclick="@(() => DoLogin("custom"))">
+                                    <div class="login-button-contents">
+                                        @if (!String.IsNullOrWhiteSpace(CustomLoginIcon)) {
+                                            if (CustomLoginIcon.Contains("<") && !CustomLoginIcon.Contains("<i")) {
+                                                <div class="login-button-icon">@((MarkupString)CustomLoginIcon)</div>
+                                            } else {
+                                                <div class="login-button-icon">@((MarkupString)CustomLoginIcon)</div>
+                                            }
+                                        }
+                                        <div class="login-button-text"><i>@((MarkupString)CustomLoginText)</i></div>
+                                    </div>
+                                </button>
+                            </div>
+                        }
+
+                        @if (AllowLoginTypePlugin) {
+                            var plugins = Model.Plugins.Where(x => x.Type.ToLower() == "auth" && (x.LimitToTenants.Count == 0 || x.LimitToTenants.Contains(Model.TenantId))).ToList();
+                            foreach(var plugin in plugins) {
+                                string buttonClass = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonClass", plugin.Properties);
+                                string buttonIcon = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonIcon", plugin.Properties);
+                                string buttonText = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonText", plugin.Properties);
+
+                                if (String.IsNullOrWhiteSpace(buttonClass)) {
+                                    buttonClass = "btn btn-secondary";
+                                }
+
+                                if (String.IsNullOrWhiteSpace(buttonIcon)) {
+                                    buttonIcon = Helpers.Icon("Login", true);
+                                }
+
+                                if (String.IsNullOrWhiteSpace(buttonText)) {
+                                    buttonText = plugin.Name;
+                                }
+
+                                <div class="mb-2">
+                                    <button type="button" class="login-button @buttonClass" @onclick="@(() => DoLoginPlugin(plugin))">
+                                        <div class="login-button-contents">
+                                            <div class="login-button-icon">@((MarkupString)buttonIcon)</div>
+                                            <div class="login-button-text"><i>@buttonText</i></div>
+                                        </div>
+                                    </button>
+                                </div>
+                            }
+                        }
+
+                        @if (_tenantListing.Tenants.Count() > 1) {
+                            <div class="mb-2 mt-4 center">
+                                <button type="button" class="btn btn-warning" @onclick="SelectTenants">
+                                    <Language Tag="SwitchTenant" IncludeIcon="true" />
+                                </button>
+                            </div>
+                        }
+
+                    </MudBlazor.MudFocusTrap>
+                    break;
+
+                case "selecttenant":
+                    <h1 class="page-title"><Language Tag="SelectTenant" /></h1>
+                    <div class="mb-2"><Language Tag="SelectTenantInfo" /></div>
+
+                    @if (_tenantListing.Tenants.Any()) {
+                        <table>
+                            <tbody>
+                                @foreach (var tenant in _tenantListing.Tenants) {
+                                    <tr>
+                                        <td style="width:1%;">
+                                            <button type="button" class="btn btn-sm btn-primary nowrap" @onclick="@(() => SelectTenant(tenant.TenantId))">
+                                                <Language Tag="Select" IncludeIcon="true" />
+                                            </button>
+                                        </td>
+                                        <td>@tenant.Name</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    } else {
+                        <div class="alert alert-danger">
+                            Warning: No active tenants have been configured.
+                        </div>
+                    }
+                    break;
+
+                case "local":
+                    <h1 class="page-title"><Language Tag="LoginRequired" /></h1>
+
+                    @if (processing) {
+                        <div class="mb-2"><Language Tag="ProcessingLoginWait" /></div>
+                    } else {
+                        <div class="mb-2">
+                            <label for="login-email">
+                                <Language Tag="Email" />
+                            </label>
+                            <input type="text" class="form-control" id="login-email" @bind="email" @ref="loginEmail" @onkeyup="CheckForEnterKey" @bind:event="oninput" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="login-password">
+                                <Language Tag="Password" />
+                            </label>
+                            <input type="password" class="form-control" id="login-password" @bind="password" @ref="loginPassword" @onkeyup="CheckForEnterKey" @bind:event="oninput" />
+                        </div>
+
+                        <div class="mb-2 center">
+                            @if (AvailableLoginOptions.Count() > 1) {
+                                <button type="button" class="btn btn-dark" @onclick="Back">
+                                    <Language Tag="Back" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            <button type="button" class="btn btn-primary" @onclick="ProcessLogin" disabled="@LoginDisabled">
+                                <Language Tag="Log-In" IncludeIcon="true" />
+                            </button>
+
+                            @if (ShowSignup) {
+                                <button type="button" class="btn btn-success" @onclick="SignUp">
+                                    <Language Tag="Signup" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            @if (ShowPasswordReset) {
+                                <button type="button" class="btn btn-warning" @onclick="ForgotPassword">
+                                    <Language Tag="ForgotPassword" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            @if (_tenantListing.Tenants.Count() > 1) {
+                                <button type="button" class="btn btn-warning" @onclick="SelectTenants">
+                                    <Language Tag="SwitchTenant" IncludeIcon="true" />
+                                </button>
+                            }
+                        </div>
+                    }
+                    break;
+
+                case "forgotpassword":
+                    <h1 class="page-title"><Language Tag="ForgotPassword" /></h1>
+                    <div class="mb-2"><Language Tag="ForgotPasswordInfo" /></div>
+
+                    <RequiredIndicator />
+
+                    <div class="mb-2">
+                        <label for="forgotpassword-email">
+                            <Language Tag="EmailAddress" Required="true" />
+                        </label>
+                        <input type="text" id="forgotpassword-email" @bind="_user.Email" @bind:event="oninput"
+                        class="@Helpers.MissingValue(_user.Email, "form-control")" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="forgotpassword-password">
+                            <Language Tag="NewPassword" Required="true" />
+                        </label>
+                        <input type="password" id="forgotpassword-password" @bind="_user.Password" @bind:event="oninput"
+                        class="@Helpers.MissingValue(_user.Password, "form-control")" />
+                    </div>
+
+                    <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                        <Language Tag="BackToLogin" IncludeIcon="true" />
+                    </button>
+
+                    <button type="button" class="btn btn-success" @onclick="ForgotPasswordReset" disabled="@ResetPasswordDisabled">
+                        <Language Tag="ResetPassword" IncludeIcon="true" />
+                    </button>
+                    break;
+
+                case "forgotpasswordvalidate":
+                    <h1 class="page-title"><Language Tag="ValidateConfirmationCode" /></h1>
+                    <div class="mb-2"><Language Tag="ForgotPasswordValidateInstructions" /></div>
+
+                    <div class="mb-2">
+                        <label for="forgot-password-validate"><Language Tag="ValidationCode" /></label>
+
+                        <div class="center">
+                            <ConfirmationCode 
+                                    Id="forgot-password-validate"
+                                    @bind-Value="_user.Confirmation"
+                                />
+                        </div>
+                    </div>
+
+                    <div class="mb-2 center">
+                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                            <Language Tag="BackToLogin" IncludeIcon="true" />
+                        </button>
+
+                        <button type="button" class="btn btn-primary" @onclick="ForgotPasswordValidateCode">
+                            <Language Tag="ValidateConfirmationCode" IncludeIcon="true" />
+                        </button>
+                    </div>
+                    break;
+
+                case "redirecting":
+                    <h1 class="page-title"><Language Tag="RedirectingToLogin" IncludeIcon="true" /></h1>
+                    break;
+
+                case "signup":
+                    <h1 class="page-title"><Language Tag="SignUp" /></h1>
+                    <div class="mb-2"><Language Tag="SignUpInstructions" /></div>
+
+                    <RequiredIndicator />
+
+                    <div class="row">
+                        <div class="col col-12 col-sm-12 col-md-4 col-lg-4 mb-2">
+                            <label for="signup-firstName"><Language Tag="FirstName" Required="true" /></label>
+                            <input type="text" id="signup-firstName" @bind="_user.FirstName" @bind:event="oninput" class="form-control" />
+                        </div>
+
+                        <div class="col col-12 col-sm-12 col-md-4 col-lg-4 mb-2">
+                            <label for="signup-lastName"><Language Tag="LastName" Required="true" /></label>
+                            <input type="text" id="signup-lastName" @bind="_user.LastName" @bind:event="oninput" class="form-control" />
+                        </div>
+
+                        <div class="col col-12 col-sm-12 col-md-4 col-lg-4 mb-2">
+                            <label for="signup-email"><Language Tag="Email" Required="true" /></label>
+                            <input type="text" id="signup-email" @bind="_user.Email" @bind:event="oninput" class="form-control" />
+                        </div>
+
+                        <div class="col col-12 col-sm-12 col-md-6 col-lg-6 mb-2">
+                            <label for="signup-password"><Language Tag="Password" Required="true" /></label>
+                            <input type="password" id="signup-password" @bind="_user.Password" @bind:event="oninput" class="form-control" />
+                        </div>
+
+                        <div class="col col-12 col-sm-12 col-md-6 col-lg-6 mb-2">
+                            <label for="signup-confirmPassword"><Language Tag="ConfirmPassword" Required="true" /></label>
+                            <input type="password" id="signup-confirmPassword" @bind="confirmPassword" @bind:event="oninput" class="form-control" />
+                        </div>
+                    </div>
+
+
+                    @if (!String.IsNullOrWhiteSpace(_user.Password) && _user.Password != confirmPassword) {
+                        <div class="alert alert-danger"><Language Tag="NewPasswordAndConfirmDontMatch" /></div>
+                    }
+
+                    <div class="mt-2 center">
+                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                            <Language Tag="BackToLogin" IncludeIcon="true" />
+                        </button>
+                        <button type="button" class="btn btn-success" disabled="@SignupSaveDisabled" @onclick="SignupSave">
+                            <Language Tag="SignUp" IncludeIcon="true" />
+                        </button>
+                    </div>
+                    break;
+
+                case "signupvalidate":
+                    <h1 class="page-title"><Language Tag="ValidateConfirmationCode" /></h1>
+                    <div class="mb-2"><Language Tag="SignUpValidateInstructions" /></div>
+
+                    <div class="mb-2">
+                        <label for="signup-validate"><Language Tag="ValidationCode" /></label>
+
+                        <div class="center">
+                            <ConfirmationCode 
+                                    Id="signup-validate"
+                                    @bind-Value="_user.Confirmation"
+                                />
+                        </div>
+                    </div>
+
+                    <div class="mb-2 center">
+                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                            <Language Tag="BackToLogin" IncludeIcon="true" />
+                        </button>
+
+                        <button type="button" class="btn btn-primary" @onclick="SignupValidateCode">
+                            <Language Tag="ValidateConfirmationCode" IncludeIcon="true" />
+                        </button>
+                    </div>
+                    break;
+
+                case "pluginprompts":
+                    <h1 class="page-title">@_plugin.Name</h1>
+
+                    <div class="mb-2">
+                        <PluginPrompts 
+                        Plugin="_plugin"
+                        OnValuesChange="DoLoginPluginWithPromptsPromptValuesChanged" />
+                    </div>
+
+                    <div class="mb-2 center">
+                        @if (AvailableLoginOptions.Count() > 1) {
+                            <button type="button" class="btn btn-dark" @onclick="Back">
+                                <Language Tag="Back" IncludeIcon="true" />
+                            </button>
+                        }
+
+                        <button type="button" class="btn btn-primary" @onclick="DoLoginPluginWithPrompts">
+                            <Language Tag="Log-In" IncludeIcon="true" />
+                        </button>
+                    </div>
+                    @* </form> *@
+                    break;
+            }
+        </div>
+        <div class="login-padding"></div>
+    </div>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected ElementReference loginEmail;
+    protected ElementReference loginPassword;
+
+    protected bool _afterLoadedCalled = false;
+    protected string confirmPassword = "";
+    protected string email = "";
+    protected string loginIntro = "";
+    protected string password = "";
+    protected Plugin _plugin = new Plugin();
+    protected List<PluginPromptValue> _promptValues = new List<PluginPromptValue>();
+    protected bool processing = false;
+    protected DataObjects.User _user = new DataObjects.User();
+    protected string view = "";
+    protected DataObjects.LoginTenantListing _tenantListing = new DataObjects.LoginTenantListing();
+
+    protected string _pageName = "login";
+
+    public void Dispose() { }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        // See if the user is already logged in.
+        if(Model.LoggedIn) {
+            Helpers.NavigateToRoot();
+            return;
+        }
+
+        if (Model.Loaded) {
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_afterLoadedCalled) {
+                _afterLoadedCalled = true;
+                await AfterLoaded();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task AfterLoaded()
+    {
+        if (!Model.DefaultLanguage.Phrases.Any()) {
+            await Helpers.LoadDefaultLanguage();
+        }
+
+        loginIntro = Helpers.Text("LoginIntro");
+        switch (loginIntro.ToLower()) {
+            case "loginintro":
+            case "login intro":
+                loginIntro = "";
+                break;
+        }
+
+        if (Model.TenantId == Guid.Empty) {
+            if (!_tenantListing.Tenants.Any()) {
+                var getTenants = await Helpers.GetOrPost<DataObjects.LoginTenantListing>("api/Data/GetTenantsForLogin");
+                if (getTenants != null) {
+                    _tenantListing = getTenants;
+
+                    if (Model.UseTenantCodeInUrl && !String.IsNullOrWhiteSpace(Model.TenantCodeFromUrl)) {
+                        var tenant = _tenantListing.Tenants.FirstOrDefault(x => x.TenantCode.ToLower() == Model.TenantCodeFromUrl.ToLower());
+                        if (tenant != null) {
+                            _tenantListing.Tenants = new List<DataObjects.Tenant> { tenant };
+                            _tenantListing.Languages = _tenantListing.Languages.Where(x => x.TenantId == tenant.TenantId).ToList();
+                        }
+                    }
+
+                    Model.Tenants = _tenantListing.Tenants;
+                    Model.Languages = _tenantListing.Languages;
+
+                    if (_tenantListing.Tenants.Count() == 1) {
+                        Model.Tenant = _tenantListing.Tenants.First();
+                        Model.TenantId = Model.Tenant.TenantId;
+
+                        await ShowLoginProviders();
+                    } else {
+                        SelectTenants();
+                    }
+
+                } else {
+                    Model.UnknownError();
+                }
+            }
+        } else {
+            await ShowLoginProviders();
+        }
+
+        if (view == "" || view == "selectloginprovider") {
+            if (AvailableLoginOptions.Count() == 1 && AllowLoginTypeLocal) {
+                await ShowLocalLogin();
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    protected bool AllowLoginTypeCustom
+    {
+        get {
+            bool output = Model.UseCustomAuthenticationProviderFromAdminAccount;
+
+            // If not using the admin option check this tenant.
+            if (!output && Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("custom")) {
+                output = true;
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeApple
+    {
+        get {
+            bool output = false;
+
+            if (Model.AuthenticationProviders.UseApple) {
+                if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("apple")) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeFacebook
+    {
+        get {
+            bool output = false;
+
+            if (Model.AuthenticationProviders.UseFacebook) {
+                if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("facebook"))
+                {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeGoogle
+    {
+        get {
+            bool output = false;
+
+            if (Model.AuthenticationProviders.UseGoogle) {
+                if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("google")) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeLocal
+    {
+        get {
+            bool output = false;
+
+            if(Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Any()) {
+                output = Model.Tenant.TenantSettings.LoginOptions.Contains("local");
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeMicrosoftAccount
+    {
+        get {
+            bool output = false;
+
+            if (Model.AuthenticationProviders.UseMicrosoftAccount) {
+                if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("microsoft")) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeOpenId
+    {
+        get {
+            bool output = false;
+
+            if (Model.AuthenticationProviders.UseOpenId) {
+                if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("openid")) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypePlugin {
+        get {
+            bool output = false;
+
+            if (Model.Plugins.Any(x => x.Type.ToLower() == "auth" && (x.LimitToTenants.Count == 0 || x.LimitToTenants.Contains(Model.TenantId)))) {
+                output = true;
+            }
+
+            return output;
+        }
+    }
+
+    public List<string> AvailableLoginOptions
+    {
+        get {
+            List<string> output = new List<string>();
+
+            if (AllowLoginTypeCustom) { output.Add("custom"); }
+            if (AllowLoginTypeApple) { output.Add("apple");  }
+            if (AllowLoginTypeFacebook) { output.Add("facebook"); }
+            if (AllowLoginTypeGoogle) { output.Add("google"); }
+            if (AllowLoginTypeLocal) { output.Add("local"); }
+            if (AllowLoginTypeMicrosoftAccount) { output.Add("microsoft"); }
+            if (AllowLoginTypeOpenId) { output.Add("openid"); }
+            if (AllowLoginTypePlugin) { output.Add("plugin"); }
+
+            return output;
+        }
+    }
+
+    protected async Task Back()
+    {
+        await ShowLoginProviders();
+    }
+
+    public async Task CheckForEnterKey(KeyboardEventArgs e)
+    {
+        if(e.Code == "Enter" || e.Code == "NumpadEnter") {
+            await ProcessLogin();
+        }
+    }
+
+    protected string CustomLoginButtonClass
+    {
+        get {
+            string output = Model.AdminCustomLoginProvider.ButtonClass;
+
+            // If not using the Admin option check the tenant settings.
+            if (String.IsNullOrWhiteSpace(output) && !String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.CustomAuthenticationButtonClass)) {
+                output = Model.Tenant.TenantSettings.CustomAuthenticationButtonClass;
+            }
+
+            if (String.IsNullOrWhiteSpace(output)) {
+                output = "btn btn-secondary";
+            }
+
+            return output;
+        }
+    }
+
+    protected string CustomLoginIcon
+    {
+        get {
+            string output = Model.AdminCustomLoginProvider.Icon;
+
+            // If not using the Admin option check the tenant settings.
+            if (String.IsNullOrWhiteSpace(output) && !String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.CustomAuthenticationIcon)) {
+                string icon = Model.Tenant.TenantSettings.CustomAuthenticationIcon;
+                if (icon.Contains("<")) {
+                    // This icon is a full element, so just return it.
+                    output = icon;
+                } else {
+                    // See if this is a named icon
+                    output = Helpers.Icon(icon);
+
+                    if (String.IsNullOrWhiteSpace(output)) {
+                        // Not a named icon, so just return this as a class inside an i element.
+                        output = "<i class=\"icon " + icon + "\"></i>";
+                    }
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected string CustomLoginText
+    {
+        get {
+            string output = Model.AdminCustomLoginProvider.Name;
+
+            // If not using the Admin option check the tenant settings.
+            if (String.IsNullOrWhiteSpace(output)) {
+                output = Helpers.StringValue(Model.Tenant.TenantSettings.CustomAuthenticationName);
+            }
+
+            if (String.IsNullOrWhiteSpace(output)) {
+                output = Helpers.Text("CustomLoginProvider");
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task DoLogin(string type)
+    {
+        processing = false;
+        Model.ClearMessages();
+
+        switch (type.ToLower()) {
+            case "custom":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/Custom?TenantId=" + Model.TenantId.ToString() + "&Fingerprint=" + Model.Fingerprint, true);
+                break;
+
+            case "local":
+                await ShowLocalLogin();
+                break;
+
+            case "apple":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/Apple/" + Model.TenantId.ToString() + "?Fingerprint=" + Model.Fingerprint, true);
+                break;
+
+            case "facebook":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/Facebook/" + Model.TenantId.ToString() + "?Fingerprint=" + Model.Fingerprint, true);
+                break;
+
+            case "google":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/Google/" + Model.TenantId.ToString() + "?Fingerprint=" + Model.Fingerprint, true);
+                break;
+
+            case "microsoftaccount":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/MicrosoftAccount/" + Model.TenantId.ToString() + "?Fingerprint=" + Model.Fingerprint, true);
+                break;
+
+            case "openid":
+                SetView("redirecting");
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/OpenId/" + Model.TenantId.ToString() + "?Fingerprint=" + Model.Fingerprint, true);
+                break;
+        }
+    }
+
+    protected async Task DoLoginPlugin(Plugin plugin)
+    {
+        processing = false;
+        Model.ClearMessages();
+
+        if (plugin.Prompts != null && plugin.Prompts.Count > 0) {
+            _plugin = plugin;
+            SetView("pluginprompts");
+
+            await Helpers.DelayedFocus("plugin-" + _plugin.Id.ToString() + "-prompt-1");
+        } else {
+            SetView("redirecting");
+            Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/Plugin?Name=" + plugin.Name.Replace(" ", "_") + "&TenantId=" + Model.TenantId.ToString() + "&Fingerprint=" + Model.Fingerprint, true);
+        }
+    }
+
+    protected async Task DoLoginPluginWithPrompts()
+    {
+        // First, make sure each prompt element has a value.
+        int index = 0;
+        if (_plugin.Prompts != null && _promptValues != null) {
+            foreach (var prompt in _plugin.Prompts) {
+                index++;
+
+                //string value = Helpers.GetPromptItemValueAsString(prompt.Value);
+                string value = String.Empty;
+
+                var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
+                if (promptValue != null && promptValue.Values != null && promptValue.Values.Count() > 0) {
+                    value += promptValue.Values[0];
+                }
+
+                if (String.IsNullOrWhiteSpace(value)) {
+                    await Helpers.DelayedFocus("plugin-" + _plugin.Id.ToString() + "-prompt-" + index.ToString());
+                    return;
+                }
+            }
+        }
+
+        var result = await Helpers.GetOrPost<DataObjects.SimpleResponse>("api/Data/EncryptPrompts", _promptValues);
+
+        if (result != null) {
+            if (result.Result && !String.IsNullOrWhiteSpace(result.Message)) {
+                var url = Model.ApplicationUrl + "Authorization/Plugin?Name=" + _plugin.Name.Replace(" ", "_") + "&TenantId=" + Model.TenantId.ToString() + "&Prompts=" + result.Message + "&Fingerprint=" + Model.Fingerprint;
+
+                SetView("redirecting");
+                StateHasChanged();
+
+                Helpers.NavigateTo(url, true);
+            } else {
+                await Back();
+            }
+        } else {
+            await Back();
+        }
+
+        // Build out the URL to redirect to with the encrypted items in the querystring.
+    }
+
+    protected async Task DoLoginPluginWithPromptsPromptValuesChanged(List<PluginPromptValue> values)
+    {
+        _promptValues = values;
+
+        await DoLoginPluginWithPrompts();
+    }
+
+    protected async Task ForgotPassword()
+    {
+        confirmPassword = "";
+        _user = new DataObjects.User();
+        _user.TenantId = Model.TenantId;
+        _user.UserId = Guid.Empty;
+
+        SetView("forgotpassword");
+
+        await Helpers.DelayedFocus("forgotpassword-email");
+
+    }
+
+    protected async Task ForgotPasswordReset()
+    {
+        Model.ClearMessages();
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_user.Email)) {
+            errors.Add(Helpers.MissingRequiredField("Email"));
+            if (focus == "") { focus = "forgotpassword-email"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.Password)) {
+            errors.Add(Helpers.MissingRequiredField("Password"));
+            if (focus == "") { focus = "forgotpassword-password"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            if (focus != "") {
+                await Helpers.DelayedFocus(focus);
+            }
+            return;
+        }
+
+        Model.Message_Processing();
+
+        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/ForgotPassword", _user);
+
+        Model.ClearMessages();
+
+        if (saved != null) {
+            if (saved.ActionResponse.Result) {
+                _user = saved;
+                SetView("forgotpasswordvalidate");
+                await Helpers.DelayedFocus("forgot-password-validate");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task ForgotPasswordValidateCode()
+    {
+        if (String.IsNullOrWhiteSpace(_user.Confirmation)) {
+            await Helpers.DelayedFocus("forgot-password-validate");
+            return;
+        }
+
+        Model.ClearMessages();
+        Model.AddMessage(Helpers.Text("ValidatingConfirmationCode"), MessageType.Dark, false);
+
+        var validated = await Helpers.GetOrPost<DataObjects.User>("api/Data/ForgotPasswordConfirm", _user);
+
+        Model.ClearMessages();
+
+        if (validated != null) {
+            if (validated.ActionResponse.Result) {
+                await ShowLocalLogin();
+                Model.AddMessage(Helpers.Text("PasswordResetMessage"), MessageType.Success, false);
+            } else {
+                Model.ErrorMessages(validated.ActionResponse.Messages);
+                await Helpers.DelayedFocus("forgot-password-validate");
+            }
+        } else {
+            Model.UnknownError();
+            await Helpers.DelayedFocus("forgot-password-validate");
+        }
+    }
+
+    protected bool LoginDisabled
+    {
+        get {
+            bool output = String.IsNullOrWhiteSpace(email) || String.IsNullOrWhiteSpace(password);
+            return output;
+        }
+    }
+
+    protected async Task ProcessLogin()
+    {
+        Model.ClearMessages();
+
+        if (String.IsNullOrWhiteSpace(email)) {
+            await Helpers.DelayedFocus("login-email");
+            return;
+        }
+
+        if (String.IsNullOrWhiteSpace(password)) {
+            await Helpers.DelayedFocus("login-password");
+            return;
+        }
+
+        processing = true;
+        StateHasChanged();
+
+        var auth = new DataObjects.Authenticate {
+            Username = email,
+            Password = password,
+            TenantCode = "",
+            TenantId = Model.TenantId,
+        };
+
+        bool validLogin = false;
+        var errors = new List<string>();
+
+        try {
+            var user = await Helpers.GetOrPost<DataObjects.User>("api/Data/Authenticate", auth);
+            if(user != null) {
+                if (user.ActionResponse.Result) {
+                    if (!String.IsNullOrWhiteSpace(user.AuthToken)) {
+                        await Helpers.CookieWrite("user-token", user.AuthToken);
+                        await Helpers.CookieWrite("Login-Method", "Local");
+
+                        validLogin = true;
+                    }
+                } else {
+                    if (user.ActionResponse.Messages.Any()) {
+                        errors = user.ActionResponse.Messages;
+                    }
+                }
+            }
+            
+        } catch (Exception ex) {
+            errors.Add(ex.Message);
+        }
+
+        if (validLogin) {
+            var requestedUrl = await Helpers.CookieRead<string>("requested-url");
+
+            if (!String.IsNullOrWhiteSpace(requestedUrl)) {
+                await Helpers.CookieWrite("requested-url", "");
+                Helpers.NavigateTo(requestedUrl, true);
+            } else {
+                Helpers.NavigateTo("ProcessLogin");
+            }
+
+            return;
+        } else {
+            if (!errors.Any()) {
+                errors.Add("Invalid Login");
+            }
+
+            email = "";
+            password = "";
+
+            await ShowLocalLogin();
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+        }
+    }
+
+    protected bool ResetPasswordDisabled
+    {
+        get {
+            bool output = false;
+
+            if (String.IsNullOrWhiteSpace(_user.Email) || String.IsNullOrWhiteSpace(_user.Password)) {
+                output = true;
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task SelectTenant(Guid TenantId)
+    {
+        var tenant = _tenantListing.Tenants.FirstOrDefault(x => x.TenantId == TenantId);
+
+        if(tenant != null) {
+            Model.TenantId = TenantId;
+            Model.Tenant = tenant;
+
+            DataObjects.Language? language = null;
+            if (!String.IsNullOrWhiteSpace(Model.CultureCode)) {
+                language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId && x.Culture.ToLower() == Model.CultureCode.ToLower());
+            }
+
+            if(language == null) {
+                language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId && x.Culture.ToLower() == "en-us");
+            }
+
+            if(language == null) {
+                language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId);
+            }
+
+            if(language != null) {
+                Model.Language = language;
+            }
+
+            if (AvailableLoginOptions.Count() == 1 && AllowLoginTypeLocal) {
+                await ShowLocalLogin();
+            } else {
+                await ShowLoginProviders();
+            }
+        }
+    }
+
+    protected void SelectTenants()
+    {
+        SetView("selecttenant");
+    }
+
+    protected void SetView(string newView)
+    {
+        Model.ClearMessages();
+        view = newView;
+        StateHasChanged();
+    }
+
+    protected async Task ShowLocalLogin()
+    {
+        processing = false;
+        SetView("local");
+        await Helpers.DelayedFocus("login-email");
+    }
+
+    protected async Task ShowLoginProviders()
+    {
+        SetView("selectloginprovider");
+
+        string focus = "";
+
+        if (AllowLoginTypeLocal && focus == "") { focus = "login-button-local"; }
+        if (AllowLoginTypeApple && focus == ""){ focus = "login-button-apple";  }
+        if (AllowLoginTypeFacebook && focus == "") { focus = "login-button-facebook"; }
+        if (AllowLoginTypeGoogle && focus == "") { focus = "login-button-google"; }
+        if (AllowLoginTypeMicrosoftAccount && focus == "") { focus = "login-button-microsoftaccount"; }
+        if (AllowLoginTypeOpenId && focus == "") { focus = "login-button-openid"; }
+        if (AllowLoginTypeCustom && focus == "") { focus = "login-button-custom"; }
+
+        if(focus != "") {
+            await Helpers.DelayedFocus(focus);
+        }
+    }
+
+    protected bool ShowPasswordReset
+    {
+        get {
+            bool output = false;
+
+            if (AllowLoginTypeLocal) {
+                if (Model.Tenant.TenantSettings.AllowUsersToResetPasswordsForLocalLogin) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool ShowSignup
+    {
+        get {
+            bool output = false;
+
+            if (AllowLoginTypeLocal) {
+                if (Model.Tenant.TenantSettings.AllowUsersToSignUpForLocalLogin) {
+                    output = true;
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task SignupSave()
+    {
+        Model.ClearMessages();
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_user.FirstName)) {
+            errors.Add(Helpers.MissingRequiredField("FirstName"));
+            if (focus == "") { focus = "signup-firstName"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.LastName)) {
+            errors.Add(Helpers.MissingRequiredField("LastName"));
+            if(focus == ""){ focus = "signup-lastName"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.Email)) {
+            errors.Add(Helpers.MissingRequiredField("Email"));
+            if(focus == ""){ focus = "signup-email"; }
+        }
+        if (String.IsNullOrWhiteSpace(_user.Password)) {
+            errors.Add(Helpers.MissingRequiredField("Password"));
+            if (focus == "") { focus = "signup-password"; }
+        }
+        if (String.IsNullOrWhiteSpace(confirmPassword)) {
+            errors.Add(Helpers.MissingRequiredField("ConfirmPassword"));
+            if (focus == "") { focus = "signup-confirmPassword"; }
+        }
+        if(!String.IsNullOrWhiteSpace(_user.Password) && !String.IsNullOrEmpty(confirmPassword)) {
+            if(_user.Password != confirmPassword) {
+                errors.Add(Helpers.Text("NewPasswordAndConfirmDontMatch"));
+                _user.Password = "";
+                confirmPassword = "";
+                if (focus == "") { focus = "signup-password"; }
+            }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            if(focus != "") {
+                await Helpers.DelayedFocus(focus);
+            }
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/UserSignUp", _user);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                _user = saved;
+                SetView("signupvalidate");
+                await Helpers.DelayedFocus("signup-validate");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected bool SignupSaveDisabled
+    {
+        get {
+            bool output = false;
+
+            if( String.IsNullOrWhiteSpace(_user.FirstName) ||
+                String.IsNullOrWhiteSpace(_user.LastName) ||
+                String.IsNullOrWhiteSpace(_user.Email) ||
+                String.IsNullOrWhiteSpace(_user.Password) ) {
+                output = true;
+            }
+
+            if(_user.Password != confirmPassword) {
+                output = true;
+            }
+
+            return output;
+        }
+
+    }
+
+    protected async Task SignUp()
+    {
+        confirmPassword = "";
+        _user = new DataObjects.User();
+        _user.TenantId = Model.TenantId;
+        _user.UserId = Guid.Empty;
+
+        SetView("signup");
+
+        await Helpers.DelayedFocus("signup-firstName");
+    }
+
+    protected async Task SignupValidateCode()
+    {
+        if (String.IsNullOrWhiteSpace(_user.Confirmation)) {
+            await Helpers.DelayedFocus("signup-validate");
+            return;
+        }
+
+        Model.ClearMessages();
+        Model.AddMessage(Helpers.Text("ValidatingConfirmationCode"), MessageType.Dark, false);
+
+        var validated = await Helpers.GetOrPost<DataObjects.User>("api/Data/UserSignupConfirm", _user);
+
+        Model.ClearMessages();
+
+        if(validated != null) {
+            if (validated.ActionResponse.Result) {
+                await ShowLocalLogin();
+                Model.AddMessage(Helpers.Text("ValidationCompleteReturnToLogin"), MessageType.Success, false);
+            } else {
+                Model.ErrorMessages(validated.ActionResponse.Messages);
+                await Helpers.DelayedFocus("signup-validate");
+            }
+        } else {
+            Model.UnknownError();
+            await Helpers.DelayedFocus("signup-validate");
+        }
+    }
+}

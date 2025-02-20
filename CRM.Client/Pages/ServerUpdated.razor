@@ -1,0 +1,35 @@
+﻿@page "/ServerUpdated"
+@page "/{TenantCode}/ServerUpdated"
+@implements IDisposable
+@inject BlazorDataModel Model
+<h1 class="page-title">
+    <Language Tag="ServerUpdated" IncludeIcon="true" />
+</h1>
+<div>
+    <Language Tag="ServerUpdatedMessage" />
+</div>
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    public void Dispose() { }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await System.Threading.Tasks.Task.Delay(5000);
+
+        string redirect = System.Web.HttpUtility.UrlDecode(Helpers.GetQuerystringValue("Redirect"));
+        if (!String.IsNullOrWhiteSpace(redirect)) {
+            await Helpers.ConsoleLog("Redirecting After Update to '" + redirect + "'");
+            await Helpers.NavigateToViaJavascript(redirect);
+        } else {
+            Helpers.NavigateToRoot(true);
+        }
+    }
+}

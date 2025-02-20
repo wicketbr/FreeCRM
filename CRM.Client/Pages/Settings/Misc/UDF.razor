@@ -1,0 +1,242 @@
+﻿@page "/Settings/UDF"
+@page "/{TenantCode}/Settings/UDF"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="UserDefinedFields" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="UserDefinedFields" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <button type="button" class="btn btn-success" @onclick="Save">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-primary" @onclick="ToggleHelp">
+                    @if (_showHelp) {
+                        <Language Tag="HideHelp" IncludeIcon="true" />
+                    } else {
+                        <Language Tag="ShowHelp" IncludeIcon="true" />
+                    }
+
+                </button>
+            </div>
+        </div>
+
+        if (_showHelp) {
+            <div class="row mb-2">
+                <div class="col-sm-12">
+                    <div class="alert alert-info">
+                        <div class="mb-2"><Language Tag="UserDefinedFieldsHelpIntro" /></div>
+                        <div class="mb-2"><Language Tag="UserDefinedFieldsOptions" /></div>
+                        <div class="mb-2">
+                            <strong><Language Tag="ShowColumn" IncludeIcon="true" /></strong> -
+                            <Language Tag="ShowColumnInfo" />
+                        </div>
+                        <div class="mb-2">
+                            <strong><Language Tag="ShowInFilter" IncludeIcon="true" /></strong> -
+                            <Language Tag="ShowInFilterInfo" />
+                        </div>
+                        <div class="mb-2">
+                            <strong><Language Tag="IncludeInSearch" IncludeIcon="true" /></strong> -
+                            <Language Tag="IncludeInSearchInfo" />
+                        </div>
+                        <div><Language Tag="UserDefinedFieldsShowConflictNote" /></div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-sm-12">
+                <table class="table table-sm udf-labels">
+                    <thead>
+                        <tr class="table-dark">
+                            <th class="nowrap" style="width:1%;"><Language Tag="Module" ReplaceSpaces="true" /></th>
+                            <th class="nowrap" style="width:1%;"><Language Tag="UDF" ReplaceSpaces="true" /></th>
+                            <th class="nowrap"><Language Tag="Label" ReplaceSpaces="true" /></th>
+                            <th class="nowrap center" style="width:1%;"><Language Tag="ShowColumn" ReplaceSpaces="true" IncludeIcon="true" /></th>
+                            <th class="nowrap center" style="width:1%;"><Language Tag="ShowInFilter" ReplaceSpaces="true" IncludeIcon="true" /></th>
+                            <th class="nowrap center" style="width:1%;"><Language Tag="IncludeInSearch" ReplaceSpaces="true" IncludeIcon="true" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var udfLabel in _udfLabels) {
+                            _index++;
+                            <tr>
+                                <td class="top">@udfLabel.Module</td>
+                                <td class="top">@udfLabel.udf</td>
+                                <td>
+                                    <input type="text" class="form-control" @bind="udfLabel.Label" />
+                                    <LastModifiedMessage DataObject="udfLabel" />
+                                </td>
+                                <td class="top">
+                                    <div class="form-check center">
+                                        <input type="checkbox" id="udf-showcolumn-@_index" class="form-check-input" @bind="udfLabel.ShowColumn" title="@TextShowColumn" />
+                                        <label for="udf-showcolumn-@_index">@((MarkupString)TextShowColumn.Replace(" ", "&nbsp;"))</label>
+                                    </div>
+                                </td>
+                                <td class="top">
+                                    <div class="form-check center">
+                                        <input type="checkbox" id="udf-showinfilter-@_index" class="form-check-input" @bind="udfLabel.ShowInFilter" title="@TextShowInFilter" />
+                                        <label for="udf-showinfilter-@_index">@((MarkupString)TextShowInFilter.Replace(" ", "&nbsp;"))</label>
+                                    </div>
+                                </td>
+                                <td class="top">
+                                    <div class="form-check center">
+                                        <input type="checkbox" id="udf-includeinsearch-@_index" class="form-check-input" @bind="udfLabel.IncludeInSearch" title="@TextIncludeInSearch" />
+                                        <label for="udf-includeinsearch-@_index">@((MarkupString)TextIncludeInSearch.Replace(" ", "&nbsp;"))</label>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected int _index = 0;
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected bool _showHelp = false;
+    protected List<DataObjects.udfLabel> _udfLabels = new List<DataObjects.udfLabel>();
+
+    protected string _pageName = "udf";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledUDF || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+        await Helpers.LoadUdfLabels();
+
+        // Make a local copy
+        _udfLabels = new List<DataObjects.udfLabel>();
+
+        if (Model.udfLabels.Any()) {
+            foreach(var label in Model.udfLabels) {
+                _udfLabels.Add(new DataObjects.udfLabel {
+                    Id = label.Id,
+                    TenantId = label.TenantId,
+                        Module = label.Module,
+                        udf = label.udf,
+                        Label = label.Label,
+                        ShowColumn = label.ShowColumn,
+                        ShowInFilter = label.ShowInFilter,
+                        IncludeInSearch = label.IncludeInSearch,
+                        FilterOptions = label.FilterOptions,
+                        LastModified = label.LastModified,
+                        LastModifiedBy = label.LastModifiedBy,
+                });
+            }
+        }
+
+        _loading = false;
+
+        StateHasChanged();
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveUDFLabels", _udfLabels);
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.Result) {
+                // Reload the values.
+                await Helpers.LoadUdfLabels();
+                Model.Message_Saved();
+            } else {
+                Model.ErrorMessages(saved.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected string TextIncludeInSearch
+    {
+        get {
+            return Helpers.Text("IncludeInSearch");
+        }
+    }
+
+    protected string TextShowColumn
+    {
+        get {
+            return Helpers.Text("ShowColumn");
+        }
+    }
+
+    protected string TextShowInFilter
+    {
+        get {
+            return Helpers.Text("ShowInFilter");
+        }
+    }
+
+    protected void ToggleHelp()
+    {
+        _showHelp = !_showHelp;
+    }
+}

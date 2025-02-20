@@ -1,0 +1,342 @@
+﻿@page "/Profile"
+@page "/{TenantCode}/Profile"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    <h1 class="page-title">
+        <Language Tag="ManageProfile" IncludeIcon="true" />
+    </h1>
+
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        @if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars) {
+            <div class="card mb-2">
+                <div class="card-header text-bg-primary text-white">
+                    <Language Tag="ManageAvatar" IncludeIcon="true" />&nbsp;
+                    @if (UserHasAvatarPhoto) {
+                        <button type="button" class="btn btn-danger btn-sm" @onclick="DeleteAvatarPhoto">
+                            <Language Tag="DeleteAvatar" IncludeIcon="true" />
+                        </button>
+                    }
+                    <button type="button" class="btn btn-success btn-sm" @onclick="UploadAvatarImage">
+                        <Language Tag="UploadFile" IncludeIcon="true" />
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (UserHasAvatarPhoto) {
+                        <div class="mb-2">
+                            <img class="user-icon mb-2" src="@UserAvatarUrl" />
+                        </div>
+                    }
+                 </div>
+             </div>
+        }
+
+        @if (Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo && Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
+      Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any()) {
+            <div class="card mb-2">
+                <div class="card-header text-bg-primary text-white">
+                    <Language Tag="ManageProfileInfo" IncludeIcon="true" />
+                    <button type="button" class="btn btn-sm btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (Model.AllowUsersToManageName || Model.AllowUsersToManageEmail) {
+                        <RequiredIndicator />
+                    }
+
+                    @if (Model.AllowUsersToManageName) {
+                        <div class="mb-2">
+                            <label for="edit-profile-firstName"><Language Tag="FirstName" Required="true" /></label>
+                            <input type="text" id="edit-profile-firstName" @bind="_user.FirstName" @bind:event="oninput"
+                                   class="@Helpers.MissingValue(_user.FirstName, "form-control")" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="edit-profile-lastName"><Language Tag="LastName" Required="true" /></label>
+                            <input type="text" id="edit-profile-lastName" @bind="_user.LastName" @bind:event="oninput"
+                                   class="@Helpers.MissingValue(_user.LastName, "form-control")" />
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManageEmail) {
+                        <div class="mb-2">
+                            <label for="edit-profile-email"><Language Tag="Email" Required="true" /></label>
+                            <input type="email" id="edit-profile-email" @bind="_user.Email" @bind:event="oninput"
+                                   class="@Helpers.MissingValue(_user.Email, "form-control")" />
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManagePhone) {
+                        <div class="mb-2">
+                            <label for="edit-profile-phone"><Language Tag="PhoneNumber" /></label>
+                            <input type="phone" class="form-control" id="edit-profile-phone" @bind="_user.Phone" />
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManageEmployeeId) {
+                        <div class="mb-2">
+                            <label for="edit-profile-employeeId"><Language Tag="EmployeeId" /></label>
+                            <input type="text" class="form-control" id="edit-profile-employeeId" @bind="_user.EmployeeId" />
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManageTitle) {
+                        <div class="mb-2">
+                            <label for="edit-profile-title"><Language Tag="Title" /></label>
+                            <input type="text" class="form-control" id="edit-profile-title" @bind="_user.Title" />
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManageDepartment && Model.Departments.Any()) {
+                        <div class="mb-2">
+                            <label for="edit-profile-department"><Language Tag="Department" /></label>
+                            <select class="form-select" id="edit-profile-department" @bind="_user.DepartmentId">
+                                <option value=""></option>
+                                @foreach (var dept in Model.Departments) {
+                                    <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    @if (Model.AllowUsersToManageLocation) {
+                        <div class="mb-2">
+                            <label for="edit-profile-location"><Language Tag="Location" /></label>
+                            <input type="text" class="form-control" id="edit-profile-location" @bind="_user.Location" />
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected bool _loadingUser = false;
+    protected DataObjects.User _user = new DataObjects.User();
+
+    protected string _pageName = "profile";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        if (!_loadingUser) {
+            if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
+                await LoadUser();
+            } else if (!Model.LoggedIn) {
+                _loading = true;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+    
+    protected async Task DeleteAvatarPhoto()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteUserPhoto/" + Model.User.UserId.ToString());
+        Model.ClearMessages();
+        if(deleted != null) {
+            if (deleted.Result) {
+                await Helpers.ReloadUser();
+                _user = Model.User;
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadUser()
+    {
+        _loadingUser = true;
+
+        Model.ClearMessages();
+
+        if (Model.FeatureEnabledDepartments && !Model.Departments.Any()) {
+            await Helpers.LoadDepartments();
+        }
+
+        _loading = true;
+
+        var getUser = await Helpers.GetOrPost<DataObjects.User>("api/Data/GetUser/" + Model.User.UserId.ToString());
+        if (getUser != null) {
+            _user = getUser;
+        } else {
+            Model.UnknownError();
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        _loadingUser = false;
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (Model.AllowUsersToManageName) {
+            if (String.IsNullOrWhiteSpace(_user.FirstName)) {
+                errors.Add(Helpers.MissingRequiredField("FirstName"));
+                if (focus == "") { focus = "edit-profile-firstName"; }
+            }
+            if (String.IsNullOrWhiteSpace(_user.LastName)) {
+                errors.Add(Helpers.MissingRequiredField("LastName"));
+                if (focus == "") { focus = "edit-profile-lastName"; }
+            }
+        }
+
+        if(Model.AllowUsersToManageEmail && String.IsNullOrWhiteSpace(_user.Email)) {
+            errors.Add(Helpers.MissingRequiredField("Email"));
+            if (focus == "") { focus = "edit-profile-email"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/SaveUser", _user);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Model.Message_Saved();
+                await Helpers.ReloadUser();
+                _user = Model.User;
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task UploadAvatarImage()
+    {
+        Delegate onUploadComplete = async (DataObjects.FileStorage fileStorage) => {
+
+            await UploadedAvatarImage(fileStorage);
+        };
+
+        string title = "";
+        string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
+        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
+        List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
+
+        await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
+    }
+
+    protected async Task UploadedAvatarImage(DataObjects.FileStorage fileStorage)
+    {
+        if (fileStorage != null && !String.IsNullOrWhiteSpace(fileStorage.Extension)) {
+            bool allowedExtension = false;
+            string extension = fileStorage.Extension;
+
+            switch (extension.ToUpper()) {
+                case ".GIF":
+                case ".JPG":
+                case ".JPEG":
+                case ".PNG":
+                case ".SVG":
+                    allowedExtension = true;
+                    break;
+            }
+
+            if (allowedExtension) {
+                fileStorage.FileId = Guid.Empty;
+                fileStorage.UserId = Model.User.UserId;
+
+                Model.Message_Saving();
+                var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveUserPhoto", fileStorage);
+
+                Model.ClearMessages();
+
+                if (saved != null) {
+                    if (saved.Result) {
+                        await Helpers.ReloadUser();
+                        _user = Model.User;
+                    } else {
+                        Model.ErrorMessages(saved.Messages);
+                    }
+                } else {
+                    Model.UnknownError();
+                }
+            } else {
+                string errorMessage = Helpers.Text("InvalidImageFileType") + " - " + fileStorage.FileName;
+                Model.ErrorMessage(errorMessage);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    protected string UserAvatarUrl
+    {
+        get {
+            string output = "";
+
+            if(_user.Photo.HasValue && _user.Photo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)_user.Photo).ToString();// + "?Random=" + Guid.NewGuid().ToString();
+            }
+
+            return output;
+        }
+    }
+
+    protected bool UserHasAvatarPhoto
+    {
+        get {
+            return _user.Photo.HasValue && _user.Photo != Guid.Empty;
+        }
+    }
+}

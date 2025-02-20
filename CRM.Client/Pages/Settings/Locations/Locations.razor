@@ -1,0 +1,170 @@
+﻿@page "/Settings/Locations"
+@page "/{TenantCode}/Settings/Locations"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Locations" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Locations" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/AddLocation"))" role="button" class="btn btn-success">
+                    <Language Tag="AddNewLocation" IncludeIcon="true" />
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="locations-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                <label for="locations-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+            </div>
+        </div>
+
+        @if (Model.Locations.Any()) {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th><Language Tag="LocationName" ReplaceSpaces="true" /></th>
+                        <th><Language Tag="Address" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="CalendarStyle" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Default" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Enabled" ReplaceSpaces="true" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var location in Model.Locations) {
+                        @if (!location.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            var style = FormatLocationStyle(location);
+
+                            <tr class="@(location.Deleted ? "item-deleted" : "")">
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditLocation(location.LocationId))">
+                                        <Language Tag="Edit" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@location.Name</td>
+                                <td>@((MarkupString)Helpers.FormatAddress(location))</td>
+                                <td class="center">
+                                    <div class="calendar-style-sample" style="@style">
+                                        <Language Tag="CalendarStyle" />
+                                    </div>
+                                </td>
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(location.DefaultLocation))</td>
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(location.Enabled))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected string _pageName = "locations";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledLocation || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditLocation(Guid LocationId)
+    {
+        Helpers.NavigateTo("Settings/EditLocation/" + LocationId.ToString());
+    }
+
+    protected string FormatLocationStyle(DataObjects.Location location)
+    {
+        string output = "";
+
+        if (!String.IsNullOrWhiteSpace(location.CalendarBackgroundColor)) {
+            output += "background-color:" + location.CalendarBackgroundColor + ";";
+        }
+
+        if (!String.IsNullOrWhiteSpace(location.CalendarForegroundColor)) {
+            output += "color:" + location.CalendarForegroundColor + ";";
+        }
+
+        return output;
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+        await Helpers.LoadLocations();
+        _loading = false;
+
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Location && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+}

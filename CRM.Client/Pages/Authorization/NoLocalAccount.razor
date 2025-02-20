@@ -1,0 +1,59 @@
+﻿@page "/Authorization/NoLocalAccount"
+@page "/{TenantCode}/Authorization/NoLocalAccout"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.View == _pageName) {
+    <h1 class="page-title">
+        <Language Tag="InvalidLogin" IncludeIcon="true" />
+    </h1>
+
+    <div class="mb-2">
+        <Language Tag="InvalidLoginNoLocalAccount" />
+    </div>
+
+    <button type="button" class="btn btn-primary" @onclick="Back">
+        <Language Tag="BackToLogin" IncludeIcon="true" />
+    </button>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _pageName = "nolocalaccount";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Login");
+    }
+}

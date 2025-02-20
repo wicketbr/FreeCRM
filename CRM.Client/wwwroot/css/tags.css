@@ -1,0 +1,693 @@
+.tag {
+    display: inline-block;
+    padding: .1em .3em 0 .3em;
+    border: solid 1px;
+    border-radius: .2em;
+    border-color: #0d6efd;
+    background-color: #0d6efd;
+    color: #000;
+    font-size: 0.9em;
+    margin: 0 .2em .2em 0;
+}
+
+.tag-selector {
+    display:inline-block;
+    margin: 0 .8em .5em 0;
+    border:dashed 1px #555;
+    border-radius:.2em;
+    padding:.2em;
+    cursor:pointer;
+}
+
+.tag-selector > .tag {
+    margin:0;
+}
+
+.tag-selector .add-remove {
+    display:inline-block;
+    min-width:20px;
+}
+
+.tag-lightcoral {
+    background-color: lightcoral;
+    border-color: lightcoral;
+}
+
+.tag-salmon {
+    background-color: salmon;
+    border-color: salmon;
+}
+
+.tag-darksalmon {
+    background-color: darksalmon;
+    border-color: darksalmon;
+}
+
+.tag-lightsalmon {
+    background-color: lightsalmon;
+    border-color: lightsalmon;
+}
+
+.tag-crimson {
+    background-color: crimson;
+    border-color: crimson;
+    color: #fff;
+}
+
+.tag-red {
+    background-color: red;
+    border-color: red;
+    color: #fff;
+}
+
+.tag-firebrick {
+    background-color: firebrick;
+    border-color: firebrick;
+    color: #fff;
+}
+
+.tag-darkred {
+    background-color: darkred;
+    border-color: darkred;
+    color: #fff;
+}
+
+.tag-pink {
+    background-color: pink;
+    border-color: pink;
+}
+
+.tag-lightpink {
+    background-color: lightpink;
+    border-color: lightpink;
+}
+
+.tag-hotpink {
+    background-color: hotpink;
+    border-color: hotpink;
+}
+
+.tag-deeppink {
+    background-color: deeppink;
+    border-color: deeppink;
+}
+
+.tag-mediumvioletred {
+    background-color: mediumvioletred;
+    border-color: mediumvioletred;
+    color: #fff;
+}
+
+.tag-palevioletred {
+    background-color: palevioletred;
+    border-color: palevioletred;
+}
+
+.tag-coral {
+    background-color: coral;
+    border-color: coral;
+}
+
+.tag-tomato {
+    background-color: tomato;
+    border-color: tomato;
+}
+
+.tag-orangered {
+    background-color: orangered;
+    border-color: orangered;
+}
+
+.tag-darkorange {
+    background-color: darkorange;
+    border-color: darkorange;
+}
+
+.tag-orange {
+    background-color: orange;
+    border-color: orange;
+}
+
+.tag-gold {
+    background-color: gold;
+    border-color: gold;
+}
+
+.tag-yellow {
+    background-color: yellow;
+    border-color: yellow;
+}
+
+.tag-lightyellow {
+    background-color: lightyellow;
+    border-color: lightyellow;
+}
+
+.tag-lemonchiffon {
+    background-color: lemonchiffon;
+    border-color: lemonchiffon;
+}
+
+.tag-lightgoldenrodyellow {
+    background-color: lightgoldenrodyellow;
+    border-color: lightgoldenrodyellow;
+}
+
+.tag-papayawhip {
+    background-color: papayawhip;
+    border-color: papayawhip;
+}
+
+.tag-moccasin {
+    background-color: moccasin;
+    border-color: moccasin;
+}
+
+.tag-peachpuff {
+    background-color: peachpuff;
+    border-color: peachpuff;
+}
+
+.tag-palegoldenrod {
+    background-color: palegoldenrod;
+    border-color: palegoldenrod;
+}
+
+.tag-khaki {
+    background-color: khaki;
+    border-color: khaki;
+}
+
+.tag-darkkhaki {
+    background-color: darkkhaki;
+    border-color: darkkhaki;
+}
+
+.tag-lavender {
+    background-color: lavender;
+    border-color: lavender;
+}
+
+.tag-thistle {
+    background-color: thistle;
+    border-color: thistle;
+}
+
+.tag-plum {
+    background-color: plum;
+    border-color: plum;
+}
+
+.tag-violet {
+    background-color: violet;
+    border-color: violet;
+}
+
+.tag-orchid {
+    background-color: orchid;
+    border-color: orchid;
+}
+
+.tag-fuchsia {
+    background-color: fuchsia;
+    border-color: fuchsia;
+}
+
+.tag-magenta {
+    background-color: magenta;
+    border-color: magenta;
+}
+
+.tag-mediumorchid {
+    background-color: mediumorchid;
+    border-color: mediumorchid;
+    color: #fff;
+}
+
+.tag-mediumpurple {
+    background-color: mediumpurple;
+    border-color: mediumpurple;
+    color: #fff;
+}
+
+.tag-rebeccapurple {
+    background-color: rebeccapurple;
+    border-color: rebeccapurple;
+    color: #fff;
+}
+
+.tag-blueviolet {
+    background-color: blueviolet;
+    border-color: blueviolet;
+    color: #fff;
+}
+
+.tag-darkviolet {
+    background-color: darkviolet;
+    border-color: darkviolet;
+    color: #fff;
+}
+
+.tag-darkorchid {
+    background-color: darkorchid;
+    border-color: darkorchid;
+    color: #fff;
+}
+
+.tag-darkmagenta {
+    background-color: darkmagenta;
+    border-color: darkmagenta;
+    color: #fff;
+}
+
+.tag-purple {
+    background-color: purple;
+    border-color: purple;
+    color: #fff;
+}
+
+.tag-indigo {
+    background-color: indigo;
+    border-color: indigo;
+    color: #fff;
+}
+
+.tag-slateblue {
+    background-color: slateblue;
+    border-color: slateblue;
+    color: #fff;
+}
+
+.tag-darkslateblue {
+    background-color: darkslateblue;
+    border-color: darkslateblue;
+    color: #fff;
+}
+
+.tag-mediumslateblue {
+    background-color: mediumslateblue;
+    border-color: mediumslateblue;
+    color: #fff;
+}
+
+.tag-greenyellow {
+    background-color: greenyellow;
+    border-color: greenyellow;
+}
+
+.tag-chartreuse {
+    background-color: chartreuse;
+    border-color: chartreuse;
+}
+
+.tag-lawngreen {
+    background-color: lawngreen;
+    border-color: lawngreen;
+}
+
+.tag-lime {
+    background-color: lime;
+    border-color: lime;
+}
+
+.tag-limegreen {
+    background-color: limegreen;
+    border-color: limegreen;
+}
+
+.tag-palegreen {
+    background-color: palegreen;
+    border-color: palegreen;
+}
+
+.tag-lightgreen {
+    background-color: lightgreen;
+    border-color: lightgreen;
+}
+
+.tag-mediumspringgreen {
+    background-color: mediumspringgreen;
+    border-color: mediumspringgreen;
+}
+
+.tag-springgreen {
+    background-color: springgreen;
+    border-color: springgreen;
+}
+
+.tag-mediumseagreen {
+    background-color: mediumseagreen;
+    border-color: mediumseagreen;
+}
+
+.tag-seagreen {
+    background-color: seagreen;
+    border-color: seagreen;
+    color: #fff;
+}
+
+.tag-forestgreen {
+    background-color: forestgreen;
+    border-color: forestgreen;
+    color: #fff;
+}
+
+.tag-green {
+    background-color: green;
+    border-color: green;
+    color: #fff;
+}
+
+.tag-darkgreen {
+    background-color: darkgreen;
+    border-color: darkgreen;
+    color: #fff;
+}
+
+.tag-yellowgreen {
+    background-color: yellowgreen;
+    border-color: yellowgreen;
+}
+
+.tag-olivedrab {
+    background-color: olivedrab;
+    border-color: olivedrab;
+    color: #fff;
+}
+
+.tag-olive {
+    background-color: olive;
+    border-color: olive;
+    color: #fff;
+}
+
+.tag-darkolivegreen {
+    background-color: darkolivegreen;
+    border-color: darkolivegreen;
+    color: #fff;
+}
+
+.tag-mediumaquamarine {
+    background-color: mediumaquamarine;
+    border-color: mediumaquamarine;
+}
+
+.tag-darkseagreen {
+    background-color: darkseagreen;
+    border-color: darkseagreen;
+}
+
+.tag-lightseagreen {
+    background-color: lightseagreen;
+    border-color: lightseagreen;
+}
+
+.tag-darkcyan {
+    background-color: darkcyan;
+    border-color: darkcyan;
+    color: #fff;
+}
+
+.tag-teal {
+    background-color: teal;
+    border-color: teal;
+    color: #fff;
+}
+
+.tag-aqua {
+    background-color: aqua;
+    border-color: aqua;
+}
+
+.tag-cyan {
+    background-color: cyan;
+    border-color: cyan;
+}
+
+.tag-lightcyan {
+    background-color: lightcyan;
+    border-color: lightcyan;
+}
+
+.tag-paleturquoise {
+    background-color: paleturquoise;
+    border-color: paleturquoise;
+}
+
+.tag-aquamarine {
+    background-color: aquamarine;
+    border-color: aquamarine;
+}
+
+.tag-turquoise {
+    background-color: turquoise;
+    border-color: turquoise;
+}
+
+.tag-mediumturquoise {
+    background-color: mediumturquoise;
+    border-color: mediumturquoise;
+}
+
+.tag-darkturquoise {
+    background-color: darkturquoise;
+    border-color: darkturquoise;
+}
+
+.tag-cadetblue {
+    background-color: cadetblue;
+    border-color: cadetblue;
+}
+
+.tag-steelblue {
+    background-color: steelblue;
+    border-color: steelblue;
+    color: #fff;
+}
+
+.tag-lightsteelblue {
+    background-color: lightsteelblue;
+    border-color: lightsteelblue;
+}
+
+.tag-powderblue {
+    background-color: powderblue;
+    border-color: powderblue;
+}
+
+.tag-lightblue {
+    background-color: lightblue;
+    border-color: lightblue;
+}
+
+.tag-skyblue {
+    background-color: skyblue;
+    border-color: skyblue;
+}
+
+.tag-lightskyblue {
+    background-color: lightskyblue;
+    border-color: lightskyblue;
+}
+
+.tag-deepskyblue {
+    background-color: deepskyblue;
+    border-color: deepskyblue;
+}
+
+.tag-dodgerblue {
+    background-color: dodgerblue;
+    border-color: dodgerblue;
+    color: #fff;
+}
+
+.tag-cornflowerblue {
+    background-color: cornflowerblue;
+    border-color: cornflowerblue;
+    color: #fff;
+}
+
+.tag-royalblue {
+    background-color: royalblue;
+    border-color: royalblue;
+    color: #fff;
+}
+
+.tag-blue {
+    background-color: blue;
+    border-color: blue;
+    color: #fff;
+}
+
+.tag-mediumblue {
+    background-color: mediumblue;
+    border-color: mediumblue;
+    color: #fff;
+}
+
+.tag-darkblue {
+    background-color: darkblue;
+    border-color: darkblue;
+    color: #fff;
+}
+
+.tag-navy {
+    background-color: navy;
+    border-color: navy;
+    color: #fff;
+}
+
+.tag-midnightblue {
+    background-color: midnightblue;
+    border-color: midnightblue;
+    color: #fff;
+}
+
+.tag-cornsilk {
+    background-color: cornsilk;
+    border-color: cornsilk;
+}
+
+.tag-blanchedalmond {
+    background-color: blanchedalmond;
+    border-color: blanchedalmond;
+}
+
+.tag-bisque {
+    background-color: bisque;
+    border-color: bisque;
+}
+
+.tag-navajowhite {
+    background-color: navajowhite;
+    border-color: navajowhite;
+}
+
+.tag-wheat {
+    background-color: wheat;
+    border-color: wheat;
+}
+
+.tag-burlywood {
+    background-color: burlywood;
+    border-color: burlywood;
+}
+
+.tag-tan {
+    background-color: tan;
+    border-color: tan;
+}
+
+.tag-rosybrown {
+    background-color: rosybrown;
+    border-color: rosybrown;
+}
+
+.tag-sandybrown {
+    background-color: sandybrown;
+    border-color: sandybrown;
+}
+
+.tag-goldenrod {
+    background-color: goldenrod;
+    border-color: goldenrod;
+}
+
+.tag-darkgoldenrod {
+    background-color: darkgoldenrod;
+    border-color: darkgoldenrod;
+}
+
+.tag-peru {
+    background-color: peru;
+    border-color: peru;
+}
+
+.tag-chocolate {
+    background-color: chocolate;
+    border-color: chocolate;
+}
+
+.tag-saddlebrown {
+    background-color: saddlebrown;
+    border-color: saddlebrown;
+    color: #fff;
+}
+
+.tag-sienna {
+    background-color: sienna;
+    border-color: sienna;
+    color: #fff;
+}
+
+.tag-brown {
+    background-color: brown;
+    border-color: brown;
+    color: #fff;
+}
+
+.tag-maroon {
+    background-color: maroon;
+    border-color: maroon;
+    color: #fff;
+}
+
+.tag-mistyrose {
+    background-color: mistyrose;
+    border-color: mistyrose;
+}
+
+.tag-gainsboro {
+    background-color: gainsboro;
+    border-color: gainsboro;
+}
+
+.tag-lightgray {
+    background-color: lightgray;
+    border-color: lightgray;
+}
+
+.tag-silver {
+    background-color: silver;
+    border-color: silver;
+}
+
+.tag-darkgray {
+    background-color: darkgray;
+    border-color: darkgray;
+}
+
+.tag-gray {
+    background-color: gray;
+    border-color: gray;
+}
+
+.tag-dimgray {
+    background-color: dimgray;
+    border-color: dimgray;
+    color: #fff;
+}
+
+.tag-lightslategray {
+    background-color: lightslategray;
+    border-color: lightslategray;
+    color: #fff;
+}
+
+.tag-slategray {
+    background-color: slategray;
+    border-color: slategray;
+    color: #fff;
+}
+
+.tag-darkslategray {
+    background-color: darkslategray;
+    border-color: darkslategray;
+    color: #fff;
+}
+
+.tag-black {
+    background-color: black;
+    border-color: black;
+    color: #fff;
+}

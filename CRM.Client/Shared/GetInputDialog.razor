@@ -1,0 +1,96 @@
+﻿@implements IDisposable
+@inject IJSRuntime jsRuntime
+@inject Radzen.DialogService DialogService
+<GetInput Class="@Class"
+          DefaultValue="@DefaultValue"
+          Id="@Id"
+          Instructions="@Instructions"
+          MultiselectRows="@MultiselectRows"
+          OnInputAccepted="TextValueChanged"
+          PlaceholderText="@PlaceholderText"
+          SetFocus="@SetFocus"
+          UserInputOptions="@UserInputOptions"
+          UserInputType="@UserInputType" />
+<div class="mt-2 mb-2">
+    <button type="button" class="btn btn-dark" @onclick="Cancel">
+        <i class="fa-solid fa-xmark"></i> Cancel
+    </button>
+    <button type="button" class="btn btn-success" @onclick="ReturnValue">
+        <i class="fa-solid fa-circle-check"></i> OK
+    </button>
+</div>
+@code {
+    protected object? _value;
+
+    /// <summary>
+    /// An optional class for the input.
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// An optional default value to set for the input.
+    /// </summary>
+    [Parameter] public string? DefaultValue { get; set; }
+
+    /// <summary>
+    /// An optional id for the input.
+    /// </summary>
+    [Parameter] public string? Id { get; set; }
+
+    /// <summary>
+    /// Optional instructions for the input.
+    /// </summary>
+    [Parameter] public string? Instructions { get; set; }
+
+    /// <summary>
+    /// Option to use the multiple option for a select input.
+    /// </summary>
+    [Parameter] public int? MultiselectRows { get; set; }
+
+    /// <summary>
+    /// Optional delegate to call when the input is accepted.
+    /// The delegate will received the value for the input type, which varies by type (string, List<string>, bool).
+    /// </summary>
+    [Parameter] public Delegate? OnInputAccepted { get; set; }
+
+    /// <summary>
+    /// Optional placeholder text for input elements that support that option.
+    /// </summary>
+    [Parameter] public string? PlaceholderText { get; set; }
+
+    /// <summary>
+    /// Option to set the focus on the input element for elements that support focus.
+    /// </summary>
+    [Parameter] public bool? SetFocus { get; set; }
+
+    /// <summary>
+    /// Options for input elements that support options.
+    /// </summary>
+    [Parameter] public Dictionary<string, string>? UserInputOptions { get; set; }
+
+    /// <summary>
+    /// The type of input to display.
+    /// </summary>
+    [Parameter] public FreeBlazor.GetInput.InputType? UserInputType { get; set; }
+
+    public void Dispose() { }
+
+    protected void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    protected void ReturnValue()
+    {
+        if (OnInputAccepted != null && _value != null) {
+            OnInputAccepted.DynamicInvoke(_value);
+        }
+
+        DialogService.Close();
+    }
+
+    protected void TextValueChanged(object value)
+    {
+        _value = value;
+    }
+}

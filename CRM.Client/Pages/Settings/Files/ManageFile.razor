@@ -1,0 +1,187 @@
+﻿@implements IDisposable
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded) {
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        if (file.Deleted) {
+            <UndeleteMessage DeletedAt="file.DeletedAt" LastModifiedBy="@file.LastModifiedBy" OnUndelete="Undelete" />
+        } else {
+            <div class="mb-2">
+                <label for="manage-file-FileName">
+                    <Language Tag="FileName" />
+                </label>
+
+                <div class="input-group">
+                    <input type="text" class="form-control" id="manage-file-FileName" @bind="_filename" />
+                    <span class="input-group-text">@file.Extension</span>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-dark" @onclick="Cancel">
+                    <Language Tag="Cancel" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-success" @onclick="Save">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+
+                @if (OnDelete != null) {
+                    <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                }
+            </div>
+
+            <div class="mt-2 mb-2">
+                <hr />
+                <LastModifiedMessage DataObject="file" />
+            </div>
+        }
+    }
+}
+@code {
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected bool _newAppointment = false;
+
+    protected DataObjects.FileStorage file = new DataObjects.FileStorage();
+    protected string _filename = "";
+    protected bool _visible = false;
+
+    [Parameter]
+    public Guid FileId { get; set; }
+
+    [Parameter]
+    public Delegate? OnComplete { get; set; }
+
+    [Parameter]
+    public Delegate? OnDelete { get; set; }
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledFiles) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+        Model.OnSignalRUpdate += SignalRUpdate;
+    }
+
+    protected void Cancel()
+    {
+        _visible = false;
+        DialogService.Close();
+    }
+
+    protected void Delete()
+    {
+        if(OnDelete != null) {
+            OnDelete.DynamicInvoke(file);
+        }
+
+        _visible = false;
+        DialogService.Close();
+    }
+
+    protected async Task LoadData()
+    {
+        var results = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/GetFileStorage/" + FileId.ToString());
+        if(results != null) {
+            if (results.ActionResponse.Result) {
+                file = results;
+                _visible = true;
+
+                UpdateFilename();
+            } else {
+                _visible = false;
+                DialogService.Close();
+                Model.ErrorMessages(results.ActionResponse.Messages);
+            }
+        } else {
+            _visible = false;
+            DialogService.Close();
+            Model.UnknownError();
+        }
+
+        _loading = false;
+        _loadedData = true;
+
+        StateHasChanged();
+    }
+
+    protected async Task Save()
+    {
+        if (String.IsNullOrWhiteSpace(_filename)) {
+            await Helpers.DelayedFocus("manage-file-FileName");
+            return;
+        }
+
+        file.FileName = _filename + file.Extension;
+
+        if (OnComplete != null) {
+            OnComplete.DynamicInvoke(file);
+        }
+
+        _visible = false;
+        DialogService.Close();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (_visible && update.UpdateType == DataObjects.SignalRUpdateType.File && update.ItemId == FileId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    _visible = false;
+                    DialogService.Close();
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var updatedFile = Helpers.DeserializeObject<DataObjects.FileStorage>(update.ObjectAsString);
+                    if (updatedFile != null) {
+                        file = updatedFile;
+
+                        UpdateFilename();
+
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected async Task Undelete()
+    {
+        file.Deleted = false;
+        await Save();
+    }
+
+    protected void UpdateFilename()
+    {
+        _filename = !String.IsNullOrWhiteSpace(file.FileName) ? file.FileName : String.Empty;
+        if (_filename.Contains(".")) {
+            _filename = _filename.Substring(0, _filename.LastIndexOf("."));
+        }
+    }
+}

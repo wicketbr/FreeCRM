@@ -1,0 +1,908 @@
+﻿@page "/Settings"
+@page "/{TenantCode}/Settings"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    @if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Settings" IncludeIcon="true" />
+            <StickyMenuIcon />
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Settings" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-success" @onclick="SaveSettings" disabled="@_loading">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+            </div>
+
+            <RequiredIndicator />
+
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tabGeneralButton" data-bs-toggle="tab" data-bs-target="#tabGeneral"
+                            type="button" role="tab" aria-controls="home" aria-selected="true">
+                        <Language Tag="SettingsGeneral" />
+                    </button>
+                </li>
+                @if (Model.FeatureEnabledThemes) {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tabThemeButton" data-bs-toggle="tab" data-bs-target="#tabTheme"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                            <Language Tag="SettingsTheme" />
+                        </button>
+                    </li>
+                }
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tabAuthenticationButton" data-bs-toggle="tab" data-bs-target="#tabAuthentication"
+                            type="button" role="tab" aria-controls="home" aria-selected="true">
+                        <Language Tag="SettingsAuthentication" />
+                    </button>
+                </li>
+
+                @if (_availableOptInOptions.Any()) {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tabOptionalFeaturesButton" data-bs-toggle="tab" data-bs-target="#tabOptionalFeatures"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                            <Language Tag="SettingsOptionalFeatures" />
+                        </button>
+                    </li>
+                }
+
+                @if (Model.FeatureEnabledWorkSchedule) {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tabWorkScheduleButton" data-bs-toggle="tab" data-bs-target="#tabWorkSchedule"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                            <Language Tag="SettingsWorkSchedule" />
+                        </button>
+                    </li>
+                }
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tabEmailButton" data-bs-toggle="tab" data-bs-target="#tabEmail"
+                            type="button" role="tab" aria-controls="home" aria-selected="true">
+                        <Language Tag="SettingsEmail" />
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="tab-content tab-content-settings">
+            <div id="tabGeneral" class="tab-pane active" role="tabpanel" aria-labelledby="tabGeneralButton">
+                <div class="mb-2">
+                    <label for="edit-setting-name"><Language Tag="Name" Required="true" /></label>
+                    <input id="edit-setting-name" type="text" class="@Helpers.MissingValue(_tenant.Name, "form-control")" @bind="_tenant.Name" @bind:event="oninput" />
+                </div>
+
+                <div class="mb-2">
+                    <label for="edit-setting-defaultCultureCode"><Language Tag="DefaultCultureCode" /></label>
+                    <select id="edit-setting-defaultCultureCode" class="form-select" @bind="_tenant.TenantSettings.DefaultCultureCode">
+                        <option value=""></option>
+                        @foreach (var cc in Model.CultureCodes.OrderBy(x => x.Id)) {
+                            <option value="@cc.Id">@cc.Id [@cc.Value]</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-2 form-check form-switch">
+                    <input type="checkbox" role="switch" class="form-check-input" id="edit-setting-allowUsersToManageAvatars" @bind="_tenant.TenantSettings.AllowUsersToManageAvatars" />
+                    <label for="edit-setting-allowUsersToManageAvatars" class="form-check-label"><Language Tag="AllowUsersToManageAvatar" /></label>
+                </div>
+
+                <div class="mb-2">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" role="switch" class="form-check-input" id="edit-setting-allowUsersToManageBasicProfileInfo" @bind="_tenant.TenantSettings.AllowUsersToManageBasicProfileInfo" />
+                        <label for="edit-setting-allowUsersToManageBasicProfileInfo" class="form-check-label"><Language Tag="AllowUsersToManageBasicProfileInfo" /></label>
+                    </div>
+
+                    @if (_tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
+                        <div class="indented">
+                            <label for="edit-tenant-allowUsersToManageBasicProfileInfoElements"><Language Tag="AllowUsersToManageBasicProfileInfoElements" /></label>
+                            <select id="allowUsersToManageBasicProfileInfoElements" class="form-select" multiple size="8" @bind="_allowUsersToManageBasicProfileInfoElements">
+                                <option value="name">Name</option>
+                                <option value="email">Email Address</option>
+                                <option value="phone">Phone Number</option>
+                                <option value="employeeid">Employee ID</option>
+                                <option value="title">Title</option>
+                                <option value="department">Department</option>
+                                <option value="location">Location</option>
+                            </select>
+                        </div>
+                    }
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-bg-primary"><Language Tag="Logo" /></div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <Language Tag="LogoInfo" />
+                        </div>
+
+                        <div class="mb-2">
+                            @if (_tenant.TenantSettings.Logo.HasValue && _tenant.TenantSettings.Logo != Guid.Empty) {
+                                <DeleteConfirmation OnConfirmed="DeleteTenantLogo" />
+                            }
+                            <button type="button" class="btn btn-success" @onclick="UploadLogo">
+                                <Language Tag="UploadFile" IncludeIcon="true" />
+                            </button>
+                        </div>
+
+                        @if (!String.IsNullOrWhiteSpace(LogoUrl)) {
+                            <div class="mb-2">
+                                <img class="logo-medium" src="@LogoUrl" />
+                            </div>
+                        }
+
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="edit-setting-LogoIncludedOnHomePage" @bind="_tenant.TenantSettings.LogoIncludedOnHomePage" />
+                            <label for="edit-setting-LogoIncludedOnHomePage" class="form-check-label"><Language Tag="LogoIncludedOnHomePage" /></label>
+                        </div>
+
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="edit-setting-LogoIncludedOnNavbar" @bind="_tenant.TenantSettings.LogoIncludedOnNavbar" />
+                            <label for="edit-setting-LogoIncludedOnNavbar" class="form-check-label"><Language Tag="LogoIncludedOnNavbar" /></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header bg-danger text-bg-danger"><Language Tag="DeletePreferences" /></div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <Language Tag="DeletePreferencesInfo" />
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="delete-preference">
+                                <Language Tag="DeletePreferences" />
+                            </label>
+                            <select id="delete-preference" class="form-select" @bind="_deletePreference">
+                                <option value="mark"><Language Tag="DeletePreferencesMarkAsDeleted" /></option>
+                                <option value="immediate"><Language Tag="DeletePreferencesImmediate" /></option>
+                            </select>
+                        </div>
+
+                        @if (_deletePreference == "mark") {
+                            <div class="mb-2">
+                                <label for="delete-preference-deleteAfterDays">
+                                    <Language Tag="DeletePreferencesDeleteAfterDays" />
+                                </label>
+                                <span class="note">
+                                    -
+                                    <Language Tag="DeletePreferencesDeleteAfterDaysInfo" />
+                                </span>
+                                <input type="number" min="0" step="1" id="delete-preference-deleteAfterDays" class="form-control" @bind="_tenant.TenantSettings.DeleteMarkedRecordsAfterDays" />
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            
+            @if (Model.FeatureEnabledThemes) {
+                <div id="tabTheme" class="tab-pane" role="tabpanel" aria-labelledby="tabThemeButton">
+                    <div class="mb-2">
+                        <Language Tag="ThemeInfo" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="edit-setting-theme"><Language Tag="Theme" /></label>
+                        <select class="form-select" id="edit-setting-theme" @bind="_tenant.TenantSettings.Theme">
+                            <option value=""><Language Tag="ThemeAuto" /></option>
+                            <option value="light"><Language Tag="ThemeLight" /></option>
+                            <option value="dark"><Language Tag="ThemeDark" /></option>
+                            <option value="blue"><Language Tag="ThemeBlue" /></option>
+                            <option value="cyan"><Language Tag="ThemeCyan" /></option>
+                            <option value="green"><Language Tag="ThemeGreen" /></option>
+                            <option value="gray"><Language Tag="ThemeGray" /></option>
+                            <option value="indigo"><Language Tag="ThemeIndigo" /></option>
+                            <option value="orange"><Language Tag="ThemeOrange" /></option>
+                            <option value="pink"><Language Tag="ThemePink" /></option>
+                            <option value="purple"><Language Tag="ThemePurple" /></option>
+                            <option value="red"><Language Tag="ThemeRed" /></option>
+                            <option value="teal"><Language Tag="ThemeTeal" /></option>
+                            <option value="yellow"><Language Tag="ThemeYellow" /></option>
+                            <option value="custom"><Language Tag="ThemeCustom" /></option>
+                        </select>
+                    </div>
+
+                    @if (_tenant.TenantSettings.Theme == "custom") {
+                        <div class="mb-2">
+                            <label for="edit-setting-theme-css">
+                                <Language Tag="ThemeCustomInfo" />
+                                <button type="button" class="btn btn-sm btn-primary mb-2" @onclick="DefaultCustomThemeCss">
+                                    <Language Tag="ThemeCustomCssDefault" IncludeIcon="true" />
+                                </button>
+                            </label>
+                            <textarea id="edit-setting-theme-css" class="form-control code"
+                                      @bind="_tenant.TenantSettings.ThemeCss" rows="@TextareaHeightDefaultCustomThemeCss">
+                                                    </textarea>
+                        </div>
+                    }
+
+                    <div class="mb-2">
+                        <Language Tag="ThemeFontInfo" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="edit-setting-theme-css-font">
+                            <Language Tag="ThemeFont" />
+                        </label>
+                        <input type="text" id="edit-setting-theme-css-font" class="form-control" @bind="_tenant.TenantSettings.ThemeFont" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="edit-setting-theme-css-font-import">
+                            <Language Tag="ThemeFontCssImport" />
+                        </label>
+                        <input type="text" id="edit-setting-theme-css-font-import" class="form-control" @bind="_tenant.TenantSettings.ThemeFontCssImport" />
+                    </div>
+
+
+                </div>
+            }
+            
+            <div id="tabAuthentication" class="tab-pane" role="tabpanel" aria-labelledby="tabAuthenticationButton">
+                <div class="mb-2 form-check form-switch">
+                    <input type="checkbox" role="switch" class="form-check-input" id="edit-setting-requirePreExistingAccountToLogIn" @bind="_tenant.TenantSettings.RequirePreExistingAccountToLogIn" />
+                    <label for="edit-setting-requirePreExistingAccountToLogIn" class="form-check-label"><Language Tag="RequirePreExistingAccount" /></label>
+                    <div class="note"><Language Tag="RequirePreExistingAccountInfo" /></div>
+                </div>
+
+                @if (AuthOptionLocal) {
+                    <div class="mb-2">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-allowUsersToResetPasswordsForLocalLogin" @bind="_tenant.TenantSettings.AllowUsersToResetPasswordsForLocalLogin" />
+                            <label for="edit-tenant-allowUsersToResetPasswordsForLocalLogin" class="form-check-label"><Language Tag="AllowUsersToResetLocalPasswordsAtLogin" /></label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-allowUsersToSignUpForLocalLogin" @bind="_tenant.TenantSettings.AllowUsersToSignUpForLocalLogin" />
+                            <label for="edit-tenant-allowUsersToSignUpForLocalLogin" class="form-check-label"><Language Tag="AllowUsersToSignUpAtLogin" /></label>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (_availableOptInOptions.Any()) {
+                <div id="tabOptionalFeatures" class="tab-pane" role="tabpanel" aria-labelledby="tabOptionalFeaturesButton">
+                    <div class="mb-2">
+                        <Language Tag="FeatureOptInInfo" />
+                    </div>
+
+                    @if (_availableOptInOptions.Contains("departments")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-departments" @bind="_optInDepartments" />
+                            <label for="opt-in-departments" class="form-check-label"><Language Tag="FeatureOptInDepartments" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("emailtemplates")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-emailtemplates" @bind="_optInEmailTemplates" />
+                            <label for="opt-in-emailtemplates" class="form-check-label"><Language Tag="FeatureOptInEmailTemplates" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("employeeid")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-employeeid" @bind="_optInEmployeeId" />
+                            <label for="opt-in-employeeid" class="form-check-label"><Language Tag="FeatureOptInEmployeeId" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("files")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-files" @bind="_optInFiles" />
+                            <label for="opt-in-files" class="form-check-label"><Language Tag="FeatureOptInFiles" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("invoices")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-invoices" @bind="_optInInvoices" />
+                            <label for="opt-in-invoices" class="form-check-label"><Language Tag="FeatureOptInInvoices" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("location")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-location" @bind="_optInLocation" />
+                            <label for="opt-in-location" class="form-check-label"><Language Tag="FeatureOptInLocation" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("scheduling")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-scheduling" @bind="_optInScheduling" />
+                            <label for="opt-in-scheduling" class="form-check-label"><Language Tag="FeatureOptInScheduling" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("services")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-services" @bind="_optInServices" />
+                            <label for="opt-in-services" class="form-check-label"><Language Tag="FeatureOptInServices" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("tags")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-tags" @bind="_optInTags" />
+                            <label for="opt-in-tags" class="form-check-label"><Language Tag="FeatureOptInTags" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("themes")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-themes" @bind="_optInThemes" />
+                            <label for="opt-in-themes" class="form-check-label"><Language Tag="FeatureOptInThemes" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("udf")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-udf" @bind="_optInUDF" />
+                            <label for="opt-in-udf" class="form-check-label"><Language Tag="FeatureOptInUDF" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("usergroups")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-usergroups" @bind="_optInUserGroups" />
+                            <label for="opt-in-usergroups" class="form-check-label"><Language Tag="FeatureOptInUserGroups" /></label>
+                        </div>
+                    }
+
+                    @if (_availableOptInOptions.Contains("workschedule")) {
+                        <div class="mb-2 form-check form-switch">
+                            <input type="checkbox" role="switch" class="form-check-input" id="opt-in-workschedule" @bind="_optInWorkSchedule" />
+                            <label for="opt-in-workschedule" class="form-check-label"><Language Tag="FeatureOptInWorkSchedule" /></label>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div id="tabEmail" class="tab-pane" role="tabpanel" aria-labelledby="tabEmailButton">
+                <div class="mb-4">
+                    <label for="edit-tenant-defaultReplyToAddress"><Language Tag="DefaultReplyToAddress" /></label>
+                    <input type="text" class="form-control" id="edit-tenant-defaultReplyToAddress" @bind="_tenant.TenantSettings.DefaultReplyToAddress" />
+                </div>
+
+            </div>
+
+            @if (Model.FeatureEnabledWorkSchedule) {
+                <div id="tabWorkSchedule" class="tab-pane" role="tabpanel" aria-labelledby="tabWorkScheduleButton">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th style="width:1%;"></th>
+                                <th style="width:1%;"><Language Tag="WorkScheduleDay" ReplaceSpaces="true" /></th>
+                                <th style="width:1%;"><Language Tag="WorkScheduleAllDay" ReplaceSpaces="true" /></th>
+                                <th><Language Tag="WorkScheduleStart" ReplaceSpaces="true" /></th>
+                                <th><Language Tag="WorkScheduleEnd" ReplaceSpaces="true" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Sunday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Sunday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Sunday" class="form-check-label"><Language Tag="DayLabelSunday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SundayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SundayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday || _tenant.TenantSettings.WorkSchedule.SundayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SundayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday || _tenant.TenantSettings.WorkSchedule.SundayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Monday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Monday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Monday" class="form-check-label"><Language Tag="DayLabelMonday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.MondayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.MondayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday || _tenant.TenantSettings.WorkSchedule.MondayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.MondayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday || _tenant.TenantSettings.WorkSchedule.MondayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Tuesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Tuesday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Tuesday" class="form-check-label"><Language Tag="DayLabelTuesday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday || _tenant.TenantSettings.WorkSchedule.TuesdayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday || _tenant.TenantSettings.WorkSchedule.TuesdayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Wednesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Wednesday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Wednesday" class="form-check-label"><Language Tag="DayLabelWednesday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday || _tenant.TenantSettings.WorkSchedule.WednesdayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday || _tenant.TenantSettings.WorkSchedule.WednesdayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Thursday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Thursday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Thursday" class="form-check-label"><Language Tag="DayLabelThursday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday || _tenant.TenantSettings.WorkSchedule.ThursdayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday || _tenant.TenantSettings.WorkSchedule.ThursdayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Friday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Friday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Friday" class="form-check-label"><Language Tag="DayLabelFriday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.FridayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.FridayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday || _tenant.TenantSettings.WorkSchedule.FridayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.FridayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday || _tenant.TenantSettings.WorkSchedule.FridayAllDay)" /></td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" id="edit-tenant-Saturday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Saturday" />
+                                    </div>
+                                </td>
+                                <td><label for="edit-tenant-Saturday" class="form-check-label"><Language Tag="DayLabelSaturday" /></label></td>
+                                <td class="center">
+                                    <div class="form-check form-switch">
+                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday)" />
+                                    </div>
+                                </td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday || _tenant.TenantSettings.WorkSchedule.SaturdayAllDay)" /></td>
+                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday || _tenant.TenantSettings.WorkSchedule.SaturdayAllDay)" /></td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            }
+            
+        </div>
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string[] _allowUsersToManageBasicProfileInfoElements = new string[] { };
+    protected List<string> _availableOptInOptions = new List<string>();
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected string[] _loginOptions = new string[] { };
+    protected bool _optInDepartments = false;
+    protected bool _optInEmailTemplates = false;
+    protected bool _optInEmployeeId = false;
+    protected bool _optInFiles = false;
+    protected bool _optInInvoices = false;
+    protected bool _optInLocation = false;
+    protected bool _optInScheduling = false;
+    protected bool _optInServices = false;
+    protected bool _optInTags = false;
+    protected bool _optInThemes = false;
+    protected bool _optInUDF = false;
+    protected bool _optInUserGroups = false;
+    protected bool _optInWorkSchedule = false;
+    protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
+
+    protected string _deletePreference = "";
+
+    protected string _pageName = "settings";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn){
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadSettings();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected bool AuthOptionLocal
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("local");
+        }
+    }
+
+    protected void DefaultCustomThemeCss()
+    {
+        string css = 
+@"[data-bs-theme=custom] {
+  color-scheme: custom;
+
+  /* General body text color */
+  --bs-body-color: #495057;
+  --bs-body-color-rgb: 73, 80, 87;
+
+  /* Color used for menu highlighting */
+  --bs-tertiary-bg: #495057;
+  --bs-tertiary-bg-rgb: 73, 80, 87;
+
+  /* Color used for border around elements, such as form inputs */
+  --bs-border-color: #495057;
+
+  /* Color used for body emphasis text */
+  --bs-emphasis-color: #495057;
+
+  /* Color used for top navmenu text */
+  --bs-emphasis-color-rgb: 255, 255, 255;
+}
+
+/* Color used for the background of the top navbar */
+[data-bs-theme=custom] nav.navbar {
+  background-color: #495057;
+}
+
+/* Font color used when hovering over dropdown menu items */
+[data-bs-theme=custom] .dropdown-menu {
+  --bs-dropdown-link-hover-color: #fff;
+}";
+
+        _tenant.TenantSettings.ThemeCss = css;
+    }
+
+    protected async Task DeleteTenantLogo()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteTenantLogo");
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Tenant.TenantSettings.Logo = null;
+                _tenant.TenantSettings.Logo = null;
+
+                var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
+                if(tenantItem != null) {
+                    tenantItem.TenantSettings.Logo = null;
+                }
+
+                ToggleLogoUpdate();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected int TextareaHeightDefaultCustomThemeCss
+    {
+        get {
+            int output = Helpers.LinesInString(_tenant.TenantSettings.ThemeCss);
+            if(output < 5) {
+                output = 5;
+            }
+            return output;
+        }
+    }
+
+    protected async Task LoadSettings()
+    {
+        _loading = true;
+
+        var tenant = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/GetTenant/" + Model.TenantId.ToString());
+        if(tenant != null) {
+            _tenant = tenant;
+            _allowUsersToManageBasicProfileInfoElements = Helpers.ListToArray(_tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements);
+            _loginOptions = Helpers.ListToArray(_tenant.TenantSettings.LoginOptions);
+
+            switch (_tenant.TenantSettings.DeletePreference) {
+                case DataObjects.DeletePreference.Immediate:
+                    _deletePreference = "immediate";
+                    break;
+
+                default:
+                    _deletePreference = "mark";
+                    break;
+            }
+
+            // Add any options that aren't blocked by the AppAdmin
+            _availableOptInOptions = new List<string>();
+            var blockedOptions = _tenant.TenantSettings.ModuleHideElements;
+
+            foreach(var item in Model.Modules) {
+                if (!blockedOptions.Contains(item)) {
+                    _availableOptInOptions.Add(item);
+                }
+            }
+
+            if (_tenant.TenantSettings.ModuleOptInElements.Any()) {
+                _optInDepartments = _tenant.TenantSettings.ModuleOptInElements.Contains("departments");
+                _optInEmailTemplates = _tenant.TenantSettings.ModuleOptInElements.Contains("emailtemplates");
+                _optInEmployeeId = _tenant.TenantSettings.ModuleOptInElements.Contains("employeeid");
+                _optInFiles = _tenant.TenantSettings.ModuleOptInElements.Contains("files");
+                _optInInvoices = _tenant.TenantSettings.ModuleOptInElements.Contains("invoices");
+                _optInLocation = _tenant.TenantSettings.ModuleOptInElements.Contains("location");
+                _optInScheduling = _tenant.TenantSettings.ModuleOptInElements.Contains("scheduling");
+                _optInServices = _tenant.TenantSettings.ModuleOptInElements.Contains("services");
+                _optInTags = _tenant.TenantSettings.ModuleOptInElements.Contains("tags");
+                _optInThemes = _tenant.TenantSettings.ModuleOptInElements.Contains("themes");
+                _optInUDF = _tenant.TenantSettings.ModuleOptInElements.Contains("udf");
+                _optInUserGroups = _tenant.TenantSettings.ModuleOptInElements.Contains("usergroups");
+                _optInWorkSchedule = _tenant.TenantSettings.ModuleOptInElements.Contains("workschedule");
+            }
+
+            _loading = false;
+            StateHasChanged();
+
+            await Helpers.DelayedFocus("edit-setting-name");
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected string LogoUrl
+    {
+        get {
+            string output = "";
+
+            if(_tenant.TenantSettings.Logo.HasValue && _tenant.TenantSettings.Logo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)_tenant.TenantSettings.Logo).ToString();
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task SaveSettings()
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        _tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements = _allowUsersToManageBasicProfileInfoElements.ToList();
+        _tenant.TenantSettings.LoginOptions = _loginOptions.ToList();
+
+        switch (_deletePreference) {
+            case "immediate":
+                _tenant.TenantSettings.DeletePreference = DataObjects.DeletePreference.Immediate;
+                break;
+
+            default:
+                _tenant.TenantSettings.DeletePreference = DataObjects.DeletePreference.MarkAsDeleted;
+                break;
+        }
+
+        List<string> optIn = new List<string>();
+
+        if (_availableOptInOptions.Contains("departments") && _optInDepartments) { optIn.Add("departments"); }
+        if (_availableOptInOptions.Contains("emailtemplates") && _optInEmailTemplates) { optIn.Add("emailtemplates"); }
+        if (_availableOptInOptions.Contains("employeeid") && _optInEmployeeId) { optIn.Add("employeeid"); }
+        if (_availableOptInOptions.Contains("files") && _optInFiles) { optIn.Add("files"); }
+        if (_availableOptInOptions.Contains("invoices") && _optInInvoices) { optIn.Add("invoices"); }
+        if (_availableOptInOptions.Contains("location") && _optInLocation) { optIn.Add("location"); }
+        if (_availableOptInOptions.Contains("scheduling") && _optInScheduling) { optIn.Add("scheduling"); }
+        if (_availableOptInOptions.Contains("services") && _optInServices){ optIn.Add("services"); }
+        if (_availableOptInOptions.Contains("tags") && _optInTags) { optIn.Add("tags"); }
+        if (_availableOptInOptions.Contains("themes") && _optInThemes) { optIn.Add("themes"); }
+        if (_availableOptInOptions.Contains("udf") && _optInUDF) { optIn.Add("udf"); }
+        if (_availableOptInOptions.Contains("usergroups") && _optInUserGroups) { optIn.Add("usergroups"); }
+        if (_availableOptInOptions.Contains("workschedule") && _optInWorkSchedule) { optIn.Add("workschedule"); }
+
+        _tenant.TenantSettings.ModuleOptInElements = optIn;
+
+        var saved = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/SaveTenant", _tenant);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                var currentTenant = Model.Tenants.FirstOrDefault(x => x.TenantId == saved.TenantId);
+                if(currentTenant != null) {
+                    var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
+                    if(dup != null) {
+                        currentTenant = saved;
+                    }
+                }
+
+                if(Model.TenantId == saved.TenantId) {
+                    var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
+                    if(dup != null) {
+                        Model.Tenant = dup;
+                    }
+                }
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+
+            Model.Message_Saved();
+        } else {
+            Model.UnknownError();    
+        }
+    }
+
+    protected int TextareaHeightCustomCode()
+    {
+        int output = Helpers.LinesInString(_tenant.TenantSettings.CustomAuthenticationCode);
+        if(output < 5) {
+            output = 5;
+        }
+        return output;
+    }
+
+    protected int TextareaHeightRSA()
+    {
+        int linesInPrivateKey = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPrivateKey);
+        int linesInPublicKey = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPublicKey);
+
+        int output = linesInPrivateKey;
+        if(linesInPublicKey > output) {
+            output = linesInPublicKey;
+        }
+
+        return output;
+    }
+
+    protected void ToggleLogoUpdate()
+    {
+        // var tenant = Helpers.DuplicateObject<DataObjects.Tenant>(Model.Tenant);
+        // if(tenant != null){
+        //     Model.Tenant = tenant;
+        // }
+
+        // StateHasChanged();
+        Model.TriggerUpdate();
+    }
+
+    protected async Task UploadLogo()
+    {
+        Delegate onUploadComplete = async (DataObjects.FileStorage fileStorage) => {
+            await UploadedLogo(fileStorage);
+        };
+
+        string title = "";
+        string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
+        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
+        List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
+
+        await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
+    }
+
+    protected async Task UploadedLogo(DataObjects.FileStorage fileStorage)
+    {
+        if (fileStorage != null && !String.IsNullOrWhiteSpace(fileStorage.Extension)) {
+            bool allowedExtension = false;
+            string extension = fileStorage.Extension;
+
+            switch (extension.ToUpper()) {
+                case ".GIF":
+                case ".JPG":
+                case ".JPEG":
+                case ".PNG":
+                case ".SVG":
+                    allowedExtension = true;
+                    break;
+            }
+
+            if (allowedExtension) {
+                fileStorage.FileId = Guid.Empty;
+                fileStorage.SourceFileId = "logo";
+
+                Model.Message_Saving();
+                var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveTenantLogo", fileStorage);
+
+                Model.ClearMessages();
+
+                if (saved != null) {
+                    if (saved.Result) {
+                        // Update this user with the new photo id
+                        var photoId = await Helpers.GetOrPost<DataObjects.SimpleResponse>("api/Data/GetTenantLogo/");
+                        if (photoId != null && photoId.Result) {
+                            Guid fileId = Guid.Empty;
+                            try {
+                                fileId = new Guid(Helpers.StringValue(photoId.Message));
+                                _tenant.TenantSettings.Logo = fileId;
+
+                                Model.Tenant.TenantSettings.Logo = fileId;
+
+                                var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
+                                if(tenantItem != null) {
+                                    tenantItem.TenantSettings.Logo = fileId;
+                                }
+
+                                ToggleLogoUpdate();
+                            } catch { }
+                        }
+                    } else {
+                        Model.ErrorMessages(saved.Messages);
+                    }
+                } else {
+                    Model.UnknownError();
+                }
+            } else {
+                string errorMessage = Helpers.Text("InvalidImageFileType") + " - " + fileStorage.FileName;
+                Model.ErrorMessage(errorMessage);
+            }
+        }
+
+        StateHasChanged();
+    }
+}

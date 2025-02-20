@@ -1,0 +1,482 @@
+﻿@page "/Settings/Language"
+@page "/{TenantCode}/Settings/Language"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == "language") {
+    switch (Helpers.StringLower(_view)) {
+        case "add":
+            <h1 class="page-title">
+                <Icon Name="Language" />
+                <Language Tag="AddLanguage" />
+            </h1>
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-dark" @onclick="Cancel">
+                    <Language Tag="Cancel" IncludeIcon="true" />
+                </button>
+            </div>
+
+            <div class="alert alert-info">
+                <Language Tag="AddLanguageInfo" />
+            </div>
+
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th style="width:1%;" class="min-100">
+                            <Language Tag="Code" />
+                        </th>
+                        <th>
+                            <Language Tag="Description" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var cc in Model.CultureCodes.OrderBy(x => x.Id)) {
+                        var inUse = Model.Languages.FirstOrDefault(x => x.TenantId == Model.TenantId && x.Culture == cc.Value);
+                        if (inUse == null) {
+                            <tr>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary nowrap" @onclick="@(() => AddSelectedLanguage(cc.Id))">
+                                        <Language Tag="Add" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@cc.Id</td>
+                                <td>@cc.Value</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            break;
+
+        case "adding":
+            <h1 class="page-title">
+                <Language Tag="AddLanguage" IncludeIcon="true" />
+            </h1>
+
+            <h2 class="subtitle">
+                <Language Tag="ProcessingWait" />
+            </h2>
+            break;
+
+        case "deleting":
+            <h1 class="page-title">
+                <Language Tag="Language" IncludeIcon="true" />
+            </h1>
+            <h2 class="subtitle">
+                <Language Tag="DeletingWait" />
+            </h2>
+            break;
+
+        case "edit":
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="EditLanguage" IncludeIcon="true" /> &ldquo;<span>@_cultureCode</span>&rdquo;
+                    <StickyMenuIcon />
+                </h1>
+
+                <div class="mb-2">
+                    <button type="button" class="btn btn-dark" @onclick="Cancel">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="EditAll">
+                        <Language Tag="EditAll" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="btn btn-warning" @onclick="ResetAll">
+                        <Icon Name="Reset" />
+                        <Language Tag="ResetLanguageDefaults" />
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <Language Tag="EditLanguageInfo" />
+            </div>
+
+            <div class="mb-2">
+                <FreeBlazor.AutoComplete Class="form-control"
+                    Disabled="false"
+                    GetAutoCompleteItems="Lookup"
+                    HighlightFirstMatch="true"
+                    Id="language-tag-lookup"
+                    LookupDelay="300"
+                    MatchParentWidth="true"
+                    MinimumCharacters="1"
+                    OnSelected="LookupItemSelected"
+                    PlaceholderText="@Helpers.Text("SearchLanguageTag")" />
+            </div>
+
+            @if (_editingItem != "") {
+                var defaultValue = Helpers.DefaultLanguage(_editingItem);
+
+                <div class="card mt-4">
+                    <div class="card-header bg-primary text-bg-primary"><Language Tag="EditItem" /> &ldquo;<span>@_editingItem</span>&rdquo;</div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <button type="button" class="btn btn-sm btn-dark" @onclick="CancelEditingItem">
+                                <Language Tag="Cancel" IncludeIcon="true" />
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" @onclick="EditItemSave">
+                                <Icon Name="Save" />
+                                <Language Tag="SaveItemChanges" />
+                            </button>
+                            @if (_value != defaultValue) {
+                                <button type="button" class="btn btn-sm btn-warning" @onclick="ResetItem">
+                                    <Language Tag="Reset" IncludeIcon="true" />
+                                </button>
+                            }
+                        </div>
+
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="edit-language-item" @bind="_value" @bind:event="oninput" />
+                        </div>
+
+                        @if (_value != defaultValue) {
+                            <div class="mb-2">
+                                <strong><Language Tag="Default" />:</strong>&nbsp;<span>@((MarkupString)defaultValue)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            break;
+
+        case "editall":
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="EditLanguage" IncludeIcon="true" /> &ldquo;<span>@_cultureCode</span>&rdquo;
+                    <StickyMenuIcon />
+                </h1>
+
+                <div class="mb-2">
+                    <button type="button" class="btn btn-dark" @onclick="Cancel">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="btn btn-warning" @onclick="ResetAll">
+                        <Icon Name="Reset" />
+                        <Language Tag="ResetLanguageDefaults" />
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                </div>
+            </div>
+
+            @foreach (var item in _language.Phrases) {
+                var tagName = "" + item.Id;
+                var defaultValue = Helpers.DefaultLanguage(tagName);
+                string itemClass = defaultValue == item.Value ? "badge text-bg-secondary" : "badge text-bg-warning";
+
+                <div class="mb-3">
+                    <div class="mb-1">
+                        <b>@item.Id</b><span>:&nbsp;</span><span class="@itemClass">@defaultValue</span>
+                    </div>
+                    <input type="text" class="form-control" @bind="item.Value" />
+                </div>
+            }
+            break;
+
+        case "loading":
+            <h1 class="page-title">
+                <Language Tag="Language" IncludeIcon="true" />
+            </h1>
+
+            <h2 class="subtitle">
+                <Language Tag="LoadingWait" />
+            </h2>
+            break;
+
+        default:
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="Language" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+
+                <div class="mb-2">
+                    <button type="button" class="btn btn-success" @onclick="AddLanguage">
+                        <Language Tag="AddLanguage" IncludeIcon="true" />
+                    </button>
+                </div>
+            </div>
+
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th style="width:1%;" class="min-100">
+                            <Language Tag="Code" />
+                        </th>
+                        <th>
+                            <Language Tag="Description" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var language in Model.Languages.Where(x => x.TenantId == Model.TenantId).OrderBy(x => x.Culture)) {
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => Edit(language.Culture))">
+                                    <Language Tag="Edit" IncludeIcon="true" />
+                                </button>
+                            </td>
+                            <td>@language.Culture</td>
+                            <td>@language.Description</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            break;
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _cultureCode = "";
+    protected string _editingItem = "";
+    protected DataObjects.Language _language = new DataObjects.Language();
+    protected string _value = "";
+    protected string _view = "";
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains("Languages")){
+            Model.Subscribers_OnChange.Add("Languages");
+            Model.OnChange += StateHasChanged;
+        }
+
+        Model.View = "language";
+    }
+
+    protected void AddLanguage()
+    {
+        _view = "add";
+        StateHasChanged();
+    }
+
+    protected async Task AddSelectedLanguage(string? cc)
+    {
+        if (!String.IsNullOrWhiteSpace(cc)) {
+            _view = "adding";
+            StateHasChanged();
+
+            var added = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/AddLanguage", new DataObjects.SimplePost { SingleItem = cc });
+            if(added != null) {
+                if (added.Result) {
+                    await Helpers.ReloadModel();
+                    _view = "";
+                } else {
+                    // Show errors
+                    _view = "";
+                }
+            } else {
+                _view = "";
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected void Cancel()
+    {
+        _language = new DataObjects.Language();
+        _view = "";
+        StateHasChanged();
+    }
+
+    protected async Task CancelEditingItem()
+    {
+        _editingItem = "";
+        _value = "";
+        StateHasChanged();
+
+        await Helpers.DelayedFocus("language-tag-lookup");
+    }
+
+    protected async Task Delete()
+    {
+        _view = "deleting";
+        StateHasChanged();
+
+        var result = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteLanguage", new DataObjects.SimplePost { SingleItem = _cultureCode });
+        await Helpers.ReloadModel();
+        _view = "";
+        StateHasChanged();
+        if(result != null) {
+            if (!result.Result) {
+                Model.ErrorMessages(result.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task Edit(string CultureCode)
+    {
+        _view = "loading";
+        _cultureCode = "";
+        _editingItem = "";
+        StateHasChanged();
+
+        var lang = Model.Languages.FirstOrDefault(x => x.Culture.ToLower() == CultureCode.ToLower() && x.TenantId == Model.TenantId);
+        if(lang != null) {
+            var duplicateLanguage = Helpers.DuplicateObject<DataObjects.Language>(lang);
+            if(duplicateLanguage != null) {
+                _language = duplicateLanguage;
+                _cultureCode = CultureCode;
+                _view = "edit";
+                StateHasChanged();
+
+                await Helpers.DelayedFocus("language-tag-lookup");
+            }
+        }
+    }
+
+    protected void EditAll()
+    {
+        _editingItem = "";
+        _value = "";
+        _view = "editall";
+        StateHasChanged();
+    }
+
+    protected void EditItem(string tagName)
+    {
+        _editingItem = tagName;
+        _value = "";
+
+        var item = _language.Phrases.FirstOrDefault(x => x.Id != null && x.Id.ToLower() == tagName.ToLower());
+        if(item != null) {
+            _value += item.Value;
+        }
+
+        StateHasChanged();
+    }
+
+    protected void EditItemSave()
+    {
+        var item = _language.Phrases.FirstOrDefault(x => x.Id != null && x.Id.ToLower() == _editingItem.ToLower());
+        if(item != null) {
+            item.Value = _value;
+            _editingItem = "";
+            _value = "";
+            StateHasChanged();
+        }
+    }
+
+    protected async Task<List<(string key, string label)>?> Lookup(string search)
+    {
+        var output = new List<(string key, string label)>();
+
+        var items = _language.Phrases
+            .Where(x => 
+                (x.Id != null && x.Id.ToLower().Contains(search.ToLower())) ||
+                (x.Value != null && x.Value.ToLower().Contains(search.ToLower()))
+            )
+            .OrderBy(x => x.Id);
+
+        if(items != null && items.Any()) {
+            foreach(var item in items) {
+                if (!String.IsNullOrEmpty(item.Id) && !String.IsNullOrEmpty(item.Value)) {
+                    output.Add((item.Id, item.Id + " - " + item.Value));
+                }
+            }
+        }
+
+        return output;
+    }
+
+    protected async Task LookupItemSelected((string key, string label) item)
+    {
+        var languageItem = _language.Phrases.FirstOrDefault(x => x.Id != null && x.Id.ToLower() == item.key.ToLower());
+
+        if (languageItem != null) {
+            _editingItem = item.key;
+            _value = Helpers.StringValue(languageItem.Value);
+
+            StateHasChanged();
+            await Helpers.DelayedFocus("edit-language-item");
+        }
+    }
+
+    protected void ResetAll()
+    {
+        _editingItem = "";
+        _value = "";
+
+        var def = Helpers.DuplicateObject<DataObjects.Language>(Model.DefaultLanguage);
+        if(def != null) {
+            _language = def;
+        }
+
+        StateHasChanged();
+    }
+
+    protected void ResetItem()
+    {
+        _value = Helpers.DefaultLanguage(_editingItem);
+        StateHasChanged();
+    }
+
+    protected void ResetItem(string tagName)
+    {
+        var item = _language.Phrases.FirstOrDefault(x => x.Id != null && x.Id.ToLower() == tagName.ToLower());
+        if(item != null) {
+            item.Value = Helpers.DefaultLanguage(tagName);
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveLanguage", _language);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.Result) {
+                Model.Message_Saved();
+
+                _view = "";
+                StateHasChanged();
+            } else {
+                Model.ErrorMessages(saved.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+}

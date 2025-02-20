@@ -1,0 +1,57 @@
+﻿How I use the EF tools to build the EF models from my database design.
+For all steps below using the Package Manager Console utility, make sure the EFModels project
+is set as the Startup Project. The Package Manager Console can be opened by selecting
+"Tools / NuGet Package Manager / Package Manager Console" from the Visual Studio menus.
+
+1.  Use the Scaffold-DbContext to create or update the EFModels after making changes to the
+    underlying database.
+
+    Scaffold-DbContext "Data Source=(local);Initial Catalog=CRM;Persist Security Info=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "EFModels" -Context "EFDataModel" -UseDatabaseNames -Force
+
+
+
+
+
+2.  Remove or comment out the following OnConfiguring override in the \EFModels\EFDataModel.cs file before deploying:
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=(local);Initial Catalog=Data;Persist Security Info=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;TrustServerCertificate=True;");
+
+
+
+
+
+3.  Build migrations from the Package Manager after making changes to the EF models using the
+    Scaffold-DbContext method above, or by manually modifying the models:
+    
+    First migration: 
+        add-migration 001
+
+    Second migration, etc;
+        add-migration 002, etc.
+
+    Generate SQL script:
+        script-migration
+            To generate a script for a given framework uncomment the OnConfiguring override in the
+            EFDataModel.cs file for the framework you are using, and use the "script-migration" command
+            from the Package Manager console.
+
+            NOTE: Not all of the scripts that are generated will be perfect, but they will be close.
+            EF Core does a pretty good job with generating the migration scripts for the various
+            providers. However, the scripts created, which I store in the Migration Scripts\Framework
+            folders, are a good starting point for what ends up in the DataAccess\DataMigrations.Framework.cs
+            files. Help with the difference between various frameworks can be found at convert-in.com, such as:
+
+            MySQL type mappings compared to SQL Server:
+                https://www.convert-in.com/docs/mss2sql/types-mapping.htm
+
+            PostgreSQL type mappings compared to SQL Server:
+                https://www.convert-in.com/docs/mss2pgs/types-mapping.htm
+
+
+
+
+
+4.  Modify the various DataMigrations.FRAMEWORKS.cs class files to add a migration based on the
+    finalized SQL that you have tested against your provider.

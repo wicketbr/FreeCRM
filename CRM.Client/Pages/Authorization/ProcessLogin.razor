@@ -1,0 +1,54 @@
+﻿@page "/ProcessLogin"
+@page "/{TenantCode}/ProcessLogin"
+@implements IDisposable
+@inject BlazorDataModel Model
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+    // This page is hit immediately after a local login to make sure the entire login has been
+    // processed and the Model has completely loaded and logged the user in before redirecting
+    // to the main application home page.
+
+    protected System.Threading.Timer? timer;
+
+    public void Dispose()
+    {
+        DisposeTimer();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.View = "processlogin";
+
+        timer = new System.Threading.Timer(async(object? stateInfo) => {
+            await CheckLogin();
+        }, new System.Threading.AutoResetEvent(false), 0, 500);
+    }
+
+    protected async Task CheckLogin()
+    {
+        var user = await Helpers.GetCurrentUser();
+
+        if (user != null && user.ActionResponse.Result) {
+            if (Model.View == "processlogin") {
+                DisposeTimer();
+                Helpers.NavigateToRoot();
+            } else {
+                DisposeTimer();
+            }
+        }
+    }
+
+    protected void DisposeTimer()
+    {
+        if (timer != null) {
+            timer.Dispose();
+        }
+    }
+}

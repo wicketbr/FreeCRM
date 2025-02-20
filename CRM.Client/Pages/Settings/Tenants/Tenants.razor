@@ -1,0 +1,144 @@
+﻿@page "/Settings/Tenants"
+@page "/{TenantCode}/Settings/Tenants"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    <div class="@Model.StickyMenuClass">
+        <h1 class="page-title">
+            <Language Tag="Tenants" IncludeIcon="true" />
+            <StickyMenuIcon />
+        </h1>
+
+        <div class="mb-2">
+            <button type="button" class="btn btn-success" @onclick="AddTenant" disabled="@_loading">
+                <Language Tag="AddNewTenant" IncludeIcon="true" />
+            </button>
+        </div>
+    </div>
+
+    <div class="mb-2">
+        <div class="form-check form-switch">
+            <input type="checkbox" id="tenants-EnabledItemsOnly" class="form-check-input" @bind="Model.User.UserPreferences.EnabledItemsOnly" />
+            <label for="tenants-EnabledItemsOnly" class="form-check-label"><Language Tag="EnabledItemsOnly" /></label>
+        </div>
+    </div>
+
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        if (_tenants == null || !_tenants.Any(x => x.Enabled == true || !Model.User.UserPreferences.EnabledItemsOnly)) {
+            <Language Tag="NoItemsToShow" />
+        } else {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th><Language Tag="TenantId" ReplaceSpaces="true" /></th>
+                        <th><Language Tag="TenantName" ReplaceSpaces="true" /></th>
+                        <th style="width:1%;"><Language Tag="TenantCode" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Enabled" ReplaceSpaces="true" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tenant in _tenants) {
+                        string itemClass = String.Empty;
+                        if (!tenant.Enabled) {
+                            itemClass = "disabled";
+                        }
+                        <tr class="@itemClass">
+                            <td>
+                                <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditTenant(tenant.TenantId))">
+                                    <Language Tag="Edit" IncludeIcon="true" />
+                                </button>
+                            </td>
+                            <td class="nowrap"><span class="note">@tenant.TenantId</span></td>
+                            <td>@tenant.Name</td>
+                            <td>@tenant.TenantCode</td>
+                            <td class="center">@((MarkupString)Helpers.BooleanToIcon(tenant.Enabled))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected List<DataObjects.Tenant>? _tenants = null;
+
+    protected string _pageName = "tenants";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.AppAdmin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadTenants();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void AddTenant()
+    {
+        Helpers.NavigateTo("Settings/AddTenant");
+    }
+
+    protected void EditTenant(Guid TenantId)
+    {
+        Helpers.NavigateTo("Settings/EditTenant/" + TenantId.ToString());
+    }
+
+    protected async Task LoadTenants()
+    {
+        _loading = true;
+
+        var tenants = await Helpers.GetOrPost<List<DataObjects.Tenant>>("api/Data/GetTenants/");
+        if (tenants != null && tenants.Any()) {
+            _tenants = tenants;
+            _loading = false;
+            StateHasChanged();
+        } else {
+            Model.UnknownError();
+        }
+    }
+}

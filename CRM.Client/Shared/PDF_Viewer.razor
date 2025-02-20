@@ -1,0 +1,37 @@
+﻿@implements IDisposable
+@inject Radzen.DialogService DialogService
+<div class="mt-2 mb-2">
+    <button type="button" class="btn btn-dark" @onclick="Close">
+        <Language Tag="Close" IncludeIcon="true" />
+    </button>
+    @if (AllowDownload && FileId.HasValue) {
+        <button type="button" class="btn btn-primary" @onclick="Download">
+            <Language Tag="DownloadPDF" IncludeIcon="true" />
+        </button>
+    }
+</div>
+<BlazorBootstrap.PdfViewer Url="@PdfFile" />
+@code {
+    [Parameter]
+    public bool AllowDownload { get; set; }
+
+    [Parameter]
+    public Guid? FileId { get; set; }
+
+    [Parameter]
+    public string? PdfFile { get; set; }
+
+    public void Dispose() { }
+
+    protected void Close()
+    {
+        DialogService.Close();
+    }
+
+    protected async Task Download()
+    {
+        if (FileId.HasValue) {
+            await Helpers.DownloadFile((Guid)FileId);
+        }
+    }
+}

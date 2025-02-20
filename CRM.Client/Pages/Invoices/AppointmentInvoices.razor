@@ -1,0 +1,529 @@
+﻿@page "/AppointmentInvoices/{AppointmentId}"
+@page "/{TenantCode}/AppointmentInvoices/{AppointmentId}"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="AppointmentInvoices" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        if(_appointment.Users != null && _appointment.Users.Any()) {
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="AppointmentInvoices" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+                <button type="button" class="btn btn-success" @onclick="Save">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header text-bg-primary text-white">
+                    <Language Tag="Defaults" />
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-sm btn-success mb-2" @onclick="AddItemToDefaultInvoice">
+                        <Language Tag="InvoiceAddItem" IncludeIcon="true" />
+                    </button>
+
+                    <div class="row">
+                        <div class="col col-sm-4 mb-2">
+                            <label for="default-invoice-Title">
+                                <Language Tag="InvoiceTitle" />
+                            </label>
+                            <input type="text" class="form-control" id="default-invoice-Title" @bind="_defaults.Title" />
+                        </div>
+                        <div class="col col-sm-2 mb-2">
+                            <label for="default-invoice-InvoiceSendDate">
+                                <Language Tag="InvoiceSendDate" />
+                            </label>
+                            <br />
+                            <RadzenDatePicker TValue="DateTime?" Value="@_defaults.InvoiceSendDate" id="default-invoice-InvoiceSendDate"
+                            Change="@(args => _defaults.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                        </div>
+                        <div class="col col-sm-2 mb-2">
+                            <label for="default-invoice-InvoiceDueDate">
+                                <Language Tag="InvoiceDue" />
+                            </label>
+                            <br />
+                            <RadzenDatePicker TValue="DateTime?" Value="@_defaults.InvoiceDueDate" id="default-invoice-InvoiceDueDate"
+                            Change="@(args => _defaults.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                        </div>
+                        <div class="col col-sm-2">
+                            <label for="default-invoice-InvoiceNumber">
+                                <Language Tag="InvoiceNumber" />
+                            </label>
+                            <input type="text" class="form-control" id="default-invoice-InvoiceNumber" @bind="_defaults.InvoiceNumber" />
+                        </div>
+                        <div class="col col-sm-2">
+                            <label for="default-invoice-PONumber">
+                                <Language Tag="InvoicePO" />
+                            </label>
+                            <input type="text" class="form-control" id="default-invoice-PONumber" @bind="_defaults.PONumber" />
+                        </div>
+                    </div>
+
+                    <table class="table table-sm">
+                        <thead>
+                            <tr class="table-dark">
+                                <th style="width:1%;"></th>
+                                <th>
+                                    <Language Tag="InvoiceItemDescription" ReplaceSpaces="true" />
+                                </th>
+                                <th style="width:120px;">
+                                    <Language Tag="InvoiceItemPrice" ReplaceSpaces="true" />
+                                </th>
+                                <th style="width:100px;">
+                                    <Language Tag="InvoiceItemQuantity" ReplaceSpaces="true" />
+                                </th>
+                                <th style="width:100px;" class="right">
+                                    <Language Tag="InvoiceItemTotal" ReplaceSpaces="true" />
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var item in _defaults.InvoiceItems) {
+                                <tr>
+                                    <td>
+                                        @if (_defaults.InvoiceItems.Count() > 1) {
+                                            <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="(() => DeleteDefaultInvoiceItem(item.Id))">
+                                                <Language Tag="Delete" IncludeIcon="true" />
+                                            </button>
+                                        }
+                                    </td>
+                                    <td>
+                                        <input type="text" 
+                                        class="@Helpers.MissingValue(item.Description, "form-control")"
+                                        @bind="item.Description" @bind:event="oninput" />
+                                    </td>
+                                    <td>
+                                        <input type="number" min="0"
+                                        class="@Helpers.MissingValue(item.Price, "form-control")"
+                                        @bind="item.Price" @bind:event="oninput" />
+                                    </td>
+                                    <td>
+                                        <input type="number" min="0"
+                                        class="@Helpers.MissingValue(item.Quantity, "form-control")"
+                                        @bind="item.Quantity" @bind:event="oninput" />
+                                    </td>
+                                    <td class="right">
+                                        @((MarkupString)InvoiceItemTotal(item))
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            foreach(var user in _appointment.Users) {
+                var userInvoice = _appointment.Invoices.FirstOrDefault(x => x.UserId == user.UserId);
+
+                <div class="card mb-4">
+                    <div class="card-header text-bg-primary text-white">
+                        <span>@user.DisplayName</span>
+                    </div>
+                    <div class="card-body">
+                        @if(userInvoice == null) {
+                            <button type="button" class="btn btn-sm btn-success" @onclick="@(() => CreateInvoiceForUser(user.UserId))">
+                                <Language Tag="CreateInvoiceForUser" IncludeIcon="true" />
+                            </button>
+                        } else {
+                            bool invoiceClosed = userInvoice.InvoiceClosed.HasValue;
+                            var invoiceTotal = InvoiceTotal(userInvoice);
+
+                            @if (!invoiceClosed) {
+                                <button type="button" class="btn btn-sm btn-success mb-2" @onclick="@(() => AddItemToUserInvoice(userInvoice))">
+                                    <Language Tag="InvoiceAddItem" IncludeIcon="true" />
+                                </button>
+
+                                @if (userInvoice.InvoiceId != Guid.Empty) {
+                                    <button type="button" class="btn btn-sm btn-primary mb-2" @onclick="@(() => EditItem(userInvoice.InvoiceId))">
+                                        <Language Tag="EditInvoice" IncludeIcon="true" />
+                                    </button>
+                                }
+                            }
+
+                            <div class="row">
+                                <div class="col col-sm-4 mb-2">
+                                    <label>
+                                        <Language Tag="InvoiceTitle" />
+                                    </label>
+                                    <input type="text" class="form-control" @bind="userInvoice.Title" />
+                                </div>
+                                <div class="col col-sm-2 mb-2">
+                                    <label>
+                                        <Language Tag="InvoiceSendDate" />
+                                    </label>
+                                    <br />
+                                    <RadzenDatePicker TValue="DateTime?" Value="@userInvoice.InvoiceSendDate"
+                                    Change="@(args => userInvoice.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                                </div>
+                                <div class="col col-sm-2 mb-2">
+                                    <label>
+                                        <Language Tag="InvoiceDue" />
+                                    </label>
+                                    <br />
+                                    <RadzenDatePicker TValue="DateTime?" Value="@userInvoice.InvoiceDueDate"
+                                    Change="@(args => userInvoice.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                                </div>
+                                <div class="col col-sm-2">
+                                    <label>
+                                        <Language Tag="InvoiceNumber" />
+                                    </label>
+                                    <input type="text" class="form-control" @bind="userInvoice.InvoiceNumber" />
+                                </div>
+                                <div class="col col-sm-2">
+                                    <label>
+                                        <Language Tag="InvoicePO" />
+                                    </label>
+                                    <input type="text" class="form-control" @bind="userInvoice.PONumber" />
+                                </div>
+                            </div>
+
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr class="table-dark">
+                                        <th style="width:1%;"></th>
+                                        <th>
+                                            <Language Tag="InvoiceItemDescription" ReplaceSpaces="true" />
+                                        </th>
+                                        <th style="width:120px;">
+                                            <Language Tag="InvoiceItemPrice" ReplaceSpaces="true" />
+                                        </th>
+                                        <th style="width:100px;">
+                                            <Language Tag="InvoiceItemQuantity" ReplaceSpaces="true" />
+                                        </th>
+                                        <th style="width:100px;" class="right">
+                                            <Language Tag="InvoiceItemTotal" ReplaceSpaces="true" />
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach(var item in userInvoice.InvoiceItems) {
+                                        string descId = "invoice-item-desc-" + item.Id.ToString();
+                                        string priceId = "invoice-item-price-" + item.Id.ToString();
+                                        string qtyId = "invoice-item-qty-" + item.Id.ToString();
+                                        <tr>
+                                            <td>
+                                                @if (!invoiceClosed && userInvoice.InvoiceItems.Count() > 1) {
+                                                    <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="(() => DeleteUserInvoiceItem(userInvoice, item))">
+                                                        <Language Tag="Delete" IncludeIcon="true" />
+                                                    </button>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (invoiceClosed) {
+                                                    <span>@item.Description</span>
+                                                } else {
+                                                    <input type="text" id="@descId"
+                                                    class="@Helpers.MissingValue(item.Description, "form-control")"
+                                                    @bind="item.Description" @bind:event="oninput" />
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (invoiceClosed) {
+                                                    <span>@item.Price</span>
+                                                } else {
+                                                    <input type="number" id="@priceId" min="0"
+                                                    class="@Helpers.MissingValue(item.Price, "form-control")"
+                                                    @bind="item.Price" @bind:event="oninput" />
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (invoiceClosed) {
+                                                    <span>@item.Quantity</span>
+                                                } else {
+                                                    <input type="number" id="@qtyId" min="0"
+                                                    class="@Helpers.MissingValue(item.Quantity, "form-control")"
+                                                    @bind="item.Quantity" @bind:event="oninput" />
+                                                }
+                                            </td>
+                                            <td class="right">
+                                                @((MarkupString)InvoiceItemTotal(item))
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                @if(invoiceTotal > 0) {
+                                    <tfoot>
+                                        <tr class="table-success right">
+                                            <td colspan="5">
+                                                <Language Tag="InvoiceTotal" />
+                                                <span>@((MarkupString)invoiceTotal.ToString("C"))</span>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                }
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+    // https://localhost:44329/AppointmentInvoices/69d54cd5-862f-4fc3-a1f5-9a5fa6165331
+
+    [Parameter]
+    public string? AppointmentId { get; set; }
+
+    protected DataObjects.Appointment _appointment = new DataObjects.Appointment();
+    protected DataObjects.Invoice _defaults = new DataObjects.Invoice();
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected string _pageName = "appointmentinvoices";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledInvoices || !Model.FeatureEnabledScheduling) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if(!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void AddItemToDefaultInvoice()
+    {
+        _defaults.InvoiceItems.Add(new DataObjects.InvoiceItem {
+            Id = Guid.NewGuid(),
+            Description = "",
+            Price = 0,
+            Quantity = 1,
+        });
+    }
+
+    protected void AddItemToUserInvoice(DataObjects.Invoice invoice)
+    {
+        invoice.InvoiceItems.Add(new DataObjects.InvoiceItem {
+            Id = Guid.NewGuid(),
+            Description = "",
+            Price = 0,
+            Quantity = 1,
+        });
+    }
+
+    protected async void CreateInvoiceForUser(Guid UserId)
+    {
+        var exists = _appointment.Invoices.FirstOrDefault(x => x.UserId == UserId);
+        if(exists == null) {
+            string title = !String.IsNullOrWhiteSpace(_defaults.Title)
+                ? _defaults.Title
+                : Helpers.Text("InvoiceForAppointment") + " " + _appointment.Title;
+
+            var userInvoice = new DataObjects.Invoice {
+                InvoiceId = Guid.Empty,    
+                TenantId = _appointment.TenantId,
+                InvoiceNumber = _defaults.InvoiceNumber,
+                PONumber = _defaults.PONumber,
+                AppointmentId = _appointment.AppointmentId,
+                UserId = UserId,
+                Title = title,
+                Notes = _defaults.Notes,
+                InvoiceCreated = _defaults.InvoiceCreated,
+                InvoiceDueDate = _defaults.InvoiceDueDate,
+                InvoiceSendDate = _defaults.InvoiceSendDate,
+                InvoiceItems = _defaults.InvoiceItems,
+            };
+
+            if (!userInvoice.InvoiceItems.Any() && _appointment.Services != null && _appointment.Services.Any()) {
+                if (!Model.Services.Any()) {
+                    await Helpers.LoadServices();
+                }
+
+                foreach(var service in _appointment.Services) {
+                    var svc = Model.Services.FirstOrDefault(x => x.ServiceId == service.ServiceId);
+                    if(svc != null) {
+                        userInvoice.InvoiceItems.Add(new DataObjects.InvoiceItem {
+                            Id = Guid.NewGuid(),
+                            Description = svc.Description,
+                            Price = svc.Rate,
+                            Quantity = 1,
+                        });
+                    }
+                }
+            }
+
+            _appointment.Invoices.Add(userInvoice);
+            StateHasChanged();
+        }
+    }
+
+    protected void DeleteDefaultInvoiceItem(Guid ItemId)
+    {
+        _defaults.InvoiceItems = _defaults.InvoiceItems.Where(x => x.Id != ItemId).ToList();
+        StateHasChanged();
+    }
+
+    protected void DeleteUserInvoiceItem(DataObjects.Invoice invoice, DataObjects.InvoiceItem item)
+    {
+        invoice.InvoiceItems = invoice.InvoiceItems.Where(x => x.Id != item.Id).ToList();
+    }
+
+    protected void EditItem(Guid ItemId)
+    {
+        Helpers.NavigateTo("EditInvoice/" + ItemId.ToString());
+    }
+
+    protected string InvoiceItemTotal(DataObjects.InvoiceItem item)
+    {
+        string output = String.Empty;
+
+        if (item.Quantity > 0 && item.Price > 0) {
+            decimal total = item.Quantity * item.Price;
+            output = total.ToString("C");
+        }
+
+        return output;
+    }
+
+    protected decimal InvoiceTotal(DataObjects.Invoice invoice)
+    {
+        decimal output = 0;
+
+        if (invoice.InvoiceItems.Any()) {
+            foreach (var item in invoice.InvoiceItems) {
+                if (item.Quantity > 0 && item.Price > 0) {
+                    output += item.Quantity * item.Price;
+                }
+            }
+        }
+
+        invoice.Total = output;
+
+        return output;
+    }
+
+    protected async Task LoadData()
+    {
+        Model.ClearMessages();
+
+        if (!String.IsNullOrWhiteSpace(AppointmentId)) {
+            Guid appointmentId = Guid.Empty;
+            try {
+                appointmentId = new Guid(AppointmentId);
+            } catch { }
+            if(appointmentId != Guid.Empty) {
+                var appt = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointmentWithInvoices/" + AppointmentId);
+                if(appt != null) {
+                    if (appt.ActionResponse.Result) {
+                        _appointment = appt;
+
+                        _defaults = new DataObjects.Invoice {
+                            InvoiceNumber = "",
+                            PONumber = "",
+                            AppointmentId = _appointment.AppointmentId,
+                            Title = Helpers.Text("InvoiceForAppointment") + " " + _appointment.Title,
+                            InvoiceItems = new List<DataObjects.InvoiceItem>(),
+                        };
+                        if (_appointment.Services != null && _appointment.Services.Any()) {
+                            if (!Model.Services.Any()) {
+                                await Helpers.LoadServices();
+                            }
+
+                            foreach (var service in _appointment.Services) {
+                                var svc = Model.Services.FirstOrDefault(x => x.ServiceId == service.ServiceId);
+                                if (svc != null) {
+                                    _defaults.InvoiceItems.Add(new DataObjects.InvoiceItem {
+                                        Id = Guid.NewGuid(),
+                                        Description = svc.Description,
+                                        Price = svc.Rate,
+                                        Quantity = 1,
+                                    });
+                                }
+                            }
+                        }
+
+                    } else {
+                        Model.ErrorMessages(appt.ActionResponse.Messages);
+                    }
+                } else {
+                    Model.UnknownError();
+                }
+            }
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/SaveAppointmentInvoices", _appointment);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                _appointment = saved;
+                Model.Message_Saved();
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Invoice && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+}

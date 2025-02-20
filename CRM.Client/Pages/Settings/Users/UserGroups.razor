@@ -1,0 +1,158 @@
+﻿@page "/Settings/UserGroups"
+@page "/{TenantCode}/Settings/UserGroups"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="UserGroups" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="UserGroups" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/AddUserGroup"))" role="button" class="btn btn-success">
+                    <Language Tag="AddNewUserGroup" IncludeIcon="true" />
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="userGroups-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                <label for="userGroups-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="userGroups-EnabledItemsOnly" class="form-check-input" @bind="Model.User.UserPreferences.EnabledItemsOnly" />
+                <label for="userGroups-EnabledItemsOnly" class="form-check-label"><Language Tag="EnabledItemsOnly" /></label>
+            </div>
+        </div>
+
+        @if (Model.UserGroups.Any(x => x.Enabled == true || !Model.User.UserPreferences.EnabledItemsOnly)) {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th><Language Tag="Name" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Users" ReplaceSpaces="true" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Enabled" ReplaceSpaces="true" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var userGroup in Model.UserGroups) {
+                        @if(!userGroup.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            string itemClass = String.Empty;
+                            if (userGroup.Deleted) {
+                                itemClass = "item-deleted";
+                            } else if (!userGroup.Enabled) {
+                                itemClass = "disabled";
+                            }
+                            <tr class="@itemClass">
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditUserGroup(userGroup.GroupId))">
+                                        <Language Tag="Edit" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@userGroup.Name</td>
+                                <td class="center">@(userGroup.Users != null && userGroup.Users.Any() ? userGroup.Users.Count().ToString() : "")</td>
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(userGroup.Enabled))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected string _pageName = "usergroups";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledUserGroups || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditUserGroup(Guid GroupId)
+    {
+        Helpers.NavigateTo("Settings/EditUserGroup/" + GroupId.ToString());
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+        await Helpers.LoadUserGroups();
+        _loading = false;
+
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.UserGroup && Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}

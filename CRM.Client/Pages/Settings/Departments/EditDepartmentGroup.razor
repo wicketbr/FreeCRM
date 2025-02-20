@@ -1,0 +1,233 @@
+﻿@page "/Settings/EditDepartmentGroup/{departmentgroupid}"
+@page "/{TenantCode}/Settings/EditDepartmentGroup/{departmentgroupid}"
+@page "/Settings/AddDepartmentGroup"
+@page "/{TenantCode}/Settings/AddDepartmentGroup"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/DepartmentGroups"))" class="btn btn-dark">
+                    <Icon Name="Back" />
+                    <Language Tag="Cancel" />
+                </a>
+
+                @if (!_deptGroup.Deleted) {
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+
+                    @if (!_newDepartmentGroup) {
+                        <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                    }
+                }
+            </div>
+        </div>
+
+        @if (_deptGroup.Deleted) {
+            <UndeleteMessage DeletedAt="_deptGroup.DeletedAt" LastModifiedBy="@_deptGroup.LastModifiedBy" OnUndelete="(() => _deptGroup.Deleted = false)" />
+        } else {
+            <RequiredIndicator />
+
+            <div class="mb-2">
+                <label for="edit-departmentgroup-departmentGroupName"><Language Tag="DepartmentGroupName" Required="true" /></label>
+                <input type="text" id="edit-departmentgroup-departmentGroupName" @bind="_deptGroup.DepartmentGroupName" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_deptGroup.DepartmentGroupName,"form-control")" />
+            </div>
+
+            @if (!_newDepartmentGroup) {
+                <div class="mb-2">
+                    <hr />
+                    <LastModifiedMessage DataObject="_deptGroup" />
+                </div>
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? departmentgroupid { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newDepartmentGroup = false;
+    protected string _title = "";
+    protected DataObjects.DepartmentGroup _deptGroup = new DataObjects.DepartmentGroup();
+
+    protected string _pageName = "editdepartmentgroup";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledDepartments || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(departmentgroupid)) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteDepartmentGroup/" + _deptGroup.DepartmentGroupId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Helpers.NavigateTo("Settings/DepartmentGroups");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        await Helpers.LoadDepartments();
+
+        if (!String.IsNullOrWhiteSpace(departmentgroupid)) {
+            Model.NavigationId = departmentgroupid;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newDepartmentGroup = false;
+            _title = "EditDepartmentGroup";
+
+            var getDepartmentGroup = await Helpers.GetOrPost<DataObjects.DepartmentGroup>("api/Data/GetDepartmentGroup/" + departmentgroupid);
+            if (getDepartmentGroup != null) {
+                if (getDepartmentGroup.ActionResponse.Result) {
+                    _deptGroup = getDepartmentGroup;
+                } else {
+                    Model.ErrorMessages(getDepartmentGroup.ActionResponse.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newDepartmentGroup = true;
+            _title = "AddNewDepartmentGroup";
+
+            _deptGroup = new DataObjects.DepartmentGroup();
+            _deptGroup.TenantId = Model.TenantId;
+            _deptGroup.DepartmentGroupId = Guid.Empty;
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-departmentgroup-departmentGroupName");
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_deptGroup.DepartmentGroupName)) {
+            errors.Add(Helpers.MissingRequiredField("DepartmentGroupName"));
+            if (focus == "") { focus = "edit-departmentgroup-departmentGroupName"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.DepartmentGroup>("api/Data/SaveDepartmentGroup", _deptGroup);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/DepartmentGroups");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.DepartmentGroup && update.ItemId == _deptGroup.DepartmentGroupId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/DepartmentGroups");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var deptGroup = Helpers.DeserializeObject<DataObjects.DepartmentGroup>(update.ObjectAsString);
+                    if (deptGroup != null) {
+                        _deptGroup = deptGroup;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

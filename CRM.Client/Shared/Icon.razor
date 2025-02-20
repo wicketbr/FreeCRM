@@ -1,0 +1,67 @@
+﻿@implements IDisposable
+@{
+    switch (_source) {
+        case "google":
+            <i class="icon icon-google material-symbols-outlined" title="@_title">@_icon</i>
+            break;
+
+        case "fa":
+            <i class="icon icon-fa @_icon"></i>
+            break;
+
+        case "svg":
+            @((MarkupString)_svg)
+            break;
+    }
+}
+@code {
+    protected string _icon = String.Empty;
+    protected string _title = String.Empty;
+
+    [Parameter]
+    public string? Name { get; set; }
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    protected string _source = String.Empty;
+    protected string _svg = String.Empty;
+
+    public void Dispose() { }
+
+    protected override void OnInitialized()
+    {
+        RenderIcon();
+    }
+
+    protected void RenderIcon()
+    {
+        _title = String.Empty;
+
+        if (!String.IsNullOrWhiteSpace(Title)) {
+            _title = Helpers.Text(Title);
+
+            if (_title.ToLower() == Title.ToLower()) {
+                _title = Title;
+            }
+        }
+
+        if (!String.IsNullOrWhiteSpace(Name)) {
+            var icon = Helpers.Icons.FirstOrDefault(x => x.Value.Contains(Name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            if (!String.IsNullOrWhiteSpace(icon.Key)) {
+                string key = icon.Key;
+
+                if (key.ToLower().StartsWith("google:")) {
+                    _source = "google";
+                    _icon = key.Substring(7);
+                } else if (key.ToLower().StartsWith("fa:")) {
+                    _source = "fa";
+                    _icon = key.Substring(3);
+                } else if (key.ToLower().StartsWith("svg:")) {
+                    _source = "svg";
+                    _svg = Helpers.Icon(Name, true);
+                }
+            }
+        }
+    }
+}

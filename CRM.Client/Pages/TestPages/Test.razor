@@ -1,0 +1,83 @@
+﻿@page "/TimerTest"
+@page "/{TenantCode}/TimerTest"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    <h1>Timer Test Page</h1>
+
+    <div class="mb-2">
+        This page uses a timer.
+    </div>
+
+    <div>@_timerOutput</div>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected string _pageName = "timer";
+    protected System.Timers.Timer _timer = new System.Timers.Timer();
+    protected string _timerOutput = "";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        _timer.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateTo("Login");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        _timer = new System.Timers.Timer();
+        _timer.Interval = 1000;
+        _timer.Elapsed += TimerExecuted;
+        _timer.AutoReset = true;
+        _timer.Start();
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        Console.WriteLine("OnDataModelUpdated - Test Page");
+
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void TimerExecuted(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        _timerOutput = DateTime.Now.ToLongTimeString();
+        StateHasChanged();
+
+        Console.WriteLine("Timer Executed - " + _timerOutput);
+    }
+}

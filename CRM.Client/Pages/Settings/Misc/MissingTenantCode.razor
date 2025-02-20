@@ -1,0 +1,83 @@
+﻿@page "/MissingTenantCode"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.View == _pageName) {
+    if (_loading) {
+        <LoadingMessage />
+    } else {
+        <h1>@((MarkupString)_pageTitle)</h1>
+        <p>@((MarkupString)_info)</p>
+
+        @if (Model.TenantList.Any(x => x.TenantId != Helpers.Guid1)) {
+            foreach (var item in Model.TenantList.Where(x => x.TenantId != Helpers.Guid1).OrderBy(x => x.Name)) {
+                var url = Model.ApplicationUrl + item.TenantCode;
+                <div>
+                    <a href="@url">@item.Name</a>
+                </div>
+            }
+        }
+    }
+}
+@code {
+    protected string _pageTitle = "";
+    protected string _info = "";
+    protected bool _loading = true;
+
+    protected string _pageName = "missingtenantcode";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loading) {
+            _loading = false;
+            _pageTitle = Helpers.Text("MissingTenantCode");
+            _info = Helpers.Text("MissingTenantCodeInfo");
+
+            if (_pageTitle == "MISSINGTENANTCODE") {
+                _pageTitle = "Missing Tenant Code";
+            }
+
+            if (_info == "MISSINGTENANTCODEINFO") {
+                _info = "A tenant code is required in the URL to access this application.";
+            }
+
+            if (Model.ShowTenantListingWhenMissingTenantCode) {
+                await GetTenantCodes();
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task GetTenantCodes()
+    {
+        if (!Model.TenantList.Any()) {
+            await Helpers.LoadTenantList();
+        }
+    }
+}

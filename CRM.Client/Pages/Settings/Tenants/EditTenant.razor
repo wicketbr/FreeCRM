@@ -1,0 +1,648 @@
+﻿@page "/Settings/EditTenant/{tenantid}"
+@page "/{TenantCode}/Settings/EditTenant/{tenantid}"
+@page "/Settings/AddTenant"
+@page "/{TenantCode}/Settings/AddTenant"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    <div class="@Model.StickyMenuClass">
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+            <StickyMenuIcon />
+        </h1>
+
+        <div class="mb-2">
+            <button type="button" class="btn btn-dark" @onclick="@(() => Helpers.NavigateTo("Settings/Tenants"))">
+                <Icon Name="Back" />
+                <Language Tag="Cancel" />
+            </button>
+            <button type="button" class="btn btn-success" @onclick="Save">
+                <Language Tag="Save" IncludeIcon="true" />
+            </button>
+
+            @if (_allowDelete) {
+                <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+            }
+        </div>
+    </div>
+
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        <RequiredIndicator />
+
+        @if (_newTenant)
+        {
+            <div class="mb-2">
+                To add a new tenant enter the Tenant Name and Tenant Code for this tenant.
+                When saving a new tenant record some default data will be seeded for things
+                like Categories, Priorities, Resolutions, and Statuses.
+                Also, default settings will be set for this tenant.
+            </div>
+        }
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-enabled" @bind="_tenant.Enabled" />
+                <label for="edit-tenant-enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <label for="edit-tenant-name"><Language Tag="TenantName" Required="true" /></label>
+            <input id="edit-tenant-name" type="text" class="@Helpers.MissingValue(_tenant.Name, "form-control")" @bind="_tenant.Name" @bind:event="oninput" />
+        </div>
+
+        <div class="mb-2">
+            <label for="edit-tenant-code"><Language Tag="TenantCode" Required="true" /></label>
+            <input id="edit-tenant-code" type="text" class="@Helpers.MissingValue(_tenant.TenantCode, "form-control")" @bind="_tenant.TenantCode" @bind:event="oninput" />
+        </div>
+
+        @if (Model.Modules.Any()) {
+            <div class="card mb-2">
+                <div class="card-header text-bg-primary text-white"><Language Tag="DisabledFeatures" /></div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <Language Tag="DisabledFeaturesInfo" />
+                    </div>
+
+                    <div class="mb-2">
+                        <select class="form-select" size="@Model.Modules.Count()" multiple @bind="_moduleHideElements">
+                            @foreach (var item in Model.Modules) {
+                                <option value="@item">@Helpers.Text("FeatureOptIn" + item)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="row mb-4">
+            <div class="col col-sm-12 col-md-6">
+                <label for="edit-tenant-jwtRsaPrivateKey"><Language Tag="JwtRsaPrivateKey" /></label>
+                <span class="note"><Language Tag="JwtRsaPrivateKeyInfo" /></span>
+                <textarea class="form-control fixed-width" id="edit-tenant-jwtRsaPrivateKey"
+                @bind="_tenant.TenantSettings.JwtRsaPrivateKey" rows="@TextareaHeightRSA" @bind:event="oninput"></textarea>
+            </div>
+
+            <div class="col col-sm-12 col-md-6">
+                <label for="edit-tenant-jwtRsaPublicKey"><Language Tag="JwtRsaPublicKey" /></label>
+                <span class="note"><Language Tag="JwtRsaPublicKeyInfo" /></span>
+                <textarea class="form-control fixed-width" id="edit-tenant-jwtRsaPublicKey"
+                @bind="_tenant.TenantSettings.JwtRsaPublicKey" rows="@TextareaHeightRSA" @bind:event="oninput"></textarea>
+            </div>
+        </div>    
+        <div class="mb-2">
+            <label for="edit-tenant-loginOptions"><Language Tag="LoginOptions" /></label>
+            <select id="edit-tenant-loginOptions" class="form-select" size="@CustomAuthenticationProviderCount" multiple @bind="_loginOptions">
+                <option value="local">Local Login</option>
+                @if (Model.AuthenticationProviders.UseApple) {
+                    <option value="apple">Apple</option>
+                }
+                @if (Model.AuthenticationProviders.UseFacebook) {
+                    <option value="facebook">Facebook</option>
+                }
+                @if (Model.AuthenticationProviders.UseGoogle) {
+                    <option value="google">Google</option>
+                }
+                @if (Model.AuthenticationProviders.UseMicrosoftAccount) {
+                    <option value="microsoft">Microsoft Account</option>
+                }
+                @if (Model.AuthenticationProviders.UseOpenId) {
+                    string openIdLabel = "OpenId";
+                    if (!String.IsNullOrWhiteSpace(Model.AuthenticationProviders.OpenIdButtonText)){
+                        openIdLabel += " (" + Model.AuthenticationProviders.OpenIdButtonText + ")";
+                    }
+
+                    <option value="openid">@openIdLabel</option>
+                }
+                @if (ShowCustomAuthenticationOptions) {
+                    <option value="custom">Custom Provider</option>
+                }
+            </select>
+        </div>
+
+        @if (AuthOptionLocal)
+        {
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-allowUsersToResetPasswordsForLocalLogin" @bind="_tenant.TenantSettings.AllowUsersToResetPasswordsForLocalLogin" />
+                    <label for="edit-tenant-allowUsersToResetPasswordsForLocalLogin" class="form-check-label"><Language Tag="AllowUsersToResetLocalPasswordsAtLogin" /></label>
+                </div>
+                <div class="form-check form-switch">
+                    <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-allowUsersToSignUpForLocalLogin" @bind="_tenant.TenantSettings.AllowUsersToSignUpForLocalLogin" />
+                    <label for="edit-tenant-allowUsersToSignUpForLocalLogin" class="form-check-label"><Language Tag="AllowUsersToSignUpAtLogin" /></label>
+                </div>
+            </div>
+        }
+
+        @if (AuthOptionCustom) {
+            if (_tenant.TenantId == Helpers.Guid1) {
+                <div class="alert alert-danger">
+                    <Language Tag="CustomLoginProviderAdminTenantWarning" />
+                </div>
+            }
+
+            <div class="mt-4 mb-2">
+                <div class="alert alert-warning">
+                    <h2 class="display-8">Custom Authentication Provider Information</h2>
+                    <div class="mb-2">
+                        To use a custom authentication provider requires some C# coding experience.
+                        Enter your custom C# code below. The code will have full access to the
+                        backend DataAccess library of this application, so you can test your code
+                        in a tool such as LINQPad (<a href="https://linqpad.net" target="_blank">https://linqpad.net</a>)
+                        by referencing the DataAccess libraries of this solution. Your code below needs to
+                        follow a structure of using a namespace named "CustomAuthenticationProvider", a public class
+                        named "Authentication", and a function named "Authenticate".
+                        Your code also needs to implement a Logout method that returns a bool and receives the
+                        same two objects passed. An example is:
+                    </div>
+                    <div class="mb-2">
+                        <pre>
+namespace CustomAuthenticationProvider {
+    using CRM;
+    using CRM.EFModels.EFModels;
+    using System;
+    using System.Data;
+    using System.Text;
+    using System.Text.RegularExpressions;
+    using System.Xml;
+    using System.Xml.Serialization;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
+    using JWT;
+    using JWT.Algorithms;
+    using JWT.Serializers;
+    using Microsoft.EntityFrameworkCore;
+    using System.Net;
+    using System.Net.Mail;
+    using System.Data.SqlClient;
+    using System.Dynamic;
+    using System.Collections.Generic;
+    using System.Linq;
+
+    public class Authentication {
+        public DataObjects.User? Authenticate(DataAccess da, string CurrentUrl)
+        {
+            DataObjects.User? output = null;
+
+            // do your custom coding here. Your app might redirect to an external URL
+            // for authentication, so you can use the CurrentUrl property that is provided
+            // as your return URL to get back to this code to evaluate your authentication
+            // token or whatever you are checking for on return.
+            //
+            // Your function needs to return a User object with at least the following
+            // attributes set:
+            //
+            // .FirstName
+            // .LastName
+            // .Email
+            //
+            // You can also set the following attributes, but any other properties will be ignored:
+            //
+            // .Phone
+            // .EmployeeId
+            // .DepartmentName
+            // .Title
+            // .Location
+            //
+            // The Email property will be used as the unique property when determining if
+            // this user already has an account configured in the application. If not, and if the
+            // tenant setting allows for accounts to be created if they don't already exist, then
+            // a new account will be created with the email address you provide.
+        }
+
+        public bool Logout(DataAccess da, string CurrentUrl)
+        {
+            // Here is where you can redirect to your auth signout URL and return back here.
+            return true;
+        }
+    }
+}
+                        </pre>
+                    </div>
+                    <div class="mb-2">
+                        <label for="edit-tenant-customAuthenticationName">Custom Authentication Name</label>
+                        <span class="note">- The text that will be displayed on the log in button.</span>
+                        <input type="text" class="form-control" id="edit-tenant-customAuthenticationName" @bind="_tenant.TenantSettings.CustomAuthenticationName" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="edit-tenant-customAuthenticationIcon">Custom Authentication Icon</label>
+                        <span class="note">- An optional icon that will be displayed on the log in button.</span>
+                        <input type="text" class="form-control" id="edit-tenant-customAuthenticationIcon" @bind="_tenant.TenantSettings.CustomAuthenticationIcon" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="edit-tenant-CustomAuthenticationButtonClass">Custom Authentication Button Class</label>
+                        <span class="note">- An optional class that will be applied to the log in button.</span>
+                        <input type="text" class="form-control" id="edit-tenant-CustomAuthenticationButtonClass" @bind="_tenant.TenantSettings.CustomAuthenticationButtonClass" />
+                    </div>
+                    <div class="mb-2">
+                        <label for="edit-tenant-customAuthenticationCode">Custom Authentication C# Code</label>
+                        <textarea id="edit-tenant-customAuthenticationCode" class="form-control" rows="@TextareaHeightCustomAuthenticationCode" 
+                        @bind="_tenant.TenantSettings.CustomAuthenticationCode" @bind:event="oninput"></textarea>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (AuthOptionApple || AuthOptionFacebook || AuthOptionGoogle || AuthOptionMicrosoft || AuthOptionOpenId)
+        {
+            <div class="mt-4 mb-2" data-bind="visible:AuthOptionFacebook() == true || AuthOptionGoogle() == true || AuthOptionMicrosoft() == true || AuthOptionOpenId() == true">
+                <div class="alert alert-primary">
+                    @if (AuthOptionApple)
+                    {
+                        <div>
+                            <h2 class="display-8">Apple Authentication Provider Information</h2>
+                            <div class="mb-2">
+                                When using the Apple login option you must set the Apple ClientId, KeyId, and TeamId
+                                in the AuthenticationProviders:Apple section of the appsettings.json file.
+                                Also, your private key file must exist at the root of the web server and must be
+                                named &ldquo;SignInWithAppleKey.p8&rdquo;.
+                            </div>
+                        </div>
+                    }
+
+                    @if (AuthOptionFacebook)
+                    {
+                        <div>
+                            <h2 class="display-8">Facebook Authentication Provider Information</h2>
+                            <div class="mb-2">
+                                When using the Facebook login option you must set the Facebook AppId and AppSecret
+                                in the AuthenticationProviders:Facebook section of the appsettings.json file.
+                            </div>
+                        </div>
+                    }
+
+                    @if (AuthOptionGoogle)
+                    {
+                        <div data-bind="visible:AuthOptionGoogle() == true">
+                            <h2 class="display-8">Google Authentication Provider Information</h2>
+                            <div class="mb-2">
+                                When using the Google login option you must set the ClientId and ClientSecret
+                                in the AuthenticationProviders:Google section of the appsettings.json file.
+                            </div>
+                        </div>
+                    }
+
+                    @if (AuthOptionMicrosoft)
+                    {
+                        <div data-bind="visible:AuthOptionMicrosoft() == true">
+                            <h2 class="display-8">Microsoft Account Authentication Provider Information</h2>
+                            <div class="mb-2">
+                                When using the Microsoft Account login option you must set the ClientId and ClientSecret
+                                in the AuthenticationProviders:MicrosoftAccount section of the appsettings.json file.
+                            </div>
+                        </div>
+                    }
+
+                    @if (AuthOptionOpenId)
+                    {
+                        <div data-bind="visible:AuthOptionOpenId() == true">
+                            <h2 class="display-8">OpenId Authentication Provider Information</h2>
+                            <div class="mb-2">
+                                When using the OpenId login option you must set the ClientId, ClientSecret, and
+                                Authority settings in the AuthenticationProviders:OpenId section of the appsettings.json file.
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        @if (!_newTenant) {
+            <div class="mb-2">
+                <hr />
+                <LastModifiedMessage DataObject="_tenant" />
+            </div>
+        }
+        
+    }
+}
+@code {
+    [Parameter] public string? tenantid { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _allowDelete = false;
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected bool _loadingTenant = false;
+    protected string[] _loginOptions = new string[] { };
+    protected string[] _moduleHideElements = new string[] { };
+    protected bool _newTenant = false;
+    protected string _title = "";
+    protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
+
+    protected string _pageName = "edittenant";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.AppAdmin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || (tenantid != null && _tenant.TenantId.ToString() != tenantid)) {
+                _loadedData = true;
+                await LoadTenant();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected bool AuthOptionApple
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("apple");
+        }
+    }
+
+    protected bool AuthOptionCustom
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("custom");
+        }
+    }
+
+    protected bool AuthOptionFacebook
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("facebook");
+        }
+    }
+
+    protected bool AuthOptionGoogle
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("google");
+        }
+    }
+
+    protected bool AuthOptionLocal
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("local");
+        }
+    }
+
+    protected bool AuthOptionMicrosoft
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("microsoft");
+        }
+    }
+
+    protected bool AuthOptionOpenId
+    {
+        get {
+            return _loginOptions != null && _loginOptions.Contains("openid");
+        }
+    }
+
+    protected int CustomAuthenticationProviderCount
+    {
+        get {
+            int output = 1;
+
+            if (Model.AuthenticationProviders.UseApple) {
+                output += 1;
+            }
+            if (Model.AuthenticationProviders.UseFacebook) {
+                output += 1;
+            }
+            if (Model.AuthenticationProviders.UseGoogle) {
+                output += 1;
+            }
+            if (Model.AuthenticationProviders.UseMicrosoftAccount) {
+                output += 1;
+            }
+            if (Model.AuthenticationProviders.UseOpenId) {
+                output += 1;
+            }
+            if (ShowCustomAuthenticationOptions) {
+                output += 1;
+            }
+
+            return output;
+        }
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("/api/Data/DeleteTenant/" + _tenant.TenantId.ToString());
+        if(deleted != null) {
+            if (deleted.Result) {
+                // If this was the active tenant, then update to the default Guid2 tenant.
+                if(Model.TenantId == _tenant.TenantId) {
+                    Model.TenantId = Helpers.Guid2;
+                    var defaultTenant = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
+                    if(defaultTenant != null) {
+                        Model.Tenant = defaultTenant;
+                    }
+
+                    var defaultUser = Model.Users.FirstOrDefault(x => x.TenantId == Model.TenantId);
+                    if(defaultUser != null) {
+                        Model.User = defaultUser;
+                    }
+                }
+
+                Model.Tenants = Model.Tenants.Where(x => x.TenantId != _tenant.TenantId).ToList();
+                Model.Users = Model.Users.Where(x => x.TenantId != _tenant.TenantId).ToList();
+
+                Helpers.NavigateTo("Settings/Tenants");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadTenant()
+    {
+        if (_loadingTenant) {
+            return;
+        }
+
+        _loadingTenant = true;
+
+        _allowDelete = false;
+        _newTenant = String.IsNullOrWhiteSpace(tenantid);
+
+        _loginOptions = new string[] { };
+        _moduleHideElements = new string[] { };
+
+        if (_newTenant) {
+            _title = "AddNewTenant";
+
+            _tenant = new DataObjects.Tenant();
+            _tenant.TenantId = Guid.Empty;
+            _tenant.Enabled = true;
+            await Helpers.DelayedFocus("edit-tenant-name");
+        } else {
+            Model.NavigationId = Helpers.StringValue(tenantid);
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _title = "EditTenant";
+
+            var getTenant = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/GetTenant/" + tenantid);
+            if (getTenant != null) {
+                _tenant = getTenant;
+
+                _allowDelete = _tenant.TenantId != Helpers.Guid1 && _tenant.TenantId != Helpers.Guid2;
+                _loginOptions = Helpers.ListToArray(_tenant.TenantSettings.LoginOptions);
+                _moduleHideElements = Helpers.ListToArray(_tenant.TenantSettings.ModuleHideElements);
+
+                await Helpers.DelayedFocus("edit-tenant-name");
+            } else {
+                Model.UnknownError();
+            }
+        }
+
+        _loading = false;
+        _loadingTenant = false;
+
+        this.StateHasChanged();
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        // Make sure all required fields have been filled in.
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_tenant.Name)) {
+            errors.Add(Helpers.MissingRequiredField("TenantName"));
+            focus = "edit-tenant-name";
+        }
+        if (String.IsNullOrWhiteSpace(_tenant.TenantCode)) {
+            errors.Add(Helpers.MissingRequiredField("TenantCode"));
+            if(focus == "") {
+                focus = "edit-tenant-code";
+            }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            if(focus != "") {
+                await Helpers.DelayedFocus(focus);
+            }
+            return;
+        }
+
+        Model.Message_Saving();
+
+        _tenant.TenantSettings.LoginOptions = _loginOptions.ToList();
+        _tenant.TenantSettings.ModuleHideElements = _moduleHideElements.ToList();
+
+        bool newTenant = _tenant.TenantId == Guid.Empty;
+
+        var saved = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/SaveTenant", _tenant);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                // Update any Model objects
+                if(Model.TenantId == saved.TenantId) {
+                    var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
+                    if(dup != null) {
+                        Model.Tenant = dup;
+                    }
+
+                    var listItem = Model.Tenants.FirstOrDefault(x => x.TenantId == saved.TenantId);
+                    if(listItem != null) {
+                        var dup2 = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
+                        if(dup2 != null) {
+                            listItem = dup2;
+                        }
+                    }
+                }
+
+                if (_newTenant) {
+                    Helpers.NavigateTo("Settings/EditTenant/" + saved.TenantId.ToString(), newTenant);
+                } else {
+                    Helpers.NavigateTo("Settings/Tenants", newTenant);
+                }
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected bool ShowCustomAuthenticationOptions
+    {
+        get {
+            bool output = _tenant.TenantId == Helpers.Guid1;
+
+            if (!output) {
+                output = !Model.UseCustomAuthenticationProviderFromAdminAccount;
+            }
+
+            return output;
+        }
+    }
+
+    protected int TextareaHeightCustomAuthenticationCode
+    {
+        get {
+            int output = Helpers.LinesInString(_tenant.TenantSettings.CustomAuthenticationCode);
+            if(output < 5) {
+                output = 5;
+            }
+            return output;
+        }
+    }
+
+    protected int TextareaHeightRSA
+    {
+        get {
+            int output = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPrivateKey);
+
+            int publicKey = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPublicKey);
+
+            if(publicKey > output) {
+                output = publicKey;
+            }
+
+            return output;
+        }
+    }
+}

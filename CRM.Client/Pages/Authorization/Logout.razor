@@ -1,0 +1,95 @@
+﻿@page "/Logout"
+@page "/{TenantCode}/Logout"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject IJSRuntime jsRuntime
+@if (Model.View == _pageName) {
+    <div class="login-page">
+        <div class="login-padding"></div>
+        <div class="login-content">
+            <h1 class="page-title">
+                <Language Tag="LoggingOutWait" />
+            </h1>
+        </div>
+        <div class="login-padding"></div>
+    </div>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _pageName = "logout";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+
+            bool customLogin = false;
+            bool pluginLogin = false;
+            string pluginName = String.Empty;
+            string tenantId = String.Empty;
+            string loginMethod = await Helpers.CookieRead<string>("Login-Method");
+            if (!String.IsNullOrWhiteSpace(loginMethod)) {
+                if (loginMethod.ToLower() == "custom") {
+                    customLogin = true;
+                    tenantId = Model.TenantId.ToString();
+                } else if (loginMethod.ToLower().StartsWith("plugin:")) {
+                    pluginName = loginMethod.Substring(7);
+
+                    var plugin = Model.Plugins.FirstOrDefault(x => x.Name.ToLower() == pluginName.ToLower() && x.Type.ToLower() == "auth");
+                    if (plugin != null) {
+                        pluginLogin = true;
+                        tenantId = Model.TenantId.ToString();
+                    }
+                }
+            }
+
+            await Helpers.CookieWrite("user-token", "");
+            await LocalStorage.RemoveItemAsync("session-data");
+
+            // Clear the Model Properties (except for the DefaultLanguage, Released, and Version properties)
+            Model.CultureCode = "en-US";
+            Model.CultureCodes = new List<DataObjects.OptionPair>();
+            Model.Languages = new List<DataObjects.Language>();
+            Model.LoggedIn = false;
+            Model.TenantId = Guid.Empty;
+            Model.Tenants = new List<DataObjects.Tenant>();
+            Model.User = new DataObjects.User();
+            Model.Users = new List<DataObjects.User>();
+
+            // Remove the user token cookie
+            await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/UserSignout");
+
+            if (customLogin) {
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/CustomAuthenticationLogout?TenantId=" + tenantId, true);
+            }else if (pluginLogin) {
+                Helpers.NavigateTo(Model.ApplicationUrl + "Authorization/PluginAuthenticationLogout?Name=" + pluginName.Replace(" ", "_") + "&TenantId=" + tenantId, true);
+            } else {
+                Helpers.NavigateToRoot(true);
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}

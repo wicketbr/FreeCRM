@@ -1,0 +1,248 @@
+﻿@page "/Plugins"
+@page "/{TenantCode}/Plugins"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using Plugins
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    <h1 class="page-title">
+        Example Plugins
+    </h1>
+
+    if (_showPrompts) {
+        <h2 class="subtitle">Plugin Uses Prompts</h2>
+
+        <div class="mb-2">
+            <button type="button" class="btn btn-dark" @onclick="@(() => { _showPrompts = false; _result = null; StateHasChanged(); })">
+                <Language Tag="Back" IncludeIcon="true" />
+            </button>
+
+            <button type="button" class="btn btn-primary" @onclick="ExecutePluginWithPrompts">
+                Execute Plugin with Prompts
+            </button>
+        </div>
+
+        <div class="mb-2">
+            @if (_missingRequiredPluginValues.Any()) {
+                <span>Missing Required Values:</span> @String.Join(", ", _missingRequiredPluginValues)
+            } else {
+                <span>No Missing Required Values</span>
+            }
+        </div>
+
+        <div class="row">
+            <PluginPrompts @ref="_pluginPrompts"
+                ButtonClickHandler="PluginButtonClicked"
+                Class="prompt-wrapper mb-2"
+                HighlightMissingRequiredFields="true"
+                Plugin="_plugin"
+                OnValuesChange="PromptValuesChanged" />
+        </div>
+    } else if (Model.Plugins.Count > 0) {
+        bool haveDescriptions = Model.Plugins.Any(x => x.Type.ToLower() == "example" && !String.IsNullOrWhiteSpace(x.Description));
+
+        <div class="mb-2">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width:1%;"></th>
+                        <th>Name</th>
+                        <th>Id</th>
+                        <th>Namespace</th>
+                        <th>Class</th>
+                        <th>Type</th>
+                        <th>Author</th>
+                        <th>Version</th>
+                        <th>Sensitive</th>
+                        <th>Prompts</th>
+                        <th>Sort</th>
+                        @if (haveDescriptions) {
+                            <th title="Description">
+                                <Icon Name="Info" />
+                            </th>
+                        }
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var plugin in Model.Plugins.Where(x => x.Type.ToLower() == "example").OrderBy(x => x.SortOrder).ThenBy(x => x.Name)) {
+                        int pluginCount = plugin.Prompts != null ? plugin.Prompts.Count : 0;
+
+                        <tr>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary" @onclick="@(() => ExecutePlugin(plugin))">
+                                    Execute
+                                </button>
+                            </td>
+
+                            <td>@plugin.Name</td>
+                            <td>@plugin.Id</td>
+                            <td>@plugin.Namespace</td>
+                            <td>@plugin.ClassName</td>
+                            <td>@plugin.Type</td>
+                            <td>@plugin.Author</td>
+                            <td>@plugin.Version</td>
+                            <td>@plugin.ContainsSensitiveData.ToString()</td>
+                            <td>@pluginCount</td>
+                            <td>@plugin.SortOrder</td>
+                            @if (haveDescriptions) {
+                                <td>
+                                    @if (!String.IsNullOrWhiteSpace(plugin.Description)) {
+                                        <Tooltip TipText="@plugin.Description" />
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    if (_executing) {
+        <div class="mb-2">
+            <h2 class="subtitle">Executing...</h2>
+        </div>
+    } else if (_result != null) {
+        <div class="mb-2">
+            <table class="table first-column-bold first-column-small first-column-nowrap first-column-right">
+                <tbody>
+                    <tr>
+                        <td>Result</td>
+                        <td>@_result.Result.ToString()</td>
+                    </tr>
+
+                    @if (_result.Messages.Any()) {
+                        <tr>
+                            <td>Messages</td>
+                            <td>
+                                @foreach (var message in _result.Messages) {
+                                    <div>@message &nbsp;</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected List<string> _missingRequiredPluginValues = new List<string>();
+    protected string _pageName = "plugins";
+
+    protected bool _executing = false;
+    protected Plugin _plugin = new Plugin();
+    protected PluginExecuteResult? _result = null;
+    protected bool _showPrompts = false;
+
+    PluginPrompts _pluginPrompts = null!;
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateTo("Login");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task ExecutePlugin(Plugin plugin)
+    {
+        _missingRequiredPluginValues = new List<string>();
+        _plugin = plugin;
+        _result = null;
+        _showPrompts = false;
+
+        if (plugin.Prompts != null && plugin.Prompts.Count > 0) {
+            _showPrompts = true;
+            StateHasChanged();
+        } else {
+            _executing = true;
+            StateHasChanged();
+
+            _result = await Helpers.ExecutePlugin(plugin, null);
+
+            _executing = false;
+            StateHasChanged();
+        }
+    }
+
+    protected async Task ExecutePluginWithPrompts()
+    {
+        _executing = true;
+        StateHasChanged();
+
+        var p = Helpers.DuplicateObject<Plugin>(_plugin);
+        if (p != null) {
+            _result = await Helpers.ExecutePlugin(p, null);
+        }
+
+        _executing = false;
+        StateHasChanged();
+    }
+
+    protected void PluginButtonClicked(PluginExecuteResult result)
+    {
+        string responseMessage = String.Empty;
+
+        if (result.Result) {
+            if (result.Objects != null && result.Objects.Count() > 0) {
+                try {
+                    responseMessage += Helpers.GetObjectAsType<string>(result.Objects.First());
+                } catch { }
+            }
+        }
+
+        if (!String.IsNullOrWhiteSpace(responseMessage)) {
+            Model.AddMessage(responseMessage, MessageType.Success);
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void PromptValuesChanged(List<PluginPromptValue> values)
+    {
+        _plugin.PromptValues = values;
+        
+        if (_pluginPrompts != null) {
+            _missingRequiredPluginValues = _pluginPrompts.MissingRequiredValues;
+        }
+
+        StateHasChanged();
+    }
+}

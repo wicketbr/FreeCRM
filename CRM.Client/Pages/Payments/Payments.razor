@@ -1,0 +1,107 @@
+﻿@page "/Payments"
+@page "/{TenantCode}/Payments"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    <h1 class="page-title">
+        <Language Tag="Payments" IncludeIcon="true" />
+    </h1>
+
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        @if (Model.User.Admin) {
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox" id="files-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                    <label for="files-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedItems" /></label>
+                </div>
+            </div>
+        }
+
+        @if (_payments.Any()) {
+            <div>Show Payments</div>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+    protected List<DataObjects.Payment> _payments = new List<DataObjects.Payment>();
+    protected string _token = "";
+
+    protected string _pageName = "payments";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditItem(Guid ItemId)
+    {
+        Helpers.NavigateTo("Settings/EditPayment/" + ItemId.ToString());
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Payment && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+}

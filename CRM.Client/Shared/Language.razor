@@ -1,0 +1,121 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+@if (!String.IsNullOrWhiteSpace(Icon)) {<Icon Name="@Icon" /><span class="@_class">@((MarkupString)LanguageTag)</span>} else {<i class="@_class">@((MarkupString)LanguageTag)</i>}
+@code {
+    protected string Icon = String.Empty;
+    protected string LanguageTag = String.Empty;
+
+    /// <summary>
+    /// An optional class to add around the text.
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// Option to include an icon before the text.
+    /// </summary>
+    [Parameter] public bool? IncludeIcon { get; set; }
+
+    /// <summary>
+    /// Option to mark strings in uppercase if they are not defined in your DataAccess.Language.cs file (defaults to true).
+    /// </summary>
+    [Parameter] public bool MarkUndefinedStrings { get; set; } = true;
+
+    /// <summary>
+    /// The required name of the language tag.
+    /// </summary>
+    [Parameter] public string Tag { get; set; } = "";
+
+    /// <summary>
+    /// Option to replace any spaces in the text with &nbsp; characters.
+    /// </summary>
+    [Parameter] public bool? ReplaceSpaces { get; set; }
+
+    /// <summary>
+    /// Option to indicate if this is a required text label, prepending the span with the class of "required-flag" character.
+    /// </summary>
+    [Parameter] public bool? Required { get; set; }
+
+    /// <summary>
+    /// Option to transform the case of the text using a TextCase enum of Normal, Lowercase, Uppercase, Sentence, or Title.
+    /// </summary>
+    [Parameter] public TextCase? TransformCase { get; set; }
+
+    protected string _class = "";
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+        //RenderText();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        RenderText();
+    }
+
+    protected override void OnParametersSet()
+    {
+        RenderText();
+    }
+
+    protected void RenderText()
+    {
+        string output = String.Empty;
+        Icon = String.Empty;
+
+        if (!String.IsNullOrWhiteSpace(Tag)) {
+            output = Helpers.Text(Tag.Trim(), false, null, MarkUndefinedStrings);
+
+            if (TransformCase.HasValue) {
+                switch (TransformCase) {
+                    case TextCase.Lowercase:
+                        output = output.ToLower();
+                        break;
+
+                    case TextCase.Uppercase:
+                        output = output.ToUpper();
+                        break;
+
+                    case TextCase.Sentence:
+                        output = output.Humanize(LetterCasing.Sentence);
+                        break;
+
+                    case TextCase.Title:
+                        output = output.Humanize(LetterCasing.Title);
+                        break;
+                }
+            }
+
+            bool replaceSpaces = ReplaceSpaces.HasValue ? (bool)ReplaceSpaces : false;
+            if (replaceSpaces && !String.IsNullOrWhiteSpace(output)) {
+                output = output.Replace(" ", "&nbsp;");
+            }
+
+            bool required = Required.HasValue ? (bool)Required : false;
+            if (required) {
+                output += "<span class='required-flag'></span>";
+            }
+
+            bool includeIcon = IncludeIcon.HasValue ? (bool)IncludeIcon : false;
+            if (includeIcon){
+                Icon = Tag + String.Empty;
+            }
+        }
+
+        _class = !String.IsNullOrWhiteSpace(Class) ? Class : "";
+
+        if (!String.IsNullOrWhiteSpace(Icon)) {
+            if (_class != "") {
+                _class += " ";
+            }
+            _class += "icon-text";
+        }
+
+        LanguageTag = output;
+    }
+}

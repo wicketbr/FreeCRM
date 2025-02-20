@@ -1,0 +1,972 @@
+﻿@implements IDisposable
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == "schedule") {
+    @if (_loading) {
+        <LoadingMessage />
+    } else {
+        if (_newAppointment) {
+            <div class="mb-2">
+                <Language Tag="AppointmentType" />:
+
+                <div class="btn-group" role="group">
+                    <button type="button" class="@(_appointment.Meeting ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary")"
+                    @onclick="@(() => _appointment.Meeting = true)">
+                        <Language Tag="AppointmentTypeMeeting" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="@(!_appointment.Meeting ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary")"
+                    @onclick="@(() => _appointment.Meeting = false)">
+                        <Language Tag="AppointmentTypeEvent" IncludeIcon="true" />
+                    </button>
+                </div>
+            </div>
+        }
+
+        @if (_appointment.Deleted) {
+            if (AllowEdit) {
+                <UndeleteMessage DeletedAt="_appointment.DeletedAt" LastModifiedBy="@_appointment.LastModifiedBy" OnUndelete="(() => _appointment.Deleted = false)" />
+            }
+        } else {
+            if (AllowEdit) {
+                <div class="mt-2">
+                    <RequiredIndicator />
+                </div>
+
+                <div class="mb-2 input-group">
+                    <span class="input-group-text">
+                        <label for="edit-appt-Title">
+                            <Language Tag="AppointmentTitle" Required="true" />
+                        </label>
+                    </span>
+                    
+                    <input type="text" id="edit-appt-Title" @bind="_appointment.Title" @bind:event="oninput"
+                           class="@Helpers.MissingValue(_appointment.Title, "form-control")" />
+                </div>
+
+                <div class="mb-2">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" id="edit-appt-AllDay" class="form-check-input"
+                               @bind="_appointment.AllDay" />
+                        <label for="edit-appt-AllDay" class="form-check-label"><Language Tag="AllDayEvent" /></label>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <table class="full edit-appointment">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <label for="edit-appt-StartDate">
+                                        <Language Tag="AppointmentStart" Required="true" />
+                                    </label>
+                                </td>
+                                @if (!_appointment.AllDay) {
+                                    <td></td>
+                                }
+                                <td>
+                                    <label for="edit-appt-EndDate">
+                                        <Language Tag="AppointmentEnd" Required="true" />
+                                    </label>
+                                </td>
+                                @if (_appointment.AllDay) {
+                                    <td></td>
+                                }else{
+                                    <td style="width:99%;"></td>
+                                }
+                            </tr>
+                            <tr>
+                                <td class="pad-right">
+                                    <RadzenDatePicker TValue="DateTime?" Value="@_startDate" id="edit-appt-StartDate"
+                                                      class="date-only-picker"
+                                                      Change="@(args => _startDate = args)" ShowTime="false" DateFormat="d" />
+                                </td>
+                                @if (!_appointment.AllDay) {
+                                    <td class="pad-right">
+                                        <RadzenDatePicker @bind-Value=_startTime ShowTime="true" TimeOnly="true"
+                                                          class="time-only-picker"
+                                                          DateFormat="t" HourFormat="@_hourFormat" />
+                                    </td>
+                                }
+                                <td class="pad-right">
+                                    <RadzenDatePicker TValue="DateTime?" Value="@_endDate" id="edit-appt-EndDate"
+                                                      class="date-only-picker"
+                                                      Change="@(args => _endDate = args)" ShowTime="false" DateFormat="d" />
+                                </td>
+                                @if (!_appointment.AllDay) {
+                                    <td>
+                                        <RadzenDatePicker @bind-Value=_endTime ShowTime="true" TimeOnly="true"
+                                                          class="time-only-picker"
+                                                          DateFormat="t" HourFormat="@_hourFormat" />
+                                    </td>
+                                }else {
+                                    <td style="width:99%;"></td>
+                                }
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mb-2 input-group">
+                    <span class="input-group-text">
+                        <label for="edit-appt-Note">
+                            <Language Tag="AppointmentNote" />
+                        </label>
+                        <Tooltip TipText="@Helpers.Text("AppointmentNoteInfo")" />
+                    </span>
+                    <textarea id="edit-appt-Note" class="form-control" @bind="_appointment.Note" @bind:event="oninput" rows="@Helpers.LinesInString(_appointment.Note, 1)" />
+                </div>
+
+                @if (Model.Locations.Any(x => x.Enabled == true)) {
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">
+                            <label for="edit-appt-Location">
+                                <Language Tag="Location" />
+                            </label>
+                        </span>
+                        <select class="form-select" id="edit-appt-Location" @bind="_appointment.LocationId">
+                            <option value=""></option>
+                            @foreach (var location in Model.Locations.Where(x => x.Enabled == true)) {
+                                <option value="@location.LocationId">@location.Name</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tabApptStyleButton" data-bs-toggle="tab" data-bs-target="#tabApptStyle"
+                            type="button" role="tab" aria-controls="home" aria-selected="true">
+                            <Language Tag="CalendarStyle" />
+                        </button>
+                    </li>
+                    @if (_appointment.Meeting) {
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabApptAttendeesButton" data-bs-toggle="tab" data-bs-target="#tabApptAttendees"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                                <Language Tag="AppointmentAttendees" />
+                            </button>
+                        </li>
+                    }
+                    @if (_appointment.Notes.Any(x => x.Deleted == false)){
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabApptNotesButton" data-bs-toggle="tab" data-bs-target="#tabApptNotes"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                                <Language Tag="Notes" />
+                            </button>
+                        </li>
+                    }
+                    @if (_appointment.Meeting && Model.FeatureEnabledServices) {
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabApptServicesButton" data-bs-toggle="tab" data-bs-target="#tabApptServices"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                                <Language Tag="Services" />
+                            </button>
+                        </li>
+                    }
+                    @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInAppointments == true)){
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabApptTagsButton" data-bs-toggle="tab" data-bs-target="#tabApptTags"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                                <Language Tag="Tags" />
+                            </button>
+                        </li>
+                    }
+                </ul>
+
+                <div class="mb-2 tab-content tab-content-settings">
+                    <div id="tabApptStyle" class="tab-pane active" role="tabpanel" aria-labelledby="tabApptStyleButton">
+                        <div class="row mb-2">
+                            @if (LocationHasColors) {
+                                <div class="col col-12">
+                                    <Language Tag="OverrideLocationColors" />
+                                    <Tooltip TipText="@Helpers.Text("OverrideLocationColorsInfo")" />
+                                </div>
+                            }
+
+                            <div class="col col-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <label for="edit-appt-bgColor">
+                                            <Language Tag="BackgroundColorAbbreviation" />
+                                            <Tooltip TipText="@Helpers.Text("BackgroundColor")" />
+                                        </label>
+                                    </span>
+                                    <RadzenColorPicker id="edit-appt-bgColor" @bind-Value="_appointment.BackgroundColor"
+                                                       ShowHSV="true" ShowRGBA="true" ShowColors="true"
+                                                       ShowButton="true" Change="@((args) => _appointment.BackgroundColor = args)" />
+                                    <span class="input-group-text" @onclick="@(() => _appointment.BackgroundColor = "")">
+                                        <Language Tag="Clear" />
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="col col-6">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <label for="edit-appt-fgColor">
+                                            <Language Tag="ForegroundColorAbbreviation" />
+                                            <Tooltip TipText="@Helpers.Text("ForegroundColor")" />
+                                        </label>
+                                    </span>
+                                    <RadzenColorPicker id="edit-appt-fgColor" @bind-Value="_appointment.ForegroundColor"
+                                                       ShowHSV="true" ShowRGBA="true" ShowColors="true"
+                                                       ShowButton="true" Change="@((args) => _appointment.ForegroundColor = args)" />
+                                    <span class="input-group-text" @onclick="@(() => _appointment.ForegroundColor = "")">
+                                        <Language Tag="Clear" />
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (_appointment.Meeting) {
+                        <div id="tabApptAttendees" class="tab-pane" role="tabpanel" aria-labelledby="tabApptAttendeesButton">
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-xs btn-success" @onclick="AddNewUser">
+                                    <Language Tag="AddNewUser" IncludeIcon="true" />
+                                </button>
+                                <AutoComplete Class="form-control"
+                                    Disabled="false"
+                                    GetAutoCompleteItems="UserLookup"
+                                    HighlightFirstMatch="true"
+                                    Id="edit-appt-AddUser"
+                                    LookupDelay="300"
+                                    MatchParentWidth="true"
+                                    MinimumCharacters="1"
+                                    OnSelected="UserLookupItemSelected"
+                                    PlaceholderText="@UserLookupPlaceholderText" />
+                            </div>
+
+                            <div class="mb-2">
+                                @if (_appointment.Users.Any()) {
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:1%;"></th>
+                                                <th>
+                                                    <Language Tag="Name" ReplaceSpaces="true" />
+                                                </th>
+                                                <th style="width:150px;">
+                                                    <Language Tag="AppointmentStatus" ReplaceSpaces="true" />
+                                                </th>
+                                                <th style="width:100px;">
+                                                    <Language Tag="AppointmentFees" ReplaceSpaces="true" />
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var user in _appointment.Users.OrderBy(x => x.DisplayName)) {
+                                                <tr>
+                                                    <td>
+                                                        <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="@(() => RemoveUserFromAppointment(user.UserId))">
+                                                            <Icon Name="Delete" />
+                                                        </button>
+                                                    </td>
+                                                    <td>@user.DisplayName</td>
+                                                    <td>
+                                                        <select class="form-select" @bind="user.AttendanceCode">
+                                                            <option value="invited"><Language Tag="AppointmentAttendanceCodeInvited" /></option>
+                                                            <option value="accepted"><Language Tag="AppointmentAttendanceCodeAccepted" /></option>
+                                                            <option value="declined"><Language Tag="AppointmentAttendanceCodeDeclined" /></option>
+                                                            <option value="tentative"><Language Tag="AppointmentAttendanceCodeTentative" /></option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" class="form-control" min="0" @bind="user.Fees" />
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                } else {
+                                    <Language Tag="NoUsersInvited" />
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div id="tabApptNotes" class="tab-pane" role="tabpanel" aria-labelledby="tabApptNotesButton">
+                        @if (_appointment.Notes.Any(x => x.Deleted == false)) {
+                            <div class="mb-2">
+                                <strong><Language Tag="AppointmentNotes" /></strong>
+                                <Tooltip TipText="@Helpers.Text("AppointmentNotesInfo")" />
+                                @foreach (var note in _appointment.Notes.Where(x => x.Deleted == false).OrderByDescending(x => x.Added)) {
+                                    <div class="appointment-note">
+                                        <DeleteConfirmation ButtonSize="xs" OnConfirmed="@(() => DeleteAppointmentNote(note.AppointmentNoteId))" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                                        <span>@((MarkupString)Helpers.StringValue(note.Note))</span>
+                                        <div class="note-right">
+                                            <Language Tag="Added" />
+                                            <span>@Helpers.FormatDateTime(note.Added, false, true)</span>
+                                            @if (!String.IsNullOrWhiteSpace(note.AddedBy)) {
+                                                <span></span>
+                                                <Language Tag="AppointmentNoteAddedBy" />
+                                                <span>@((MarkupString)Helpers.StringValue(note.AddedBy))</span>
+                                            }
+                                            @if (note.Deleted) {
+                                                <br />
+                                                <Language Tag="Deleted" />
+                                                <span>@Helpers.FormatDateTime(note.DeletedAt, false, true)</span>
+                                                @if (!String.IsNullOrWhiteSpace(note.LastModifiedBy)) {
+                                                    <span>@((MarkupString)Helpers.StringValue(note.LastModifiedBy))</span>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (Model.FeatureEnabledServices) {
+                        <div id="tabApptServices" class="tab-pane" role="tabpanel" aria-labelledby="tabApptServicesButton">
+                            @if (Model.FeatureEnabledServices && Model.Services.Any(x => x.Enabled == true && x.Deleted == false)) {
+                                <div class="mb-2">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr class="table-dark">
+                                                <th style="width:1%;"></th>
+                                                <th>
+                                                    <Language Tag="Service" ReplaceSpaces="true" />
+                                                    <button type="button" class="btn btn-xs btn-success" @onclick="AddService">
+                                                        <Language Tag="AppointmentAddService" IncludeIcon="true" />
+                                                    </button>
+                                                </th>
+                                                <th style="width:1%;"><Language Tag="AppointmentFees" ReplaceSpaces="true" /></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var service in _appointment.Services.Where(x => x.Deleted == false)) {
+                                                <tr>
+                                                    <td>
+                                                        <button type="button" class="btn btn-xs btn-danger" @onclick="@(() => DeleteAppointmentService(service))">
+                                                            <Icon Name="Delete" />
+                                                        </button>
+                                                    </td>
+                                                    <td>
+                                                        @if (Model.Services.Any(x => x.Enabled == true && x.Deleted == false)) {
+                                                            int index = 0;
+                                                            int thisIndex = index + 0;
+
+                                                            <select class="form-select" value="@service.ServiceId" @onchange="@((ChangeEventArgs args) => ServiceChanged(service, args))">
+                                                                @foreach (var serviceItem in Model.Services.Where(x => x.Enabled == true && x.Deleted == false)) {
+                                                                    <option value="@serviceItem.ServiceId">@serviceItem.Description</option>
+                                                                    index++;
+                                                                }
+                                                            </select>
+                                                        } else {
+                                                            <span>Show Service Name</span>
+                                                        }
+                                                    </td>
+                                                    <td width="1%;">
+                                                        <input type="number" class="form-control fixed-100" @bind="service.Fee" />
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInAppointments == true)) {
+                        <div id="tabApptTags" class="tab-pane" role="tabpanel" aria-labelledby="tabApptTagsButton">
+                            <div class="mb-2">
+                                <select class="form-select" @onchange="AddTag" id="edit-appt-addTag" disabled="@(AvailableTags.Any() == false)">
+                                    <option value=""><Language Tag="AddTag" /></option>
+                                    @foreach(var tag in AvailableTags) {
+                                        <option value="@tag.TagId">@tag.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            @if (_appointment.Tags != null && _appointment.Tags.Any()){
+                                foreach (var tagId in _appointment.Tags) {
+                                    var tag = Model.Tags.FirstOrDefault(x => x.TagId == tagId);
+                                    string thisTagId = tagId.ToString();
+                                    if(tag != null){
+                                        <div class="mb-1">
+                                            <button type="button" class="btn btn-xs btn-danger" @onclick="@(() => RemoveTag(thisTagId))">
+                                                <Language Tag="Remove" IncludeIcon="true" />
+                                            </button>
+                                            <span>@((MarkupString)Helpers.RenderTag(tag))</span>
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <LastModifiedMessage DataObject="_appointment" />
+                </div>
+            } else {
+                <div class="mb-2">@Helpers.FormatAppointmentDatesAndTimes(_appointment)</div>
+
+                @if (!String.IsNullOrWhiteSpace(_appointment.Note)) {
+                    <div class="mb-2">
+                        <strong><Language Tag="AppointmentNote" /></strong>
+                        <div>@((MarkupString)_appointment.Note)</div>
+                    </div>
+                }
+
+                @if (_userIsScheduled && _appointment.End > DateTime.UtcNow) {
+                    <div class="mb-2">
+                        <Language Tag="UserScheduleInfo" />
+                    </div>
+
+                    @if (_updatingAttendance) {
+                        <div class="mb-2">
+                            <Language Tag="UpdatingWait" />
+                        </div>
+                    } else {
+                        <div class="mb-2">
+                            <button type="button"
+                            @onclick="@(() => UpdateAttendance("accepted"))"
+                                    class="@(_userAttendance == "accepted" ? "btn btn-sm btn-success" : "btn btn-sm btn-dark")">
+                                <Language Tag="@(_userAttendance == "accepted" ? "AppointmentAttendanceCodeAccepted" : "AppointmentAttendanceCodeAccept")" />
+                            </button>
+                            <button type="button"
+                            @onclick="@(() => UpdateAttendance("tentative"))"
+                                    class="@(_userAttendance == "tentative" ? "btn btn-sm btn-warning" : "btn btn-sm btn-dark")">
+                                <Language Tag="AppointmentAttendanceCodeTentative" />
+                            </button>
+                            <button type="button"
+                            @onclick="@(() => UpdateAttendance("declined"))"
+                                    class="@(_userAttendance == "declined" ? "btn btn-sm btn-danger" : "btn btn-sm btn-dark")">
+                                <Language Tag="@(_userAttendance == "declined" ? "AppointmentAttendanceCodeDeclined" : "AppointmentAttendanceCodeDecline")" />
+                            </button>
+                        </div>
+                    }
+                }
+            }
+
+            <button type="button" class="btn btn-sm btn-dark" @onclick="Close">
+                @if(_newAppointment){
+                    <Language Tag="Cancel" IncludeIcon="true" />
+                } else {
+                    <Language Tag="Close" IncludeIcon="true" />
+                }
+            </button>
+            @if (AllowEdit) {
+                @if (OnComplete != null) {
+                    <button type="button" class="btn btn-sm btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                }
+
+                @if (!_newAppointment) {
+                    <button type="button" class="btn btn-sm btn-primary" @onclick="AddNote">
+                        <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
+                    </button>
+
+                    @if (OnDelete != null) {
+                        <DeleteConfirmation ButtonSize="small" OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                    }
+
+                    @if (_appointment.Meeting && Model.FeatureEnabledInvoices) {
+                        <button type="button" class="btn btn-sm btn-dark" @onclick="AppointmentInvoices">
+                            <Language Tag="Invoices" IncludeIcon="true" />
+                        </button>
+                    }
+                }
+            }
+        }
+    }
+}
+@code {
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected bool _newAppointment = false;
+    protected bool _updatingAttendance = false;
+    protected string _userAttendance = "";
+    protected bool _userIsScheduled = false;
+    protected bool _visible = false;
+
+    protected DateTime? _startDate;
+    protected DateTime? _startTime;
+    protected DateTime? _endDate;
+    protected DateTime? _endTime;
+
+    protected string _hourFormat = Convert.ToDateTime("1/1/2000 13:00:00").ToString("t").ToUpper().Contains("PM") ? "12" : "24";
+
+    protected DataObjects.Appointment _appointment = new DataObjects.Appointment();
+
+    [Parameter]
+    public DataObjects.Appointment? Appointment { get; set; }
+
+    [Parameter]
+    public Delegate? OnComplete { get; set; }
+
+    [Parameter]
+    public Delegate? OnDelete { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledUDF) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            if (!_loadedData) {
+                _appointment = Appointment != null ? Appointment : new DataObjects.Appointment();
+                _visible = true;
+
+                Model.NavigationId = _appointment.AppointmentId.ToString();
+                Model.ViewIsEditPage = true;
+
+                SortAppointmentTags();
+
+                _userIsScheduled = false;
+
+                if (_appointment.Meeting && _appointment.Users.Any()) {
+                    var scheduled = _appointment.Users.FirstOrDefault(x => x.UserId == Model.User.UserId);
+                    if (scheduled != null) {
+                        _userIsScheduled = true;
+                        _userAttendance = scheduled.AttendanceCode;
+                    }
+                }
+
+                _newAppointment = _appointment.AppointmentId == Guid.Empty;
+
+                _startDate = _appointment.Start;
+                _startTime = _appointment.Start;
+                _endDate = _appointment.End;
+                _endTime = _appointment.End;
+
+                _loading = false;
+                _loadedData = true;
+
+                StateHasChanged();
+
+                await Helpers.DelayedFocus("edit-appt-Title");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+        Model.OnSignalRUpdate += SignalRUpdate;
+    }
+
+    protected async Task AddNewUser()
+    {
+        Delegate onUserAdded = (DataObjects.User user) => {
+            var existing = _appointment.Users.FirstOrDefault(x => x.UserId == user.UserId);
+            if(existing == null) {
+                _appointment.Users.Add(new DataObjects.AppointmentUser {
+                    UserId = user.UserId,    
+                    DisplayName = user.FirstName + " " + user.LastName,
+                });
+            }
+        };
+
+        await Helpers.QuickAction("adduser", onUserAdded);
+    }
+
+    protected async Task AddNote()
+    {
+        Model.QuickAddAppointmentNote = new DataObjects.AppointmentNote {
+            AppointmentNoteId = Guid.Empty,
+            AppointmentId = _appointment.AppointmentId,
+            TenantId = Model.TenantId,
+        };
+
+        Delegate quickActionOnComplete = (DataObjects.AppointmentNote newNote) => {
+            var existingNote = _appointment.Notes.FirstOrDefault(x => x.AppointmentNoteId == newNote.AppointmentNoteId);
+            if(existingNote != null) {
+                existingNote = newNote;
+            }else{
+                _appointment.Notes.Add(newNote);
+            }
+        };
+
+        await Helpers.QuickAction("appointmentnote", quickActionOnComplete);
+    }
+
+    protected void AddService()
+    {
+        // If there is a single service set that.
+        Guid serviceId = Guid.Empty;
+        decimal fee = 0;
+
+        if(Model.Services.Count() == 1) {
+            serviceId = Model.Services.First().ServiceId;
+            fee = Model.Services.First().Rate;
+        }
+
+        _appointment.Services.Add(new DataObjects.AppointmentService {
+            AppointmentServiceId = Guid.NewGuid(),
+            ServiceId = serviceId,
+            Fee = fee,
+        });
+    }
+
+    protected async Task AddTag(ChangeEventArgs e)
+    {
+        Guid tagId = Guid.Empty;
+
+        if(e != null && e.Value != null) {
+            try {
+                string tagGuid = Helpers.StringValue(e.Value.ToString());
+                tagId = new Guid(tagGuid);
+            }
+            catch { }
+        }
+
+        if(tagId != Guid.Empty){
+            if (_appointment.Tags == null) {
+                _appointment.Tags = new List<Guid>();
+            }
+
+            if (!_appointment.Tags.Contains(tagId)) {
+                _appointment.Tags.Add(tagId);
+                SortAppointmentTags();
+
+                await Helpers.SetElementValue("edit-appt-addTag", "");
+            }
+        }
+    }
+
+    protected bool AllowEdit
+    {
+        get {
+            return Model.User.ManageAppointments;
+        }
+    }
+
+    protected void AppointmentInvoices()
+    {
+        DialogService.Close();
+        Helpers.NavigateTo("AppointmentInvoices/" + _appointment.AppointmentId.ToString());
+    }
+
+    protected List<DataObjects.Tag> AvailableTags
+    {
+        get {
+            var output = Model.Tags.ToList();
+
+            if(_appointment.Tags != null && _appointment.Tags.Any()) {
+                output = output.Where(x => !_appointment.Tags.Contains(x.TagId)).ToList();
+            }
+
+            return output;
+        }
+    }
+
+    protected void Close()
+    {
+        _visible = false;
+        DialogService.Close();
+    }
+
+    protected void Delete()
+    {
+        if (OnDelete != null) {
+            OnDelete.DynamicInvoke(Appointment);
+        }
+
+        _visible = false;
+        DialogService.Close();
+    }
+
+    protected async Task DeleteAppointmentNote(Guid AppointmentNoteId)
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteAppointmentNote/" + AppointmentNoteId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                _appointment.Notes = _appointment.Notes.Where(x => x.AppointmentNoteId != AppointmentNoteId).ToList();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void DeleteAppointmentService(DataObjects.AppointmentService service)
+    {
+        service.Deleted = true;
+    }
+
+    protected bool LocationHasColors
+    {
+        get {
+            bool output = false;
+
+            if(_appointment.LocationId.HasValue && _appointment.LocationId != Guid.Empty) {
+                var location = Model.Locations.FirstOrDefault(x => x.LocationId == _appointment.LocationId);
+                if(location != null) {
+                    if(!String.IsNullOrWhiteSpace(location.CalendarBackgroundColor) || !String.IsNullOrWhiteSpace(location.CalendarForegroundColor)) {
+                        output = true;
+                    }
+                }
+            }
+
+            return output;
+        }
+    }
+
+    protected void RemoveTag(string TagId)
+    {
+        if(_appointment.Tags != null && _appointment.Tags.Any()) {
+            _appointment.Tags = _appointment.Tags.Where(x => x.ToString() != TagId).ToList();
+            SortAppointmentTags();
+        }
+    }
+
+    protected void RemoveUserFromAppointment(Guid UserId)
+    {
+        _appointment.Users = _appointment.Users.Where(x => x.UserId != UserId).ToList();
+    }
+
+    protected async Task Save()
+    {
+        if (String.IsNullOrWhiteSpace(_appointment.Title)) {
+            await Helpers.DelayedFocus("edit-appt-Title");
+            return;
+        }
+
+        DateTime start = DateTime.Now;
+        DateTime end = DateTime.Now;
+
+        // Validate the start and end dates and times.
+        if (_appointment.AllDay) {
+            if (!_startDate.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-StartDate");
+                return;
+            }
+
+            if (!_endDate.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-EndDate");
+                return;
+            }
+
+            start = Convert.ToDateTime(((DateTime)_startDate).ToShortDateString() + " 12:00:00 AM");
+            end = Convert.ToDateTime(((DateTime)_endDate).ToShortDateString() + " 11:59:59 PM");
+        } else {
+            if (!_startDate.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-StartDate");
+                return;
+            }
+            if (!_startTime.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-StartTime");
+                return;
+            }
+            if (!_endDate.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-EndDate");
+                return;
+            }
+            if (!_endTime.HasValue) {
+                await Helpers.DelayedFocus("edit-appt-EndTime");
+                return;
+            }
+
+            start = Convert.ToDateTime(((DateTime)_startDate).ToShortDateString() + " " + ((DateTime)_startTime).ToShortTimeString());
+            end = Convert.ToDateTime(((DateTime)_endDate).ToShortDateString() + " " + ((DateTime)_endTime).ToShortTimeString());
+
+            if(end < start) {
+                end = start;
+            }
+        }
+
+        _appointment.Start = start;
+        _appointment.End = end;
+
+        _visible = false;
+        DialogService.Close();
+
+        if(OnComplete != null) {
+            OnComplete.DynamicInvoke(_appointment);
+        }
+    }
+
+    protected void ServiceChanged(DataObjects.AppointmentService service, ChangeEventArgs args)
+    {
+        string value = String.Empty;
+        Guid serviceId = Guid.Empty;
+
+        if(args != null && args.Value != null) {
+            try {
+                value += args.Value.ToString();
+                serviceId = new Guid(value);
+            } catch { }
+        }
+
+        service.ServiceId = serviceId;
+
+        decimal fee = service.Fee;
+
+        if (serviceId != Guid.Empty) {
+            var serviceItem = Model.Services.FirstOrDefault(x => x.ServiceId == serviceId);
+            if (serviceItem != null && serviceItem.Rate > 0 && serviceItem.Rate != fee) {
+                service.Fee = serviceItem.Rate;
+            }
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (_visible && Model.View == "schedule" && update.UserId != Model.User.UserId) {
+            string message = update.Message.ToLower();
+
+            switch (update.UpdateType) {
+                case DataObjects.SignalRUpdateType.Appointment:
+                    switch (message) {
+                        case "deleted":
+                            if (update.ItemId == _appointment.AppointmentId) {
+                                Close();
+                                Model.Message_RecordDeleted("", update.UserDisplayName);
+                            }
+                            break;
+
+                        case "saved":
+                            var appt = Helpers.DeserializeObject<DataObjects.Appointment>(update.ObjectAsString);
+                            if (appt != null && _appointment.AppointmentId == appt.AppointmentId) {
+                                _appointment = appt;
+                                StateHasChanged();
+                                Model.Message_RecordUpdated("", update.UserDisplayName);
+                            }
+                            break;
+                    }
+                    break;
+
+                case DataObjects.SignalRUpdateType.AppointmentNote:
+                    switch (message) {
+                        case "deleted":
+                            _appointment.Notes = _appointment.Notes.Where(x => x.AppointmentNoteId != update.ItemId).ToList();
+                            StateHasChanged();
+                            Model.Message_RecordUpdated("", update.UserDisplayName);
+                            break;
+
+                        case "saved":
+                            var note = Helpers.DeserializeObject<DataObjects.AppointmentNote>(update.ObjectAsString);
+                            if (note != null && note.AppointmentId == _appointment.AppointmentId) {
+                                var existingNote = _appointment.Notes.FirstOrDefault(x => x.AppointmentNoteId == note.AppointmentNoteId);
+                                if (existingNote != null) {
+                                    existingNote = note;
+                                } else {
+                                    _appointment.Notes.Add(note);
+                                }
+                                StateHasChanged();
+                                Model.Message_RecordUpdated("", update.UserDisplayName);
+                            }
+                            break;
+                    }
+
+                    break;
+
+                case DataObjects.SignalRUpdateType.AppointmentService:
+                    switch (message) {
+                        case "deleted":
+                            _appointment.Services = _appointment.Services.Where(x => x.AppointmentServiceId != update.ItemId).ToList();
+                            StateHasChanged();
+                            Model.Message_RecordUpdated("", update.UserDisplayName);
+                            break;
+
+                        case "saved":
+                            var apptService = Helpers.DeserializeObject<DataObjects.AppointmentService>(update.ObjectAsString);
+                            if (apptService != null) {
+                                var existingApptService = _appointment.Services.FirstOrDefault(x => x.AppointmentServiceId == apptService.AppointmentServiceId);
+                                if (existingApptService != null) {
+                                    existingApptService = apptService;
+                                } else {
+                                    _appointment.Services.Add(apptService);
+                                }
+                                StateHasChanged();
+                                Model.Message_RecordUpdated("", update.UserDisplayName);
+                            }
+                            break;
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected void SortAppointmentTags()
+    {
+        _appointment.Tags = Helpers.SortTagList(_appointment.Tags);
+    }
+
+    protected async Task UpdateAttendance(string attendance)
+    {
+        _updatingAttendance = true;
+
+        DataObjects.AppointmentAttendanceUpdate update = new DataObjects.AppointmentAttendanceUpdate {
+            AppointmentId = _appointment.AppointmentId,    
+            UserId = Model.User.UserId,
+            AttendanceCode = attendance,
+        };
+
+        var updated = await Helpers.GetOrPost<DataObjects.AppointmentAttendanceUpdate>("api/Data/UpdateUserAttendance", update);
+
+        if(updated != null) {
+            if (updated.ActionResponse.Result) {
+                _userAttendance = updated.AttendanceCode;
+
+                _updatingAttendance = false;
+
+                StateHasChanged();
+            } else {
+                Model.ErrorMessages(updated.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task<List<(string key, string label)>?> UserLookup(string search)
+    {
+        List<Guid> excludeUsers = new List<Guid>();
+
+        if (_appointment.Users.Any()) {
+            excludeUsers = _appointment.Users.Select(x => x.UserId).ToList();
+        }
+
+        var output = await Helpers.UserLookupResults(search, excludeUsers);
+
+        return output;
+    }
+
+    protected string UserLookupPlaceholderText
+    {
+        get {
+            return Helpers.Text("AutoCompleteUserLookupPlaceholder");
+        }
+    }
+
+    protected async Task UserLookupItemSelected((string key, string label) item)
+    {
+        //Model.AddMessage("Selected '" + item.Value + "'", MessageType.Warning);
+        // Make sure the user isn't already in the list.
+
+        var existing = _appointment.Users.FirstOrDefault(x => x.UserId.ToString() == item.key);
+        if (existing == null) {
+            _appointment.Users.Add(new DataObjects.AppointmentUser {
+                UserId = new Guid(item.key),
+                DisplayName = item.label,
+                AttendanceCode = "invited",
+                Fees = 0,
+            });
+        }
+
+        await Helpers.DelayedFocus("edit-user-group-lookup");
+    }
+}

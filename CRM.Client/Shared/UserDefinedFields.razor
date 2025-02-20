@@ -1,0 +1,144 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@inject IJSRuntime jsRuntime
+@for(int x = 1; x <= _count; x++) {
+    if(Model.UdfShowField(Module, x)) {
+        string label = Model.UdfLabel(Module, x);
+
+        if (!String.IsNullOrWhiteSpace(label)) {
+            string id = Module + "-udf-" + x.ToString();
+            string type = Model.UdfFieldType(Module, x);
+
+            string propertyName = "UDF" + (x < 10 ? "0" : "") + x.ToString();
+
+            string value = String.Empty + Helpers.GetObjectPropertyValue<string>(Data, propertyName);
+            var options = Model.UdfFieldOptions(Module, x);
+
+            int index = -1;
+
+            int itemId = x;
+
+            switch (type) {
+                case "select":
+                    @if (options.Any()) {
+                        <tr>
+                            <td>
+                                <label for="@id">@((MarkupString)label)</label>
+                            </td>
+                            <td>
+                                <select class="form-select" id="@id" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))">
+                                    <option value=""></option>
+                                    @foreach(var option in options) {
+                                        <option value="@option" selected="@value==option">@option</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                    break;
+
+                case "radio":
+                    if (options.Any()) {
+                        <tr>
+                            <td>
+                                <label for="@id">@((MarkupString)label)</label>
+                            </td>
+                            <td>
+                                @foreach(var option in options) {
+                                    index++;
+                                    string optionId = id + "-" + index.ToString();
+                                    <div>
+                                        @if(option == value) {
+                                            <input type="radio" name="@id" id="@optionId" value="@option" checked
+                                                @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
+                                        } else {
+                                            <input type="radio" name="@id" id="@optionId" value="@option"
+                                                @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
+                                        }
+                                        
+                                        <label for="@optionId">&nbsp;@option</label>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    break;
+
+                default:
+                    <tr>
+                        <td>
+                            <label for="@id">@((MarkupString)label)</label>
+                        </td>
+                        <td>
+                            <input type="text" class="form-control" id="@id" value="@value" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))" />
+                        </td>
+                    </tr>
+                    break;
+            }
+        }
+    }
+}
+@code {
+    [Parameter]
+    public string? Module { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; } = "";
+
+    [Parameter]
+    public string? Id { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
+
+    [Parameter]
+    public object? Data { get; set; }
+
+    private int _count = 0;
+    private IJSObjectReference? jsModule;
+
+    public void Dispose() { }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./Shared/UserDefinedFields.razor.js");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        switch (Module) {
+            case "users":
+                _count = 10;
+                break;
+        }
+    }
+
+    protected async Task OnRadioUpdated(ChangeEventArgs args, string element, int Item)
+    {
+        string value = String.Empty;
+
+        if (jsModule != null) {
+            value += await jsModule.InvokeAsync<string>("RadioOptionValue", element);
+        }
+
+        if (Data != null) {
+            string udf = "UDF" + (Item < 10 ? "0" : "") + Item.ToString();
+            Data = Helpers.SetObjectPropertyValue(Data, udf, value);
+        }
+    }
+
+    protected void OnValueUpdated(ChangeEventArgs args, int Item)
+    {
+        string value = String.Empty;
+        if(args.Value != null) {
+            try {
+                value += args.Value.ToString();
+            } catch { }
+        }
+
+        if(Data != null) {
+            string udf = "UDF" + (Item < 10 ? "0" : "") + Item.ToString();
+            Data = Helpers.SetObjectPropertyValue(Data, udf, value);
+        }
+    }
+}

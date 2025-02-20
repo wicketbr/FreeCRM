@@ -1,0 +1,156 @@
+﻿@page "/Settings/Services"
+@page "/{TenantCode}/Settings/Services"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Services" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Services" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/AddService"))" role="button" class="btn btn-success">
+                    <Language Tag="AddNewService" IncludeIcon="true" />
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="services-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                <label for="services-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+            </div>
+        </div>
+
+        @if (Model.Services.Any()) {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th style="width:1%;"><Language Tag="ServiceCode" ReplaceSpaces="true" /></th>
+                        <th><Language Tag="ServiceDescription" ReplaceSpaces="true" /></th>
+                        @if(Model.FeatureEnabledTags){
+                            <th><Language Tag="Tags" ReplaceSpaces="true" /></th>
+                        }
+                        <th class="center" style="width:1%;"><Language Tag="ServiceDefaultService" ReplaceSpaces="true" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var service in Model.Services) {
+                        @if(!service.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            <tr class="@(service.Deleted ? "item-deleted" : "")">
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditService(service.ServiceId))">
+                                        <Language Tag="Edit" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@service.Code</td>
+                                <td>@service.Description</td>
+                                @if (Model.FeatureEnabledTags) {
+                                    <td>@((MarkupString)Helpers.RenderTags(service.Tags))</td>
+                                }
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(service.DefaultService))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected string _pageName = "services";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledServices || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+
+                if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
+                    await Helpers.LoadTags();
+                }
+
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditService(Guid ServiceId)
+    {
+        Helpers.NavigateTo("Settings/EditService/" + ServiceId.ToString());
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+        await Helpers.LoadServices();
+        _loading = false;
+
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Service && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+}

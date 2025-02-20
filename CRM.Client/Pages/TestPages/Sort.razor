@@ -1,0 +1,101 @@
+﻿@page "/SortTest"
+@page "/{TenantCode}/SortTest"
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+<style>
+    @((MarkupString)PageCSS)
+</style>
+
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    <h1>Sortable List Test Page</h1>
+
+    <div class="mb-2">
+        <SortableList Id="sortable-list"
+                      Items="Model.Tenant.Users"
+                      OnUpdate="ListSorted"
+                      Context="user"
+                      Group="sort-share"
+                      Pull="clone">
+            <SortableItemTemplate>
+                <div class="prevent-select sortable-item">
+                    @user.FirstName @user.LastName
+                </div>
+            </SortableItemTemplate>
+        </SortableList>
+    </div>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected string _pageName = "sorttest";
+    protected string _value = "Waiting for data...";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateTo("Login");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)) {
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected string PageCSS {
+        get {
+            var output = new System.Text.StringBuilder();
+
+            output.AppendLine(".myclass {");
+            output.AppendLine(Model.User.Email == "brad.wickett" ? "    color: red;" : "    color: blue;");
+            output.AppendLine("}");
+
+            return output.ToString();
+        }
+    }
+
+    protected void ListSorted((int oldIndex, int newIndex) indices)
+    {
+        // deconstruct the tuple
+        var (oldIndex, newIndex) = indices;
+
+        var items = Model.Tenant.Users;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count) {
+            items.Insert(newIndex, itemToMove);
+        } else {
+            items.Add(itemToMove);
+        }
+
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,74 @@
+﻿@page "/Authorization/CustomAuthenticationLogout"
+@inject CRM.IDataAccess data
+@inject Microsoft.AspNetCore.Hosting.Server.IServer server
+
+@{
+    data.SetHttpRequest(Request);
+    data.SetHttpResponse(Response);
+
+    string strTenantId = "";
+
+    try {
+        strTenantId += data.Request("TenantId");
+    } catch { }
+
+    Guid tenantId = Guid.Empty;
+    try {
+        tenantId = new Guid(strTenantId);
+    } catch { }
+
+    if (tenantId == Guid.Empty) {
+        <h1>Error</h1>
+        <p>Unable to find a valid Tenant Id.</p>
+        return;
+    }
+
+    string serverUrl = data.ApplicationURL;
+    if (String.IsNullOrWhiteSpace(serverUrl)) {
+        <h1>Error</h1>
+        <p>Unable to read server URL.</p>
+        return;
+    }
+
+    if (!serverUrl.EndsWith("/")) {
+        serverUrl += "/";
+    }
+
+    // Now, make sure we can access this tenant and that this tenant has cutom auth configured.
+    var tenant = data.GetTenant(tenantId);
+    if (tenant == null || tenant.ActionResponse.Result == false || tenant.Enabled == false) {
+        <h1>Error</h1>
+        <p>The Tenant Id passed does not match a current active tenant.</p>
+        return;
+    }
+
+    // See if the custom auth is enabled on the Admin tenant.
+    string customCode = String.Empty;
+    bool allowCustomAuth = data.UseCustomAuthenticationProviderFromAdminAccount;
+    if (allowCustomAuth) {
+        // Using the Admin option
+        var customProvider = data.AdminCustomLoginProvider;
+        customCode = customProvider.Code;
+    } else {
+        // If not enabled on the admin tenant see if this tenant has the custom options.
+        if (tenant.TenantSettings.LoginOptions != null && tenant.TenantSettings.LoginOptions.Contains("custom")) {
+            allowCustomAuth = true;
+            customCode = data.StringValue(tenant.TenantSettings.CustomAuthenticationCode);
+        }
+    }
+
+    if (!allowCustomAuth) {
+        <h1>Error</h1>
+        <p>The specified tenant is does not allow this authentication type.</p>
+        return;
+    }
+
+    if (String.IsNullOrWhiteSpace(customCode)) {
+        <h1>Error</h1>
+        <p>This tenant has not configured custom authentication.</p>
+        return;
+    }
+
+    bool loggedOut = data.ExecuteDynamicCSharpCode<bool>(customCode,
+        new object[] { data, serverUrl }, null, "CustomAuthenticationProvider", "Authentication", "Logout");
+}

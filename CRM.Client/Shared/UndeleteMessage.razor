@@ -1,0 +1,66 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+<div class="alert alert-danger marked-as-deleted">
+    <div class="mb-2 marked-as-deleted-info">
+        <Language Tag="RecordMarkedAsDeletedInfo" />
+    </div>
+
+    @if (DeletedAt.HasValue) {
+        <div class="mb-2 marked-as-deleted-notes">
+            <Language Tag="MarkedAsDeleted" Class="marked-as-deleted-label" />:
+            <span class="marked-as-deleted-date">@((MarkupString)Helpers.FormatDateTime(DeletedAt))</span>
+            @if (!String.IsNullOrWhiteSpace(LastModifiedBy)) {
+                <span></span>
+                <Language Tag="DeletedBy" Class="marked-as-deleted-by-label" />
+                <span class="marked-as-deleted-last-modified">@((MarkupString)LastModifiedBy)</span>
+            }
+            @if (WillDeleteAt.HasValue) {
+                <br /><Language Tag="WillBeDeleted" Class="marked-as-deleted-willbedeleted-label" />
+                <span class="marked-as-deleted-willbedeleted-label">:</span>
+                <span class="marked-as-deleted-willbedeleted-date">@((MarkupString)Helpers.FormatDateTime(WillDeleteAt))</span>
+            }
+        </div>
+    }
+
+    <button type="button" class="btn btn-danger" @onclick="DoUndelete">
+        <Language Tag="UndeleteRecord" IncludeIcon="true" />
+    </button>
+</div>
+@code {
+    /// <summary>
+    /// Required callback event to invoke when the Undelete Record button is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnUndelete { get; set; }
+
+    /// <summary>
+    /// Optional DeletedAt datetime? value.
+    /// </summary>
+    [Parameter]
+    public DateTime? DeletedAt { get; set; }
+
+    /// <summary>
+    /// Optional DeletedBy value.
+    /// </summary>
+    [Parameter]
+    public string? LastModifiedBy { get; set; }
+
+    protected DateTime? WillDeleteAt;
+
+    public void Dispose() { }
+
+    protected override void OnParametersSet()
+    {
+        if (DeletedAt.HasValue) {
+            int deleteAfterDays = Model.Tenant.TenantSettings.DeleteMarkedRecordsAfterDays;
+            if(deleteAfterDays > 0) {
+                WillDeleteAt = ((DateTime)DeletedAt).AddDays(deleteAfterDays);
+            }
+        }
+    }
+
+    protected async Task DoUndelete()
+    {
+        await OnUndelete.InvokeAsync();
+    }
+}

@@ -1,0 +1,21 @@
+﻿table.password-generator {
+    width:100%;
+}
+
+table.password-generator tbody tr td {
+    padding:.5em;
+    vertical-align:top;
+}
+
+table.password-generator tbody tr td:first-child {
+    width:99%;
+}
+
+table.password-generator tbody tr td:last-child {
+    width:1%;
+    white-space:nowrap;
+}
+
+#generated-password {
+    width:100%;
+}

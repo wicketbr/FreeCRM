@@ -1,0 +1,321 @@
+﻿@page "/Settings/EditUserGroup/{groupid}"
+@page "/{TenantCode}/Settings/EditUserGroup/{groupid}"
+@page "/Settings/AddUserGroup"
+@page "/{TenantCode}/Settings/AddUserGroup"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/UserGroups"))" class="btn btn-dark">
+                    <Icon Name="Back" />
+                    <Language Tag="Cancel" />
+                </a>
+
+                @if (!_userGroup.Deleted) {
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+
+                    @if (!_newUserGroup) {
+                        <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                    }
+                }
+            </div>
+        </div>
+
+        @if (_userGroup.Deleted) {
+            <UndeleteMessage DeletedAt="_userGroup.DeletedAt" LastModifiedBy="@_userGroup.LastModifiedBy" OnUndelete="(() => _userGroup.Deleted = false)" />
+        } else {
+            <RequiredIndicator />
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-group-enabled" @bind="_userGroup.Enabled" />
+                <label for="edit-group-enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-group-name"><Language Tag="Name" Required="true" /></label>
+                <input type="text" id="edit-group-name" @bind="_userGroup.Name" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_userGroup.Name, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <hr />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-user-group-lookup"><Language Tag="AddUsersToGroup" /></label>
+                <AutoComplete Class="form-control"
+                    Disabled="false"
+                    GetAutoCompleteItems="UserLookup"
+                    HighlightFirstMatch="true"
+                    Id="edit-user-group-lookup"
+                    LookupDelay="300"
+                    MatchParentWidth="true"
+                    MinimumCharacters="1"
+                    OnSelected="AutoCompleteItemSelected"
+                    PlaceholderText="@UserLookupPlaceholderText" />
+            </div>
+
+            <div class="mb-2">
+                <div class="bold"><Language Tag="UsersInGroup" /></div>
+
+                @if (_userGroup.Users != null && _userGroup.Users.Any()) {
+                    foreach (var user in _userGroup.Users.OrderBy(x => x.FirstName).ThenBy(x => x.LastName)) {
+                        <div class="user-listing">
+                            <button type="button" class="btn btn-sm btn-danger" @onclick="@(() => RemoveUserFromGroup(user.UserId))">
+                                <Language Tag="Delete" IncludeIcon="true" />
+                            </button>
+                            <span>@Helpers.FormatUserDisplayName(user)</span>
+                        </div>
+                    }
+                } else {
+                    <Language Tag="NoItemsToShow" />
+                }
+            </div>
+
+            @if (!_newUserGroup) {
+                <div class="mb-2">
+                    <hr />
+                <LastModifiedMessage DataObject="_userGroup" />
+            </div>
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? groupid { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newUserGroup = false;
+    protected string _title = "";
+    protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
+
+    protected string _pageName = "editusergroup";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(groupid)) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task AutoCompleteItemSelected((string key, string label) item)
+    {
+        //Model.AddMessage("Selected '" + item.Value + "'", MessageType.Warning);
+        // Make sure the user isn't already in the list.
+        if(_userGroup.Users == null) {
+            _userGroup.Users = new List<DataObjects.UserListing>();
+        }
+
+        var existing = _userGroup.Users.FirstOrDefault(x => x.UserId.ToString() == item.key);
+        if(existing == null) {
+            _userGroup.Users.Add(new DataObjects.UserListing {
+                UserId = new Guid(item.key),    
+                FirstName = item.label,
+            });
+        }
+
+        await Helpers.DelayedFocus("edit-user-group-lookup");
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteUserGroup/" + _userGroup.GroupId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Helpers.NavigateTo("Settings/UserGroups");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        await Helpers.LoadDepartments();
+
+        if (!String.IsNullOrWhiteSpace(groupid)) {
+            Model.NavigationId = groupid;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newUserGroup = false;
+            _title = "EditUserGroup";
+
+            var getUserGroup = await Helpers.GetOrPost<DataObjects.UserGroup>("api/Data/GetUserGroup/" + groupid);
+            if (getUserGroup != null) {
+                if (getUserGroup.ActionResponse.Result) {
+                    _userGroup = getUserGroup;
+                } else {
+                    Model.ErrorMessages(getUserGroup.ActionResponse.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newUserGroup = true;
+            _title = "NewUserGroup";
+
+            _userGroup = new DataObjects.UserGroup();
+            _userGroup.TenantId = Model.TenantId;
+            _userGroup.GroupId = Guid.Empty;
+            _userGroup.Enabled = true;
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-group-name");
+    }
+
+    protected async Task RemoveUserFromGroup(Guid UserId)
+    {
+        if(_userGroup.Users != null && _userGroup.Users.Any()) {
+            _userGroup.Users = _userGroup.Users.Where(x => x.UserId != UserId).ToList();
+        }
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_userGroup.Name)) {
+            errors.Add(Helpers.MissingRequiredField("Name"));
+            if (focus == "") { focus = "edit-group-name"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.UserGroup>("api/Data/SaveUserGroup", _userGroup);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/UserGroups");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.UserGroup && update.ItemId == _userGroup.GroupId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/UserGroups");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var group = Helpers.DeserializeObject<DataObjects.UserGroup>(update.ObjectAsString);
+                    if (group != null) {
+                        _userGroup = group;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected async Task<List<(string key, string label)>?> UserLookup(string search)
+    {
+        List<Guid> excludeUsers = new List<Guid>();
+        if (_userGroup.Users != null && _userGroup.Users.Any()) {
+            excludeUsers = _userGroup.Users.Select(x => x.UserId).ToList();
+        }
+
+        var output = await Helpers.UserLookupResults(search, excludeUsers);
+
+        return output;
+    }
+
+    protected string UserLookupPlaceholderText
+    {
+        get {
+            return Helpers.Text("AutoCompleteUserLookupPlaceholder");
+        }
+    }
+
+}

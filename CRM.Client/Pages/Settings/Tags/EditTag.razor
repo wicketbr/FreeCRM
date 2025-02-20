@@ -1,0 +1,300 @@
+﻿@page "/Settings/EditTag/{id}"
+@page "/{TenantCode}/Settings/EditTag/{id}"
+@page "/Settings/AddTag"
+@page "/{TenantCode}/Settings/AddTag"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        if (_tag.Deleted) {
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+            </h1>
+            <UndeleteMessage DeletedAt="_tag.DeletedAt" LastModifiedBy="@_tag.LastModifiedBy" OnUndelete="(() => _tag.Deleted = false)" />
+        }else{
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="@_title" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+                <div class="mb-2">
+                    <a href="@(Helpers.BuildUrl("Settings/Tags"))" class="btn btn-dark">
+                        <Language Tag="Back" IncludeIcon="true" />
+                    </a>
+
+                    @if (!_tag.Deleted) {
+                        <button type="button" class="btn btn-success" @onclick="Save">
+                            <Language Tag="Save" IncludeIcon="true" />
+                        </button>
+
+                        @if (!_newTag) {
+                            <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                        }
+                    }
+                </div>
+            </div>
+
+            <RequiredIndicator />
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-Enabled" @bind="_tag.Enabled" />
+                <label for="edit-tag-Enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-tag-Name">
+                    <Language Tag="TagName" Required="true" />
+                </label>
+                <input type="text" id="edit-tag-Name" @bind="_tag.Name" @bind:event="oninput"
+                    class="@Helpers.MissingValue(_tag.Name, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-tag-Style">
+                    <Language Tag="TagStyle" />
+                </label>
+                <span class="note">
+                    - <Language Tag="TagStyleInfo" />
+                </span>
+                @if (!string.IsNullOrWhiteSpace(_tag.Style) && (_tag.Style.Contains("background-color") || _tag.Style.Contains("border-color"))) {
+                    <input type="text" id="edit-tag-Style" class="form-control" @bind="_tag.Style" @bind:event="oninput" />
+                } else {
+                    <select id="edit-tag-Style" class="form-select" @bind="_tag.Style">
+                        <option value=""><Language Tag="TagSelectColor" /></option>
+                        <option value="background-color:green;border-color:green;"><Language Tag="TagCustomStyle" /></option>
+
+                        @foreach (var color in Helpers.TagColors) {
+                            if (_tag.Style == color) {
+                                <option class="@("tag tag-" + color.ToLower())" value="@color" SELECTED>@color</option>
+                            } else {
+                                <option class="@("tag tag-" + color.ToLower())" value="@color">@color</option>
+                            }
+                        }
+                    </select>
+                }
+            </div>
+
+            <div class="mb-2">
+                <div><Language Tag="TagPreview" /></div>
+                <div>@((MarkupString)Helpers.RenderTag(_tag))</div>
+            </div>
+
+            <div class="mb-2">
+                <h2 class="subtitle">
+                    <Language Tag="TagModules" />
+                </h2>
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInAppointments" @bind="_tag.UseInAppointments" />
+                <label for="edit-tag-UseInAppointments" class="form-check-label"><Language Tag="TagUseInAppointments" /></label>
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInEmailTemplates" @bind="_tag.UseInEmailTemplates" />
+                <label for="edit-tag-UseInEmailTemplates" class="form-check-label"><Language Tag="TagUseInEmailTemplates" /></label>
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInServices" @bind="_tag.UseInServices" />
+                <label for="edit-tag-UseInServices" class="form-check-label"><Language Tag="TagUseInServices" /></label>
+            </div>
+        }
+    }
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newTag = false;
+    protected string _title = "";
+    protected DataObjects.Tag _tag = new DataObjects.Tag();
+
+    protected string _pageName = "edittag";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledTags || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
+                _loadedData = true;
+                await LoadTag();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Settings/Tags");
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteTag/" + id);
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Tags = Model.Tags.Where(x => x.TagId.ToString() != id).ToList();
+
+                Helpers.NavigateTo("Settings/Tags");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadTag()
+    {
+        if (!Model.Locations.Any()) {
+            await Helpers.LoadLocations();
+        }
+
+        if (!String.IsNullOrWhiteSpace(id)) {
+            Model.NavigationId = id;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newTag = false;
+            _title = "EditTag";
+
+            var getTag = await Helpers.GetOrPost<DataObjects.Tag>("api/Data/GetTag/" + id);
+            if (getTag != null) {
+                _tag = getTag;
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newTag = true;
+            _title = "AddNewTag";
+
+            _tag = new DataObjects.Tag {
+                TenantId = Model.TenantId,    
+                TagId = Guid.Empty,
+                Enabled = true,
+            };
+
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-tag-Name");
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_tag.Name)) {
+            errors.Add(Helpers.MissingRequiredField("TagName"));
+            if (focus == "") { focus = "edit-tag-Name"; }
+        }
+
+        if(!_tag.UseInAppointments && !_tag.UseInEmailTemplates && !_tag.UseInServices) {
+            errors.Add(Helpers.Text("TagMustBeEnabledForAtLeastOneModule"));
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Tag>("api/Data/SaveTag", _tag);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/Tags");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.Tag && update.ItemId == _tag.TagId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/Tags");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var tag = Helpers.DeserializeObject<DataObjects.Tag>(update.ObjectAsString);
+                    if (tag != null) {
+                        _tag = tag;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

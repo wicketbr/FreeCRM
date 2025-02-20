@@ -1,0 +1,35 @@
+﻿@implements IDisposable
+@if (!String.IsNullOrWhiteSpace(TipText)) {
+    <i @ref="_element" @onclick="ShowTooltip" class="tooltip-item">@((MarkupString)_icon)</i>
+}
+@code {
+    protected string _icon = "";
+    protected ElementReference _element;
+
+    [Parameter]
+    public string? Icon { get; set; }
+
+    [Parameter]
+    public string? TipText { get; set; }
+
+    [Parameter]
+    public TooltipOptions? Options { get; set; }
+
+    public void Dispose() { }
+
+    protected override void OnInitialized()
+    {
+        if (!String.IsNullOrWhiteSpace(Icon)) {
+            _icon = Icon;
+        } else {
+            _icon = "<i class=\"icon fa-solid fa-circle-info\"></i>";
+        }
+    }
+
+    protected void ShowTooltip()
+    {
+        if (!String.IsNullOrWhiteSpace(TipText)) {
+            Helpers.Tooltip(_element, TipText, Options);
+        }
+    }
+}

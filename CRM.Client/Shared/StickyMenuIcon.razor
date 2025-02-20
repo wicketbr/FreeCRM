@@ -1,0 +1,28 @@
+﻿@inject BlazorDataModel Model
+<span class="@IconClass" @onclick="ToggleStickyMenus" title="@Helpers.Text("ToggleStickyMenus")">
+@if (Model.User.UserPreferences.StickyMenus) {
+    <i class="fa-solid fa-thumbtack"></i>
+} else {
+    <i class="fa-solid fa-thumbtack-slash"></i>
+}
+</span>
+
+@code {
+    protected string IconClass {
+        get {
+            string output = "sticky-menu-icon";
+
+            if (Model.User.UserPreferences.StickyMenus) {
+                output += " sticky";
+            }
+
+            return output;
+        }
+    }
+
+    protected void ToggleStickyMenus()
+    {
+        Model.User.UserPreferences.StickyMenus = !Model.User.UserPreferences.StickyMenus;
+        Model.TriggerUpdate();
+    }
+}

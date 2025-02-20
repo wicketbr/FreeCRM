@@ -1,0 +1,296 @@
+﻿@page "/Settings/EditLocation/{id}"
+@page "/{TenantCode}/Settings/EditLocation/{id}"
+@page "/Settings/AddLocation"
+@page "/{TenantCode}/Settings/AddLocation"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        if (_location.Deleted) {
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+            </h1>
+            <UndeleteMessage DeletedAt="_location.DeletedAt" LastModifiedBy="@_location.LastModifiedBy" OnUndelete="(() => _location.Deleted = false)" />
+        }else{
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="@_title" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+                <div class="mb-2">
+                    <a href="@(Helpers.BuildUrl("Settings/Locations"))" class="btn btn-dark">
+                        <Language Tag="Back" IncludeIcon="true" />
+                    </a>
+
+                    @if (!_location.Deleted) {
+                        <button type="button" class="btn btn-success" @onclick="Save">
+                            <Language Tag="Save" IncludeIcon="true" />
+                        </button>
+
+                        @if (!_newLocation) {
+                            <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                        }
+                    }
+                </div>
+            </div>
+
+            <RequiredIndicator />
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-location-Enabled" @bind="_location.Enabled" />
+                <label for="edit-location-Enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-location-Default" @bind="_location.DefaultLocation" />
+                <label for="edit-location-Default" class="form-check-label"><Language Tag="Default" /></label>
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-Name">
+                    <Language Tag="LocationName" Required="true" />
+                </label>
+                <input type="text" id="edit-location-Name" @bind="_location.Name" @bind:event="oninput"
+                       class="@Helpers.MissingValue(_location.Name, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-Address">
+                    <Language Tag="Address" />
+                </label>
+                <input type="text" id="edit-location-Address" @bind="_location.Address" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-City">
+                    <Language Tag="City" />
+                </label>
+                <input type="text" id="edit-location-City" @bind="_location.City" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-State">
+                    <Language Tag="State" />
+                </label>
+                <input type="text" id="edit-location-State" @bind="_location.State" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-PostalCode">
+                    <Language Tag="PostalCode" />
+                </label>
+                <input type="text" id="edit-location-PostalCode" @bind="_location.PostalCode" class="form-control" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-CalendarBackgroundColor">
+                    <Language Tag="BackgroundColor" />
+                </label>
+                <RadzenColorPicker id="edit-location-CalendarBackgroundColor" @bind-Value="_location.CalendarBackgroundColor"
+                    ShowHSV="true" ShowRGBA="true" ShowColors="true" 
+                    ShowButton="true" Change="@((args) => _location.CalendarBackgroundColor = args)" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-location-CalendarForegroundColor">
+                    <Language Tag="ForegroundColor" />
+                </label>
+                <RadzenColorPicker id="edit-location-CalendarForegroundColor" @bind-Value="_location.CalendarForegroundColor"
+                    ShowHSV="true" ShowRGBA="true" ShowColors="true"
+                    ShowButton="true" Change="@((args) => _location.CalendarForegroundColor = args)" />
+            </div>
+        }
+    }
+}
+@code {
+    [Parameter] public string? id { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newLocation = false;
+    protected string _title = "";
+    protected DataObjects.Location _location = new DataObjects.Location();
+
+    protected string _pageName = "editlocation";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledLocation || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
+                _loadedData = true;
+                await LoadLocation();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Settings/Locations");
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteLocation/" + id);
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Model.Locations = Model.Locations.Where(x => x.LocationId.ToString() != id).ToList();
+
+                Helpers.NavigateTo("Settings/Locations");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadLocation()
+    {
+        if (!Model.Locations.Any()) {
+            await Helpers.LoadLocations();
+        }
+
+        if (!String.IsNullOrWhiteSpace(id)) {
+            Model.NavigationId = id;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newLocation = false;
+            _title = "EditLocation";
+
+            var getLocation = await Helpers.GetOrPost<DataObjects.Location>("api/Data/GetLocation/" + id);
+            if (getLocation != null) {
+                _location = getLocation;
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newLocation = true;
+            _title = "AddNewLocation";
+
+            _location = new DataObjects.Location {
+                TenantId = Model.TenantId,    
+                LocationId = Guid.Empty,
+                Enabled = true,
+            };
+
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-location-Name");
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_location.Name)) {
+            errors.Add(Helpers.MissingRequiredField("ServiceDescription"));
+            if (focus == "") { focus = "edit-location-Name"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Location>("api/Data/SaveLocation", _location);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/Locations");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.Location && update.ItemId == _location.LocationId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/Locations");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var loc = Helpers.DeserializeObject<DataObjects.Location>(update.ObjectAsString);
+                    if (loc != null) {
+                        _location = loc;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

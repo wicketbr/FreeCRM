@@ -1,0 +1,490 @@
+﻿@page "/Schedule"
+@page "/{TenantCode}/Schedule"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    <h1 class="page-title block">
+        @if (_loading) {
+            <LoadingMessage />
+        } else {
+            <Language Tag="Schedule" IncludeIcon="true" />
+            @if (Model.User.ManageAppointments) {
+                <button type="button" class="btn btn-success pad-left" @onclick="AddAppoinment">
+                    <Language Tag="AddAppointment" IncludeIcon="true" />
+                </button>
+            }
+        }
+    </h1>
+    @if (Model.User.ManageAppointments && Model.HaveDeletedRecords && Model.DeletedRecordCounts.Appointments > 0) {
+        <div class="form-check form-switch header">
+            <input type="checkbox" id="schedule-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+            <label for="schedule-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+        </div>
+    }
+    <RadzenScheduler @ref=@scheduler
+        AppointmentRender=@OnAppointmentRender
+        AppointmentSelect=@OnAppointmentSelect 
+        class="appointment-calendar"
+        Data=@ShowAppointments 
+        EndProperty="End"
+        LoadData=@OnAppointmentLoadData
+      
+        SelectedIndex="2" 
+        SlotRender=@OnSlotRender 
+        SlotSelect=@OnSlotSelect 
+        StartProperty="Start" 
+        TextProperty="TitleDisplay" 
+        TodayText="@Helpers.Text("ScheduleViewToday")"
+        TItem="DataObjects.Appointment" >
+        <RadzenDayView Text="@Helpers.Text("ScheduleViewDay")" />
+        <RadzenWeekView Text="@Helpers.Text("ScheduleViewWeek")" />
+        <RadzenMonthView Text="@Helpers.Text("ScheduleViewMonth")" MoreText="@Helpers.Text("ScheduleMore")" />
+        <RadzenYearView Text="@Helpers.Text("ScheduleViewYear")" MoreText="@Helpers.Text("ScheduleMore")" />
+    </RadzenScheduler>
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    RadzenScheduler<DataObjects.Appointment> scheduler;
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
+
+    protected List<string> _datesLoaded = new List<string>();
+
+    IList<DataObjects.Appointment> ShowAppointments = new List<DataObjects.Appointment>();
+    List<DataObjects.Appointment> AllAppointments = new List<DataObjects.Appointment>();
+
+    protected string _pageName = "schedule";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledScheduling) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                if (Model.FeatureEnabledLocation && !Model.Locations.Any()) {
+                    await Helpers.LoadLocations();
+                }
+
+                if (Model.FeatureEnabledServices && !Model.Services.Any()) {
+                    await Helpers.LoadServices();
+                }
+
+                if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
+                    await Helpers.LoadTags();
+                }
+
+                _loadedData = true;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task AddAppoinment()
+    {
+        int minutes = Model.Tenant.TenantSettings.DefaultAppointmentDuration;
+        if (minutes == 0) {
+            minutes = 30;
+        }
+
+        DateTime start = Convert.ToDateTime(DateTime.Now.ToShortDateString() + " 12:00 PM");
+        DateTime end = start.AddMinutes(minutes);
+
+        Guid? defaultLocationId = null;
+        if (Model.Locations.Any()) {
+            var defaultLocation = Model.Locations.FirstOrDefault(x => x.DefaultLocation == true);
+            if(defaultLocation != null) {
+                defaultLocationId = defaultLocation.LocationId;  
+            }
+        }
+
+        List<DataObjects.AppointmentService> services = new List<DataObjects.AppointmentService>();
+        if (Model.FeatureEnabledServices && Model.Services.Any(x => x.DefaultService == true)) {
+            var defaultService = Model.Services.FirstOrDefault(x => x.DefaultService == true);
+            if(defaultService != null) {
+                services.Add(new DataObjects.AppointmentService {
+                    AppointmentServiceId = Guid.NewGuid(),
+                    ServiceId = defaultService.ServiceId,
+                    Fee = defaultService.Rate,
+                });
+            }
+        }
+
+        var appt = new DataObjects.Appointment {
+            TenantId = Model.TenantId,
+            AppointmentId = Guid.Empty,
+            LocationId = defaultLocationId,
+            Meeting = true,
+            Start = start,
+            End = end,
+            Services = services,
+        };
+
+        await ViewAppointment(appt);
+    }
+
+    protected async Task AddAppointmentToList(DataObjects.Appointment appt)
+    {
+        // First, remove any pre-existing item from the list.
+        AllAppointments = AllAppointments.Where(x => x.AppointmentId != appt.AppointmentId).ToList();
+
+        // Now, adjust the dates for the local time zone.
+        appt.Start = appt.Start.ToLocalTime();
+        appt.End = appt.End.ToLocalTime();
+        appt.TitleDisplay = FormatAppointmentTitle(appt);
+
+        AllAppointments.Add(appt);
+
+        await UpdateSchedulerView();
+    }
+
+    protected async Task Delete(DataObjects.Appointment appt)
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteAppointment/" + appt.AppointmentId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                AllAppointments = AllAppointments.Where(x => x.AppointmentId != appt.AppointmentId).ToList();
+
+                // If this tenant is just marking items for delete, then this item will still exist in the database.
+                // So, try and reload the item.
+                var deletedItem = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + appt.AppointmentId.ToString());
+                if(deletedItem != null && deletedItem.ActionResponse.Result) {
+                    await AddAppointmentToList(deletedItem);
+                }
+
+                await UpdateSchedulerView();
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected string FormatAppointmentTitle(DataObjects.Appointment appt)
+    {
+        string output = String.Empty;
+
+        if (appt.AllDay) {
+            output = appt.Title;
+        } else {
+            // First, start with just the time and title
+            output = Helpers.FormatTime(appt.Start, true) + " - " + appt.Title;
+
+            // If this is a multi-day event then add the end date and time
+            if (appt.Start.ToShortDateString() != appt.End.ToShortDateString()) {
+                output = appt.Start.ToShortDateString() + " " + Helpers.FormatTime(appt.Start, true) +
+                    " - " +
+                    appt.End.ToShortDateString() + " " + Helpers.FormatTime(appt.End, true) +
+                    " - " + appt.Title;
+
+            }
+        }
+
+        if (appt.Deleted) {
+            output = "[" + Helpers.Text("Deleted") + "] " + output;
+        }
+
+        return output;
+    }
+
+    async Task OnAppointmentLoadData(SchedulerLoadDataEventArgs args)
+    {
+        string key = args.Start.ToShortDateString() + "-" + args.End.ToShortDateString();
+
+        if (_datesLoaded.Contains(key)) {
+            // These date ranges have already been loaded
+        } else {
+            _loading = true;
+
+            var appts = await Helpers.GetOrPost<List<DataObjects.Appointment>>("api/Data/GetAppointments", new DataObjects.AppoinmentLoader {
+                TenantId = Model.TenantId,    
+                Start = args.Start,
+                End = args.End,
+            });
+
+            if(appts != null && appts.Any()) {
+                foreach(var appt in appts) {
+                    // Remove the appointment first.
+                    AllAppointments = AllAppointments.Where(x => x.AppointmentId != appt.AppointmentId).ToList();
+
+                    DataObjects.Appointment add = new DataObjects.Appointment {
+                        ActionResponse = appt.ActionResponse,    
+                        AppointmentId = appt.AppointmentId,
+                        TenantId = appt.TenantId,
+                        Added = appt.Added,
+                        AddedBy = appt.AddedBy,
+                        AllDay = appt.AllDay,
+                        BackgroundColor = appt.BackgroundColor,
+                        Deleted = appt.Deleted,
+                        DeletedAt = appt.DeletedAt,
+                        End = appt.End.ToLocalTime(),
+                        ForegroundColor = appt.ForegroundColor,
+                        LastModified = appt.LastModified,
+                        LastModifiedBy = appt.LastModifiedBy,
+                        LocationId = appt.LocationId,
+                        Meeting = appt.Meeting,
+                        Note = appt.Note,
+                        Notes = appt.Notes,
+                        Services = appt.Services,
+                        Start = appt.Start.ToLocalTime(),
+                        Title = appt.Title,
+                        Users = appt.Users,
+                    };
+
+                    add.TitleDisplay = FormatAppointmentTitle(add);
+
+                    if(!add.Deleted || Model.User.Admin) {
+                        AllAppointments.Add(add);
+                    }
+                }
+            }
+
+            _datesLoaded.Add(key);
+            _loading = false;
+
+            await UpdateSchedulerView();
+        }
+    }
+
+    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+        // Highlight today in month view
+        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today) {
+            //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+            args.Attributes["class"] = "today";
+        }
+
+        // Highlight working hours (9-18)
+        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19) {
+            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+        }
+    }
+
+    async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
+    {
+        if (Model.User.ManageAppointments) {
+            if (args.View.Text != "Year") {
+                int minutes = Model.Tenant.TenantSettings.DefaultAppointmentDuration;
+                if (minutes == 0) {
+                    minutes = 30;
+                }
+
+                DateTime start = args.Start;
+                DateTime end = args.Start.AddMinutes(minutes);
+
+                if (args.End == args.Start) {
+                    end = args.End;
+                }
+
+
+                DataObjects.Appointment appt = new DataObjects.Appointment {
+                        AppointmentId = Guid.Empty,
+                        TenantId = Model.TenantId,
+                        Meeting = true,
+                        Start = start,
+                        End = end,
+                    };
+
+                await ViewAppointment(appt);
+            }
+        }
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<DataObjects.Appointment> args)
+    {
+        if (args.Data != null) {
+            await ViewAppointment(args.Data);
+        }
+    }
+
+    async void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<DataObjects.Appointment> args)
+    {
+        // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+        if (args.Data.Deleted) {
+            args.Attributes["class"] = "rz-event-content deleted";
+        } else {
+            // See if this location has any special color formatting.
+            var style = await Helpers.GetLocationStyle(args.Data.LocationId, args.Data);
+
+            if (!String.IsNullOrWhiteSpace(style)) {
+                args.Attributes["style"] = style;
+            }
+
+            args.Attributes["class"] = "rz-event-content";
+        }
+    }
+
+    protected async Task Save(DataObjects.Appointment appt)
+    {
+        Model.ClearMessages();
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/SaveAppointment", appt);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                await AddAppointmentToList(saved);
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Appointment) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    AllAppointments = AllAppointments.Where(x => x.AppointmentId != update.ItemId).ToList();
+                    await UpdateSchedulerView();
+                    StateHasChanged();
+                    break;
+
+                case "saved":
+                    var appt = Helpers.DeserializeObject<DataObjects.Appointment>(update.ObjectAsString);
+                    if (appt != null) {
+                        await AddAppointmentToList(appt);
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected async Task UpdateSchedulerView()
+    {
+        if (Model.User.ManageAppointments) {
+            if (Model.User.UserPreferences.IncludeDeletedItems) {
+                ShowAppointments = AllAppointments.ToList();
+            } else {
+                ShowAppointments = AllAppointments.Where(x => x.Deleted != true).ToList();
+            }
+        } else {
+            // Standard users can only see appointments where they are a user.
+            ShowAppointments = AllAppointments.Where(x => x.Meeting != true || x.Users.Any(u => u.UserId == Model.User.UserId)).ToList();
+        }
+
+        await scheduler.Reload();
+    }
+
+    protected async Task ViewAppointment(DataObjects.Appointment appt)
+    {
+        string title = appt.Title;
+
+        if (Model.User.ManageAppointments) {
+            if (appt.AppointmentId == Guid.Empty) {
+                title = Helpers.Text("AddAppointment");
+            } else {
+                if (appt.Meeting) {
+                    title = Helpers.Text("EditAppointmentMeeting");
+                } else {
+                    title = Helpers.Text("EditAppointmentEvent");
+                }
+            }
+        }
+
+        Delegate onComplete = async (DataObjects.Appointment appointment) => {
+            await Save(appointment);
+        };
+
+        Delegate onDelete = async (DataObjects.Appointment appointment) => {
+            await Delete(appointment);
+        };
+
+        Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+        if (Model.User.ManageAppointments) {
+            parameters.Add("OnComplete", onComplete);
+            parameters.Add("OnDelete", onDelete);
+        }
+
+        // Reload the event to get the latest details
+        Model.ClearMessages();
+        Model.Message_Loading();
+
+        if (appt.AppointmentId != Guid.Empty) {
+            //Helpers.ModalMessage(Model.LoadingMessage, title);
+
+            var loadEvent = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + appt.AppointmentId.ToString());
+            if (loadEvent != null && loadEvent.ActionResponse.Result) {
+                // Adjust the datetime values
+                loadEvent.Start = loadEvent.Start.ToLocalTime();
+                loadEvent.End = loadEvent.End.ToLocalTime();
+
+                appt = loadEvent;
+            }
+
+            //Helpers.ModalClose();
+        }
+        
+        parameters.Add("Appointment", appt);
+
+        Model.ClearMessages();
+        // Helpers.ModalClose();
+
+        // await System.Threading.Tasks.Task.Delay(100);
+
+        await DialogService.OpenAsync<EditAppointment>(title, parameters, new Radzen.DialogOptions() {
+            AutoFocusFirstElement = false,
+            Resizable = false,
+            Draggable = false,
+            //Width="620px",
+            CloseDialogOnEsc = false,
+            CloseDialogOnOverlayClick = false,
+            ShowClose = false,
+        });
+    }
+}

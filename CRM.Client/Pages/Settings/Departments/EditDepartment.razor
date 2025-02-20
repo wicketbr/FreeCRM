@@ -1,0 +1,262 @@
+﻿@page "/Settings/EditDepartment/{departmentid}"
+@page "/{TenantCode}/Settings/EditDepartment/{departmentid}"
+@page "/Settings/AddDepartment"
+@page "/{TenantCode}/Settings/AddDepartment"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="@_title" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    }else{
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="@_title" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/Departments"))" class="btn btn-dark">
+                    <Icon Name="Back" />
+                    <Language Tag="Cancel" />
+                </a>
+
+                @if (!_dept.Deleted) {
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+
+                    @if (!_newDepartment) {
+                        <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                    }
+                }
+            </div>
+        </div>
+
+        @if (_dept.Deleted) {
+            <UndeleteMessage DeletedAt="_dept.DeletedAt" LastModifiedBy="@_dept.LastModifiedBy" OnUndelete="(() => _dept.Deleted = false)" />
+        } else {
+            <RequiredIndicator />
+
+            <div class="mb-2">
+                <label for="edit-department-departmentName"><Language Tag="DepartmentName" Required="true" /></label>
+                <input type="text" id="edit-department-departmentName" @bind="_dept.DepartmentName" @bind:event="oninput"
+                class="@Helpers.MissingValue(_dept.DepartmentName, "form-control")" />
+            </div>
+
+            <div class="mb-2">
+                <label for="edit-department-activeDirectoryNames"><Language Tag="ActiveDirectoryNames" /></label>
+                <span class="note"><Language Tag="ActiveDirectoryNamesInfo" /></span>
+                <input type="text" id="edit-department-activeDirectoryNames" class="form-control" @bind="_dept.ActiveDirectoryNames" />
+            </div>
+
+            @if (Model.DepartmentGroups.Any()) {
+                <div class="mb-2">
+                    <label for="edit-department-departmentGroupId"><Language Tag="DepartmentGroup" /></label>
+                    <select id="edit-department-departmentGroupId" class="form-select" @bind="_dept.DepartmentGroupId">
+                        <option value=""></option>
+                        @foreach (var deptGroup in Model.DepartmentGroups) {
+                            <option value="@deptGroup.DepartmentGroupId">@deptGroup.DepartmentGroupName</option>
+                        }
+                    </select>
+                </div>
+            }
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-department-enabled" @bind="_dept.Enabled" />
+                <label for="edit-department-enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+            </div>
+
+            @if (!_newDepartment) {
+                <div class="mb-2">
+                    <hr />
+                    <LastModifiedMessage DataObject="_dept" />
+                </div>
+            }
+        }
+    }
+}
+@code {
+    [Parameter] public string? departmentid { get; set; }
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected bool _newDepartment = false;
+    protected string _title = "";
+    protected DataObjects.Department _dept = new DataObjects.Department();
+
+    protected string _pageName = "editdepartment";
+
+    public void Dispose() {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledDepartments || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(departmentid)) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void Back()
+    {
+        Helpers.NavigateTo("Settings/Departments");
+    }
+
+    protected async Task Delete()
+    {
+        Model.ClearMessages();
+        Model.Message_Deleting();
+
+        var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteDepartment/" + _dept.DepartmentId.ToString());
+
+        Model.ClearMessages();
+
+        if(deleted != null) {
+            if (deleted.Result) {
+                Helpers.NavigateTo("Settings/Departments");
+            } else {
+                Model.ErrorMessages(deleted.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        await Helpers.LoadDepartments();
+
+        if (!String.IsNullOrWhiteSpace(departmentid)) {
+            Model.NavigationId = departmentid;
+            Model.ViewIsEditPage = true;
+
+            _loading = true;
+            _newDepartment = false;
+            _title = "EditDepartment";
+
+            var getDepartment = await Helpers.GetOrPost<DataObjects.Department>("api/Data/GetDepartment/" + departmentid);
+            if (getDepartment != null) {
+                if (getDepartment.ActionResponse.Result) {
+                    _dept = getDepartment;
+                } else {
+                    Model.ErrorMessages(getDepartment.ActionResponse.Messages);
+                }
+            } else {
+                Model.UnknownError();
+            }
+        } else {
+            _newDepartment = true;
+            _title = "AddNewDepartment";
+
+            _dept = new DataObjects.Department();
+            _dept.TenantId = Model.TenantId;
+            _dept.DepartmentId = Guid.Empty;
+            _dept.Enabled = true;
+        }
+
+        _loading = false;
+        this.StateHasChanged();
+
+        await Helpers.DelayedFocus("edit-department-departmentName");
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+
+        List<string> errors = new List<string>();
+        string focus = "";
+
+        if (String.IsNullOrWhiteSpace(_dept.DepartmentName)) {
+            errors.Add(Helpers.MissingRequiredField("DepartmentName"));
+            if (focus == "") { focus = "edit-department-departmentName"; }
+        }
+
+        if (errors.Any()) {
+            Model.ErrorMessages(errors);
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.Message_Saving();
+
+        var saved = await Helpers.GetOrPost<DataObjects.Department>("api/Data/SaveDepartment", _dept);
+
+        Model.ClearMessages();
+
+        if(saved != null) {
+            if (saved.ActionResponse.Result) {
+                Helpers.NavigateTo("Settings/Departments");
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.Department && update.ItemId == _dept.DepartmentId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/Departments");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var dept = Helpers.DeserializeObject<DataObjects.Department>(update.ObjectAsString);
+                    if (dept != null) {
+                        _dept = dept;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
+        }
+    }
+}

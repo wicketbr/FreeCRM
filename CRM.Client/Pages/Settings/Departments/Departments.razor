@@ -1,0 +1,151 @@
+﻿@page "/Settings/Departments"
+@page "/{TenantCode}/Settings/Departments"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Departments" IncludeIcon="true" />
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Departments" IncludeIcon="true" />
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <a href="@(Helpers.BuildUrl("Settings/AddDepartment"))" role="button" class="btn btn-success">
+                    <Language Tag="AddNewDepartment" IncludeIcon="true" />
+                </a>
+
+                <a href="@(Helpers.BuildUrl("Settings/DepartmentGroups"))" role="button" class="btn btn-dark">
+                    <Language Tag="DepartmentGroups" IncludeIcon="true" />
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" id="depts-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
+                <label for="depts-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+            </div>
+        </div>
+
+        @if (Model.Departments.Any()) {
+            <table class="table table-sm">
+                <thead>
+                    <tr class="table-dark">
+                        <th style="width:1%;"></th>
+                        <th><Language Tag="DepartmentName" /></th>
+                        <th><Language Tag="DepartmentGroup" /></th>
+                        <th><Language Tag="ActiveDirectoryNames" /></th>
+                        <th class="center" style="width:1%;"><Language Tag="Enabled" /></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var dept in Model.Departments) {
+                        if(!dept.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            <tr class="@(dept.Deleted ? "item-deleted": "")">
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditDepartment(dept.DepartmentId))">
+                                        <Language Tag="Edit" IncludeIcon="true" />
+                                    </button>
+                                </td>
+                                <td>@dept.DepartmentName</td>
+                                <td>@Model.DepartmentGroupName(dept.DepartmentGroupId)</td>
+                                <td>@dept.ActiveDirectoryNames</td>
+                                <td class="center">@((MarkupString)Helpers.BooleanToIcon(dept.Enabled))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = true;
+
+    protected string _pageName = "departments";
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if(Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledDepartments || !Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected void EditDepartment(Guid DepartmentId)
+    {
+        Helpers.NavigateTo("Settings/EditDepartment/" + DepartmentId.ToString());
+    }
+
+    protected async Task LoadData()
+    {
+        // Always reload the data in the data model.
+        _loading = true;
+        await Helpers.LoadDepartments();
+        await Helpers.LoadDepartmentGroups();
+        _loading = false;
+
+        StateHasChanged();
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Department && Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}

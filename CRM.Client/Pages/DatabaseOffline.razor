@@ -1,0 +1,60 @@
+﻿@page "/DatabaseOffline"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+<div class="container-fluid">
+    @if (_reloading) {
+        <h1>
+            <span class="spinner-grow me-2" role="status"></span>
+            Reloading...
+        </h1>
+    } else {
+        <div id="error-message">
+            <h1>Database Offline</h1>
+
+            <div class="alert alert-danger" style="width:300px;">
+                Unable connect to the backend database.
+                This could indicate a configuration issue, or a temporary network
+                communication issue.
+
+                @if (Model.StartupErrors.Any()) {
+                    foreach(var msg in Model.StartupErrors) {
+                        <div class="mt-2">@((MarkupString)msg)</div>
+                    }
+                }
+            </div>
+
+            <button type="button" class="btn btn-dark" @onclick="ReloadApp">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                Retry
+            </button>
+        </div>
+    }
+</div>
+@code {
+    protected bool _reloading = false;
+
+    public void Dispose() { }
+
+    protected void ReloadApp()
+    {
+        string url = String.Empty;
+
+        try {
+            var uri = Helpers.ToAbsoluteUri(Helpers.Uri);
+            url += uri.ToString();
+        } catch { }
+
+        if (!String.IsNullOrWhiteSpace(url)) {
+            url = url.ToLower().Replace("/databaseoffline", "/");
+
+            _reloading = true;
+            StateHasChanged();
+
+            Helpers.NavigateTo(url, true);
+        }
+    }
+}

@@ -1,0 +1,95 @@
+﻿@implements IDisposable
+@inject IJSRuntime jsRuntime
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+<div class="mt-2 mb-2">
+    <button type="button" class="btn btn-dark" @onclick="Cancel">
+        <Language Tag="Cancel" IncludeIcon="true" />
+    </button>
+    <button type="button" class="btn btn-success" @onclick="Save" disabled="@(_mode == "source")">
+        <Language Tag="OK" IncludeIcon="true" />
+    </button>
+</div>
+
+@if (!String.IsNullOrWhiteSpace(Instructions)) {
+    <div class="mb-2">@((MarkupString)Instructions)</div>
+}
+
+<HtmlEditor 
+    @ref="_htmlEditor"
+    Config="@Config"
+    Value="@Value"
+    OnModeChanged="EditorModeHasChanged"
+    SetFocusOnLoad="SetFocusOnLoad" />
+@code {
+    /// <summary>
+    /// Optional HtmlEditorConfiguration to override default value.
+    /// </summary>
+    [Parameter] public FreeBlazor.HtmlEditor.HtmlEditorConfiguration? Config { get; set; }
+
+    /// <summary>
+    /// Optional instructions to show above the editor.
+    /// </summary>
+    [Parameter] public string? Instructions { get; set; }
+
+    /// <summary>
+    /// An optional delegate used when the editor is in a dialog to send the HTML back to the calling method.
+    /// </summary>
+    [Parameter] public Delegate? OnEditCompleted { get; set; }
+
+    /// <summary>
+    /// Optional delegate to be notified when the mode changes between the "source" and "wysiwyg" options.
+    /// Since the editor does not update the HTML value when in Source view until you switch back you may
+    /// want to use this so you can block your save method until the editor is back in the WYWIWYG mode.
+    /// </summary>
+    [Parameter] public Delegate? OnModeChanged { get; set; }
+
+    /// <summary>
+    /// Option to set the focus of the HTML editor when it loads.
+    /// </summary>
+    [Parameter] public bool SetFocusOnLoad { get; set; }
+
+    /// <summary>
+    /// Optional HTML to set when the editor is loaded.
+    /// </summary>
+    [Parameter] public string? Value { get; set; }
+
+    protected FreeBlazor.HtmlEditor.HtmlEditorConfiguration _config = new FreeBlazor.HtmlEditor.HtmlEditorConfiguration();
+    FreeBlazor.HtmlEditor? _htmlEditor;
+    protected string _mode = "editor";
+
+    public void Dispose() { }
+
+    protected void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    protected void EditorModeHasChanged(string mode)
+    {
+        if (mode != _mode) {
+            _mode = mode;
+
+            if (OnModeChanged != null) {
+                OnModeChanged.DynamicInvoke(_mode);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected async Task Save()
+    {
+        if (OnEditCompleted != null) {
+            string output = String.Empty;
+            if(_htmlEditor != null) {
+                output = await _htmlEditor.GetHTML();
+            }
+            
+            OnEditCompleted.DynamicInvoke(output);
+            DialogService.Close();
+        } else {
+            Model.AddMessage("Missing Callback Handler", MessageType.Danger);
+        }
+    }
+}

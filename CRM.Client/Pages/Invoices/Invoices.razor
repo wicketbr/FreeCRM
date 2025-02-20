@@ -1,0 +1,577 @@
+﻿@page "/Invoices"
+@page "/Invoices/{userid}"
+@page "/{TenantCode}/Invoices"
+@page "/{TenantCode}/Invoices/{userid}"
+@implements IDisposable
+@using Blazored.LocalStorage
+@inject IJSRuntime jsRuntime
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@if (Model.Loaded && Model.View == _pageName) {
+    if (_loading) {
+        <h1 class="page-title">
+            <Language Tag="Invoices" IncludeIcon="true" />@((MarkupString)(_forUser ? " " + Helpers.Text("ForUser") + " " + _user.DisplayName : ""))
+        </h1>
+        <LoadingMessage />
+    } else {
+        <div class="@Model.StickyMenuClass">
+            <h1 class="page-title">
+                <Language Tag="Invoices" IncludeIcon="true" />@((MarkupString)(_forUser ? " " + Helpers.Text("ForUser") + " " + _user.DisplayName : ""))
+                <StickyMenuIcon />
+            </h1>
+            <div class="mb-2">
+                <div class="btn-group" role="group">
+                    @if (Model.User.Admin) {
+                        <button type="button" class="btn btn-success" @onclick="CreateInvoice">
+                            <Language Tag="CreateInvoice" IncludeIcon="true" />
+                        </button>
+                    }
+
+                    <button type="button" class="btn btn-warning" @onclick="ClearFilter" disabled="@Filter.Loading">
+                        <Language Tag="Clear" IncludeIcon="true" />
+                    </button>
+
+                    @if (Filter.ShowFilters) {
+                        <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                            <Language Tag="HideFilter" IncludeIcon="true" />
+                        </button>
+                    } else {
+                        <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                            <Language Tag="ShowFilter" IncludeIcon="true" />
+                        </button>
+                    }
+
+                    <button type="button" class="btn btn-dark" @onclick="Refresh" disabled="@Filter.Loading">
+                        <Language Tag="Refresh" IncludeIcon="true" />
+                    </button>
+                </div>
+                @if (Filter.ShowFilters && !Filter.Loading) {
+                    <div class="keyword-search mb-2">
+                        <label for="invoices-filter-keyword"><Language Tag="Search" /></label>
+                        <div class="fixed-200">
+                            <input type="text" id="invoices-filter-keyword" class="form-control" @onchange="FilterChangedSearch" value="@Filter.Keyword" placeholder="@FilterSearchPlaceholder" />
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Filter.ShowFilters) {
+            <div class="row mb-2">
+                <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
+                    <label for="invoices-filter-ClosedStatus"><Language Tag="InvoiceClosedStatus" /></label>
+                    <select class="form-control" size="4" id="invoices-filter-ClosedStatus" @onchange="FilterChangedClosedStatus" value="@Filter.ClosedStatus">
+                        <option value="">All</option>
+                        <option value="closed">Closed Invoices Only</option>
+                        <option value="open">Open Invoices Only</option>
+                    </select>
+                </div>
+
+                @if (Model.User.Admin) {
+                    <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
+                        <label for="invoices-filter-enabled"><Language Tag="InvoiceSentStatus" /></label>
+                        <select class="form-control" size="4" id="invoices-filter-SentStatus" @onchange="FilterChangedSentStatus" value="@Filter.SentStatus">
+                            <option value="">All</option>
+                            <option value="sent">Sent Invoices Only</option>
+                            <option value="unsent">Unsent Invoices Only</option>
+                        </select>
+                    </div>
+                }
+            </div>
+
+            <div class="form-check form-switch">
+                <input type="checkbox" id="invoices-filter-IncludeDeletedRecords" class="form-check-input"
+                       checked="@Model.User.UserPreferences.IncludeDeletedItems" @onchange="FilterChangedShowDeletedRecords" />
+                <label for="invoices-filter-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+            </div>
+        }
+
+        @if (Filter.Records != null && Filter.Records.Any()) {
+            <PagedRecordset ActionHandlers="ActionHandlers"
+                Configuration="Config"
+                Formatters="Formatters"
+                NavigationCallbackHander="NavigationCallbackHander"
+                NavigationLocation="PagedRecordset.NavLocation.Both"
+                RecordData="Data"
+                RowClasses="_rowClasses"
+                UseBootstrap="true" />
+        } else {
+            <Language Tag="NoItemsToShow" />
+        }
+    }
+}
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+    [Parameter] public string? userid { get; set; }
+
+    List<PagedRecordset.ActionHandler> ActionHandlers = new List<PagedRecordset.ActionHandler>();
+    PagedRecordset.Config Config = new PagedRecordset.Config();
+    PagedRecordset.Recordset Data = new PagedRecordset.Recordset();
+    DataObjects.FilterInvoices Filter = new DataObjects.FilterInvoices();
+    List<PagedRecordset.Formatter> Formatters = new List<PagedRecordset.Formatter>();
+
+    protected bool _forUser = false;
+    protected bool _loadedData = false;
+    protected bool LoadedFilter = false; 
+    protected bool _loading = true;
+    protected List<string> _rowClasses = new List<string>(); 
+    protected string _token = "";
+    protected DataObjects.User _user = new DataObjects.User();
+
+    protected string _pageName = "invoices";
+
+    public void Dispose() {
+        Model.OnChange -= OnDataModelUpdated;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        Config = new PagedRecordset.Config {
+            TextFirstRecord = Helpers.Text("FirstRecord"),
+            TextLastRecord = Helpers.Text("LastRecord"),
+            TextNextRecord = Helpers.Text("NextRecord"),
+            TextOf = Helpers.Text("Of"),
+            TextPreviousRecord = Helpers.Text("PreviousRecord"),
+            TextRecord = Helpers.Text("Record"),
+            TextRecords = Helpers.Text("Records"),
+            TextRecordsPerPage = Helpers.Text("RecordsPerPage"),
+            TextShowing = Helpers.Text("Showing"),
+            TextShowingAllRecords = Helpers.Text("ShowingAllRecords"),
+        };
+
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.FeatureEnabledInvoices) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            await Helpers.ValidateUrl(TenantCode);
+
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            } else {
+                if(_forUser && String.IsNullOrWhiteSpace(userid)) {
+                    _forUser = false;
+                    _user = new DataObjects.User();
+                    await ClearFilter();
+                }
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task ClearFilter()
+    {
+        Filter.CultureCode = Model.CultureCode;
+        Filter.Keyword = null;
+        Filter.Sort = "InvoiceCreated";
+        Filter.SortOrder = "DESC";
+        Filter.Page = 1;
+        Filter.AppointmentId = null;
+        Filter.ClosedStatus = null;
+        Filter.SentStatus = null;
+
+        if (!_forUser) {
+            Filter.UserId = null;
+        }
+
+        Model.User.UserPreferences.IncludeDeletedItems = false;
+
+        await LoadFilter();
+    }
+
+    protected void CreateInvoice()
+    {
+        if (_forUser) {
+            Helpers.NavigateTo("CreateInvoice/" + _user.UserId.ToString());
+        } else {
+            Helpers.NavigateTo("CreateInvoice");
+        }
+    }
+
+    protected async Task FilterChangedClosedStatus(ChangeEventArgs e)
+    {
+        string value = String.Empty;
+
+        try {
+            value += e.Value;
+        } catch { }
+
+        Filter.ClosedStatus = value;
+
+        await LoadFilter();
+    }
+
+    protected async Task FilterChangedSearch(ChangeEventArgs e)
+    {
+        string value = String.Empty;
+
+        try {
+            value += e.Value;
+        } catch { }
+
+        Filter.Keyword = value;
+
+        await LoadFilter();
+    }
+
+    protected async Task FilterChangedSentStatus(ChangeEventArgs e)
+    {
+        string value = String.Empty;
+
+        try {
+            value += e.Value;
+        } catch { }
+
+        Filter.SentStatus = value;
+
+        await LoadFilter();
+    }
+
+    protected async Task FilterChangedShowDeletedRecords(ChangeEventArgs e)
+    {
+        bool showDeleted = false;
+
+        if (e.Value != null) {
+            try {
+                showDeleted = (bool)e.Value;
+            } catch { }
+        }
+
+        Model.User.UserPreferences.IncludeDeletedItems = showDeleted;
+
+        await LoadFilter();
+    }
+
+    protected string FilterSearchPlaceholder
+    {
+        get {
+            string output = Helpers.Text("SearchInvoices");
+            return output;
+        }
+    }
+
+    protected string FormatDateTimeValue(string? value)
+    {
+        return Helpers.FormatDateTime(value);
+    }
+
+    protected string FormatDateValue(string? value)
+    {
+        return Helpers.FormatDate(value, false, false);
+    }
+
+    protected async Task LoadData()
+    {
+        ActionHandlers = new List<PagedRecordset.ActionHandler> {
+            new PagedRecordset.ActionHandler {
+                CallbackHandler = OnRecordSelected,
+                ActionElement =
+                    "<button type=\"button\" class=\"btn btn-xs btn-primary nowrap action-button\">" +
+                    Helpers.IconAndText(Model.User.Admin ? "Edit" : "View") +
+                    "</button>"
+            },
+            new PagedRecordset.ActionHandler {
+                CallbackHandler = Preview,
+                ActionElement = 
+                    "<button type=\"button\" class=\"btn btn-xs btn-secondary nowrap action-button\">" +
+                    Helpers.IconAndText("Preview") +
+                    "</button>"
+            }
+        };
+
+        Formatters = new List<PagedRecordset.Formatter> {
+            new PagedRecordset.Formatter {
+                DataType = "datetime",
+                CallbackHandler = FormatDateTimeValue,
+            }, 
+            new PagedRecordset.Formatter {
+                DataType = "Date",
+                CallbackHandler = FormatDateValue,
+            }
+        };
+
+        // Get the saved filter if it exists.
+        var savedFilter = await LocalStorage.GetItemAsync<DataObjects.FilterInvoices>("invoices-filter-" + Model.TenantId.ToString());
+        if (savedFilter != null) {
+            Filter = savedFilter;
+        }
+
+        if (!String.IsNullOrWhiteSpace(userid)) {
+            bool invalidUserId = false;
+            Guid userId = Guid.Empty;
+            try {
+                userId = new Guid(userid);
+            } catch { }
+            if(userId != Guid.Empty) {
+                Filter.UserId = userId;
+                _user = await Helpers.GetUser(userId);
+                _forUser = _user.ActionResponse.Result;
+
+                if (!_forUser) {
+                    invalidUserId = true;
+                }
+            } else {
+                invalidUserId = true;
+            }
+
+            if (invalidUserId) {
+                // Unable to load a user for the given UserId
+                Helpers.NavigateTo("Invoices");
+                Model.ErrorMessage(Helpers.Text("InvalidUserId") + " - " + userid);
+            }
+        }
+
+        await LoadFilter();
+    }
+
+    protected async Task LoadFilter()
+    {
+        if (Model.LoggedIn) {
+            Filter.Loading = true;
+            Filter.TenantId = Model.TenantId;
+
+            if (Filter.RecordsPerPage < 1) {
+                Filter.RecordsPerPage = 10;
+            }
+
+            Filter.IncludeDeletedItems = Model.User.UserPreferences.IncludeDeletedItems;
+
+            await SaveFilter();
+
+            var results = await Helpers.GetOrPost<DataObjects.FilterInvoices>("api/Data/GetInvoicesFiltered", Filter);
+            if (results != null) {
+                Filter = results;
+
+                Filter.Loading = false;
+
+                RenderInvoicesTable();
+
+                LoadedFilter = true;
+
+                _loading = false;
+
+                this.StateHasChanged();
+
+                if (Filter.ShowFilters) {
+                    await Helpers.DelayedFocus("invoices-filter-keyword");
+                }
+            } else {
+                Model.UnknownError();
+            }
+        }
+    }
+
+    protected async void NavigationCallbackHander(string action, object? o)
+    {
+        switch (action.ToLower()) {
+            case "count":
+                int recordsPerPage = -1;
+                try {
+                    recordsPerPage = Convert.ToInt32(o);
+                } catch { }
+                if (recordsPerPage > -1) {
+                    Filter.RecordsPerPage = recordsPerPage;
+                    await LoadFilter();
+                }
+                break;
+
+            case "page":
+                int page = -1;
+                try {
+                    page = Convert.ToInt32(o);
+                } catch { }
+                if (page > -1) {
+                    Filter.Page = page;
+                    await LoadFilter();
+                }
+                break;
+
+            case "sort":
+                string dataElementName = String.Empty;
+                try {
+                    dataElementName += Convert.ToString(o);
+                } catch { }
+                if (!String.IsNullOrWhiteSpace(dataElementName)) {
+                    string currentSort = Helpers.StringValue(Filter.Sort);
+                    string currentDirection = Helpers.StringValue(Filter.SortOrder);
+
+                    if (currentSort.ToLower() == dataElementName.ToLower()) {
+                        if (currentDirection.ToUpper() == "ASC") {
+                            Filter.SortOrder = "DESC";
+                        } else {
+                            Filter.SortOrder = "ASC";
+                        }
+                    } else {
+                        Filter.Sort = dataElementName;
+
+                        if (dataElementName.ToLower() == "lastlogin") {
+                            Filter.SortOrder = "DESC";
+                        } else {
+                            Filter.SortOrder = "ASC";
+                        }
+                    }
+                    await LoadFilter();
+                }
+
+                break;
+        }
+    }
+
+    protected void OnRecordSelected(object? record)
+    {
+        if (record != null) {
+            try {
+                var invoice = (DataObjects.Invoice)record;
+                if (Model.User.Admin) {
+                    Helpers.NavigateTo("EditInvoice/" + invoice.InvoiceId.ToString());
+                } else {
+                    Helpers.NavigateTo("ViewInvoice/" + invoice.InvoiceId.ToString());
+                }
+            }
+            catch { }
+        }
+    }
+
+    protected async void Preview(object? record)
+    {
+        if(record != null) {
+            var invoice = (DataObjects.Invoice)record;
+            await Helpers.PreviewInvoice(invoice);
+        }
+    }
+
+    protected async Task Refresh()
+    {
+        await LoadFilter();
+    }
+
+    protected void RenderInvoicesTable()
+    {
+        var columns = new List<PagedRecordset.Column>();
+        var updatedFilter = Helpers.UpdatePagedRecordsetColumnIcons(Filter);
+        if (updatedFilter.Columns != null && updatedFilter.Columns.Any()) {
+            foreach (var column in updatedFilter.Columns) {
+                columns.Add(new PagedRecordset.Column {
+                    Align = column.Align,
+                    BooleanIcon = column.BooleanIcon,
+                    Class = column.Class,
+                    DataElementName = column.DataElementName,
+                    DataType = column.DataType,
+                    Label = column.Label,
+                    Sortable = column.Sortable,
+                    TipText = column.TipText,
+                });
+            }
+        }
+
+        _rowClasses = new List<string>();
+        if (Model.User.AppAdmin) {
+            // May be showing deleted items, so add the class if needed.
+            if (Filter.Records != null && Filter.Records.Any()) {
+                foreach (var record in Filter.Records) {
+                    bool userDeleted = false;
+
+                    try {
+                        userDeleted = Helpers.GetObjectPropertyValue<Boolean>(record, "Deleted");
+                    } catch (Exception ex) {
+                        if (ex != null) { }
+                    }
+
+                    _rowClasses.Add(userDeleted ? "item-deleted" : "");
+                }
+            }
+        }
+
+        Data = new PagedRecordset.Recordset {
+            Columns = columns,
+            CurrentPage = Filter.Page,
+            TotalPages = Filter.PageCount,
+            TotalRecords = Filter.RecordCount,
+            Records = Filter.Records,
+            RecordsPerPage = Filter.RecordsPerPage,
+            Sort = Filter.Sort,
+            SortOrder = Filter.SortOrder,
+        };
+    }
+
+    protected async Task SaveFilter()
+    {
+        // Not all properties should be saved, so make a copy and clear out values that don't need to be saved.
+        DataObjects.FilterInvoices saveFilter = new DataObjects.FilterInvoices {
+            ActionResponse = new DataObjects.BooleanResponse { Result = true },
+            AppointmentId = Filter.AppointmentId,
+            ClosedStatus = Filter.ClosedStatus,
+            Columns = null,
+            CultureCode = Filter.CultureCode,
+            End = null,
+            Export = null,
+            ExecutionTime = 0,
+            Keyword = Filter.Keyword,
+            Loading = false,
+            Page = 1,
+            PageCount = 0,
+            RecordCount = 0,
+            Records = null,
+            RecordsPerPage = Filter.RecordsPerPage,
+            SentStatus = Filter.SentStatus,
+            ShowFilters = Filter.ShowFilters,
+            Sort = Filter.Sort,
+            SortOrder = Filter.SortOrder,
+            Start = null,
+            TenantId = Filter.TenantId,
+            Tenants = Filter.Tenants,
+            UserId = Filter.UserId,
+        };
+
+        await LocalStorage.SetItemAsync("invoices-filter-" + Model.TenantId.ToString(), saveFilter);
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (update.UpdateType == DataObjects.SignalRUpdateType.Invoice && Model.View == _pageName && update.UserId != Model.User.UserId) {
+            StateHasChanged();
+        }
+    }
+
+    protected async Task ToggleShowFilter()
+    {
+        if (Filter.ShowFilters) {
+            Filter.ShowFilters = false;
+        } else {
+            Filter.ShowFilters = true;
+            await Helpers.DelayedFocus("invoices-filter-keyword");
+        }
+
+        await SaveFilter();
+    }
+}
