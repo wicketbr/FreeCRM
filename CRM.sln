@@ -17,9 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		CRM - Rename App Files.linq = CRM - Rename App Files.linq
 		LICENSE = LICENSE
 		README.md = README.md
+		Rename FreeCRM.exe = Rename FreeCRM.exe
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CRM.Plugins", "CRM.Plugins\CRM.Plugins.csproj", "{A3796CA0-CA85-46AF-A0DE-7641736C95B9}"
