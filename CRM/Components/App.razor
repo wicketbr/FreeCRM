@@ -35,7 +35,7 @@
 
 <body id="body-element" data-bs-theme="" class="loading">
     <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
-    <script src="_framework/blazor.web.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@thumbmarkjs/thumbmarkjs/dist/thumbmark.umd.js"></script>
     <script src="@(applicationUrl + "_content/Blazor.Bootstrap/blazor.bootstrap.js?v=" + appVersion)"></script>
     <script src="@(applicationUrl + "_content/MudBlazor/MudBlazor.min.js?v=" + appVersion)"></script>
     <script src="@(applicationUrl + "_content/Radzen.Blazor/Radzen.Blazor.js?v=" + (typeof(Radzen.Colors).Assembly.GetName().Version))"></script>
@@ -43,12 +43,28 @@
     <script src="@Assets["js/sortablejs/sortable.min.js"]"></script>
     <script src="@Assets["js/jquery/jquery-3.7.0.min.js"]"></script>
     <script src="@Assets["js/bootstrap/js/bootstrap.bundle.min.js"]"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@@thumbmarkjs/thumbmarkjs/dist/thumbmark.umd.js"></script>
+    <script src="@(applicationUrl + "_content/BlazorMonaco/jsInterop.js?v=" + appVersion)"></script>
+    <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js?v=" + appVersion)"></script>
+    <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js?v=" + appVersion)"></script>
+    <script src="_framework/blazor.web.js"></script>
 
     <script type="text/javascript">
-        var dotNetHelper;
+        let dotNetHelper;
+        let fingerprint;
 
-        $(function () {
+        const onReady = (callback) => {
+            if (document.readyState!='loading') {
+                callback();
+            } else if (document.addEventListener) {
+                document.addEventListener('DOMContentLoaded', callback);
+            } else {
+                document.attachEvent('onreadystatechange', function() {
+                    if (document.readyState=='complete') callback();
+                });
+            }
+        };
+
+        onReady(() => {
             SetPreferredColorScheme("");
         });
 
@@ -114,15 +130,25 @@
             if (safety > 20) { return; }
             safety++;
 
-            if ($("#" + element).is(":visible") == true) {
-                // See if the element is a <div>. If so, find the first child that is an input.
-                if ($("#" + element).is("div") || $("#" + element).is("table")) {
-                    var input = $("#" + element).find('input,textarea,select').filter(":visible:first");
-                    if (input != null) {
-                        input.trigger("focus");
+            if (isVisibleByElementId(element)) {
+                let el = document.getElementById(element);
+
+                if (el != undefined && el != null) {
+                    if (el instanceof HTMLDivElement || el instanceof HTMLTableElement) {
+                        // The element provided was a div or table, so find the first input element inside that element.
+                        let inputElements = el.querySelectorAll("input,textarea,select");
+                        if (inputElements != null && inputElements.length > 0) {
+                            for (let i = 0; i < inputElements.length ; i++) {
+                                let inputElement = inputElements[i];
+                                if (isVisible(inputElement)) {
+                                    inputElement.focus();
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        el.focus();
                     }
-                } else {
-                    $("#" + element).trigger("focus");
                 }
             } else {
                 setTimeout(() => DelayedFocusInternal(element, safety), 20);
@@ -137,11 +163,29 @@
             if (safety > 20) { return; }
             safety++;
 
-            if ($("#" + element).is(":visible") == true) {
-                $("#" + element).trigger("select");
-            } else {
-                setTimeout(() => DelayedSelectInternal(element, safety), 20);
+            let el = document.getElementById(element);
+            if (el != undefined && el != null) {
+                if (isVisible(el)) {
+                    if (el instanceof HTMLDivElement || el instanceof HTMLTableElement) {
+                        // The element provided was a div or table, so find the first input element inside that element.
+                        let inputElements = el.querySelectorAll("input,textarea,select");
+                        if (inputElements != null && inputElements.length > 0) {
+                            for (let i = 0; i < inputElements.length ; i++) {
+                                let inputElement = inputElements[i];
+                                if (isVisible(inputElement)) {
+                                    inputElement.select();
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        el.select();
+                    }
+                } else {
+                    setTimeout(() => DelayedSelectInternal(element, safety), 20);
+                }
             }
+
         }
 
         async function DownloadFileFromStream(fileName, contentStreamReference) {
@@ -156,6 +200,16 @@
             URL.revokeObjectURL(url);
         }
 
+        function ElementHasClass(elementId, className) {
+            let el = document.getElementById(elementId);
+            if (el != undefined && el != null) {
+                if (el.classList.contains(className)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function GetFingerprint(){
             ThumbmarkJS.setOption('exclude', ['permissions']);
             // ThumbmarkJS.getFingerprint(includeData = true).then(
@@ -168,9 +222,27 @@
 
             ThumbmarkJS.getFingerprint().then(
                 function(fp) {
+                    fingerprint = fp;
                     dotNetHelper.invokeMethod("SetFingerprint", fp);
                 }
             );
+        }
+
+        function HideElementByClass(className) {
+            let elements = document.getElementsByClassName(className);
+            if (elements != undefined && elements != null) {
+                for(let i = 0; i < elements.length ; i++) {
+                    elements[i].setAttribute("previous-display-style", elements[i].style.display);
+                    elements[i].style.display = "none";
+                }
+            }
+        }
+
+        function HideElementById(id) {
+            let el = document.getElementById(id);
+            if (el != undefined && el != null) {
+                el.style.display = "none";
+            }
         }
 
         function HideMenu() {
@@ -185,21 +257,6 @@
             }
         }
 
-        function HighlightElementByClass(c) {
-            $("." + c).off("click");
-            $("." + c).on("click", function () {
-                RemoveElementHighlightByClass(c);
-            });
-            $("." + c).addClass("highlight");
-
-            $("." + c).fadeOut(200)
-                .fadeIn(200)
-                .fadeOut(200)
-                .fadeIn(200)
-                .fadeOut(200)
-                .fadeIn(200);
-        }
-
         function InsertAtCursor(field, value) {
             var $txt = jQuery("#" + field);
             var caretPos = $txt[0].selectionStart;
@@ -207,8 +264,19 @@
             $txt.val(textAreaTxt.substring(0, caretPos) + value + textAreaTxt.substring(caretPos));
         }
 
+        function isVisible(e) {
+            if (e == undefined || e == null) {
+                return false;
+            } else {
+                return !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length );
+            }
+        }
+
         function Loaded() {
-            $("#body-element").removeClass("loading");
+            let el = document.getElementById("body-element");
+            if (el != undefined && el != null) {
+                el.classList.remove("loading");
+            }
         }
 
         function NavigateTo(url) {
@@ -219,9 +287,13 @@
             window.location.href = window.location.href;
         }
 
-        function RemoveElementHighlightByClass(c) {
-            $("." + c).off("click");
-            $("." + c).removeClass("highlight");
+        function RemoveElementHighlightByClass(className, classToRemove = "highlight") {
+            let elements = document.getElementsByClassName(className);
+            if (elements != undefined && elements != null) {
+                for(let i = 0; i < elements.length ; i++) {
+                    elements[i].classList.remove(classToRemove);
+                }
+            }
         }
 
         function SetDotNetHelper(value) {
@@ -234,16 +306,18 @@
             }
 
             if (preferred == "auto") {
-                var colorScheme = getComputedStyle(document.body, ':after').content;
-                var preferred = colorScheme.indexOf("dark") > -1 ? "dark" : "light";
+                let colorScheme = getComputedStyle(document.body, ':after').content;
+                let preferred = colorScheme.indexOf("dark") > -1 ? "dark" : "light";
             }
 
-            var setTheme = "";
-            var setClass = "";
+            let setTheme = "";
+            let setClass = "";
+            let setMonacoTheme = "vs";
 
             if (preferred == "dark") {
                 setTheme = "dark";
                 setClass = "dark";
+                setMonacoTheme = "vs-dark";
             } else if (preferred == "light") {
                 setTheme = "";
                 setClass = "light";
@@ -253,12 +327,44 @@
             }
 
             // Only update if this has changed.
-            if ($("#body-element").hasClass(setClass)) {
+            if (ElementHasClass("body-element", setClass)) {
                 // Already up-to-date
             } else {
-                $("#body-element").attr("data-bs-theme", setTheme);
-                $("#body-element").removeClass();
-                $("#body-element").addClass(setClass);
+                let el = document.getElementById("body-element");
+                if (el != undefined && el != null) {
+                    el.setAttribute("data-bs-theme", setTheme);
+                    el.classList.remove();
+
+                    if (setClass != "") {
+                        el.classList.add(setClass);
+                    }
+                }
+            }
+
+            if (typeof(monaco) == 'object'){
+                monaco.editor.setTheme(setMonacoTheme);
+            }
+        }
+
+        function ShowElementByClass(className, display = "block") {
+            let elements = document.getElementsByClassName(className);
+            if (elements != undefined && elements != null) {
+                for(let i = 0; i < elements.length ; i++) {
+                    let previous = elements[i].getAttribute("previous-display-style");
+                    if (previous != undefined && previous != null && previous != "") {
+                        elements[i].removeAttribute("previous-display-style");
+                        elements[i].style.display = previous;
+                    } else {
+                        elements[i].style.display = display;
+                    }
+                }
+            }
+        }
+
+        function ShowElementById(id, display = "block") {
+            let el = document.getElementById(id);
+            if (el != undefined && el != null) {
+                el.style.display = display;
             }
         }
 
@@ -272,7 +378,14 @@
         }
 
         function SetElementValue(id, value) {
-            $("#" + id).val(value);
+            let el = document.getElementById(id);
+            if (el != undefined && el != null) {
+                if (el instanceof HTMLInputElement || el instanceof  HTMLSelectElement || el instanceof HTMLTextAreaElement) {
+                    el.value = value;
+                } else if (el.innerHTML != undefined && el.innerHTML != null) {
+                    el.innerHTML = value;
+                }
+            }
         }
     </script>
 </body>

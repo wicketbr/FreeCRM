@@ -143,6 +143,8 @@ public partial class DataAccess
 
                         await UpdateUserLastLoginTime(user.UserId, "Local");
                         return output;
+                    } else {
+                        await SetUserLockout(GuidValue(authenticate.TenantId), user.Email);
                     }
                 }
             }

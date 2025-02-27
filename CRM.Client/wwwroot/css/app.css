@@ -1307,3 +1307,11 @@ label.unbold {
     padding:.2em;
     cursor:pointer;
 }
+
+.monaco-editor-container {
+    min-height:100px;
+}
+
+.monaco-editor-container .monaco-diff-editor {
+    min-height:100px;
+}

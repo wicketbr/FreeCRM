@@ -1,0 +1,417 @@
+﻿@implements IDisposable
+@inject IJSRuntime jsRuntime
+@using BlazorMonaco
+@using BlazorMonaco.Editor
+
+<style>
+    @((MarkupString)CSS)
+</style>
+
+@if (String.IsNullOrWhiteSpace(ValueToDiff)) {
+    <StandaloneCodeEditor 
+            @ref="_editor"
+            Id="@EditorId"
+            CssClass="@Class"
+            OnDidChangeModelContent="EditorUpdated"
+            OnDidChangeCursorPosition="EditorUpdated_CursorPosition"
+            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => { return StandaloneEditorConstructionOptions; })" />
+} else {
+    <StandaloneDiffEditor 
+            @ref="_diffEditor"
+            Id="@EditorId"
+            CssClass="@Class"
+            OnDidChangeModelContentModified="EditorUpdated"
+            OnDidChangeCursorPositionModified="EditorUpdated_CursorPosition"
+            OnDidInit="InitDiffEditor"
+            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneDiffEditor editor) => { return StandaloneEditorConstructionOptionsDiff; })"  />
+}
+
+@code {
+    /// <summary>
+    /// OPTIONAL: An optiona class for the editor (defaults to 'default-editor' which has a min-height of 100px.)
+    // </summary>
+    [Parameter] public string Class { get; set; } = "default-editor";
+
+    /// <summary>
+    /// OPTIONAL: If you wish to override the built-in defaults for the editor configuration you can pass in your own StandaloneEditorConstructionOptions.
+    /// </summary>
+    [Parameter] public BlazorMonaco.Editor.StandaloneEditorConstructionOptions? ConstructorOptions { get; set; } = null;
+
+    /// <summary>
+    /// OPTIONAL: If you wish to override the built-in defaults for the diff editor configuration you can pass in your own StandaloneDiffEditorConstructionOptions.
+    /// </summary>
+    [Parameter]
+    public BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions? ConstructorOptionsForDiffEditor { get; set; } = null;
+
+    /// <summary>
+    /// OPTIONAL: An Id for the editor. If empty a ramdom Id will be generated.
+    /// </summary>
+    [Parameter] public string Id { get; set;} = "";
+
+    /// <summary>
+    /// REQUIRED: The language for the editor (defaults to 'plaintext'.)
+    /// </summary>
+    [Parameter] public string Language { get; set; } = MonacoLanguage.plaintext;
+
+    /// <summary>
+    /// OPTIONAL: The maximum height for the editor (defaults to 300px.)
+    /// </summary>
+    [Parameter] public string MinHeight { get; set; } = "300px;";
+
+    /// <summary>
+    /// OPTIONAL: Set to true to make the editor read-only.
+    /// </summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>
+    /// OPTIONAL: The time in milliseconds to wait before updating the value (defaults to 1000ms.)
+    /// </summary>
+    [Parameter] public int Timeout {get;set;} = 1000;
+
+    /// <summary>
+    /// REQUIRED: The value to display in the editor.
+    /// </summary>
+    [Parameter] public string Value { get; set; } = "";
+
+    /// <summary>
+    /// OPTIONAL: The value to diff against.
+    /// </summary>
+    [Parameter] public string? ValueToDiff { get; set; }
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    protected BlazorMonaco.Editor.StandaloneCodeEditor _editor = null!;
+    protected BlazorMonaco.Editor.StandaloneDiffEditor _diffEditor = null!;
+
+    protected BlazorMonaco.Position _editorPosition = new BlazorMonaco.Position();
+    protected System.Timers.Timer _timer = new System.Timers.Timer();
+
+    protected string _id = Guid.NewGuid().ToString().Replace("-", "").ToLower();
+    protected bool _readOnly = false;
+
+    public void Dispose()
+    {
+        _timer.Dispose();    
+    }
+
+    protected async Task InitDiffEditor()
+    {
+        await _diffEditor.SetModel(new DiffEditorModel {
+            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
+            Modified = await Global.CreateModel(jsRuntime, Value, Language),
+        });
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _timer = new System.Timers.Timer();
+        _timer.Interval = Timeout;
+        _timer.Elapsed += TimerElapsed;
+        _timer.AutoReset = false;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_readOnly != ReadOnly) {
+            _readOnly = ReadOnly;
+
+            await _editor.UpdateOptions(new BlazorMonaco.Editor.EditorUpdateOptions {
+                ReadOnly = _readOnly,
+            });
+        }
+    }
+
+    protected string CSS {
+        get {
+            var output = new System.Text.StringBuilder();
+
+            if (!String.IsNullOrEmpty(MinHeight)) {
+                output.AppendLine("." + Class + ",");
+                output.AppendLine("." + Class + " .monaco-diff-editor {");
+                output.AppendLine("  min-height:" + MinHeight + ";");
+                output.AppendLine("}");
+            }
+
+            return output.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Get the diff editor instance.
+    /// </summary>
+    public BlazorMonaco.Editor.StandaloneDiffEditor DiffEditor {
+        get {
+            return _diffEditor;
+        }
+    }
+
+    /// <summary>
+    /// Get the editor instance.
+    /// </summary>
+    public BlazorMonaco.Editor.StandaloneCodeEditor Editor {
+        get {
+            return _editor;
+        }
+    }
+
+    /// <summary>
+    /// Get the cursor position from the editor.
+    /// </summary>
+    public BlazorMonaco.Position EditorCursorPosition {
+        get {
+            return _editorPosition;
+        }
+    }
+
+    protected string EditorId {
+        get {
+            return !String.IsNullOrWhiteSpace(Id) ? Id : _id;
+        }
+    }
+
+    protected void EditorUpdated(BlazorMonaco.Editor.ModelContentChangedEvent e)
+    {
+        _timer.Stop();
+        _timer.Start();
+    }
+
+    protected void EditorUpdated_CursorPosition(BlazorMonaco.Editor.CursorPositionChangedEvent e)
+    {
+        _editorPosition = e.Position;
+    }
+
+    /// <summary>
+    /// Get the editor selection.
+    /// </summary>
+    public async Task<BlazorMonaco.Selection?> GetEditorSelection()
+    {
+        BlazorMonaco.Selection? output = null;
+
+        if (String.IsNullOrEmpty(ValueToDiff)) {
+            output = await _editor.GetSelection();
+        } else {
+            output = await _diffEditor.ModifiedEditor.GetSelection();
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Get the value from the editor.
+    /// </summary>
+    public async Task<string> GetValue()
+    {
+        string output = String.Empty;
+
+        if (String.IsNullOrEmpty(ValueToDiff)) {
+            output = await _editor.GetValue();
+        } else {
+            output = await _diffEditor.ModifiedEditor.GetValue();
+        }
+
+        return output;  
+    }
+
+    /// <summary>
+    /// Insert a value into the editor at the current cursor position.
+    /// </summary>
+    public async Task InsertValue(string value)
+    {
+        BlazorMonaco.Selection? selection = null;
+
+        if (String.IsNullOrWhiteSpace(ValueToDiff)) {
+            selection = await _editor.GetSelection();
+        } else {
+            selection = await _diffEditor.ModifiedEditor.GetSelection();
+        }
+
+        var edits = new List<BlazorMonaco.Editor.IdentifiedSingleEditOperation>();
+        edits.Add(new BlazorMonaco.Editor.IdentifiedSingleEditOperation {
+                ForceMoveMarkers = false,
+                Range = selection,
+                Text = value,
+            });
+
+        var selectionList = new List<BlazorMonaco.Selection> {
+            new BlazorMonaco.Selection {
+                StartLineNumber = selection.StartLineNumber,
+                EndLineNumber = selection.StartLineNumber,
+                StartColumn = selection.StartColumn,
+                EndColumn = selection.StartColumn,
+                PositionColumn = selection.StartColumn,
+                PositionLineNumber = selection.StartLineNumber,
+                SelectionStartColumn = selection.StartColumn,
+                SelectionStartLineNumber = selection.StartLineNumber,
+            },
+        };
+
+        if (String.IsNullOrWhiteSpace(ValueToDiff)) {
+            await _editor.ExecuteEdits("insert-value", edits, selectionList);
+        } else {
+            await _diffEditor.ModifiedEditor.ExecuteEdits("insert-value", edits, selectionList);
+        }
+    }
+
+    protected async void TimerElapsed(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        if (String.IsNullOrEmpty(ValueToDiff)) {
+            Value = await _editor.GetValue();
+        } else {
+            Value = await _diffEditor.ModifiedEditor.GetValue();
+        }
+        
+        ValueHasChanged();
+    }
+
+    protected BlazorMonaco.Editor.StandaloneEditorConstructionOptions StandaloneEditorConstructionOptions {
+        get {
+            if (ConstructorOptions != null) {
+                return ConstructorOptions;
+            } else {
+                return new BlazorMonaco.Editor.StandaloneEditorConstructionOptions {
+                        AutomaticLayout = true,
+                        Language = Language,
+                        Value = Value,
+                        AutoClosingBrackets = "always",
+                        AutoClosingComments = "always",
+                        AutoClosingQuotes = "always",
+                        DragAndDrop = true,
+                        FormatOnPaste = true,
+                        FormatOnType = true,
+                        ReadOnly = _readOnly,
+                        RenderWhitespace = "all",
+                    };
+            }
+        }
+    }
+
+    protected BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions StandaloneEditorConstructionOptionsDiff {
+        get {
+            if (ConstructorOptionsForDiffEditor != null) {
+                return ConstructorOptionsForDiffEditor;
+            } else {
+                return new BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions {
+                    AutomaticLayout = true,
+                    OriginalEditable = false,
+                    RenderSideBySide = true,
+                    UseInlineViewWhenSpaceIsLimited = true,
+                    AutoClosingBrackets = "always",
+                    AutoClosingComments = "always",
+                    AutoClosingQuotes = "always",
+                    DragAndDrop = true,
+                    FormatOnPaste = true,
+                    ReadOnly = _readOnly,
+                    RenderWhitespace = "all",
+                    
+                };
+            }
+        }
+    }
+
+    protected void ValueHasChanged()
+    {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// A static class for the Monaco languag options.
+    /// </summary>
+    public static class MonacoLanguage
+    {
+        public const string plaintext = "plaintext";
+        public const string abap = "abap";
+        public const string apex = "apex";
+        public const string azcli = "azcli";
+        public const string bat = "bat";
+        public const string bicep = "bicep";
+        public const string cameligo = "cameligo";
+        public const string clojure = "clojure";
+        public const string coffeescript = "coffeescript";
+        public const string c = "c";
+        public const string cpp = "cpp";
+        public const string csharp = "csharp";
+        public const string csp = "csp";
+        public const string css = "css";
+        public const string cypher = "cypher";
+        public const string dart = "dart";
+        public const string dockerfile = "dockerfile";
+        public const string ecl = "ecl";
+        public const string elixir = "elixir";
+        public const string flow9 = "flow9";
+        public const string fsharp = "fsharp";
+        public const string freemarker2 = "freemarker2";
+        public const string freemarker2_tag_angle_interpolation_dollar = "freemarker2.tag-angle.interpolation-dollar";
+        public const string freemarker2_tag_bracket_interpolation_dollar = "freemarker2.tag-bracket.interpolation-dollar";
+        public const string freemarker2_tag_angle_interpolation_bracket = "freemarker2.tag-angle.interpolation-bracket";
+        public const string freemarker2_tag_bracket_interpolation_bracket = "freemarker2.tag-bracket.interpolation-bracket";
+        public const string freemarker2_tag_auto_interpolation_dollar = "freemarker2.tag-auto.interpolation-dollar";
+        public const string freemarker2_tag_auto_interpolation_bracket = "freemarker2.tag-auto.interpolation-bracket";
+        public const string go = "go";
+        public const string graphql = "graphql";
+        public const string handlebars = "handlebars";
+        public const string hcl = "hcl";
+        public const string html = "html";
+        public const string ini = "ini";
+        public const string java = "java";
+        public const string javascript = "javascript";
+        public const string julia = "julia";
+        public const string kotlin = "kotlin";
+        public const string less = "less";
+        public const string lexon = "lexon";
+        public const string lua = "lua";
+        public const string liquid = "liquid";
+        public const string m3 = "m3";
+        public const string markdown = "markdown";
+        public const string mdx = "mdx";
+        public const string mips = "mips";
+        public const string msdax = "msdax";
+        public const string mysql = "mysql";
+        public const string objective_c = "objective-c";
+        public const string pascal = "pascal";
+        public const string pascaligo = "pascaligo";
+        public const string perl = "perl";
+        public const string pgsql = "pgsql";
+        public const string php = "php";
+        public const string pla = "pla";
+        public const string postiats = "postiats";
+        public const string powerquery = "powerquery";
+        public const string powershell = "powershell";
+        public const string proto = "proto";
+        public const string pug = "pug";
+        public const string python = "python";
+        public const string qsharp = "qsharp";
+        public const string r = "r";
+        public const string razor = "razor";
+        public const string redis = "redis";
+        public const string redshift = "redshift";
+        public const string restructuredtext = "restructuredtext";
+        public const string ruby = "ruby";
+        public const string rust = "rust";
+        public const string sb = "sb";
+        public const string scala = "scala";
+        public const string scheme = "scheme";
+        public const string scss = "scss";
+        public const string shell = "shell";
+        public const string sol = "sol";
+        public const string aes = "aes";
+        public const string sparql = "sparql";
+        public const string sql = "sql";
+        public const string st = "st";
+        public const string swift = "swift";
+        public const string systemverilog = "systemverilog";
+        public const string verilog = "verilog";
+        public const string tcl = "tcl";
+        public const string twig = "twig";
+        public const string typescript = "typescript";
+        public const string typespec = "typespec";
+        public const string vb = "vb";
+        public const string wgsl = "wgsl";
+        public const string xml = "xml";
+        public const string yaml = "yaml";
+        public const string json = "json";
+    }
+}

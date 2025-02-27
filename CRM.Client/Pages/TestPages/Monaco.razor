@@ -1,0 +1,82 @@
+﻿@page "/Monaco"
+@page "/{TenantCode}/Monaco"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+<div class="mb-2">
+    <label for="my-monaco-editor">Monaco Editor</label>
+    <MonacoEditor 
+            Id="my-monaco-editor"
+            Language="@MonacoEditor.MonacoLanguage.html"
+            ReadOnly="@_monacoReadOnly"
+            ValueToDiff="@_monacoContentToDiff"
+            @bind-Value="_monacoContent" />
+</div>
+
+<div class="mb-2 form-check form-switch">
+    <input type="checkbox" role="switch" class="form-check-input" id="monaco-read-only" @bind="_monacoReadOnly" />
+    <label for="monaco-read-only" class="form-check-label">Read-Only Editor</label>
+</div>
+
+<div><b>Content:</b></div>
+<div><textarea class="form-control" style="height:200px;">@_monacoContent</textarea></div>
+
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+}
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected string _pageName = "monaco";
+
+    protected string _monacoContent = "";
+    protected string _monacoContentToDiff = "";
+    protected bool _monacoReadOnly = false;
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateTo("Login");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _monacoContent = "<div>" + Environment.NewLine + "\tSome sample <b>HTML</b> content." + Environment.NewLine + "</div>";
+        //_monacoContentToDiff = _monacoContent;
+
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}
