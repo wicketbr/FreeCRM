@@ -89,6 +89,9 @@
     {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
+
+        Model.Subscribers_OnChange.Remove(_pageName);
+        Model.Subscribers_OnSignalRUpdate.Remove(_pageName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

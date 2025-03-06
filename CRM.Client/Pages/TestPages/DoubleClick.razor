@@ -1,0 +1,46 @@
+﻿@page "/DoubleClick"
+@page "/{TenantCode}/DoubleClick"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+<button type="button" class="btn btn-primary" @onclick="OnClick" @ondblclick="OnDoubleClick">
+    Test
+</button>
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _pageName = "doubleclick";
+
+    public void Dispose() { }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+            } else {
+                Helpers.NavigateTo("Login");
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.View = _pageName;
+    }
+
+    protected void OnClick()
+    {
+        Console.WriteLine("Clicked at " + DateTime.Now.ToString());
+    }
+
+    protected void OnDoubleClick()
+    {
+        Console.WriteLine("Double-Clicked at " + DateTime.Now.ToString());
+    }
+}

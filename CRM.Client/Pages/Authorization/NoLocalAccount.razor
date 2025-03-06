@@ -26,6 +26,7 @@
 
     public void Dispose() { 
         Model.OnChange -= OnDataModelUpdated;
+        Model.Subscribers_OnChange.Remove(_pageName);
     }
 
     protected override void OnAfterRender(bool firstRender)

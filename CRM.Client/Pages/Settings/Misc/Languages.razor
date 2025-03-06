@@ -250,6 +250,8 @@
     public void Dispose()
     {
         Model.OnChange -= StateHasChanged;
+
+        Model.Subscribers_OnChange.Remove("Languages");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

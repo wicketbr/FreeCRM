@@ -39,6 +39,8 @@
     public void Dispose()
     {
         Model.OnChange -= OnDataModelUpdated;
+
+        Model.Subscribers_OnChange.Remove(_pageName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -63,7 +65,7 @@
     protected override void OnInitialized()
     {
         _monacoContent = "<div>" + Environment.NewLine + "\tSome sample <b>HTML</b> content." + Environment.NewLine + "</div>";
-        //_monacoContentToDiff = _monacoContent;
+        _monacoContentToDiff = _monacoContent;
 
         if (!Model.Subscribers_OnChange.Contains(_pageName)){
             Model.Subscribers_OnChange.Add(_pageName);
