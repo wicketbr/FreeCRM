@@ -8,22 +8,20 @@
 </style>
 
 @if (String.IsNullOrWhiteSpace(ValueToDiff)) {
-    <StandaloneCodeEditor 
-            @ref="_editor"
-            Id="@EditorId"
-            CssClass="@Class"
-            OnDidChangeModelContent="EditorUpdated"
-            OnDidChangeCursorPosition="EditorUpdated_CursorPosition"
-            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => { return StandaloneEditorConstructionOptions; })" />
+    <StandaloneCodeEditor @ref="_editor"
+                          Id="@EditorId"
+                          CssClass="@Class"
+                          OnDidChangeModelContent="EditorUpdated"
+                          OnDidChangeCursorPosition="EditorUpdated_CursorPosition"
+                          ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => { return StandaloneEditorConstructionOptions; })" />
 } else {
-    <StandaloneDiffEditor 
-            @ref="_diffEditor"
-            Id="@EditorId"
-            CssClass="@Class"
-            OnDidChangeModelContentModified="EditorUpdated"
-            OnDidChangeCursorPositionModified="EditorUpdated_CursorPosition"
-            OnDidInit="InitDiffEditor"
-            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneDiffEditor editor) => { return StandaloneEditorConstructionOptionsDiff; })"  />
+    <StandaloneDiffEditor @ref="_diffEditor"
+                          Id="@EditorId"
+                          CssClass="@Class"
+                          OnDidChangeModelContentModified="EditorUpdated"
+                          OnDidChangeCursorPositionModified="EditorUpdated_CursorPosition"
+                          OnDidInit="InitDiffEditor"
+                          ConstructionOptions="@((BlazorMonaco.Editor.StandaloneDiffEditor editor) => { return StandaloneEditorConstructionOptionsDiff; })" />
 }
 
 @code {
@@ -46,7 +44,7 @@
     /// <summary>
     /// OPTIONAL: An Id for the editor. If empty a ramdom Id will be generated.
     /// </summary>
-    [Parameter] public string Id { get; set;} = "";
+    [Parameter] public string Id { get; set; } = "";
 
     /// <summary>
     /// REQUIRED: The language for the editor (defaults to 'plaintext'.)
@@ -66,7 +64,7 @@
     /// <summary>
     /// OPTIONAL: The time in milliseconds to wait before updating the value (defaults to 1000ms.)
     /// </summary>
-    [Parameter] public int Timeout {get;set;} = 1000;
+    [Parameter] public int Timeout { get; set; } = 1000;
 
     /// <summary>
     /// REQUIRED: The value to display in the editor.
@@ -94,15 +92,15 @@
 
     public void Dispose()
     {
-        _timer.Dispose();    
+        _timer.Dispose();
     }
 
     protected async Task InitDiffEditor()
     {
         await _diffEditor.SetModel(new DiffEditorModel {
-            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
-            Modified = await Global.CreateModel(jsRuntime, Value, Language),
-        });
+                Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
+                Modified = await Global.CreateModel(jsRuntime, Value, Language),
+            });
     }
 
     protected override async Task OnInitializedAsync()
@@ -119,8 +117,8 @@
             _readOnly = ReadOnly;
 
             await _editor.UpdateOptions(new BlazorMonaco.Editor.EditorUpdateOptions {
-                ReadOnly = _readOnly,
-            });
+                    ReadOnly = _readOnly,
+                });
         }
     }
 
@@ -212,7 +210,7 @@
             output = await _diffEditor.ModifiedEditor.GetValue();
         }
 
-        return output;  
+        return output;
     }
 
     /// <summary>
@@ -255,6 +253,21 @@
         }
     }
 
+    /// <summary>
+    /// Sets the value of the editor.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <returns></returns>
+    public async Task SetValue(string value)
+    {
+        if (String.IsNullOrWhiteSpace(ValueToDiff)) {
+            await _editor.SetValue(value);
+        } else {
+            await _diffEditor.ModifiedEditor.SetValue(value);
+        }
+        ValueHasChanged();
+    }
+
     protected async void TimerElapsed(Object? source, System.Timers.ElapsedEventArgs e)
     {
         if (String.IsNullOrEmpty(ValueToDiff)) {
@@ -262,7 +275,7 @@
         } else {
             Value = await _diffEditor.ModifiedEditor.GetValue();
         }
-        
+
         ValueHasChanged();
     }
 
@@ -294,19 +307,19 @@
                 return ConstructorOptionsForDiffEditor;
             } else {
                 return new BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions {
-                    AutomaticLayout = true,
-                    OriginalEditable = false,
-                    RenderSideBySide = true,
-                    UseInlineViewWhenSpaceIsLimited = true,
-                    AutoClosingBrackets = "always",
-                    AutoClosingComments = "always",
-                    AutoClosingQuotes = "always",
-                    DragAndDrop = true,
-                    FormatOnPaste = true,
-                    ReadOnly = _readOnly,
-                    RenderWhitespace = "all",
-                    
-                };
+                        AutomaticLayout = true,
+                        OriginalEditable = false,
+                        RenderSideBySide = true,
+                        UseInlineViewWhenSpaceIsLimited = true,
+                        AutoClosingBrackets = "always",
+                        AutoClosingComments = "always",
+                        AutoClosingQuotes = "always",
+                        DragAndDrop = true,
+                        FormatOnPaste = true,
+                        ReadOnly = _readOnly,
+                        RenderWhitespace = "all",
+
+                    };
             }
         }
     }
