@@ -8,9 +8,9 @@ public partial class DataController
     [HttpPost]
     [Authorize]
     [Route("~/api/Data/AjaxUserSearch/")]
-    public ActionResult<DataObjects.AjaxLookup> AjaxUserSearch(DataObjects.AjaxLookup Lookup)
+    public async Task<ActionResult<DataObjects.AjaxLookup>> AjaxUserSearch(DataObjects.AjaxLookup Lookup)
     {
-        var output = da.AjaxUserSearch(Lookup);
+        var output = await da.AjaxUserSearch(Lookup);
         return Ok(output);
     }
 }

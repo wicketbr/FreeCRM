@@ -2,12 +2,12 @@
 
 public partial interface IDataAccess
 {
-    DataObjects.AjaxLookup AjaxUserSearch(DataObjects.AjaxLookup Lookup, bool LocalOnly = false);
+    Task<DataObjects.AjaxLookup> AjaxUserSearch(DataObjects.AjaxLookup Lookup, bool LocalOnly = false);
 }
 
 public partial class DataAccess
 {
-    public DataObjects.AjaxLookup AjaxUserSearch(DataObjects.AjaxLookup Lookup, bool LocalOnly = false)
+    public async Task<DataObjects.AjaxLookup> AjaxUserSearch(DataObjects.AjaxLookup Lookup, bool LocalOnly = false)
     {
         // A combination of results from the local users table and from Active Directory
         List<DataObjects.AjaxResults> results = new List<DataObjects.AjaxResults>();
@@ -103,7 +103,7 @@ public partial class DataAccess
                 }
             }
 
-            var ldapLookupResults = GetActiveDirectorySearchResults(Lookup.TenantId, search, 25, excludeEmails);
+            var ldapLookupResults = await GetActiveDirectorySearchResults(Lookup.TenantId, search, 25, excludeEmails);
             if (ldapLookupResults != null && ldapLookupResults.Any()) {
                 results.Add(new DataObjects.AjaxResults {
                     value = Guid.Empty.ToString(),

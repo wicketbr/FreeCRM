@@ -2,12 +2,12 @@
 
 public partial interface IDataAccess
 {
-    DataObjects.ActiveDirectoryUserInfo? GetActiveDirectoryInfo(Guid TenantId, string Lookup, DataObjects.UserLookupType Type);
+    Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo(Guid TenantId, string Lookup, DataObjects.UserLookupType Type);
 }
 
 public partial class DataAccess
 {
-    private DataObjects.ActiveDirectoryUserInfo? AuthenticateWithLDAP(Guid TenantId, string Username, string Password)
+    private async Task<DataObjects.ActiveDirectoryUserInfo?> AuthenticateWithLDAP(Guid TenantId, string Username, string Password)
     {
         DataObjects.ActiveDirectoryUserInfo? output = null;
 
@@ -18,17 +18,17 @@ public partial class DataAccess
         int ldapLookupPort = settings.LdapLookupPort;
 
         if (Username.Contains("@")) {
-            output = GetActiveDirectoryInfo(Username, DataObjects.UserLookupType.Email, ldapLookupRoot, ldapLookupSearchBase,
+            output = await GetActiveDirectoryInfo(Username, DataObjects.UserLookupType.Email, ldapLookupRoot, ldapLookupSearchBase,
                 ldapLookupPort, Username, Password, ldapLookupLocationAttribute);
         } else {
-            output = GetActiveDirectoryInfo(Username, DataObjects.UserLookupType.Username, ldapLookupRoot, ldapLookupSearchBase,
+            output = await GetActiveDirectoryInfo(Username, DataObjects.UserLookupType.Username, ldapLookupRoot, ldapLookupSearchBase,
                 ldapLookupPort, Username, Password, ldapLookupLocationAttribute);
         }
 
         return output;
     }
 
-    public DataObjects.ActiveDirectoryUserInfo? GetActiveDirectoryInfo(Guid TenantId, string Lookup, DataObjects.UserLookupType Type)
+    public async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo(Guid TenantId, string Lookup, DataObjects.UserLookupType Type)
     {
         // Get the LDAP settings from the tenant
         var settings = GetTenantSettings(TenantId);
@@ -39,13 +39,13 @@ public partial class DataAccess
         var ldapLookupLocationAttribute = settings.LdapLookupLocationAttribute;
         int ldapLookupPort = settings.LdapLookupPort;
 
-        var output = GetActiveDirectoryInfo(Lookup, Type, ldapLookupRoot, ldapLookupSearchBase,
+        var output = await GetActiveDirectoryInfo(Lookup, Type, ldapLookupRoot, ldapLookupSearchBase,
             ldapLookupPort, ldapLookupUsername, ldapLookupPassword, ldapLookupLocationAttribute);
 
         return output;
     }
 
-    private DataObjects.ActiveDirectoryUserInfo? GetActiveDirectoryInfo(string Lookup, DataObjects.UserLookupType Type,
+    private async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo(string Lookup, DataObjects.UserLookupType Type,
         string? LdapRoot, string? SearchBase, int? LdapPort, string? LdapQueryUsername, string? LdapQueryPassword, string? LdapLocationAttribute)
     {
         if (String.IsNullOrWhiteSpace(LdapLocationAttribute)) {
@@ -81,10 +81,10 @@ public partial class DataAccess
         }
 
         var ldapConn = new Novell.Directory.Ldap.LdapConnection();
-        ldapConn.Connect(LdapRoot, ldapPort);
+        await ldapConn.ConnectAsync(LdapRoot, ldapPort);
 
         try {
-            ldapConn.Bind(LdapQueryUsername, LdapQueryPassword);
+            await ldapConn.BindAsync(LdapQueryUsername, LdapQueryPassword);
         } catch {
             return output;
         }
@@ -96,18 +96,20 @@ public partial class DataAccess
         };
 
         try {
-            var searchResults = ldapConn.Search(SearchBase, 2, searchFilter, attributes, false);
+            var searchResults = await ldapConn.SearchAsync(SearchBase, 2, searchFilter, attributes, false);
 
             if (searchResults != null) {
-                foreach (var result in searchResults) {
+                foreach (var result in searchResults.ToBlockingEnumerable()) {
                     if (output == null) {
                         // Only use the first result.
                         var user = new DataObjects.ActiveDirectoryUserInfo();
 
+                        var attributeSet = result.GetAttributeSet();
+
                         // First, get the GUID
                         Guid objectGUID = Guid.Empty;
                         try {
-                            var bytes = result.GetAttribute("objectGUID").ByteValue;
+                            var bytes = attributeSet.GetAttribute("objectGUID").ByteValue;
                             if (bytes != null) {
                                 objectGUID = new Guid(bytes);
                             }
@@ -117,19 +119,18 @@ public partial class DataAccess
                             user.UserId = objectGUID;
                         }
 
-                        // Try to add each remaining property. If properties are missing they throw
-                        // an error, so try/catch each attribute.
-                        try { user.Department = result.GetAttribute("department").StringValue; } catch { }
-                        try { user.Username = result.GetAttribute("sAMAccountName").StringValue; } catch { }
-                        try { user.FirstName = result.GetAttribute("givenName").StringValue; } catch { }
-                        try { user.LastName = result.GetAttribute("sn").StringValue; } catch { }
-                        try { user.Email = result.GetAttribute("mail").StringValue; } catch { }
-                        try { user.Phone = result.GetAttribute("telephoneNumber").StringValue; } catch { }
-                        try { user.EmployeeId = result.GetAttribute("employeeid").StringValue; } catch { }
-                        try { user.Title = result.GetAttribute("title").StringValue; } catch { }
-                        try { user.Location = result.GetAttribute(LdapLocationAttribute).StringValue; } catch { }
+                        // Try to add each remaining property. If properties are missing they throw an error, so try/catch each attribute.
+                        try { user.Department = attributeSet.GetAttribute("department").StringValue; } catch { }
+                        try { user.Username = attributeSet.GetAttribute("sAMAccountName").StringValue; } catch { }
+                        try { user.FirstName = attributeSet.GetAttribute("givenName").StringValue; } catch { }
+                        try { user.LastName = attributeSet.GetAttribute("sn").StringValue; } catch { }
+                        try { user.Email = attributeSet.GetAttribute("mail").StringValue; } catch { }
+                        try { user.Phone = attributeSet.GetAttribute("telephoneNumber").StringValue; } catch { }
+                        try { user.EmployeeId = attributeSet.GetAttribute("employeeid").StringValue; } catch { }
+                        try { user.Title = attributeSet.GetAttribute("title").StringValue; } catch { }
+                        try { user.Location = attributeSet.GetAttribute(LdapLocationAttribute).StringValue; } catch { }
 
-                        output = user;
+                        return user;
                     }
                 }
             }
@@ -138,7 +139,7 @@ public partial class DataAccess
         return output;
     }
 
-    private List<DataObjects.ActiveDirectoryUserInfo>? GetActiveDirectorySearchResults(Guid TenantId, string SearchText,
+    private async Task<List<DataObjects.ActiveDirectoryUserInfo>?> GetActiveDirectorySearchResults(Guid TenantId, string SearchText,
         int MaxResults,
         List<string>? excludeEmails)
     {
@@ -169,10 +170,10 @@ public partial class DataAccess
         }
 
         var ldapConn = new Novell.Directory.Ldap.LdapConnection();
-        ldapConn.Connect(ldapLookupRoot, ldapPort);
+        await ldapConn.ConnectAsync(ldapLookupRoot, ldapPort);
 
         try {
-            ldapConn.Bind(ldapLookupUsername, ldapLookupPassword);
+            await ldapConn.BindAsync(ldapLookupUsername, ldapLookupPassword);
         } catch {
             return output;
         }
@@ -186,16 +187,18 @@ public partial class DataAccess
         string searchFilter = "(&(objectClass=user)(objectCategory=person)(anr=" + SearchText + "))";
 
         try {
-            var searchResults = ldapConn.Search(ldapLookupSearchBase, 2, searchFilter, attributes, false);
+            var searchResults = await ldapConn.SearchAsync(ldapLookupSearchBase, 2, searchFilter, attributes, false);
 
             if (searchResults != null) {
-                foreach (var result in searchResults) {
+                foreach (var result in searchResults.ToBlockingEnumerable()) {
                     var user = new DataObjects.ActiveDirectoryUserInfo();
+
+                    var attributeSet = result.GetAttributeSet();
 
                     // First, get the GUID
                     Guid objectGUID = Guid.Empty;
                     try {
-                        var bytes = result.GetAttribute("objectGUID").ByteValue;
+                        var bytes = attributeSet.GetAttribute("objectGUID").ByteValue;
                         if (bytes != null) {
                             objectGUID = new Guid(bytes);
                         }
@@ -205,21 +208,21 @@ public partial class DataAccess
                         user.UserId = objectGUID;
                     }
 
-                    // Try to add each remaining property. If properties are missing they throw
-                    // an error, so try/catch each attribute.
-                    try { user.Department = result.GetAttribute("department").StringValue; } catch { }
-                    try { user.Username = result.GetAttribute("sAMAccountName").StringValue; } catch { }
-                    try { user.FirstName = result.GetAttribute("givenName").StringValue; } catch { }
-                    try { user.LastName = result.GetAttribute("sn").StringValue; } catch { }
-                    try { user.Email = result.GetAttribute("mail").StringValue; } catch { }
-                    try { user.Phone = result.GetAttribute("telephoneNumber").StringValue; } catch { }
-                    try { user.EmployeeId = result.GetAttribute("employeeid").StringValue; } catch { }
-                    try { user.Title = result.GetAttribute("title").StringValue; } catch { }
-                    try { user.Location = result.GetAttribute(ldapLookupLocationAttribute).StringValue; } catch { }
+                    // Try to add each remaining property. If properties are missing they throw an error, so try/catch each attribute.
+                    try { user.Department = attributeSet.GetAttribute("department").StringValue; } catch { }
+                    try { user.Username = attributeSet.GetAttribute("sAMAccountName").StringValue; } catch { }
+                    try { user.FirstName = attributeSet.GetAttribute("givenName").StringValue; } catch { }
+                    try { user.LastName = attributeSet.GetAttribute("sn").StringValue; } catch { }
+                    try { user.Email = attributeSet.GetAttribute("mail").StringValue; } catch { }
+                    try { user.Phone = attributeSet.GetAttribute("telephoneNumber").StringValue; } catch { }
+                    try { user.EmployeeId = attributeSet.GetAttribute("employeeid").StringValue; } catch { }
+                    try { user.Title = attributeSet.GetAttribute("title").StringValue; } catch { }
+                    try { user.Location = attributeSet.GetAttribute(ldapLookupLocationAttribute).StringValue; } catch { }
 
                     if (output == null) {
                         output = new List<DataObjects.ActiveDirectoryUserInfo>();
                     }
+
                     output.Add(user);
                 }
             }
