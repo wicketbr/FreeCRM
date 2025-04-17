@@ -53,17 +53,30 @@ public partial class DataAccess
         if (adminUser == null) {
             adminUser = new User {
                 UserId = _guid1,
-                TenantId = _guid1
+                TenantId = _guid1,
+                Username = "admin",
             };
             newRecord = true;
         }
         adminUser.Added = now;
         adminUser.AddedBy = "Seeded Test Data";
-        adminUser.FirstName = "Admin";
-        adminUser.LastName = "User";
-        adminUser.Email = "admin@local";
-        adminUser.Username = "admin";
-        adminUser.EmployeeId = "app.admin";
+
+        if (String.IsNullOrWhiteSpace(adminUser.Email)) {
+            adminUser.Email = "admin@local";
+        }
+
+        if (String.IsNullOrWhiteSpace(adminUser.FirstName)) {
+            adminUser.FirstName = "Admin";
+        }
+
+        if (String.IsNullOrWhiteSpace(adminUser.LastName)) {
+            adminUser.LastName = "User";
+        }
+
+        if (String.IsNullOrWhiteSpace(adminUser.EmployeeId)) {
+            adminUser.EmployeeId = "app.admin";
+        }
+
         adminUser.Enabled = true;
         adminUser.LastModified = now;
         adminUser.PreventPasswordChange = false;
@@ -119,12 +132,13 @@ public partial class DataAccess
         if (tenantIds.Any()) {
             foreach (var tenantId in tenantIds) {
                 newRecord = false;
-                var tenantAdmin = data.Users.FirstOrDefault(x => x.TenantId == tenantId && x.Username != null && x.Username.ToLower() == "admin");
+                var tenantAdmin = data.Users.FirstOrDefault(x => x.TenantId == tenantId && x.UserId == tenantId);
                 if (tenantAdmin == null) {
                     tenantAdmin = new EFModels.EFModels.User {
                         TenantId = tenantId,
                         LastModified = now,
-                        UserId = tenantId // Set the admin user id in each tenant to the tenant id
+                        UserId = tenantId, // Set the admin user id in each tenant to the tenant id
+                        Username = "admin",
                     };
                     newRecord = true;
                 }
@@ -132,11 +146,23 @@ public partial class DataAccess
                 tenantAdmin.AddedBy = "Seeded Test Data";
                 tenantAdmin.LastModified = now;
                 tenantAdmin.LastModifiedBy = "Seeded Test Data";
-                tenantAdmin.FirstName = "Admin";
-                tenantAdmin.LastName = "User";
-                tenantAdmin.Email = "admin@local";
-                tenantAdmin.Username = "admin";
-                tenantAdmin.EmployeeId = "app.admin";
+
+                if (String.IsNullOrWhiteSpace(tenantAdmin.FirstName)) {
+                    tenantAdmin.FirstName = "Admin";
+                }
+
+                if (String.IsNullOrWhiteSpace(tenantAdmin.LastName)) {
+                    tenantAdmin.LastName = "User";
+                }
+
+                if (String.IsNullOrWhiteSpace(tenantAdmin.Email)) {
+                    tenantAdmin.Email = "admin@local";
+                }
+
+                if (String.IsNullOrWhiteSpace(tenantAdmin.EmployeeId)) {
+                    tenantAdmin.EmployeeId = "app.admin";
+                }
+
                 tenantAdmin.Enabled = true;
                 tenantAdmin.Admin = true;
                 tenantAdmin.Deleted = false;
