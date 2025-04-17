@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis;
 using Microsoft.Graph.Models;
 using System.Net.Http;
+using System.Reflection;
 using Utilities;
 
 namespace CRM;
@@ -63,6 +64,7 @@ public partial interface IDataAccess
     string RecurseExceptionAsString(Exception ex, bool ShowExceptionType = true);
     void Redirect(string url);
     DateOnly Released { get; }
+    object RemoveSensitiveData(object o);
     string Replace(string input, string replaceText, string withText);
     string Request(string parameter);
     double RunningSince { get; }
@@ -810,9 +812,16 @@ public partial class DataAccess
         // Gets a limited version of the model.
         DataObjects.BlazorDataModelLoader output = new DataObjects.BlazorDataModelLoader();
 
+        var tenantsList = GetTenantsList();
+        if (tenantsList.Any()) {
+            foreach(var item in tenantsList) {
+                RemoveSensitiveData(item);
+            }
+        }
+
         output.ActiveUsers = new List<DataObjects.ActiveUser>();
         output.AdminCustomLoginProvider = AdminCustomLoginProvider;
-        output.AllTenants = GetTenantsList();
+        output.AllTenants = tenantsList;
         output.ApplicationUrl = ApplicationURL;
         output.AppSettings = AppSettings;
         output.AuthenticationProviders = _authenticationProviders;
@@ -821,7 +830,7 @@ public partial class DataAccess
         output.CultureCodes = GetLanguageCultureCodes();
         output.Languages = new List<DataObjects.Language>();
         output.LoggedIn = false;
-        output.Plugins = GetPlugins();
+        output.Plugins = GetPluginsWithoutCode();
         output.Released = Released;
         output.TenantId = Guid.Empty;
         output.Tenants = new List<DataObjects.Tenant>();
@@ -856,8 +865,9 @@ public partial class DataAccess
             }
 
             if (users.Any()) {
-                foreach (var user in users) {
-                    var tenant = GetTenant(user.TenantId, CurrentUser);
+                var allTenantIds = users.Select(x => x.TenantId).Distinct().ToList();
+                foreach (var tenantId in allTenantIds) {
+                    var tenant = GetTenant(tenantId, CurrentUser);
                     if (tenant != null && tenant.ActionResponse.Result && tenant.Enabled) {
                         tenants.Add(tenant);
                         var tenantLanguages = await GetTenantLanguages(tenant.TenantId);
@@ -870,9 +880,16 @@ public partial class DataAccess
                 }
             }
 
+            var tenantsList = GetTenantsList();
+            if (tenantsList.Any()) {
+                foreach (var item in tenantsList) {
+                    RemoveSensitiveData(item);
+                }
+            }
+
             output.ActiveUsers = await GetActiveUsers(CurrentUser);
             output.AdminCustomLoginProvider = AdminCustomLoginProvider;
-            output.AllTenants = await GetTenants();
+            output.AllTenants = tenantsList;
             output.ApplicationUrl = ApplicationURL;
             output.AppSettings = AppSettings;
             output.AuthenticationProviders = _authenticationProviders;
@@ -881,7 +898,7 @@ public partial class DataAccess
             output.CultureCodes = GetLanguageCultureCodes();
             output.Languages = languages;
             output.LoggedIn = true;
-            output.Plugins = GetPlugins();
+            output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
             output.TenantId = CurrentUser.TenantId;
             output.Tenants = tenants;
@@ -904,8 +921,15 @@ public partial class DataAccess
         if (tenant.ActionResponse.Result) {
             var tenantLanguages = await GetTenantLanguages(tenant.TenantId);
 
+            var tenantsList = GetTenantsList();
+            if (tenantsList.Any()) {
+                foreach (var item in tenantsList) {
+                    RemoveSensitiveData(item);
+                }
+            }
+
             output.AdminCustomLoginProvider = AdminCustomLoginProvider;
-            output.AllTenants = await GetTenants();
+            output.AllTenants = tenantsList;
             output.ApplicationUrl = ApplicationURL;
             output.AppSettings = AppSettings;
             output.AuthenticationProviders = _authenticationProviders;
@@ -914,7 +938,7 @@ public partial class DataAccess
             output.CultureCodes = GetLanguageCultureCodes();
             output.Languages = tenantLanguages;
             output.LoggedIn = false;
-            output.Plugins = GetPlugins();
+            output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
             output.TenantId = tenant.TenantId;
             output.Tenants = new List<DataObjects.Tenant>{ tenant };
@@ -1497,6 +1521,44 @@ public partial class DataAccess
             return _released;
         }
     }
+
+    public object RemoveSensitiveData(object o)
+    {
+        var type = o.GetType();
+        var properties = type.GetProperties();
+
+        foreach (var property in properties) {
+            var propertyType = property.PropertyType;
+            var thisObject = property.GetValue(o);
+
+            if (property.IsDefined(typeof(SensitiveAttribute))) {
+                object? defaultValue = null;
+                try {
+                    defaultValue = Activator.CreateInstance(propertyType);
+                } catch { }
+
+                // For specific item types return a value instead of null.
+                // In my testing so far it seems like only string is a problem.
+                if (thisObject != null) {
+                    if (thisObject.GetType() == typeof(System.String)) {
+                        defaultValue = "";
+                    }
+                }
+
+                property.SetValue(o, defaultValue);
+            }
+
+            if (!propertyType.ToString().ToLower().StartsWith("system.")) {
+                // This might be an object.
+                if (thisObject != null) {
+                    thisObject = RemoveSensitiveData(thisObject);
+                }
+            }
+        }
+
+        return o;
+    }
+
 
     public string Replace(string input, string replaceText, string withText)
     {

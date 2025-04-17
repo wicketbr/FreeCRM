@@ -23,7 +23,16 @@ public partial class DataAccess
             Result = false,
         };
 
-        if (!String.IsNullOrWhiteSpace(request.Plugin.Code)) {
+        var code = request.Plugin.Code;
+        if (String.IsNullOrWhiteSpace(code)) {
+            var plugins = GetPlugins();
+            var plugin = plugins.FirstOrDefault(x => x.Id == request.Plugin.Id && x.Version == request.Plugin.Version);
+            if (plugin != null) {
+                code += plugin.Code;
+            }
+        }
+
+        if (!String.IsNullOrWhiteSpace(code)) {
             object[] objectArguments = new object[] { this, request.Plugin, CurrentUser };
 
             // Auth types don't include the CurrentUser object.
@@ -62,7 +71,7 @@ public partial class DataAccess
             // Execute the plugin code. This will return a tuple of boolean Result, a List of Messages, and possibly an array of Objects.
             if (PluginsInterface != null) {
                 var result = PluginsInterface.ExecuteDynamicCSharpCode<(bool Result, List<string>? Messages, IEnumerable<object>? Objects)>(
-                    request.Plugin.Code, 
+                    code, 
                     objectArguments, 
                     additionalAssemblies, 
                     request.Plugin.Namespace, 
@@ -109,11 +118,6 @@ public partial class DataAccess
         return output;
     }
 
-    private List<Plugins.Plugin> GetPlugins_UserUpdate()
-    {
-        return GetPluginsByType("UserUpdate");
-    }
-
     private List<Plugins.Plugin> GetPluginsByType(string? type)
     {
         var output = GetPlugins();
@@ -124,6 +128,29 @@ public partial class DataAccess
         }
 
         return output;
+    }
+
+    public List<Plugins.Plugin> GetPluginsWithoutCode()
+    {
+        var output = new List<Plugins.Plugin>();
+
+        var allPlugins = GetPlugins();
+        if (allPlugins.Count > 0) {
+            var duplicate = DuplicateObject<List<Plugins.Plugin>>(allPlugins);
+            if (duplicate != null) {
+                foreach (var item in duplicate) {
+                    item.Code = String.Empty;
+                }
+                output = duplicate;
+            }
+        }
+
+        return output;
+    }
+
+    private List<Plugins.Plugin> GetPlugins_UserUpdate()
+    {
+        return GetPluginsByType("UserUpdate");
     }
 
     public IPlugins? PluginsInterface {

@@ -266,7 +266,7 @@ public partial class DataAccess
             updated = true;
         }
 
-        if (updated) {
+        if (updated && !String.IsNullOrWhiteSpace(Culture)) {
             SaveSetting("Language_" + Culture, DataObjects.SettingType.Object, output.Phrases, TenantId);
         }
 

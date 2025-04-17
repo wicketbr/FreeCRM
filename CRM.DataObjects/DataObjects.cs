@@ -1,5 +1,7 @@
 ﻿namespace CRM;
 
+public class SensitiveAttribute : System.Attribute { }
+
 public partial class DataObjects
 {
     public enum DeletePreference
@@ -431,6 +433,7 @@ public partial class DataObjects
         public bool AllowUsersToSignUpForLocalLogin { get; set; }
         public string? AppIcon { get; set; }
         public string? CustomAuthenticationButtonClass { get; set; }
+        [Sensitive]
         public string? CustomAuthenticationCode { get; set; }
         public string? CustomAuthenticationIcon { get; set; }
         public string? CustomAuthenticationName { get; set; }
@@ -440,11 +443,17 @@ public partial class DataObjects
         public DeletePreference DeletePreference { get; set; } = DeletePreference.MarkAsDeleted;
         public int DeleteMarkedRecordsAfterDays { get; set; } = 90;
         public bool HideAbout { get; set; }
+        [Sensitive]
         public string? LdapLookupRoot { get; set; }
+        [Sensitive]
         public string? LdapLookupUsername { get; set; }
+        [Sensitive]
         public string? LdapLookupPassword { get; set; }
+        [Sensitive]
         public string? LdapLookupSearchBase { get; set; }
+        [Sensitive]
         public string? LdapLookupLocationAttribute { get; set; }
+        [Sensitive]
         public int LdapLookupPort { get; set; }
         public List<string> LoginOptions { get; set; } = new List<string>();
         public Guid? Logo { get; set; }
@@ -461,7 +470,9 @@ public partial class DataObjects
         public bool RequirePreExistingAccountToLogIn { get; set; }
         public List<ListItem>? ListItems { get; set; } = null!;
         //public List<ExternalDataSource>? ExternalUserDataSources { get; set; }
+        [Sensitive]
         public string? JwtRsaPrivateKey { get; set; }
+        [Sensitive]
         public string? JwtRsaPublicKey { get; set; }
     }
 
