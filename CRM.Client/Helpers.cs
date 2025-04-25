@@ -1402,6 +1402,8 @@ public static class Helpers
         return output;
     }
 
+
+    // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// Formats the dates and times for an appointment.
     /// </summary>
@@ -1434,6 +1436,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Appointments}}
 
     /// <summary>
     /// Formats a value in the currency format.
@@ -2042,6 +2045,7 @@ public static class Helpers
         return output;
     }
 
+    // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// Gets the style for a given location.
     /// </summary>
@@ -2081,6 +2085,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Appointments}}
 
     /// <summary>
     /// Shows a dialog to get a new password.

@@ -260,7 +260,9 @@ public partial class DataAccess
 
         if(adminUser) {
             recs = data.Invoices
+                // {{ModuleItemStart:Appointments}}
                 .Include(x => x.Appointment)
+                // {{ModuleItemEnd:Appointments}}
                 .Include(x => x.User)
                 .Where(x => x.TenantId == output.TenantId);
 
@@ -269,7 +271,9 @@ public partial class DataAccess
             }
         } else {
             recs = data.Invoices
+                // {{ModuleItemStart:Appointments}}
                 .Include(x => x.Appointment)
+                // {{ModuleItemEnd:Appointments}}
                 .Include(x => x.User)
                 .Where(x => x.TenantId == output.TenantId && x.Deleted != true);
         }
@@ -376,11 +380,13 @@ public partial class DataAccess
                     : recs.OrderByDescending(x => x.Total);
                 break;
 
+            // {{ModuleItemStart:Appointments}}
             case "APPOINTMENT":
                 recs = Ascending
                     ? recs.OrderBy(x => (x.Appointment != null ? x.Appointment.Title : "")).ThenBy(x => x.InvoiceCreated)
                     : recs.OrderByDescending(x => (x.Appointment != null ? x.Appointment.Title : "")).ThenByDescending(x => x.InvoiceCreated);
                 break;
+            // {{ModuleItemEnd:Appointments}}
 
             case "USER":
                 recs = Ascending
@@ -432,9 +438,11 @@ public partial class DataAccess
                     InvoiceNumber = rec.InvoiceNumber,
                     PONumber = rec.PONumber,
                     AppointmentId = rec.AppointmentId,
+                    // {{ModuleItemStart:Appointments}}
                     AppointmentDisplay = rec.Appointment != null
                         ? rec.Appointment.Title
                         : String.Empty,
+                    // {{ModuleItemEnd:Appointments}}
                     UserId = rec.UserId,
                     UserDisplay = rec.User != null
                         ? rec.User.FirstName + " " + rec.User.LastName

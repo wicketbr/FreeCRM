@@ -456,6 +456,7 @@ public partial class DataAccess
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
         try {
+            // {{ModuleItemStart:Appointments}}
             var appointments = await data.Appointments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
             if(appointments != null && appointments.Any()) {
                 foreach(var rec in appointments) {
@@ -466,6 +467,7 @@ public partial class DataAccess
                     }
                 }
             }
+            // {{ModuleItemEnd:Appointments}}
 
             await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentNotes WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
             await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
@@ -599,6 +601,7 @@ public partial class DataAccess
 
         if (!String.IsNullOrWhiteSpace(Type)) {
             switch (Type.ToLower()) {
+                // {{ModuleItemStart:Appointments}}
                 case "appointment":
                     output = await DeleteAppointment(RecordId, CurrentUser, true);
                     break;
@@ -610,6 +613,7 @@ public partial class DataAccess
                 case "appointmentservice":
                     output = await DeleteAppointmentService(RecordId, CurrentUser, true);
                     break;
+                // {{ModuleItemEnd:Appointments}}
 
                 case "departmentgroup":
                     output = await DeleteDepartmentGroup(RecordId, CurrentUser, true);
@@ -956,9 +960,11 @@ public partial class DataAccess
 
     public async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCounts(Guid TenantId)
     {
+        // {{ModuleItemStart:Appointments}}
         var appointmentNotes = await data.AppointmentNotes.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var appointments = await data.Appointments.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var appointmentServices = await data.AppointmentServices.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemEnd:Appointments}}
         var departmentGroups = await data.DepartmentGroups.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var departments = await data.Departments.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var emailTemplates = await data.EmailTemplates.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
@@ -969,10 +975,12 @@ public partial class DataAccess
         var userGroups = await data.UserGroups.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var users = await data.Users.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
 
-        DataObjects.DeletedRecordCounts output = new DataObjects.DeletedRecordCounts { 
+        DataObjects.DeletedRecordCounts output = new DataObjects.DeletedRecordCounts {
+            // {{ModuleItemStart:Appointments}}
             AppointmentNotes = appointmentNotes,
             Appointments = appointments,
             AppointmentServices = appointmentServices,
+            // {{ModuleItemEnd:Appointments}}
             DepartmentGroups = departmentGroups,
             Departments = departments,
             EmailTemplates = emailTemplates,
@@ -989,6 +997,7 @@ public partial class DataAccess
 
     public async Task<DataObjects.DeletedRecords> GetDeletedRecords(Guid TenantId)
     {
+        // {{ModuleItemStart:Appointments}}
         List<DataObjects.DeletedRecordItem> appointmentNotes = new List<DataObjects.DeletedRecordItem>();
         var appointmentNoteRecords = await data.AppointmentNotes
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
@@ -1035,6 +1044,7 @@ public partial class DataAccess
                 });
             }
         }
+        // {{ModuleItemEnd:Appointments}}
 
         List<DataObjects.DeletedRecordItem> departmentGroups = new List<DataObjects.DeletedRecordItem>();
         var departmentGroupRecords = await data.DepartmentGroups
@@ -1181,9 +1191,11 @@ public partial class DataAccess
         }
 
         DataObjects.DeletedRecords output = new DataObjects.DeletedRecords {
+            // {{ModuleItemStart:Appointments}}
             AppointmentNotes = appointmentNotes,
             Appointments = appointments,
             AppointmentServices = appointmentServices,
+            // {{ModuleItemEnd:Appointments}}
             DepartmentGroups = departmentGroups,
             Departments = departments,
             EmailTemplates = emailTemplates,
@@ -1604,6 +1616,7 @@ public partial class DataAccess
             }
 
             if (obj != null) {
+                // {{ModuleItemStart:Appointments}}
                 if (obj.GetType() == typeof(DataObjects.Appointment)) {
                     var appt = (DataObjects.Appointment)obj;
 
@@ -1618,8 +1631,10 @@ public partial class DataAccess
                     output = output.Replace("{{Appointment:Start}}", startDate, StringComparison.InvariantCultureIgnoreCase);
                     output = output.Replace("{{Appointment:End}}", endDate, StringComparison.InvariantCultureIgnoreCase);
                     output = output.Replace("{{Appointment:DatesAndTimes}}", datesAndTimes, StringComparison.InvariantCultureIgnoreCase);
+                }
+                // {{ModuleItemEnd:Appointments}}
 
-                } else if (obj.GetType() == typeof(DataObjects.Service)) {
+                if (obj.GetType() == typeof(DataObjects.Service)) {
                     var service = (DataObjects.Service)obj;
 
                     output = output.Replace("{{Service:Code}}", service.Code, StringComparison.InvariantCultureIgnoreCase);
@@ -2021,6 +2036,7 @@ public partial class DataAccess
         try {
             if (!String.IsNullOrWhiteSpace(Type)) {
                 switch (Type.ToLower()) {
+                    // {{ModuleItemStart:Appointments}}
                     case "appointment":
                         var recAppt = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == RecordId);
                         if (recAppt != null) {
@@ -2056,6 +2072,7 @@ public partial class DataAccess
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
                         break;
+                    // {{ModuleItemEnd:Appointments}}
 
                     case "departmentgroup":
                         var recDeptGroup = await data.DepartmentGroups.FirstOrDefaultAsync(x => x.DepartmentGroupId == RecordId);

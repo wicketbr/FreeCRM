@@ -26,7 +26,9 @@ public partial class DataAccess
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
             // First, fix or delete all relational user records
             try {
+                // {{ModuleItemStart:Appointments}}
                 data.AppointmentServices.RemoveRange(data.AppointmentServices.Where(x => x.ServiceId == ServiceId));
+                // {{ModuleItemEnd:Appointments}}
                 data.TagItems.RemoveRange(data.TagItems.Where(x => x.ItemId == ServiceId));
 
                 await data.SaveChangesAsync();

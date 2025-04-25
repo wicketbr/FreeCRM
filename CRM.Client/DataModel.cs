@@ -80,7 +80,9 @@ public class BlazorDataModel
     private List<Plugins.Plugin> _Plugins = new List<Plugins.Plugin>();
     private string _QuickAction = "";
     private Delegate? _QuickActionOnComplete;
+    // {{ModuleItemStart:Appointments}}
     private DataObjects.AppointmentNote _QuickAddAppointmentNote = new DataObjects.AppointmentNote();
+    // {{ModuleItemEnd:Appointments}}
     private DataObjects.User _QuickAddUser = new DataObjects.User();
     private DateOnly _Released = DateOnly.FromDateTime(DateTime.MinValue);
     private List<DataObjects.Service> _Services = new List<DataObjects.Service>();
@@ -1268,6 +1270,7 @@ public class BlazorDataModel
         }
     }
 
+    // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// The AppointmentNote object used when adding a note via the quick action menu.
     /// </summary>
@@ -1281,6 +1284,7 @@ public class BlazorDataModel
             }
         }
     }
+    // {{ModuleItemEnd:Appointments}}
 
     /// <summary>
     /// The user object used when adding a user via the quick action menu.

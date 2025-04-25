@@ -258,6 +258,8 @@ public partial class DataAccess
 
         var today = DateTime.Now;
 
+
+        // {{ModuleItemStart:Appointments}}
         DataObjects.Appointment appt = new DataObjects.Appointment { 
             AppointmentId = Guid.Empty,
             Title = "Test Appointment",
@@ -265,6 +267,7 @@ public partial class DataAccess
             Start = Convert.ToDateTime(today.ToShortDateString() + " 12:00 pm").ToUniversalTime(),
             End = Convert.ToDateTime(today.ToShortDateString() + " 5:00 pm").ToUniversalTime(),
         };
+        // {{ModuleItemEnd:Appointments}}
 
         DataObjects.Service service = new DataObjects.Service { 
             ServiceId = Guid.Empty,

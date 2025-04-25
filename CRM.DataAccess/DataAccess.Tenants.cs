@@ -42,7 +42,8 @@ public partial class DataAccess
             
             data.Tags.RemoveRange(data.Tags.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
-            
+
+            // {{ModuleItemStart:Appointments}}
             data.AppointmentNotes.RemoveRange(data.AppointmentNotes.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
             
@@ -54,6 +55,7 @@ public partial class DataAccess
             
             data.Appointments.RemoveRange(data.Appointments.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
+            // {{ModuleItemEnd:Appointments}}
 
             data.EmailTemplates.RemoveRange(data.EmailTemplates.Where(x => x.TenantId != TenantId));
             await data.SaveChangesAsync();
