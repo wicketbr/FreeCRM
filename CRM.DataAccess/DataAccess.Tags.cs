@@ -8,7 +8,6 @@ public partial interface IDataAccess
     Task<DataObjects.Tag> GetTag(Guid TagId, DataObjects.User? CurrentUser = null);
     Task<List<DataObjects.Tag>> GetTags(Guid TenantId, DataObjects.User? CurrentUser = null);
     Task<DataObjects.Tag> SaveTag(DataObjects.Tag tag, DataObjects.User? CurrentUser = null);
-
 }
 
 public partial class DataAccess

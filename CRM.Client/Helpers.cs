@@ -4804,6 +4804,13 @@ public static class Helpers
         return o;
     }
 
+    public static async void SetTheme(string theme)
+    {
+        Model.Theme = theme;
+        await jsRuntime.InvokeVoidAsync("SetPreferredColorScheme", theme);
+        await LocalStorage.SetItemAsync("Theme", theme);
+    }
+
     /// <summary>
     /// Executes a function after a specific delay.
     /// </summary>

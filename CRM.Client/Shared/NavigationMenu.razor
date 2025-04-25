@@ -1,0 +1,279 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+
+<header>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-expand-md border-bottom box-shadow mb-3">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="@(Helpers.BuildUrl())">
+                @if (!String.IsNullOrWhiteSpace(LogoUrl) && Model.Tenant.TenantSettings.LogoIncludedOnNavbar) {
+                    <img src="@LogoUrl" class="logo-navbar" title="@Helpers.Text("AppTitle")" />
+                } else {
+                    @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
+                        <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
+                    }
+                    <span>@Helpers.Text("AppTitle")</span>
+                }
+            </a>
+            <button id="menu-bar-toggler" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navBarToggler" aria-controls="navbarSupportedContent"
+            aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="navBarToggler">
+                <ul class="navbar-nav me-auto">
+                    @if (Model.LoggedIn) {
+                        if (Model.FeatureEnabledScheduling) {
+                            <li class="nav-item">
+                                <a class="@(Model.View == "schedule" ? "nav-link active" : "nav-link")" href="@(Helpers.BuildUrl("Schedule"))">
+                                    <Language Tag="Schedule" IncludeIcon="true" />
+                                </a>
+                            </li>
+                        }
+
+                        @if (Model.FeatureEnabledInvoices) {
+                            <li class="nav-item">
+                                <a class="@(new List<string>{ "invoices", "editinvoice", "createinvoice" }.Contains(Model.View) ? "nav-link active": "nav-link")" href="@(Helpers.BuildUrl("Invoices"))">
+                                    <Language Tag="Invoices" IncludeIcon="true" />
+                                </a>
+                            </li>
+                        }
+
+
+                        @if (Model.User.Admin) {
+                            <li class="nav-item dropdown">
+                                <a class="@(AdminView ? "nav-link dropdown-toggle active": "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <Language Tag="Admin" IncludeIcon="true" />
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    @if (Model.User.AppAdmin) {
+                                        <li>
+                                            <a class="@(Model.View == "appsettings" ? "dropdown-item app-admin-only active" : "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/AppSettings"))">
+                                                <Language Tag="AppSettings" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.FeatureEnabledDepartments) {
+                                        <li>
+                                            <a class="@(new List<string>{ "departmentgroups", "editdepartmentgroup" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/DepartmentGroups"))">
+                                                <Language Tag="DepartmentGroups" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="@(new List<string>{ "departments", "editdepartment" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Departments"))">
+                                                <Language Tag="Departments" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.FeatureEnabledEmailTemplates) {
+                                        <li>
+                                            <a class="@(new List<string>{ "emailtemplates", "editemailtemplate" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/EmailTemplates"))">
+                                                <Language Tag="EmailTemplates" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.FeatureEnabledFiles) {
+                                        <li>
+                                            <a class="@(Model.View == "files" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Files"))">
+                                                <Language Tag="Files" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a class="@(Model.View == "language" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Language"))">
+                                            <Language Tag="Language" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    @if (Model.FeatureEnabledLocation) {
+                                        <li>
+                                            <a class="@(new List<string>{ "editlocation", "locations" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Locations"))">
+                                                <Language Tag="Locations" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a class="@(Model.View == "settings" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings"))">
+                                            <Language Tag="Settings" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    @if (Model.FeatureEnabledServices) {
+                                        <li>
+                                            <a class="@(new List<string>{ "editservice", "services" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Services"))">
+                                                <Language Tag="Services" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.FeatureEnabledTags) {
+                                        <li>
+                                            <a class="@(new List<string>{ "edittag", "tags" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Tags"))">
+                                                <Language Tag="Tags" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.User.AppAdmin) {
+                                        <li>
+                                            <a class="@(new List<string>{ "edittenant", "tenants" }.Contains(Model.View) ? "dropdown-item app-admin-only active": "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/Tenants"))">
+                                                <Language Tag="Tenants" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    @if (Model.FeatureEnabledUDF) {
+                                        <li>
+                                            <a class="@(Model.View == "udf" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UDF"))">
+                                                <Language Tag="UserDefinedFields" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                    <li>
+                                        <a class="@(new List<string>{ "edituser", "users" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Users"))">
+                                            <Language Tag="Users" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    @if (Model.FeatureEnabledUserGroups) {
+                                        <li>
+                                            <a class="@(new List<string>{ "editusergroup", "usergroups" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UserGroups"))">
+                                                <Language Tag="UserGroups" IncludeIcon="true" />
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    }
+                </ul>
+                <form class="d-flex">
+                    <ul class="navbar-nav me-auto">
+                        @if (Model.HaveDeletedRecords) {
+                            <li class="nav-item">
+                                <a class="nav-link deleted-records" role="button" href="@(Helpers.BuildUrl("Settings/DeletedRecords"))" title="@Helpers.Text("PendingDeletedRecords")">
+                                    <Icon Name="DeletedRecords" />
+                                </a>
+                            </li>
+                        }
+
+                        @if (String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
+                            <li class="nav-item dropdown" title="@Helpers.Text("Theme")">
+                                <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @switch (Model.Theme) {
+                                        case "dark":
+                                            <Icon Name="ThemeDark" />
+                                            break;
+
+                                        case "light":
+                                            <Icon Name="ThemeLight" />
+                                            break;
+
+                                        case "auto":
+                                            <Icon Name="ThemeAuto" />
+                                            break;
+                                    }
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeDropdown">
+                                    <li>
+                                        <a class="dropdown-item disabled" href="javascript:void('0');">
+                                            <Language Tag="Theme" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("auto"))">
+                                            <Language Tag="ThemeAuto" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("light"))">
+                                            <Language Tag="ThemeLight" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("dark"))">
+                                            <Language Tag="ThemeDark" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="offcanvas" href="#offcanvasUserMenu" role="button" aria-controls="offcanvasUserMenu">
+                                @if (Model.LoggedIn) {
+                                    @if (!String.IsNullOrWhiteSpace(UserAvatarUrl)) {
+                                        <img class="user-menu-icon" src="@UserAvatarUrl" />
+                                    } else {
+                                        <Icon Name="User" />
+                                    }
+                                } else {
+                                    <Icon Name="Info" />
+                                }
+                            </a>
+                        </li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+    </nav>
+</header>
+
+@code {
+    public void Dispose() { }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    protected bool AdminView {
+        get {
+            bool output = false;
+
+            switch (Model.View) {
+                case "appsettings":
+                case "editdepartment":
+                case "editdepartmentgroup":
+                case "editlocation":
+                case "editservice":
+                case "edittag":
+                case "edittenant":
+                case "edituser":
+                case "editusergroup":
+                case "departmentgroups":
+                case "departments":
+                case "files":
+                case "language":
+                case "locations":
+                case "services":
+                case "settings":
+                case "tags":
+                case "tenants":
+                case "udf":
+                case "users":
+                case "usergroups":
+                    output = true;
+                    break;
+            }
+
+            return output;
+        }
+    }
+
+    protected string LogoUrl {
+        get {
+            string output = "";
+
+            if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
+            }
+
+            return output;
+        }
+    }
+
+    protected string UserAvatarUrl {
+        get {
+            string output = "";
+
+            if (Model.User.Photo.HasValue && Model.User.Photo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.User.Photo).ToString();
+            }
+
+            return output;
+        }
+    }
+}

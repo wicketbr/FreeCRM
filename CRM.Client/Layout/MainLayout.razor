@@ -12,8 +12,7 @@
 @inject Radzen.TooltipService TooltipService
 <PageTitle>@Helpers.Text("AppTitle")</PageTitle>
 
-@if (IncludeCustomCss) {
-    // For clients that are using custom theme CSS and font settings that gets rendered here.
+@if (IncludeCustomCss) { // For clients that are using custom theme CSS and font settings that gets rendered here.
 <style>
     @if(!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFontCssImport)){
         @((MarkupString)Model.Tenant.TenantSettings.ThemeFontCssImport)
@@ -26,206 +25,7 @@
 }
 
 <div id="page-area" class="@PageAreaClass">
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasQuickAction"  aria-labelledby="offcanvasQuickActionLabel" role="dialog">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasQuickActionLabel"></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            @switch (Model.QuickAction.ToLower()) {
-                case "adduser":
-                    <h2 class="quick-action">
-                        <Language Tag="AddNewUser" IncludeIcon="true" />
-                    </h2>
-
-                    <RequiredIndicator />
-
-                    <div class="mb-2">
-                        <label for="quickadd-user-FirstName">
-                            <Language Tag="FirstName" Required="true" />
-                        </label>
-                        <input type="text" id="quickadd-user-FirstName" class="form-control" @bind="Model.QuickAddUser.FirstName" />
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="quickadd-user-LastName">
-                            <Language Tag="LastName" Required="true" />
-                        </label>
-                        <input type="text" id="quickadd-user-LastName" class="form-control" @bind="Model.QuickAddUser.LastName" />
-                    </div>
-
-                    <div class="mb-2">
-                        <label for="quickadd-user-Email">
-                            <Language Tag="Email" Required="true" />
-                        </label>
-                        <input type="text" id="quickadd-user-Email" class="form-control" @bind="Model.QuickAddUser.Email" />
-                    </div>
-
-                    <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddUserSave">
-                        <Language Tag="Save" IncludeIcon="true" />
-                    </button>
-
-                    <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
-                        <Language Tag="Cancel" IncludeIcon="true" />
-                    </button>
-                    break;
-
-                case "addusersaving":
-                case "appointmentnotesaving":
-                    <h2 class="quick-action">
-                        <Language Tag="SavingWait" IncludeIcon="true" />
-                    </h2>
-                    break;
-
-                case "appointmentnote":
-                    <h2 class="quick-action">
-                        <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
-                    </h2>
-
-                    <div class="mb-2">
-                        <label for="quickadd-appointment-note">
-                            <Language Tag="AppointmentNote" />
-                        </label>
-                        <textarea id="quickadd-appointment-note" rows="8" class="form-control" @bind="Model.QuickAddAppointmentNote.Note"></textarea>
-                    </div>
-
-                    <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddAppointmentNoteSave">
-                        <Language Tag="Save" IncludeIcon="true" />
-                    </button>
-
-                    <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
-                        <Language Tag="Cancel" IncludeIcon="true" />
-                    </button>
-                    break;
-            }
-        </div>
-    </div>
-
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasUserMenu" aria-labelledby="offcanvasUserMenuLabel" role="dialog">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title" id="offcanvasUserMenuLabel"></h5>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body">
-            @if (Model.LoggedIn) {
-                <div class="mb-2">
-                    <div class="menu-user-name">
-                        <span>@Model.User.FirstName</span>
-                        <span>@Model.User.LastName</span>
-                    </div>
-                    @if (!String.IsNullOrWhiteSpace(Model.User.Title)) {
-                        <div class="menu-user-title">@Model.User.Title</div>
-                    }
-                    @if (!String.IsNullOrWhiteSpace(Model.User.DepartmentName)) {
-                        <div class="menu-user-dept">@Model.User.DepartmentName</div>
-                    }
-                    <div class="menu-user-username">
-                        <Language Tag="Username" TransformCase="TextCase.Lowercase" />:
-                        <span>@Model.User.Username</span>
-                    </div>
-                    <div class="menu-user-email">
-                        <Language Tag="Email" TransformCase="TextCase.Lowercase" />:
-                        <span>@Model.User.Email</span>
-                    </div>
-                </div>
-
-                @if (Model.Tenants != null && Model.Tenants.Count() > 1) {
-                    <hr />
-                    <div class="mt-2">
-                        <Language Tag="SwitchAccountMessage" />
-                    </div>
-                    @foreach (var tenant in Model.Tenants.Where(x => x.Enabled == true).OrderBy(x => x.Name)) {
-                        string tenantDisplayName = Helpers.TenantNameFromId(tenant.TenantId);
-
-                        if (tenant.TenantId == Model.TenantId) {
-                            <div class="current-tenant">
-                                <Icon Name="TenantCurrent" />
-                                @if(tenantDisplayName.Length > 40) {
-                                    string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
-                                    <span title="@tenantDisplayName">@truncatedName</span>
-                                } else {
-                                    <span class="icon-text">@tenantDisplayName</span>
-                                }
-                            </div>
-                        } else {
-                            <div class="pointer hover-highlight" @onclick="@(() => Helpers.SwitchTenant(tenant.TenantId))">
-                                <Icon Name="TenantChange" />
-                                @if(tenantDisplayName.Length > 40) {
-                                    string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
-                                    <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
-                                } else {
-                                    <span class="icon-text">@tenantDisplayName</span>
-                                }
-                            </div>
-                        }
-                    }
-                }
-
-                @if (Model.Languages.Any()) {
-                    var languages = Model.Languages.Where(x => x.TenantId == Model.User.TenantId);
-                    if (languages != null && languages.Count() > 1) {
-                        <hr />
-                        <div class="mb-2">
-                            <div class="input-group mt-2">
-                                <span class="input-group-text" title="@Helpers.Text("Language")">
-                                    <Icon Name="Language" />
-                                </span>
-                                <select class="form-select language-selector" @onchange="@SetCultureCode">
-                                    @foreach (var language in languages.OrderBy(x => x.Description)) {
-                                        @if (language.Culture == Model.CultureCode) {
-                                            <option value="@language.Culture" SELECTED>@FormatCultureCode(language)</option>
-                                        } else {
-                                            <option value="@language.Culture">@FormatCultureCode(language)</option>
-                                        }
-
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                    }
-                }
-            }
-
-            @if (Model.LoggedIn || !Model.Tenant.TenantSettings.HideAbout) {
-                @if (Model.LoggedIn) {
-                    <hr />
-                    @if (AllowManageProfile) {
-                        <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Profile"))">
-                            <Language Tag="ManageProfile" IncludeIcon="true" />
-                        </div>
-                    }
-
-                    @if (!Model.User.PreventPasswordChange)
-                    {
-                        <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("ChangePassword"))">
-                            <Language Tag="ChangePassword" IncludeIcon="true" />
-                        </div>
-                    }
-
-                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Logout"))">
-                        <Language Tag="Logout" IncludeIcon="true" />
-                    </div>
-                }
-                <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
-                    <Language Tag="About" IncludeIcon="true" />
-                </div>
-            }
-
-            @if (!String.IsNullOrWhiteSpace(Model.Version)) {
-                <hr />
-                <div class="version-and-copyright">
-                    v. <span>@Model.Version</span>
-                    @if (Model.Released > DateOnly.FromDateTime(DateTime.MinValue)) {
-                        <span> - <span>@Model.Released.ToShortDateString()</span></span>
-                    }
-                    @if (Model.LoggedIn && !String.IsNullOrWhiteSpace(Helpers.Text("CopyrightName"))) {
-                        <div>&copy; <Language Tag="CopyrightName" /></div>
-                    }
-
-                </div>
-            }
-        </div>
-    </div>
+    <OffcanvasPopoutMenu />
 
     @if (!Loading) {
         if(Model.AppSettings.MaintenanceMode  && !BypassMaintenanceMode){
@@ -238,215 +38,7 @@
                 </div>
             </div>
         } else {
-            <header>
-                <nav class="navbar fixed-top navbar-expand-lg navbar-expand-md border-bottom box-shadow mb-3">
-                    <div class="container-fluid">
-                        <a class="navbar-brand" href="@(Helpers.BuildUrl())">
-                            @if (!String.IsNullOrWhiteSpace(LogoUrl) && Model.Tenant.TenantSettings.LogoIncludedOnNavbar) {
-                                <img src="@LogoUrl" class="logo-navbar" title="@Helpers.Text("AppTitle")" />
-                            } else {
-                                @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
-                                    <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
-                                }
-                                <span>@Helpers.Text("AppTitle")</span>    
-                            }
-                        </a>
-                        <button id="menu-bar-toggler" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navBarToggler" aria-controls="navbarSupportedContent"
-                                aria-expanded="false" aria-label="Toggle navigation">
-                            <span class="navbar-toggler-icon"></span>
-                        </button>
-                        <div class="navbar-collapse collapse" id="navBarToggler">
-                            <ul class="navbar-nav me-auto">
-                                @if (Model.LoggedIn) {
-                                    if (Model.FeatureEnabledScheduling) {
-                                        <li class="nav-item">
-                                            <a class="@(Model.View == "schedule" ? "nav-link active" : "nav-link")" href="@(Helpers.BuildUrl("Schedule"))">
-                                                <Language Tag="Schedule" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-
-                                    @if (Model.FeatureEnabledInvoices){
-                                        <li class="nav-item">
-                                            <a class="@(new List<string>{ "invoices", "editinvoice", "createinvoice" }.Contains(Model.View) ? "nav-link active": "nav-link")" href="@(Helpers.BuildUrl("Invoices"))">
-                                                <Language Tag="Invoices" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-
-
-                                    @if (Model.User.Admin) {
-                                        <li class="nav-item dropdown">
-                                            <a class="@(AdminView ? "nav-link dropdown-toggle active": "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                <Language Tag="Admin" IncludeIcon="true" />
-                                            </a>
-                                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                                @if (Model.User.AppAdmin) {
-                                                    <li>
-                                                        <a class="@(Model.View == "appsettings" ? "dropdown-item app-admin-only active" : "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/AppSettings"))">
-                                                            <Language Tag="AppSettings" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.FeatureEnabledDepartments) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "departmentgroups", "editdepartmentgroup" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/DepartmentGroups"))">
-                                                            <Language Tag="DepartmentGroups" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="@(new List<string>{ "departments", "editdepartment" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Departments"))">
-                                                            <Language Tag="Departments" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.FeatureEnabledEmailTemplates) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "emailtemplates", "editemailtemplate" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/EmailTemplates"))">
-                                                            <Language Tag="EmailTemplates" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.FeatureEnabledFiles){
-                                                    <li>
-                                                        <a class="@(Model.View == "files" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Files"))">
-                                                            <Language Tag="Files" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                <li>
-                                                    <a class="@(Model.View == "language" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Language"))">
-                                                        <Language Tag="Language" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                @if (Model.FeatureEnabledLocation) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "editlocation", "locations" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Locations"))">
-                                                            <Language Tag="Locations" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                <li>
-                                                    <a class="@(Model.View == "settings" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings"))">
-                                                        <Language Tag="Settings" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                @if (Model.FeatureEnabledServices) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "editservice", "services" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Services"))">
-                                                            <Language Tag="Services" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.FeatureEnabledTags) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "edittag", "tags" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Tags"))">
-                                                            <Language Tag="Tags" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.User.AppAdmin) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "edittenant", "tenants" }.Contains(Model.View) ? "dropdown-item app-admin-only active": "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/Tenants"))">
-                                                            <Language Tag="Tenants" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                @if (Model.FeatureEnabledUDF){
-                                                    <li>
-                                                        <a class="@(Model.View == "udf" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UDF"))">
-                                                            <Language Tag="UserDefinedFields" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                                <li>
-                                                    <a class="@(new List<string>{ "edituser", "users" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Users"))">
-                                                        <Language Tag="Users" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                @if (Model.FeatureEnabledUserGroups) {
-                                                    <li>
-                                                        <a class="@(new List<string>{ "editusergroup", "usergroups" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UserGroups"))">
-                                                            <Language Tag="UserGroups" IncludeIcon="true" />
-                                                        </a>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        </li>
-                                    }
-                                }
-                            </ul>
-                            <form class="d-flex">
-                                <ul class="navbar-nav me-auto">
-                                    @if (Model.HaveDeletedRecords) {
-                                        <li class="nav-item">
-                                            <a class="nav-link deleted-records" role="button" href="@(Helpers.BuildUrl("Settings/DeletedRecords"))" title="@Helpers.Text("PendingDeletedRecords")">
-                                                <Icon Name="DeletedRecords" />
-                                            </a>
-                                        </li>
-                                    }
-
-                                    @if (String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
-                                        <li class="nav-item dropdown" title="@Helpers.Text("Theme")">
-                                            <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                @switch (Model.Theme) {
-                                                    case "dark":
-                                                        <Icon Name="ThemeDark" />
-                                                        break;
-
-                                                    case "light":
-                                                        <Icon Name="ThemeLight" />
-                                                        break;
-
-                                                    case "auto":
-                                                        <Icon Name="ThemeAuto" />
-                                                        break;
-                                                }
-                                            </a>
-                                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeDropdown">
-                                                <li>
-                                                    <a class="dropdown-item disabled" href="javascript:void('0');">
-                                                        <Language Tag="Theme" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                <li>
-                                                    <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => SetTheme("auto"))">
-                                                        <Language Tag="ThemeAuto" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => SetTheme("light"))">
-                                                        <Language Tag="ThemeLight" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => SetTheme("dark"))">
-                                                        <Language Tag="ThemeDark" IncludeIcon="true" />
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </li>
-                                    }
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="offcanvas" href="#offcanvasUserMenu" role="button" aria-controls="offcanvasUserMenu">
-                                            @if (Model.LoggedIn) {
-                                                @if (!String.IsNullOrWhiteSpace(UserAvatarUrl)) {
-                                                    <img class="user-menu-icon" src="@UserAvatarUrl" />
-                                                } else {
-                                                    <Icon Name="User" />
-                                                }
-                                            } else {
-                                                <Icon Name="Info" />
-                                            }
-                                        </a>
-                                    </li>
-                                </ul>
-                            </form>
-                        </div>
-                    </div>
-                </nav>
-            </header>
+            <NavigationMenu />
 
             @if (!Model.AppOnline){
                 <div class="container-fluid">
@@ -583,7 +175,7 @@
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a class="dismiss">X</a>
 </div>
 
 <RadzenDialog />
@@ -609,6 +201,11 @@
     public void Dispose()
     {
         dotNetHelper?.Dispose();
+
+        Model.Subscribers_OnChange.Remove("MainLayout");
+        Model.OnChange -= StateHasChanged;
+
+        NavManager.LocationChanged -= LocationChanged;
     }
 
     protected override async Task OnInitializedAsync()
@@ -657,7 +254,7 @@
             if (String.IsNullOrWhiteSpace(theme)) {
                 theme = "light";
             }
-            SetTheme(theme);
+            Helpers.SetTheme(theme);
 
             await ValidateStartupState();
             StartupValidated = true;
@@ -717,67 +314,17 @@
         }
     }
 
-    protected bool AdminView
-    {
-        get {
-            bool output = false;
-
-            switch (Model.View) {
-                case "appsettings":
-                case "editdepartment":
-                case "editdepartmentgroup":
-                case "editlocation":
-                case "editservice":
-                case "edittag":
-                case "edittenant":
-                case "edituser":
-                case "editusergroup":
-                case "departmentgroups":
-                case "departments":
-                case "files":
-                case "language":
-                case "locations":
-                case "services":
-                case "settings":
-                case "tags":
-                case "tenants":
-                case "udf":
-                case "users":
-                case "usergroups":
-                    output = true;
-                    break;
-            }
-
-            return output;
-        }
-    }
-
-    protected bool AllowManageProfile
-    {
-        get {
-            bool output = false;
-
-            if(Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
-                output = true;
-            }
-
-            return output;
-        }
-    }
-
     protected bool BypassMaintenanceMode
     {
         get {
-            bool output = false;
-
             if(Model.User.AppAdmin) {
-                output = true;
+                return true;
             }else if (Model.View == "login" && !String.IsNullOrWhiteSpace(Model.TenantCodeFromUrl) && Model.TenantCodeFromUrl.ToLower() == "admin") {
                 // Allow logging in to the Admin tenant
-                output = true;
+                return true;
             }
 
-            return output;
+            return false;
         }
     }
 
@@ -841,26 +388,18 @@
         }
     }
 
-    protected string FormatCultureCode(DataObjects.Language language)
-    {
-        string output = language.Description + " [" + language.Culture + "]";
-        return output;
-    }
-
     protected bool IncludeCustomCss
     {
         get {
-            bool output = false;
-
             if(Model.Tenant.TenantSettings.Theme == "custom") {
-                output = true;
+                return true;
             } else if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFontCssImport)) {
-                output = true;
+                return true;
             } else if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFont)) {
-                output = true;
+                return true;
             }
 
-            return output;
+            return false;
         }
     }
 
@@ -886,7 +425,7 @@
     {
         // Remove any messages
         Model.Messages = new List<Message>();
-        Model.NavigationId = "";
+        Model.NavigationId = String.Empty;
         Model.ViewIsEditPage = false;
 
         bool reloadDeleteCounts = Model.User.Admin && Model.Tenant.TenantSettings.DeletePreference == DataObjects.DeletePreference.MarkAsDeleted;
@@ -897,19 +436,6 @@
                 await Helpers.GetDeletedRecordCount();
             }
         });
-    }
-
-    protected string LogoUrl
-    {
-        get {
-            string output = "";
-
-            if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
-                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
-            }
-
-            return output;
-        }
     }
 
     protected void MessageWatcher()
@@ -949,15 +475,12 @@
 
     protected string PageAreaClass
     {
-        get
-        {
-            string output = "";
-
+        get {
             if(Model.AppSettings.MaintenanceMode && !BypassMaintenanceMode) {
-                output += "maintenance-mode";
+                return "maintenance-mode";
             }
 
-            return output;
+            return String.Empty;
         }
     }
 
@@ -1142,86 +665,6 @@
         }
     }
 
-    protected async Task QuickActionClose()
-    {
-        await Helpers.HideMenus();
-    }
-
-    protected async Task QuickAddAppointmentNoteSave()
-    {
-        string focus = String.Empty;
-
-        if (String.IsNullOrWhiteSpace(Model.QuickAddAppointmentNote.Note)) {
-            focus = "quickadd-appointment-note";
-        }
-
-        if(focus != String.Empty) {
-            await Helpers.DelayedFocus(focus);
-            return;
-        }
-
-        Model.QuickAction = "appointmentnotesaving";
-
-        var saved = await Helpers.GetOrPost<DataObjects.AppointmentNote>("api/Data/SaveAppointmentNote", Model.QuickAddAppointmentNote);
-
-        await Helpers.HideMenus();
-
-        if(saved != null) {
-            if (saved.ActionResponse.Result) {
-                Model.AddMessage(Helpers.Text("AppointmentNoteCreated"), MessageType.Success);
-                if(Model.QuickActionOnComplete != null) {
-                    Model.QuickActionOnComplete.DynamicInvoke(saved);
-                }
-            } else {
-                Model.ErrorMessages(saved.ActionResponse.Messages);
-            }
-        } else {
-            Model.UnknownError();
-        }
-    }
-
-    protected async Task QuickAddUserSave()
-    {
-        string focus = String.Empty;
-
-        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.FirstName)) {
-            if (focus == String.Empty) { focus = "quickadd-user-FirstName"; }
-        }
-        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.LastName)) {
-            if (focus == String.Empty) { focus = "quickadd-user-LastName"; }
-        }
-        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.Email)) {
-            if (focus == String.Empty) { focus = "quickadd-user-Email"; }
-        }
-
-        if(focus != String.Empty) {
-            await Helpers.DelayedFocus(focus);
-            return;
-        }
-
-        Model.QuickAction = "addusersaving";
-
-        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/SaveUser", Model.QuickAddUser);
-
-        await Helpers.HideMenus();
-
-        if(saved != null) {
-            if (saved.ActionResponse.Result) {
-                await Helpers.ReloadTenantUsers();
-
-                if(Model.QuickActionOnComplete != null) {
-                    Model.QuickActionOnComplete.DynamicInvoke(saved);
-                }
-
-                Model.AddMessage(Helpers.Text("NewUserCreated"), MessageType.Success);
-            } else {
-                Model.ErrorMessages(saved.ActionResponse.Messages);
-            }
-        } else {
-            Model.UnknownError();
-        }
-    }
-
     protected async Task SavePendingUserPreferences()
     {
         if (Model.LoggedIn) {
@@ -1238,42 +681,10 @@
         }
     }
 
-    protected async Task SetCultureCode(ChangeEventArgs e)
-    {
-        string cultureCode = String.Empty;
-        try {
-            if (e.Value != null) {
-                cultureCode += e.Value.ToString();
-            }
-        }
-        catch { }
-
-        if (!String.IsNullOrWhiteSpace(cultureCode)) {
-            await LocalStorage.SetItemAsync("CultureCode", cultureCode);
-            Model.CultureCode = cultureCode;
-
-            var lang = Model.Languages.FirstOrDefault(x => x.TenantId == Model.TenantId && x.Culture.ToLower() == cultureCode.ToLower());
-            if (lang != null) {
-                Model.Language = lang;
-            } else {
-                Model.Language = Model.DefaultLanguage;
-            }
-
-            Helpers.ForceModelUpdates();
-        }
-    }
-
     [JSInvokable]
     public void SetFingerprint(string fingerprint)
     {
         Model.Fingerprint = fingerprint;
-    }
-
-    protected async void SetTheme(string theme)
-    {
-        Model.Theme = theme;
-        await jsRuntime.InvokeVoidAsync("SetPreferredColorScheme", theme);
-        await LocalStorage.SetItemAsync("Theme", theme);
     }
 
     protected async Task ThemeWatcher()
@@ -1285,19 +696,6 @@
         }
 
         await jsRuntime.InvokeVoidAsync("SetPreferredColorScheme", theme);
-    }
-
-    protected string UserAvatarUrl
-    {
-        get {
-            string output = "";
-
-            if (Model.User.Photo.HasValue && Model.User.Photo != Guid.Empty) {
-                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.User.Photo).ToString();// + "?Random=" + Guid.NewGuid().ToString();
-            }
-
-            return output;
-        }
     }
 
     protected async Task ValidateLogin()
@@ -1322,7 +720,7 @@
             if (Model.User.ActionResponse.Result) {
                 Model.TenantId = Model.User.TenantId;
 
-                string token = "";
+                string token = String.Empty;
                 // Check the cookie first
                 var cookieToken = await Helpers.CookieRead<string>("user-token");
                 if (!String.IsNullOrWhiteSpace(cookieToken)) {
@@ -1360,6 +758,11 @@
 
                         if (url.ToLower().Contains("/authorization/")) {
                             allowAnonymousAccess = true;
+                        }
+
+                        if (!String.IsNullOrWhiteSpace(Model.View)) {
+                            // If we have a pagename set by the model view, then use that instead of the parsed URL.
+                            pagename = Model.View;
                         }
 
                         if (!allowAnonymousAccess) {
@@ -1405,7 +808,6 @@
             SingleItem = Helpers.BaseUri,    
         };
 
-        //var response = await Http.GetAsync("api/Data/GetStartupState", post);
         var response = await Http.PostAsJsonAsync("api/Data/GetStartupState", post);
         if(response != null && response.IsSuccessStatusCode) {
             var startupState = await response.Content.ReadFromJsonAsync<DataObjects.BooleanResponse>();

@@ -1,0 +1,330 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasQuickAction" aria-labelledby="offcanvasQuickActionLabel" role="dialog">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasQuickActionLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        @switch (Model.QuickAction.ToLower()) {
+            case "adduser":
+                <h2 class="quick-action">
+                    <Language Tag="AddNewUser" IncludeIcon="true" />
+                </h2>
+
+                <RequiredIndicator />
+
+                <div class="mb-2">
+                    <label for="quickadd-user-FirstName">
+                        <Language Tag="FirstName" Required="true" />
+                    </label>
+                    <input type="text" id="quickadd-user-FirstName" class="form-control" @bind="Model.QuickAddUser.FirstName" />
+                </div>
+
+                <div class="mb-2">
+                    <label for="quickadd-user-LastName">
+                        <Language Tag="LastName" Required="true" />
+                    </label>
+                    <input type="text" id="quickadd-user-LastName" class="form-control" @bind="Model.QuickAddUser.LastName" />
+                </div>
+
+                <div class="mb-2">
+                    <label for="quickadd-user-Email">
+                        <Language Tag="Email" Required="true" />
+                    </label>
+                    <input type="text" id="quickadd-user-Email" class="form-control" @bind="Model.QuickAddUser.Email" />
+                </div>
+
+                <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddUserSave">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
+                    <Language Tag="Cancel" IncludeIcon="true" />
+                </button>
+                break;
+
+            case "addusersaving":
+            case "appointmentnotesaving":
+                <h2 class="quick-action">
+                    <Language Tag="SavingWait" IncludeIcon="true" />
+                </h2>
+                break;
+
+            case "appointmentnote":
+                <h2 class="quick-action">
+                    <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
+                </h2>
+
+                <div class="mb-2">
+                    <label for="quickadd-appointment-note">
+                        <Language Tag="AppointmentNote" />
+                    </label>
+                    <textarea id="quickadd-appointment-note" rows="8" class="form-control" @bind="Model.QuickAddAppointmentNote.Note"></textarea>
+                </div>
+
+                <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddAppointmentNoteSave">
+                    <Language Tag="Save" IncludeIcon="true" />
+                </button>
+
+                <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
+                    <Language Tag="Cancel" IncludeIcon="true" />
+                </button>
+                break;
+        }
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasUserMenu" aria-labelledby="offcanvasUserMenuLabel" role="dialog">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasUserMenuLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        @if (Model.LoggedIn) {
+            <div class="mb-2">
+                <div class="menu-user-name">
+                    <span>@Model.User.FirstName</span>
+                    <span>@Model.User.LastName</span>
+                </div>
+                @if (!String.IsNullOrWhiteSpace(Model.User.Title)) {
+                    <div class="menu-user-title">@Model.User.Title</div>
+                }
+                @if (!String.IsNullOrWhiteSpace(Model.User.DepartmentName)) {
+                    <div class="menu-user-dept">@Model.User.DepartmentName</div>
+                }
+                <div class="menu-user-username">
+                    <Language Tag="Username" TransformCase="TextCase.Lowercase" />:
+                    <span>@Model.User.Username</span>
+                </div>
+                <div class="menu-user-email">
+                    <Language Tag="Email" TransformCase="TextCase.Lowercase" />:
+                    <span>@Model.User.Email</span>
+                </div>
+            </div>
+
+            @if (Model.Tenants != null && Model.Tenants.Count() > 1) {
+                <hr />
+                <div class="mt-2">
+                    <Language Tag="SwitchAccountMessage" />
+                </div>
+                @foreach (var tenant in Model.Tenants.Where(x => x.Enabled == true).OrderBy(x => x.Name)) {
+                    string tenantDisplayName = Helpers.TenantNameFromId(tenant.TenantId);
+
+                    if (tenant.TenantId == Model.TenantId) {
+                        <div class="current-tenant">
+                            <Icon Name="TenantCurrent" />
+                            @if (tenantDisplayName.Length > 40) {
+                                string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
+                                <span title="@tenantDisplayName">@truncatedName</span>
+                            } else {
+                                <span class="icon-text">@tenantDisplayName</span>
+                            }
+                        </div>
+                    } else {
+                        <div class="pointer hover-highlight" @onclick="@(() => Helpers.SwitchTenant(tenant.TenantId))">
+                            <Icon Name="TenantChange" />
+                            @if (tenantDisplayName.Length > 40) {
+                                string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
+                                <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
+                            } else {
+                                <span class="icon-text">@tenantDisplayName</span>
+                            }
+                        </div>
+                    }
+                }
+            }
+
+            @if (Model.Languages.Any()) {
+                var languages = Model.Languages.Where(x => x.TenantId == Model.User.TenantId);
+                if (languages != null && languages.Count() > 1) {
+                    <hr />
+                    <div class="mb-2">
+                        <div class="input-group mt-2">
+                            <span class="input-group-text" title="@Helpers.Text("Language")">
+                                <Icon Name="Language" />
+                            </span>
+                            <select class="form-select language-selector" @onchange="@SetCultureCode">
+                                @foreach (var language in languages.OrderBy(x => x.Description)) {
+                                    @if (language.Culture == Model.CultureCode) {
+                                        <option value="@language.Culture" SELECTED>@FormatCultureCode(language)</option>
+                                    } else {
+                                        <option value="@language.Culture">@FormatCultureCode(language)</option>
+                                    }
+
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+            }
+        }
+
+        @if (Model.LoggedIn || !Model.Tenant.TenantSettings.HideAbout) {
+            @if (Model.LoggedIn) {
+                <hr />
+                @if (AllowManageProfile) {
+                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Profile"))">
+                        <Language Tag="ManageProfile" IncludeIcon="true" />
+                    </div>
+                }
+
+                @if (!Model.User.PreventPasswordChange) {
+                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("ChangePassword"))">
+                        <Language Tag="ChangePassword" IncludeIcon="true" />
+                    </div>
+                }
+
+                <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Logout"))">
+                    <Language Tag="Logout" IncludeIcon="true" />
+                </div>
+            }
+            <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
+                <Language Tag="About" IncludeIcon="true" />
+            </div>
+        }
+
+        @if (!String.IsNullOrWhiteSpace(Model.Version)) {
+            <hr />
+            <div class="version-and-copyright">
+                v. <span>@Model.Version</span>
+                @if (Model.Released > DateOnly.FromDateTime(DateTime.MinValue)) {
+                    <span> - <span>@Model.Released.ToShortDateString()</span></span>
+                }
+                @if (Model.LoggedIn && !String.IsNullOrWhiteSpace(Helpers.Text("CopyrightName"))) {
+                    <div>&copy; <Language Tag="CopyrightName" /></div>
+                }
+
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    public void Dispose() { }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    protected bool AllowManageProfile {
+        get {
+            bool output = false;
+
+            if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
+                output = true;
+            }
+
+            return output;
+        }
+    }
+
+    protected string FormatCultureCode(DataObjects.Language language) {
+        string output = language.Description + " [" + language.Culture + "]";
+        return output;
+    }
+
+    protected async Task QuickActionClose() {
+        await Helpers.HideMenus();
+    }
+
+    protected async Task QuickAddAppointmentNoteSave() {
+        string focus = String.Empty;
+
+        if (String.IsNullOrWhiteSpace(Model.QuickAddAppointmentNote.Note)) {
+            focus = "quickadd-appointment-note";
+        }
+
+        if (focus != String.Empty) {
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.QuickAction = "appointmentnotesaving";
+
+        var saved = await Helpers.GetOrPost<DataObjects.AppointmentNote>("api/Data/SaveAppointmentNote", Model.QuickAddAppointmentNote);
+
+        await Helpers.HideMenus();
+
+        if (saved != null) {
+            if (saved.ActionResponse.Result) {
+                Model.AddMessage(Helpers.Text("AppointmentNoteCreated"), MessageType.Success);
+                if (Model.QuickActionOnComplete != null) {
+                    Model.QuickActionOnComplete.DynamicInvoke(saved);
+                }
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task QuickAddUserSave() {
+        string focus = String.Empty;
+
+        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.FirstName)) {
+            if (focus == String.Empty) { focus = "quickadd-user-FirstName"; }
+        }
+        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.LastName)) {
+            if (focus == String.Empty) { focus = "quickadd-user-LastName"; }
+        }
+        if (String.IsNullOrWhiteSpace(Model.QuickAddUser.Email)) {
+            if (focus == String.Empty) { focus = "quickadd-user-Email"; }
+        }
+
+        if (focus != String.Empty) {
+            await Helpers.DelayedFocus(focus);
+            return;
+        }
+
+        Model.QuickAction = "addusersaving";
+
+        var saved = await Helpers.GetOrPost<DataObjects.User>("api/Data/SaveUser", Model.QuickAddUser);
+
+        await Helpers.HideMenus();
+
+        if (saved != null) {
+            if (saved.ActionResponse.Result) {
+                await Helpers.ReloadTenantUsers();
+
+                if (Model.QuickActionOnComplete != null) {
+                    Model.QuickActionOnComplete.DynamicInvoke(saved);
+                }
+
+                Model.AddMessage(Helpers.Text("NewUserCreated"), MessageType.Success);
+            } else {
+                Model.ErrorMessages(saved.ActionResponse.Messages);
+            }
+        } else {
+            Model.UnknownError();
+        }
+    }
+
+    protected async Task SetCultureCode(ChangeEventArgs e) {
+        string cultureCode = String.Empty;
+        try {
+            if (e.Value != null) {
+                cultureCode += e.Value.ToString();
+            }
+        } catch { }
+
+        if (!String.IsNullOrWhiteSpace(cultureCode)) {
+            await Helpers.SetLocalStorageItem("CultureCode", cultureCode);
+            Model.CultureCode = cultureCode;
+
+            var lang = Model.Languages.FirstOrDefault(x => x.TenantId == Model.TenantId && x.Culture.ToLower() == cultureCode.ToLower());
+            if (lang != null) {
+                Model.Language = lang;
+            } else {
+                Model.Language = Model.DefaultLanguage;
+            }
+
+            Helpers.ForceModelUpdates();
+        }
+    }
+
+
+}
