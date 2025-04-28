@@ -284,12 +284,14 @@
                         </div>
                     }
 
+                    <!-- {{ModuleItemStart:EmailTemplates}} -->
                     @if (_availableOptInOptions.Contains("emailtemplates")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-emailtemplates" @bind="_optInEmailTemplates" />
                             <label for="opt-in-emailtemplates" class="form-check-label"><Language Tag="FeatureOptInEmailTemplates" /></label>
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:EmailTemplates}} -->
 
                     @if (_availableOptInOptions.Contains("employeeid")) {
                         <div class="mb-2 form-check form-switch">
@@ -305,40 +307,50 @@
                         </div>
                     }
 
+                    <!-- {{ModuleItemStart:Invoices}} -->
                     @if (_availableOptInOptions.Contains("invoices")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-invoices" @bind="_optInInvoices" />
                             <label for="opt-in-invoices" class="form-check-label"><Language Tag="FeatureOptInInvoices" /></label>
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Invoices}} -->
 
+                    <!-- {{ModuleItemStart:Locations}} -->
                     @if (_availableOptInOptions.Contains("location")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-location" @bind="_optInLocation" />
                             <label for="opt-in-location" class="form-check-label"><Language Tag="FeatureOptInLocation" /></label>
                         </div>
                     }
-
+                    <!-- {{ModuleItemEnd:Locations}} -->
+                    
+                    <!-- {{ModuleItemStart:Appointments}} -->
                     @if (_availableOptInOptions.Contains("scheduling")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-scheduling" @bind="_optInScheduling" />
                             <label for="opt-in-scheduling" class="form-check-label"><Language Tag="FeatureOptInScheduling" /></label>
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Appointments}} -->
 
+                    <!-- {{ModuleItemStart:Services}} -->
                     @if (_availableOptInOptions.Contains("services")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-services" @bind="_optInServices" />
                             <label for="opt-in-services" class="form-check-label"><Language Tag="FeatureOptInServices" /></label>
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Services}} -->
 
+                    <!-- {{ModuleItemStart:Tags}} -->
                     @if (_availableOptInOptions.Contains("tags")) {
                         <div class="mb-2 form-check form-switch">
                             <input type="checkbox" role="switch" class="form-check-input" id="opt-in-tags" @bind="_optInTags" />
                             <label for="opt-in-tags" class="form-check-label"><Language Tag="FeatureOptInTags" /></label>
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Tags}} -->
 
                     @if (_availableOptInOptions.Contains("themes")) {
                         <div class="mb-2 form-check form-switch">
@@ -523,11 +535,21 @@
     protected bool _optInEmailTemplates = false;
     protected bool _optInEmployeeId = false;
     protected bool _optInFiles = false;
+    // {{ModuleItemStart:Invoices}}
     protected bool _optInInvoices = false;
+    // {{ModuleItemEnd:Invoices}}
+    // {{ModuleItemStart:Locations}}
     protected bool _optInLocation = false;
+    // {{ModuleItemEnd:Locations}}
+    // {{ModuleItemStart:Appointments}}
     protected bool _optInScheduling = false;
+    // {{ModuleItemEnd:Appointments}}
+    // {{ModuleItemStart:Services}}
     protected bool _optInServices = false;
+    // {{ModuleItemEnd:Services}}
+    // {{ModuleItemStart:Tags}}
     protected bool _optInTags = false;
+    // {{ModuleItemEnd:Tags}}
     protected bool _optInThemes = false;
     protected bool _optInUDF = false;
     protected bool _optInUserGroups = false;
@@ -702,11 +724,21 @@
                 _optInEmailTemplates = _tenant.TenantSettings.ModuleOptInElements.Contains("emailtemplates");
                 _optInEmployeeId = _tenant.TenantSettings.ModuleOptInElements.Contains("employeeid");
                 _optInFiles = _tenant.TenantSettings.ModuleOptInElements.Contains("files");
+                // {{ModuleItemStart:Invoices}}
                 _optInInvoices = _tenant.TenantSettings.ModuleOptInElements.Contains("invoices");
+                // {{ModuleItemEnd:Invoices}}
+                // {{ModuleItemStart:Locations}}
                 _optInLocation = _tenant.TenantSettings.ModuleOptInElements.Contains("location");
+                // {{ModuleItemEnd:Locations}}
+                // {{ModuleItemStart:Appointments}}
                 _optInScheduling = _tenant.TenantSettings.ModuleOptInElements.Contains("scheduling");
+                // {{ModuleItemEnd:Appointments}}
+                // {{ModuleItemStart:Services}}
                 _optInServices = _tenant.TenantSettings.ModuleOptInElements.Contains("services");
+                // {{ModuleItemEnd:Services}}
+                // {{ModuleItemStart:Tags}}
                 _optInTags = _tenant.TenantSettings.ModuleOptInElements.Contains("tags");
+                // {{ModuleItemEnd:Tags}}
                 _optInThemes = _tenant.TenantSettings.ModuleOptInElements.Contains("themes");
                 _optInUDF = _tenant.TenantSettings.ModuleOptInElements.Contains("udf");
                 _optInUserGroups = _tenant.TenantSettings.ModuleOptInElements.Contains("usergroups");
@@ -759,11 +791,21 @@
         if (_availableOptInOptions.Contains("emailtemplates") && _optInEmailTemplates) { optIn.Add("emailtemplates"); }
         if (_availableOptInOptions.Contains("employeeid") && _optInEmployeeId) { optIn.Add("employeeid"); }
         if (_availableOptInOptions.Contains("files") && _optInFiles) { optIn.Add("files"); }
+        // {{ModuleItemStart:Invoices}}
         if (_availableOptInOptions.Contains("invoices") && _optInInvoices) { optIn.Add("invoices"); }
+        // {{ModuleItemEnd:Invoices}}
+        // {{ModuleItemStart:Locations}}
         if (_availableOptInOptions.Contains("location") && _optInLocation) { optIn.Add("location"); }
+        // {{ModuleItemEnd:Locations}}
+        // {{ModuleItemStart:Appointments}}
         if (_availableOptInOptions.Contains("scheduling") && _optInScheduling) { optIn.Add("scheduling"); }
+        // {{ModuleItemEnd:Appointments}}
+        // {{ModuleItemStart:Services}}
         if (_availableOptInOptions.Contains("services") && _optInServices){ optIn.Add("services"); }
+        // {{ModuleItemEnd:Services}}
+        // {{ModuleItemStart:Tags}}
         if (_availableOptInOptions.Contains("tags") && _optInTags) { optIn.Add("tags"); }
+        // {{ModuleItemEnd:Tags}}
         if (_availableOptInOptions.Contains("themes") && _optInThemes) { optIn.Add("themes"); }
         if (_availableOptInOptions.Contains("udf") && _optInUDF) { optIn.Add("udf"); }
         if (_availableOptInOptions.Contains("usergroups") && _optInUserGroups) { optIn.Add("usergroups"); }

@@ -3171,20 +3171,26 @@ public static class Helpers
             // then the second part indicates the source (eg: google:home, fa:fa fa-home, etc.)
             Dictionary<string, List<string>> icons =    new Dictionary<string, List<string>> {
                 { "fa:fa-regular fa-address-card",               new List<string> { "ManageProfile", "ManageProfileInfo" }},
+                // {{ModuleItemStart:Appointments}}
                 { "fa:fa-regular fa-calendar",                   new List<string> { "AppointmentTypeEvent", "Schedule", "Scheduling" }},
                 { "fa:fa-regular fa-calendar-check",             new List<string> { "Now" }},
                 { "fa:fa-regular fa-calendar-plus",              new List<string> { "AddAppointment" }},
+                // {{ModuleItemEnd:Appointments}}
                 { "fa:fa-regular fa-circle",                     new List<string> { "TenantChange" }},
                 { "fa:fa-regular fa-circle-check",               new List<string> { "CurrentCredential", "OK", "Select", "Selected", "UserEnabled" }},
                 { "fa:fa-regular fa-circle-dot",                 new List<string> { "TenantCurrent" }},
                 { "fa:fa-regular fa-file",                       new List<string> { "Files", "ManageFile" }},
+                // {{ModuleItemStart:Appointments}}
                 { "fa:fa-regular fa-note-sticky",                new List<string> { "AppointmentNoteAdd" }},
+                // {{ModuleItemEnd:Appointments}}
                 { "fa:fa-regular fa-square-check",               new List<string> { "Checked" }},
                 { "fa:fa-regular fa-square-plus",                new List<string> { "Add", "AddLanguage", "AddNewEmailTemplate", "AddNewUserGroup", "CreateInvoiceForUser", "InvoiceAddItem" }},
                 { "fa:fa-regular fa-sun",                        new List<string> { "Theme", "ThemeLight" }},
 
                 { "fa:fa-solid fa-arrows-rotate",                new List<string> { "Refresh" }},
+                // {{ModuleItemStart:Services}}
                 { "fa:fa-solid fa-bell-concierge",               new List<string> { "AddNewService", "AppointmentAddService", "EditService", "Service", "Services" }},
+                // {{ModuleItemEnd:Services}}
                 { "fa:fa-solid fa-broom",                        new List<string> { "Clear", "Reset", "ResetLanguageDefaults" }},
                 { "fa:fa-solid fa-building-circle-arrow-right",  new List<string> { "AddNewTenant", "NewTenant" }},
                 { "fa:fa-solid fa-building-user",                new List<string> { "EditTenant", "Tenants" }},
@@ -3197,8 +3203,12 @@ public static class Helpers
                 { "fa:fa-solid fa-circle-info",                  new List<string> { "About", "Info" }},
                 { "fa:fa-solid fa-circle-user",                  new List<string> { "ManageAvatar", "User", "UserMenuIcon" }},
                 { "fa:fa-solid fa-code",                         new List<string> { "Code", "HTML", "ThemeCustomCssDefault" }},
+                // {{ModuleItemStart:EmailTemplates}}
                 { "fa:fa-solid fa-envelopes-bulk",               new List<string> { "EmailTemplate", "EmailTemplates" }},
+                // {{ModuleItemEnd:EmailTemplates}}
+                // {{ModuleItemStart:Invoices}}
                 { "fa:fa-solid fa-file-invoice",                 new List<string> { "CreateInvoice", "EditInvoice", "Invoice", "Invoices", "ViewInvoice" }},
+                // {{ModuleItemEnd:Invoices}}
                 { "fa:fa-solid fa-file-lines",                   new List<string> { "UserDefinedFields" }},
                 { "fa:fa-solid fa-file-pdf",                     new List<string> { "DownloadPDF", "PDF" }},
                 { "fa:fa-solid fa-filter",                       new List<string> { "AllItems", "ShowFilter" }},
@@ -3209,7 +3219,9 @@ public static class Helpers
                 { "fa:fa-solid fa-image",                        new List<string> { "InsertImage", "Photo" }},
                 { "fa:fa-solid fa-key",                          new List<string> { "ChangePassword", "ForgotPassword", "GeneratePassword", "GenerateNewPassword", "PasswordChanged", "UserAdmin" }},
                 { "fa:fa-solid fa-language",                     new List<string> { "Language" }},
+                // {{ModuleItemStart:Locations}}
                 { "fa:fa-solid fa-location-dot",                 new List<string> { "AddNewLocation", "EditLocation", "Locations" }},
+                // {{ModuleItemEnd:Locations}}
                 { "fa:fa-solid fa-magnifying-glass",             new List<string> { "IncludeInSearch", "Preview", "Search", "View" }},
                 { "fa:fa-solid fa-moon",                         new List<string> { "ThemeDark" }},
                 { "fa:fa-solid fa-paper-plane",                  new List<string> { "SendTestEmail" }},
@@ -4309,12 +4321,14 @@ public static class Helpers
                 focus = "quickadd-user-FirstName";
                 break;
 
+            // {{ModuleItemStart:Appointments}}
             case "appointmentnote":
                 focus = "quickadd-appointment-note";
                 break;
+            // {{ModuleItemEnd:Appointments}}
         }
 
-        if(focus != String.Empty) {
+        if (focus != String.Empty) {
             await DelayedFocus(focus);
         }
     }
