@@ -166,16 +166,26 @@ public partial class DataObjects
 
     public class DeletedRecordCounts
     {
+        // {{ModuleItemStart:Appointments}}
         public int AppointmentNotes { get; set; }
         public int Appointments { get; set; }
         public int AppointmentServices { get; set; }
+        // {{ModuleItemEnd:Appointments}}
         public int DepartmentGroups { get; set; }
         public int Departments { get; set; }
+        // {{ModuleItemStart:EmailTemplates}}
         public int EmailTemplates { get; set; }
+        // {{ModuleItemEnd:EmailTemplates}}
         public int FileStorage { get; set; }
+        // {{ModuleItemStart:Locations}}
         public int Locations { get; set; }
+        // {{ModuleItemEnd:Locations}}
+        // {{ModuleItemStart:Tags}}
         public int Tags { get; set; }
+        // {{ModuleItemEnd:Tags}}
+        // {{ModuleItemStart:Services}}
         public int Services { get; set; }
+        // {{ModuleItemEnd:Services}}
         public int UserGroups { get; set; }
         public int Users { get; set; }
     }
@@ -190,16 +200,26 @@ public partial class DataObjects
 
     public class DeletedRecords
     {
+        // {{ModuleItemStart:Appointments}}
         public List<DeletedRecordItem> AppointmentNotes { get; set; } = new List<DeletedRecordItem>();
         public List<DeletedRecordItem> Appointments { get; set; } = new List<DeletedRecordItem>();
         public List<DeletedRecordItem> AppointmentServices { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemEnd:Appointments}}
         public List<DeletedRecordItem> DepartmentGroups { get; set; } = new List<DeletedRecordItem>();
         public List<DeletedRecordItem> Departments { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemStart:EmailTemplates}}
         public List<DeletedRecordItem> EmailTemplates { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemEnd:EmailTemplates}}
         public List<DeletedRecordItem> FileStorage { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemStart:Locations}}
         public List<DeletedRecordItem> Locations { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemEnd:Locations}}
+        // {{ModuleItemStart:Services}}
         public List<DeletedRecordItem> Services { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemEnd:Services}}
+        // {{ModuleItemStart:Tags}}
         public List<DeletedRecordItem> Tags { get; set; } = new List<DeletedRecordItem>();
+        // {{ModuleItemEnd:Tags}}
         public List<DeletedRecordItem> UserGroups { get; set; } = new List<DeletedRecordItem>();
         public List<DeletedRecordItem> Users { get; set; } = new List<DeletedRecordItem>();
     }
@@ -573,7 +593,9 @@ public partial class DataObjects
         public int DefaultAppointmentDuration { get; set; }
         public bool EnabledItemsOnly { get; set; }
         public FilterFileStorage filterFileStorage { get; set; } = new FilterFileStorage();
+        // {{ModuleItemStart:Invoices}}
         public FilterInvoices filterInvoices { get; set; } = new FilterInvoices();
+        // {{ModuleItemEnd:Invoices}}
         public FilterUsers filterUsers { get; set; } = new FilterUsers();
         public bool IncludeDeletedItems { get; set; }
         public string? LastNavigationId { get; set; }

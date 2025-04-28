@@ -467,10 +467,10 @@ public partial class DataAccess
                     }
                 }
             }
-            // {{ModuleItemEnd:Appointments}}
 
             await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentNotes WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
             await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
+            // {{ModuleItemEnd:Appointments}}
 
             // Other items need to call their delete method to get all related data.
             var departmentGroups = await data.DepartmentGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
@@ -495,10 +495,13 @@ public partial class DataAccess
                 }
             }
 
+            // {{ModuleItemStart:EmailTemplates}}
             await data.Database.ExecuteSqlRawAsync("DELETE FROM EmailTemplates WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
+            // {{ModuleItemEnd:EmailTemplates}}
 
             await data.Database.ExecuteSqlRawAsync("DELETE FROM FileStorage WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
-            
+
+            // {{ModuleItemStart:Locations}}
             var locations = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
             if(locations != null && locations.Any()) {
                 foreach (var rec in locations) {
@@ -509,7 +512,9 @@ public partial class DataAccess
                 data.Locations.RemoveRange(locations);
                 await data.SaveChangesAsync();
             }
+            // {{ModuleItemEnd:Locations}}
 
+            // {{ModuleItemStart:Services}}
             var services = await data.Services.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
             if(services != null && services.Any()) {
                 foreach(var rec in services) {
@@ -519,7 +524,9 @@ public partial class DataAccess
                 data.Services.RemoveRange(services);
                 await data.SaveChangesAsync();
             }
+            // {{ModuleItemEnd:Services}}
 
+            // {{ModuleItemStart:Tags}}
             // For tags, remove any related items first, then delete the tags.
             var tags = await data.Tags.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
             if(tags != null && tags.Any()) {
@@ -530,7 +537,8 @@ public partial class DataAccess
                 data.Tags.RemoveRange(tags);
                 await data.SaveChangesAsync();
             }
-            
+            // {{ModuleItemEnd:Tags}}
+
             var userGroups = await data.UserGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
             if(userGroups != null &&  userGroups.Any()) {
                 foreach (var rec in userGroups) {
@@ -623,25 +631,33 @@ public partial class DataAccess
                     output = await DeleteDepartment(RecordId, CurrentUser, true);
                     break;
 
+                // {{ModuleItemStart:EmailTemplates}}
                 case "emailtemplate":
                     output = await DeleteEmailTemplate(RecordId, CurrentUser, true);
                     break;
+                // {{ModuleItemEnd:EmailTemplates}}
 
                 case "filestorage":
                     output = await DeleteFileStorage(RecordId, CurrentUser, true);
                     break;
 
+                // {{ModuleItemStart:Locations}}
                 case "location":
                     output = await DeleteLocation(RecordId, CurrentUser, true);
                     break;
+                // {{ModuleItemEnd:Locations}}
 
+                // {{ModuleItemStart:Services}}
                 case "service":
                     output = await DeleteService(RecordId, CurrentUser, true);
                     break;
+                // {{ModuleItemEnd:Services}}
 
+                // {{ModuleItemStart:Tags}}
                 case "tag":
                     output = await DeleteTag(RecordId, CurrentUser, true);
                     break;
+                // {{ModuleItemEnd:Tags}}
 
                 case "usergroup":
                     output = await DeleteUserGroup(RecordId, CurrentUser, true);
@@ -967,11 +983,19 @@ public partial class DataAccess
         // {{ModuleItemEnd:Appointments}}
         var departmentGroups = await data.DepartmentGroups.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var departments = await data.Departments.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemStart:EmailTemplates}}
         var emailTemplates = await data.EmailTemplates.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemEnd:EmailTemplates}}
         var fileStorage = await data.FileStorages.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemStart:Locations}}
         var locations = await data.Locations.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemEnd:Locations}}
+        // {{ModuleItemStart:Services}}
         var services = await data.Services.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemEnd:Services}}
+        // {{ModuleItemStart:Tags}}
         var tags = await data.Tags.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+        // {{ModuleItemEnd:Tags}}
         var userGroups = await data.UserGroups.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
         var users = await data.Users.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
 
@@ -983,11 +1007,19 @@ public partial class DataAccess
             // {{ModuleItemEnd:Appointments}}
             DepartmentGroups = departmentGroups,
             Departments = departments,
+            // {{ModuleItemStart:EmailTemplates}}
             EmailTemplates = emailTemplates,
+            // {{ModuleItemEnd:EmailTemplates}}
             FileStorage = fileStorage,
+            // {{ModuleItemStart:Locations}}
             Locations = locations,
+            // {{ModuleItemEnd:Locations}}
+            // {{ModuleItemStart:Services}}
             Services = services,
+            // {{ModuleItemEnd:Services}}
+            // {{ModuleItemStart:Tags}}
             Tags = tags,
+            // {{ModuleItemEnd:Tags}}
             UserGroups = userGroups,
             Users = users,
         };
@@ -1078,6 +1110,7 @@ public partial class DataAccess
             }
         }
 
+        // {{ModuleItemStart:EmailTemplates}}
         List<DataObjects.DeletedRecordItem> emailTemplates = new List<DataObjects.DeletedRecordItem>();
         var emailTemplateRecords = await data.EmailTemplates
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
@@ -1093,6 +1126,7 @@ public partial class DataAccess
                 });
             }
         }
+        // {{ModuleItemEnd:EmailTemplates}}
 
         List<DataObjects.DeletedRecordItem> fileStorage = new List<DataObjects.DeletedRecordItem>();
         var fileStorageRecord = await data.FileStorages
@@ -1110,6 +1144,7 @@ public partial class DataAccess
             }
         }
 
+        // {{ModuleItemStart:Locations}}
         List<DataObjects.DeletedRecordItem> locations = new List<DataObjects.DeletedRecordItem>();
         var locationRecords = await data.Locations
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
@@ -1125,7 +1160,9 @@ public partial class DataAccess
                 });
             }
         }
+        // {{ModuleItemEnd:Locations}}
 
+        // {{ModuleItemStart:Services}}
         List<DataObjects.DeletedRecordItem> services = new List<DataObjects.DeletedRecordItem>();
         var serviceRecords = await data.Services
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
@@ -1141,7 +1178,9 @@ public partial class DataAccess
                 });
             }
         }
+        // {{ModuleItemEnd:Services}}
 
+        // {{ModuleItemStart:Tags}}
         List<DataObjects.DeletedRecordItem> tags = new List<DataObjects.DeletedRecordItem>();
         var tagRecords = await data.Tags
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
@@ -1157,6 +1196,7 @@ public partial class DataAccess
                 });
             }
         }
+        // {{ModuleItemEnd:Tags}}
 
         List<DataObjects.DeletedRecordItem> userGroups = new List<DataObjects.DeletedRecordItem>();
         var userGroupRecords = await data.UserGroups
@@ -1198,11 +1238,19 @@ public partial class DataAccess
             // {{ModuleItemEnd:Appointments}}
             DepartmentGroups = departmentGroups,
             Departments = departments,
+            // {{ModuleItemStart:EmailTemplates}}
             EmailTemplates = emailTemplates,
+            // {{ModuleItemEnd:EmailTemplates}}
             FileStorage = fileStorage,
+            // {{ModuleItemStart:Locations}}
             Locations = locations,
+            // {{ModuleItemEnd:Locations}}
+            // {{ModuleItemStart:Services}}
             Services = services,
+            // {{ModuleItemEnd:Services}}
+            // {{ModuleItemStart:Tags}}
             Tags = tags,
+            // {{ModuleItemEnd:Tags}}
             UserGroups = userGroups,
             Users = users,
         };
@@ -1634,6 +1682,7 @@ public partial class DataAccess
                 }
                 // {{ModuleItemEnd:Appointments}}
 
+                // {{ModuleItemStart:Services}}
                 if (obj.GetType() == typeof(DataObjects.Service)) {
                     var service = (DataObjects.Service)obj;
 
@@ -1641,6 +1690,7 @@ public partial class DataAccess
                     output = output.Replace("{{Service:Description}}", service.Description, StringComparison.InvariantCultureIgnoreCase);
                     output = output.Replace("{{Service:Rate}}", service.Rate.ToString("C"), StringComparison.InvariantCultureIgnoreCase);
                 }
+                // {{ModuleItemEnd:Services}}
             }
 
             // Now, replace any potential empty tags that weren't caught above.
@@ -2098,6 +2148,7 @@ public partial class DataAccess
                         }
                         break;
 
+                    // {{ModuleItemStart:EmailTemplates}}
                     case "emailtemplate":
                         var recEmailTemplate = await data.EmailTemplates.FirstOrDefaultAsync(x => x.EmailTemplateId == RecordId);
                         if(recEmailTemplate != null) {
@@ -2109,6 +2160,7 @@ public partial class DataAccess
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
                         break;
+                    // {{ModuleItemEnd:EmailTemplates}}
 
                     case "filestorage":
                         var recFile = await data.FileStorages.FirstOrDefaultAsync(x => x.FileId == RecordId);
@@ -2122,6 +2174,7 @@ public partial class DataAccess
                         }
                         break;
 
+                    // {{ModuleItemStart:Locations}}
                     case "location":
                         var recLocation = await data.Locations.FirstOrDefaultAsync(x => x.LocationId == RecordId);
                         if (recLocation != null) {
@@ -2133,7 +2186,9 @@ public partial class DataAccess
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
                         break;
+                    // {{ModuleItemEnd:Locations}}
 
+                    // {{ModuleItemStart:Services}}
                     case "service":
                         var recService = await data.Services.FirstOrDefaultAsync(x => x.ServiceId == RecordId);
                         if (recService != null) {
@@ -2145,7 +2200,9 @@ public partial class DataAccess
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
                         break;
+                    // {{ModuleItemEnd:Services}}
 
+                    // {{ModuleItemStart:Tags}}
                     case "tag":
                         var recTag = await data.Tags.FirstOrDefaultAsync(x => x.TagId == RecordId);
                         if (recTag != null) {
@@ -2157,6 +2214,7 @@ public partial class DataAccess
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
                         break;
+                    // {{ModuleItemEnd:Tags}}
 
                     case "usergroup":
                         var recUserGroup = await data.UserGroups.FirstOrDefaultAsync(x => x.GroupId == RecordId);

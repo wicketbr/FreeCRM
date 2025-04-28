@@ -171,65 +171,63 @@ public static class CustomAuthenticationProviders
             output.UseGoogle = true;
         }
         
-        if (output.Enabled) {
-            var auth = applicationBuilder.Services.AddAuthentication(options => {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        var auth = applicationBuilder.Services.AddAuthentication(options => {
+            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+        });
+
+        auth.AddCookie();
+
+        if (output.UseApple) {
+            //var memory = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(applePrivateKey));
+            //var bytes = Encoding.UTF8.GetBytes(applePrivateKey);
+            //var str = new ReadOnlyMemory<char>(applePrivateKey.ToCharArray());
+
+            auth.AddApple(o => {
+                o.ClientId = appleClientId;
+                o.KeyId = appleKeyId;
+                o.TeamId = appleTeamId;
+                o.AccessDeniedPath = "/Authorization/AccessDenied";
+
+                o.UsePrivateKey((keyId) =>
+                    applicationBuilder.Environment.ContentRootFileProvider.GetFileInfo("SignInWithAppleKey.p8"));
             });
+        }
 
-            auth.AddCookie();
+        if (output.UseFacebook) {
+            auth.AddFacebook("Facebook", o => {
+                o.AppId = facebookAppId;
+                o.AppSecret = facebookAppSecret;
+                o.AccessDeniedPath = "/Authorization/AccessDenied";
+            });
+        }
 
-            if (output.UseApple) {
-                //var memory = new ReadOnlyMemory<byte>(Encoding.UTF8.GetBytes(applePrivateKey));
-                //var bytes = Encoding.UTF8.GetBytes(applePrivateKey);
-                //var str = new ReadOnlyMemory<char>(applePrivateKey.ToCharArray());
+        if (output.UseGoogle) {
+            auth.AddGoogle("Google", o => {
+                o.ClientId = googleClientId;
+                o.ClientSecret = googleClientSecret;
+                o.AccessDeniedPath = "/Authorization/AccessDenied";
+            });
+        }
 
-                auth.AddApple(o => {
-                    o.ClientId = appleClientId;
-                    o.KeyId = appleKeyId;
-                    o.TeamId = appleTeamId;
-                    o.AccessDeniedPath = "/Authorization/AccessDenied";
+        if (output.UseMicrosoftAccount) {
+            auth.AddMicrosoftAccount("MicrosoftAccount", o => {
+                o.ClientId = microsoftAccountClientId;
+                o.ClientSecret = microsoftAccountClientSecret;
+                o.AuthorizationEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
+                o.AccessDeniedPath = "/Authorization/AccessDenied";
+            });
+        }
 
-                    o.UsePrivateKey((keyId) =>
-                        applicationBuilder.Environment.ContentRootFileProvider.GetFileInfo("SignInWithAppleKey.p8"));
-                });
-            }
-
-            if (output.UseFacebook) {
-                auth.AddFacebook("Facebook", o => {
-                    o.AppId = facebookAppId;
-                    o.AppSecret = facebookAppSecret;
-                    o.AccessDeniedPath = "/Authorization/AccessDenied";
-                });
-            }
-
-            if (output.UseGoogle) {
-                auth.AddGoogle("Google", o => {
-                    o.ClientId = googleClientId;
-                    o.ClientSecret = googleClientSecret;
-                    o.AccessDeniedPath = "/Authorization/AccessDenied";
-                });
-            }
-
-            if (output.UseMicrosoftAccount) {
-                auth.AddMicrosoftAccount("MicrosoftAccount", o => {
-                    o.ClientId = microsoftAccountClientId;
-                    o.ClientSecret = microsoftAccountClientSecret;
-                    o.AuthorizationEndpoint = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
-                    o.AccessDeniedPath = "/Authorization/AccessDenied";
-                });
-            }
-
-            if (output.UseOpenId) {
-                auth.AddOpenIdConnect("OpenId", o => {
-                    o.ClientId = openIdClientId;
-                    o.ClientSecret = openIdClientSecret;
-                    o.Authority = openIdAuthority;
-                    o.ResponseType = "code";
-                    o.GetClaimsFromUserInfoEndpoint = true;
-                    o.AccessDeniedPath = "/Authorization/AccessDenied";
-                });
-            }
+        if (output.UseOpenId) {
+            auth.AddOpenIdConnect("OpenId", o => {
+                o.ClientId = openIdClientId;
+                o.ClientSecret = openIdClientSecret;
+                o.Authority = openIdAuthority;
+                o.ResponseType = "code";
+                o.GetClaimsFromUserInfoEndpoint = true;
+                o.AccessDeniedPath = "/Authorization/AccessDenied";
+            });
         }
 
         return output;

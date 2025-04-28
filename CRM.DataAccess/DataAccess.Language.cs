@@ -72,6 +72,7 @@ public partial class DataAccess
             { "ActiveDirectoryNames", "Active Directory Names" },
             { "ActiveDirectoryNamesInfo", "Bracket-separated names of AD groups to match for this department (eg: {Enrollment IT]{Admissions}, etc.)" },
 
+            // {{ModuleItemStart:Appointments}}
             // Appointments
             { "Appointment", "Appointment" },
             { "AddAppointment", "Add Appointment" },
@@ -124,6 +125,7 @@ public partial class DataAccess
             { "ScheduleViewWeek", "Week" },
             { "ScheduleViewYear", "Year" },
             { "Scheduling", "Scheduling" },
+            // {{ModuleItemEnd:Appointments}}
 
             // Departments
             { "Department", "Department" },
@@ -135,6 +137,7 @@ public partial class DataAccess
             { "EditDepartment", "Edit Department" },
             { "EditDepartmentGroup", "Edit Department Group" },
 
+            // {{ModuleItemStart:EmailTemplates}}
             // Email Templates
             { "AddNewEmailTemplate", "Add a New Email Template" },
             { "EditEmailTemplate", "Edit Email Template" },
@@ -144,11 +147,13 @@ public partial class DataAccess
             { "EmailTemplateReplyTo", "Reply-to Email Address" },
             { "EmailTemplates", "Email Templates" },
             { "EmailTemplateSubject", "Subject" },
+            // {{ModuleItemEnd:EmailTemplates}}
 
             // Files
             { "Extension", "Extension" },
             { "Extensions", "Extensions" },
 
+            // {{ModuleItemStart:Invoices}}
             // Invoices
             { "AppointmentInvoice", "Appointment Invoice" },
             { "AppointmentInvoices", "Appointment Invoices" },
@@ -182,7 +187,9 @@ public partial class DataAccess
             { "InvoiceTotal", "Total" },
             { "SearchInvoices", "Search Invoices" },
             { "ViewInvoice", "View Invoice" },
+            // {{ModuleItemEnd:Invoices}}
 
+            // {{ModuleItemStart:Locations}}
             // Locations
             { "AddNewLocation", "Add a New Location" },
             { "Address", "Address" },
@@ -195,10 +202,13 @@ public partial class DataAccess
             { "Locations", "Locations" },
             { "OverrideLocationColors", "Override Colors" },
             { "OverrideLocationColorsInfo", "This location has colors specified, but you can use this option to override those colors." },
+            // {{ModuleItemEnd:Locations}}
 
+            // {{ModuleItemStart:Payments}}
             // Payments
             { "Payment", "Payment" },
             { "Payments", "Payments" },
+            // {{ModuleItemEnd:Payments}}
 
             // Plugins
             { "InvalidPlugin", "Invalid Plugin" },
@@ -206,6 +216,7 @@ public partial class DataAccess
             { "PluginNotFound", "The plugin with an Id of {0} could not be found." },
             { "TestPlugin", "Test Plugin" },
 
+            // {{ModuleItemStart:Services}}
             // Services
             { "AddNewService", "Add a New Service" },
             { "EditService", "Edit Service" },
@@ -216,7 +227,9 @@ public partial class DataAccess
             { "ServiceDescription", "Description" },
             { "ServiceRate", "Rate" },
             { "Services", "Services" },
+            // {{ModuleItemEnd:Services}}
 
+            // {{ModuleItemStart:Tags}}
             // Tags
             { "AddNewTag", "Add a New Tag" },
             { "AddTag", "Add a Tag" },
@@ -239,6 +252,7 @@ public partial class DataAccess
             { "TagUseInAppointments", "Use in Appointments" },
             { "TagUseInEmailTemplates", "Use in Email Templates" },
             { "TagUseInServices", "Use in Services" },
+            // {{ModuleItemEnd:Tags}}
 
             // UDF Labels
             { "FeatureOptInUdf", "Use the User-Defined Fields" },

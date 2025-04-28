@@ -11,13 +11,17 @@ public partial interface IDataAccess
     Task<DataObjects.BooleanResponse> DeleteAppointmentNote(Guid AppointmentNoteId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false);
     Task<DataObjects.BooleanResponse> DeleteAppointmentService(Guid AppointmentServiceId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false);
     Task<DataObjects.Appointment> GetAppointment(Guid AppointmentId, DataObjects.User? CurrentUser = null);
+    // {{ModuleItemStart:Invoices}}
     Task<DataObjects.Appointment> GetAppointmentWithInvoices(Guid AppointmentId, DataObjects.User? CurrentUser = null);
     Task<List<DataObjects.Invoice>> GetAppointmentInvoices(Guid AppointmentId);
+    // {{ModuleItemEnd:Invoices}}
     Task<DataObjects.AppointmentNote> GetAppointmentNote(Guid AppointmentNoteId);
     Task<List<DataObjects.AppointmentNote>> GetAppointmentNotes(Guid AppointmentId);
     Task<List<DataObjects.Appointment>> GetAppointments(DataObjects.AppoinmentLoader loader, DataObjects.User? CurrentUser = null);
     Task<DataObjects.Appointment> SaveAppointment(DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null);
+    // {{ModuleItemStart:Invoices}}
     Task<DataObjects.Appointment> SaveAppointmentInvoices(DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null);
+    // {{ModuleItemEnd:Invoices}}
     Task<DataObjects.AppointmentNote> SaveAppointmentNote(DataObjects.AppointmentNote AppointmentNote, DataObjects.User? CurrentUser = null);
     Task<DataObjects.AppointmentAttendanceUpdate> UpdateUserAttendance(DataObjects.AppointmentAttendanceUpdate update);
 
@@ -279,6 +283,7 @@ public partial class DataAccess
         return output;
     }
 
+    // {{ModuleItemStart:Invoices}}
     public async Task<DataObjects.Appointment> GetAppointmentWithInvoices(Guid AppointmentId, DataObjects.User? CurrentUser = null)
     {
         var output = await GetAppointment(AppointmentId, CurrentUser);
@@ -335,7 +340,7 @@ public partial class DataAccess
 
         return output;
     }
-
+    // {{ModuleItemEnd:Invoices}}
     public async Task<DataObjects.AppointmentNote> GetAppointmentNote(Guid AppointmentNoteId)
     {
         var output = new DataObjects.AppointmentNote();
@@ -558,6 +563,7 @@ public partial class DataAccess
         return output;
     }
 
+    // {{ModuleItemStart:Invoices}}
     public async Task<DataObjects.Appointment> SaveAppointmentInvoices(DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null)
     {
         var output = appointment;
@@ -580,6 +586,7 @@ public partial class DataAccess
 
         return output;
     }
+    // {{ModuleItemEnd:Invoices}}
 
     public async Task<DataObjects.AppointmentNote> SaveAppointmentNote(DataObjects.AppointmentNote AppointmentNote, DataObjects.User? CurrentUser = null)
     {

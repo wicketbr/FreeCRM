@@ -15,16 +15,26 @@
     } else {
         if (Model.HaveDeletedRecords) {
             var deletedRecordTypes = new List<string> {
+                // {{ModuleItemStart:Appointments}}
                 "Appointment",
                 "AppointmentNote",
                 "AppointmentService",
+                // {{ModuleItemEnd:Appointments}}
                 "Department",
                 "DepartmentGroup",
+                // {{ModuleItemStart:EmailTemplates}}
                 "EmailTemplate",
+                // {{ModuleItemEnd:EmailTemplates}}
                 "FileStorage",
+                // {{ModuleItemStart:Locations}}
                 "Location",
+                // {{ModuleItemEnd:Locations}}
+                // {{ModuleItemStart:Services}}
                 "Service",
+                // {{ModuleItemEnd:Services}}
+                // {{ModuleItemStart:Tags}}
                 "Tag",
+                // {{ModuleItemEnd:Tags}}
                 "User",
                 "UserGroup"
             };
@@ -50,6 +60,7 @@
                 List<DataObjects.DeletedRecordItem>? deletedRecords = null;
 
                 switch (deletedRecordType) {
+                    // {{ModuleItemStart:Appointments}}
                     case "Appointment":
                         deletedRecords = _DeletedRecords.Appointments;
                         break;
@@ -62,6 +73,7 @@
                         deletedRecordTypeLanguageTag = "AppointmentServicesFull";
                         deletedRecords = _DeletedRecords.AppointmentServices;
                         break;
+                    // {{ModuleItemEnd:Appointments}}
 
                     case "Department":
                         deletedRecords = _DeletedRecords.Departments;
@@ -71,26 +83,34 @@
                         deletedRecords = _DeletedRecords.DepartmentGroups;
                         break;
 
+                    // {{ModuleItemStart:EmailTemplates}}
                     case "EmailTemplate":
                         deletedRecords = _DeletedRecords.EmailTemplates;
                         break;
+                    // {{ModuleItemEnd:EmailTemplates}}
 
                     case "FileStorage":
                         deletedRecords = _DeletedRecords.FileStorage;
                         deletedRecordTypeLanguageTag = "Files";
                         break;
 
+                    // {{ModuleItemStart:Locations}}
                     case "Location":
                         deletedRecords = _DeletedRecords.Locations;
                         break;
+                    // {{ModuleItemEnd:Locations}}
 
+                    // {{ModuleItemStart:Services}}
                     case "Service":
                         deletedRecords = _DeletedRecords.Services;
                         break;
+                    // {{ModuleItemEnd:Services}}
 
+                    // {{ModuleItemStart:Tags}}
                     case "Tag":
                         deletedRecords = _DeletedRecords.Tags;
                         break;
+                    // {{ModuleItemEnd:Tags}}
 
                     case "User":
                         deletedRecords = _DeletedRecords.Users;
@@ -241,16 +261,26 @@
 
             // Also update the counts on the Main Model
             Model.DeletedRecordCounts = new DataObjects.DeletedRecordCounts {
+                // {{ModuleItemStart:Appointments}}
                 AppointmentNotes = _DeletedRecords.AppointmentNotes.Count(),
                 Appointments = _DeletedRecords.Appointments.Count(),
                 AppointmentServices = _DeletedRecords.AppointmentServices.Count(),
+                // {{ModuleItemEnd:Appointments}}
                 DepartmentGroups = _DeletedRecords.DepartmentGroups.Count(),
                 Departments = _DeletedRecords.Departments.Count(),
+                // {{ModuleItemStart:EmailTemplates}}
                 EmailTemplates = _DeletedRecords.EmailTemplates.Count(),
+                // {{ModuleItemEnd:EmailTemplates}}
                 FileStorage = _DeletedRecords.FileStorage.Count(),
+                // {{ModuleItemStart:Locations}}
                 Locations = _DeletedRecords.Locations.Count(),
+                // {{ModuleItemEnd:Locations}}
+                // {{ModuleItemStart:Services}}
                 Services = _DeletedRecords.Services.Count(),
+                // {{ModuleItemEnd:Services}}
+                // {{ModuleItemStart:Tags}}
                 Tags = _DeletedRecords.Tags.Count(),
+                // {{ModuleItemEnd:Tags}}
                 UserGroups = _DeletedRecords.UserGroups.Count(),
                 Users = _DeletedRecords.Users.Count(),
             };

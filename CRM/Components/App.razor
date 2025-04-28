@@ -272,6 +272,15 @@
             }
         }
 
+        function isVisibleByElementId(elementId) {
+            let e = document.getElementById(elementId);
+            if (e == undefined || e == null) {
+                return false;
+            } else {
+                return isVisible(e);
+            }
+        }
+
         function Loaded() {
             let el = document.getElementById("body-element");
             if (el != undefined && el != null) {

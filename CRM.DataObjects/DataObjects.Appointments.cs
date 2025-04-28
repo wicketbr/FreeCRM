@@ -26,7 +26,9 @@ public partial class DataObjects
         public string TitleDisplay { get; set; } = "";
         public List<AppointmentUser> Users { get; set; } = new List<AppointmentUser>();
         public List<Guid>? Tags { get; set; }
+        // {{ModuleItemStart:Invoices}}
         public List<Invoice> Invoices { get; set; } = new List<Invoice>();
+        // {{ModuleItemEnd:Invoices}}
     }
 
     public class AppointmentAttendanceUpdate : ActionResponseObject

@@ -46,12 +46,15 @@
                 break;
 
             case "addusersaving":
+            // {{ModuleItemStart:Appointments}}
             case "appointmentnotesaving":
+            // {{ModuleItemEnd:Appointments}}
                 <h2 class="quick-action">
                     <Language Tag="SavingWait" IncludeIcon="true" />
                 </h2>
                 break;
 
+            // {{ModuleItemStart:Appointments}}
             case "appointmentnote":
                 <h2 class="quick-action">
                     <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
@@ -72,6 +75,7 @@
                     <Language Tag="Cancel" IncludeIcon="true" />
                 </button>
                 break;
+            // {{ModuleItemEnd:Appointments}}
         }
     </div>
 </div>
@@ -230,6 +234,7 @@
         await Helpers.HideMenus();
     }
 
+    // {{ModuleItemStart:Appointments}}
     protected async Task QuickAddAppointmentNoteSave() {
         string focus = String.Empty;
 
@@ -261,6 +266,7 @@
             Model.UnknownError();
         }
     }
+    // {{ModuleItemEnd:Appointments}}
 
     protected async Task QuickAddUserSave() {
         string focus = String.Empty;

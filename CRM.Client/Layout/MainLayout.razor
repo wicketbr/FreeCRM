@@ -492,9 +492,11 @@
             var userId = update.UserId;
 
             switch (update.UpdateType) {
+                // {{ModuleItemStart:Appointments}}
                 case DataObjects.SignalRUpdateType.Appointment:
                     var appt = Helpers.DeserializeObject<DataObjects.Appointment>(update.ObjectAsString);
                     break;
+                // {{ModuleItemEnd:Appointments}}
 
                 case DataObjects.SignalRUpdateType.Department:
                     await Helpers.LoadDepartments();
@@ -503,9 +505,11 @@
                 case DataObjects.SignalRUpdateType.DepartmentGroup:
                     break;
 
+                // {{ModuleItemStart:EmailTemplates}}
                 case DataObjects.SignalRUpdateType.EmailTemplate:
                     var emailTemplate = Helpers.DeserializeObject<DataObjects.EmailTemplate>(update.ObjectAsString);
                     break;
+                // {{ModuleItemEnd:EmailTemplates}}
 
                 case DataObjects.SignalRUpdateType.File:
                     var file = Helpers.DeserializeObject<DataObjects.FileStorage>(update.ObjectAsString);
@@ -526,13 +530,17 @@
                     }
                     break;
 
+                // {{ModuleItemStart:Locations}}
                 case DataObjects.SignalRUpdateType.Location:
                     await Helpers.LoadLocations();
                     break;
+                // {{ModuleItemEnd:Locations}}
 
+                // {{ModuleItemStart:Services}}
                 case DataObjects.SignalRUpdateType.Service:
                     await Helpers.LoadServices();
                     break;
+                // {{ModuleItemEnd:Services}}
 
                 case DataObjects.SignalRUpdateType.Setting:
                     switch (message) {
@@ -565,9 +573,11 @@
                     }
                     break;
 
+                // {{ModuleItemStart:Tags}}
                 case DataObjects.SignalRUpdateType.Tag:
                     await Helpers.LoadTags();
                     break;
+                // {{ModuleItemEnd:Tags}}
 
                 case DataObjects.SignalRUpdateType.Tenant:
                     switch (message) {

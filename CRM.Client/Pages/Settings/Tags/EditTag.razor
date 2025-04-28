@@ -205,9 +205,11 @@
 
     protected async Task LoadTag()
     {
+        // {{ModuleItemStart:Locations}}
         if (!Model.Locations.Any()) {
             await Helpers.LoadLocations();
         }
+        // {{ModuleItemEnd:Locations}}
 
         if (!String.IsNullOrWhiteSpace(id)) {
             Model.NavigationId = id;

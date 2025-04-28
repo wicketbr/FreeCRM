@@ -1194,6 +1194,7 @@ public static class Helpers
         });
     }
 
+    // {{ModuleItemStart:EmailTemplates}}
     /// <summary>
     /// Deserializes the template stored as JSON back to an EmailTemplateDetails object.
     /// </summary>
@@ -1212,6 +1213,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:EmailTemplates}}
 
     public static async Task<PluginExecuteResult> ExecutePlugin(Plugin plugin, object[]? objects = null)
     {
@@ -1375,6 +1377,7 @@ public static class Helpers
         Model.Language = lang;
     }
 
+    // {{ModuleItemStart:Locations}}
     /// <summary>
     /// Format an address.
     /// </summary>
@@ -1401,7 +1404,7 @@ public static class Helpers
 
         return output;
     }
-
+    // {{ModuleItemEnd:Locations}}
 
     // {{ModuleItemStart:Appointments}}
     /// <summary>
@@ -2786,6 +2789,7 @@ public static class Helpers
         return output;
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Gets a Tag by its unique id.
     /// </summary>
@@ -2809,6 +2813,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Gets a User object for the given unique user id.
@@ -3686,6 +3691,7 @@ public static class Helpers
         Model.ImageFiles = items != null && items.Any() ? items : new List<DataObjects.FileStorage>();
     }
 
+    // {{ModuleItemStart:Locations}}
     /// <summary>
     /// Loads the locations from the API endpoint.
     /// </summary>
@@ -3694,7 +3700,9 @@ public static class Helpers
         var items = await GetOrPost<List<DataObjects.Location>>("api/Data/GetLocations");
         Model.Locations = items != null && items.Any() ? items : new List<DataObjects.Location>();
     }
+    // {{ModuleItemEnd:Locations}}
 
+    // {{ModuleItemStart:Services}}
     /// <summary>
     /// Loads the services from the API endpoints.
     /// </summary>
@@ -3703,7 +3711,9 @@ public static class Helpers
         var items = await GetOrPost<List<DataObjects.Service>>("api/Data/GetServices");
         Model.Services = items != null && items.Any() ? items : new List<DataObjects.Service>();
     }
+    // {{ModuleItemEnd:Services}}
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Loads the Tags from the API endpoint.
     /// </summary>
@@ -3712,6 +3722,7 @@ public static class Helpers
         var items = await GetOrPost<List<DataObjects.Tag>>("api/Data/GetTags");
         Model.Tags = items != null && items.Any() ? items : new List<DataObjects.Tag>();
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Loads the Tenant List from the API endpoint.
@@ -4236,6 +4247,7 @@ public static class Helpers
         return output.ToString();
     }
 
+    // {{ModuleItemStart:Invoices}}
     /// <summary>
     /// Gets the preview for an invoice.
     /// </summary>
@@ -4272,6 +4284,7 @@ public static class Helpers
             Model.UnknownError();
         }
     }
+    // {{ModuleItemEnd:Invoices}}
 
     /// <summary>
     /// Opens a quick action slideout.
@@ -4339,6 +4352,7 @@ public static class Helpers
         return output;
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Renders a tag as HTML.
     /// </summary>
@@ -4398,6 +4412,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Reloads the entire data model for the selected user id.
@@ -4701,6 +4716,7 @@ public static class Helpers
         });
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Shows a dialog to select tags.
     /// </summary>
@@ -4740,6 +4756,7 @@ public static class Helpers
             Draggable = false,
         });
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Serializes an object to JSON using the System.Text.Json.JsonSerializer.
@@ -4832,6 +4849,7 @@ public static class Helpers
         null, millisecondsDelay, System.Threading.Timeout.Infinite);
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Sorts a list of tag by their names.
     /// </summary>
@@ -4862,6 +4880,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Returns a spacer image with a given width.
@@ -4958,6 +4977,7 @@ public static class Helpers
         Model.NotifyTenantChanged();
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// The list of colors for tags.
     /// </summary>
@@ -5067,6 +5087,7 @@ public static class Helpers
 
         return output;
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Gets the name of a tenant from the unique id.

@@ -37,11 +37,13 @@ public partial class DataAccess
         try {
             var users = data.Users.Where(x => x.TenantId == TenantId).Select(o => o.UserId).ToList();
 
+            // {{ModuleItemStart:Tags}}
             data.TagItems.RemoveRange(data.TagItems.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
-            
+
             data.Tags.RemoveRange(data.Tags.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
+            // {{ModuleItemEnd:Tags}}
 
             // {{ModuleItemStart:Appointments}}
             data.AppointmentNotes.RemoveRange(data.AppointmentNotes.Where(x => x.TenantId == TenantId));
@@ -57,15 +59,21 @@ public partial class DataAccess
             await data.SaveChangesAsync();
             // {{ModuleItemEnd:Appointments}}
 
+            // {{ModuleItemStart:EmailTemplates}}
             data.EmailTemplates.RemoveRange(data.EmailTemplates.Where(x => x.TenantId != TenantId));
             await data.SaveChangesAsync();
-            
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            // {{ModuleItemStart:Locations}}
             data.Locations.RemoveRange(data.Locations.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
-            
+            // {{ModuleItemEnd:Locations}}
+
+            // {{ModuleItemStart:Services}}
             data.Services.RemoveRange(data.Services.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
-            
+            // {{ModuleItemEnd:Services}}
+
             data.FileStorages.RemoveRange(data.FileStorages.Where(x => x.TenantId == TenantId || users.Contains((Guid)x.UserId!)));
             await data.SaveChangesAsync();
             

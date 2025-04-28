@@ -65,14 +65,18 @@ public class BlazorDataModel
     private List<DataObjects.DepartmentGroup> _DepartmentGroups = new List<DataObjects.DepartmentGroup>();
     private List<DataObjects.Department> _Departments = new List<DataObjects.Department>();
     private List<string> _DotNetHelperMessages = new List<string>();
+    // {{ModuleItemStart:EmailTemplates}}
     private List<DataObjects.EmailTemplate> _EmailTemplates = new List<DataObjects.EmailTemplate>();
+    // {{ModuleItemEnd:EmailTemplates}}
     private string _Fingerprint = "";
     private List<string>? _GloballyDisabledModules = null;
     private List<DataObjects.FileStorage> _ImageFiles = new List<DataObjects.FileStorage>();
     private DataObjects.Language _Language = new DataObjects.Language();
     private List<DataObjects.Language> _Languages = new List<DataObjects.Language>();
     private bool _Loaded = false;
+    // {{ModuleItemStart:Locations}}
     private List<DataObjects.Location> _Locations = new List<DataObjects.Location>();
+    // {{ModuleItemEnd:Locations}}
     private bool _LoggedIn = false;
     private List<Message> _Messages = new List<Message>();
     private DateTime _ModelUpdated = DateTime.UtcNow;
@@ -85,14 +89,18 @@ public class BlazorDataModel
     // {{ModuleItemEnd:Appointments}}
     private DataObjects.User _QuickAddUser = new DataObjects.User();
     private DateOnly _Released = DateOnly.FromDateTime(DateTime.MinValue);
+    // {{ModuleItemStart:Services}}
     private List<DataObjects.Service> _Services = new List<DataObjects.Service>();
+    // {{ModuleItemEnd:Services}}
     private bool _ShowTenantListingWhenMissingTenantCode = false;
     private List<string> _StartupErrors = new List<string>();
     private bool _StartupValidated = false;
     private List<string> _Subscribers_OnChange = new List<string>();
     private List<string> _Subscribers_OnDotNetHelperHandler = new List<string>();
     private List<string> _Subscribers_OnSignalRUpdate = new List<string>();
+    // {{ModuleItemStart:Tags}}
     private List<DataObjects.Tag> _Tags = new List<DataObjects.Tag>();
+    // {{ModuleItemEnd:Tags}}
     private DataObjects.Tenant _Tenant = new DataObjects.Tenant();
     private string? _TenantCodeFromUrl;
     private Guid _TenantId = Guid.Empty;
@@ -704,6 +712,7 @@ public class BlazorDataModel
         }
     }
 
+    // {{ModuleItemStart:EmailTemplates}}
     /// <summary>
     /// The list of email templates
     /// </summary>
@@ -717,6 +726,7 @@ public class BlazorDataModel
             }
         }
     }
+    // {{ModuleItemEnd:EmailTemplates}}
 
     /// <summary>
     /// Shows a Toast with an error message.
@@ -825,16 +835,27 @@ public class BlazorDataModel
         get {
             bool output = false;
 
-            if (DeletedRecordCounts.AppointmentNotes > 0 ||
+            if (
+                // {{ModuleItemStart:Appointments}}
+                DeletedRecordCounts.AppointmentNotes > 0 ||
                 DeletedRecordCounts.Appointments > 0 ||
                 DeletedRecordCounts.AppointmentServices > 0 ||
+                // {{ModuleItemEnd:Appointments}}
                 DeletedRecordCounts.DepartmentGroups > 0 ||
                 DeletedRecordCounts.Departments > 0 ||
+                // {{ModuleItemStart:EmailTemplates}}
                 DeletedRecordCounts.EmailTemplates > 0 ||
+                // {{ModuleItemEnd:EmailTemplates}}
                 DeletedRecordCounts.FileStorage > 0 ||
+                // {{ModuleItemStart:Locations}}
                 DeletedRecordCounts.Locations > 0 ||
+                // {{ModuleItemEnd:Locations}}
+                // {{ModuleItemStart:Services}}
                 DeletedRecordCounts.Services > 0 ||
+                // {{ModuleItemEnd:Services}}
+                // {{ModuleItemStart:Tags}}
                 DeletedRecordCounts.Tags > 0 ||
+                // {{ModuleItemEnd:Tags}}
                 DeletedRecordCounts.UserGroups > 0 ||
                 DeletedRecordCounts.Users > 0
             ) {
@@ -960,6 +981,7 @@ public class BlazorDataModel
         }
     }
 
+    // {{ModuleItemStart:Locations}}
     /// <summary>
     /// The list of locations for the current tenant.
     /// </summary>
@@ -973,6 +995,7 @@ public class BlazorDataModel
             }
         }
     }
+    // {{ModuleItemEnd:Locations}}
 
     /// <summary>
     /// Indicates if a user is logged in.
@@ -1385,6 +1408,7 @@ public class BlazorDataModel
         return output;
     }
 
+    // {{ModuleItemStart:Services}}
     /// <summary>
     /// The list of available services.
     /// </summary>
@@ -1398,6 +1422,7 @@ public class BlazorDataModel
             }
         }
     }
+    // {{ModuleItemEnd:Services}}
 
     /// <summary>
     /// Gets or sets the option to show the tenant listing when missing the tenant code.
@@ -1504,6 +1529,7 @@ public class BlazorDataModel
         }
     }
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// The list of Tag objects.
     /// </summary>
@@ -1517,6 +1543,7 @@ public class BlazorDataModel
             }
         }
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// The current Tenant object.
