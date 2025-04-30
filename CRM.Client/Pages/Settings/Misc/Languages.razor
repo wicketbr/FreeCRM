@@ -88,7 +88,7 @@
                     <button type="button" class="btn btn-primary" @onclick="EditAll">
                         <Language Tag="EditAll" IncludeIcon="true" />
                     </button>
-                    <button type="button" class="btn btn-warning" @onclick="ResetAll">
+                    <button type="button" class="btn btn-warning" @onclick="ResetAll" disabled="@(ResetAllDisabled)">
                         <Icon Name="Reset" />
                         <Language Tag="ResetLanguageDefaults" />
                     </button>
@@ -104,15 +104,15 @@
 
             <div class="mb-2">
                 <FreeBlazor.AutoComplete Class="form-control"
-                    Disabled="false"
-                    GetAutoCompleteItems="Lookup"
-                    HighlightFirstMatch="true"
-                    Id="language-tag-lookup"
-                    LookupDelay="300"
-                    MatchParentWidth="true"
-                    MinimumCharacters="1"
-                    OnSelected="LookupItemSelected"
-                    PlaceholderText="@Helpers.Text("SearchLanguageTag")" />
+                Disabled="false"
+                GetAutoCompleteItems="Lookup"
+                HighlightFirstMatch="true"
+                Id="language-tag-lookup"
+                LookupDelay="300"
+                MatchParentWidth="true"
+                MinimumCharacters="1"
+                OnSelected="LookupItemSelected"
+                PlaceholderText="@Helpers.Text("SearchLanguageTag")" />
             </div>
 
             @if (_editingItem != "") {
@@ -325,6 +325,21 @@
         await Helpers.DelayedFocus("language-tag-lookup");
     }
 
+    protected string DefaultLanguageJson
+    {
+        get {
+            string output = String.Empty;
+
+            var dup = Helpers.DuplicateObject<DataObjects.Language>(Model.DefaultLanguage);
+            if (dup != null) {
+                dup.TenantId = Guid.Empty;
+                output = Helpers.SerializeObject(dup);
+            }
+
+            return output;
+        }
+    }
+
     protected async Task Delete()
     {
         _view = "deleting";
@@ -442,6 +457,22 @@
         }
 
         StateHasChanged();
+    }
+
+    protected bool ResetAllDisabled
+    {
+        get {
+            bool output = false;
+
+            var dup = Helpers.DuplicateObject<DataObjects.Language>(_language);
+            if (dup != null) {
+                dup.TenantId = Guid.Empty;
+                var currentLanguageJson = Helpers.SerializeObject(dup);
+                output = DefaultLanguageJson == currentLanguageJson;
+            }
+            
+            return output;
+        }
     }
 
     protected void ResetItem()
