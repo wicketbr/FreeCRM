@@ -670,6 +670,11 @@
                     break;
             }
 
+            if (message.Contains("delete")) {
+                await Helpers.GetDeletedRecordCount();
+                StateHasChanged();
+            }
+
             // Also trigger the update in the model.
             Model.SignalRUpdate(update);
         }

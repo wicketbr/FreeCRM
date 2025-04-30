@@ -2251,7 +2251,11 @@ public partial class DataAccess
             output.Messages.Add("Error Undeleting '" + Type + "' " + RecordId.ToString() + " - " + RecurseExceptionAsString(ex));
         }
 
-
+        await SignalRUpdate(new DataObjects.SignalRUpdate {
+            TenantId = CurrentUser.TenantId,
+            UpdateType = DataObjects.SignalRUpdateType.Unknown,
+            Message = "Undelete Record",
+        });
 
         return output;
     }
