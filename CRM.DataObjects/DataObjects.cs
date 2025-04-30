@@ -553,6 +553,7 @@ public partial class DataObjects
         public UserPreferences UserPreferences { get; set; } = new UserPreferences();
         public List<Guid>? UserGroups { get; set; }
         public string? Confirmation { get; set; }
+        public bool Sudo { get; set; }
     }
 
     public class UserAccount

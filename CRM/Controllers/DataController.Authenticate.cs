@@ -17,7 +17,7 @@ public partial class DataController
 
             if (output.ActionResponse.Result && output.Enabled && context != null) {
                 if (String.IsNullOrWhiteSpace(output.AuthToken)) {
-                    output.AuthToken = da.GetUserToken(output.TenantId, output.UserId, _fingerprint);
+                    output.AuthToken = da.GetUserToken(output.TenantId, output.UserId, _fingerprint, output.Sudo);
                 }
                 
                 await CustomAuthorization.AddAuthetication(output, context, _fingerprint, "local");

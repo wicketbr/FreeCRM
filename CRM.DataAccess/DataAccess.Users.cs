@@ -30,11 +30,11 @@ public partial interface IDataAccess
     Task<Guid?> GetUserPhoto(Guid UserId);
     Task<DataObjects.SimpleResponse> GetUserPhotoId(Guid UserId);
     Task<List<DataObjects.User>> GetUsers(Guid TenantId);
-    Task<List<DataObjects.User>> GetUsersForEmailAddress(string? EmailAddress, string fingerprint = "");
+    Task<List<DataObjects.User>> GetUsersForEmailAddress(string? EmailAddress, string fingerprint = "", bool sudoLogin = false);
     Task<List<DataObjects.User>> GetUsersInDepartment(Guid TenantId, Guid DepartmentId, DataObjects.User? CurrentUser = null);
     Task<List<DataObjects.UserTenant>> GetUserTenantList(string? username, string? email, bool enabledUsersOnly = true);
     Task<List<DataObjects.Tenant>?> GetUserTenants(string? username, string? email, bool enabledUsersOnly = true);
-    string GetUserToken(Guid TenantId, Guid UserId, string fingerprint = "");
+    string GetUserToken(Guid TenantId, Guid UserId, string fingerprint = "", bool sudoLogin = false);
     string LastModifiedDisplayName(string? lastModifiedBy);
     string LastModifiedDisplayName(DataObjects.User? CurrentUser);
     Task<DataObjects.BooleanResponse> ResetUserPassword(DataObjects.UserPasswordReset reset, DataObjects.User currentUser);
@@ -1290,6 +1290,7 @@ public partial class DataAccess
                 foreach(var tenant in tenants.Where(x => x.Enabled == true)) {
                     Guid UserId = Guid.Empty;
                     string tokenFingerprint = String.Empty;
+                    bool sudoLogin = false;
 
                     Dictionary<string, object> decrypted = JwtDecode(tenant.TenantId, Token);
                     if(decrypted != null && decrypted.Any()) {
@@ -1302,7 +1303,14 @@ public partial class DataAccess
                             tokenFingerprint += decrypted["Fingerprint"];
                         } catch { }
 
-                        if(UserId != Guid.Empty) {
+                        try {
+                            var sl = decrypted["SudoLogin"];
+                            if (sl != null) {
+                                sudoLogin = (bool)sl;
+                            }
+                        } catch { }
+
+                        if (UserId != Guid.Empty) {
                             if (!String.IsNullOrWhiteSpace(fingerprint) || !String.IsNullOrWhiteSpace(tokenFingerprint)) {
                                 // Make sure the fingerprint matches
                                 if (fingerprint != tokenFingerprint) {
@@ -1311,6 +1319,7 @@ public partial class DataAccess
                             }
 
                             output = await GetUser(UserId);
+                            output.Sudo = sudoLogin;
                             return output;
                         }
                     }
@@ -1333,6 +1342,7 @@ public partial class DataAccess
 
             Guid UserId = Guid.Empty;
             string tokenFingerprint = String.Empty;
+            bool sudoLogin = false;
 
             Dictionary<string, object> decrypted = JwtDecode(TenantId, Token);
             try {
@@ -1344,6 +1354,13 @@ public partial class DataAccess
                 tokenFingerprint += decrypted["Fingerprint"];
             } catch { }
 
+            try {
+                var sl = decrypted["SudoLogin"];
+                if (sl != null) {
+                    sudoLogin = (bool)sl;
+                }
+            } catch { }
+
             if (UserId != Guid.Empty) {
                 if (!String.IsNullOrWhiteSpace(fingerprint) || !String.IsNullOrWhiteSpace(tokenFingerprint)) {
                     // Make sure the fingerprint matches
@@ -1353,6 +1370,7 @@ public partial class DataAccess
                 }
 
                 output = await GetUser(UserId);
+                output.Sudo = sudoLogin;
 
                 // Cache this response for a while so that multiple calls to this by the API call to get the current user
                 // and the CustomAuthenticationHandler will not result in multiple lookups in the database.
@@ -1486,7 +1504,7 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<List<DataObjects.User>> GetUsersForEmailAddress(string? EmailAddress, string fingerprint = "")
+    public async Task<List<DataObjects.User>> GetUsersForEmailAddress(string? EmailAddress, string fingerprint = "", bool sudoLogin = false)
     {
         List<DataObjects.User> output = new List<DataObjects.User>();
 
@@ -1498,7 +1516,8 @@ public partial class DataAccess
                 foreach (var userId in userIds) {
                     var user = await GetUser(userId);
                     if (user != null && user.ActionResponse.Result) {
-                        user.AuthToken = GetUserToken(user.TenantId, user.UserId, fingerprint);
+                        user.AuthToken = GetUserToken(user.TenantId, user.UserId, fingerprint, sudoLogin);
+                        user.Sudo = sudoLogin;
                         output.Add(user);
                     }
                 }
@@ -1623,12 +1642,16 @@ public partial class DataAccess
         return output;
     }
 
-    public string GetUserToken(Guid TenantId, Guid UserId, string fingerprint = "")
+    public string GetUserToken(Guid TenantId, Guid UserId, string fingerprint = "", bool sudoLogin = false)
     {
         // jwtencode
         Dictionary<string, object> Payload = new Dictionary<string, object> {
             { "UserId", UserId }
         };
+
+        if (sudoLogin) {
+            Payload.Add("SudoLogin", true);
+        }
 
         if (!String.IsNullOrWhiteSpace(fingerprint)) {
             Payload.Add("Fingerprint", fingerprint);

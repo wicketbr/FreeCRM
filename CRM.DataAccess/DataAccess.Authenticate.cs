@@ -43,6 +43,12 @@ public partial class DataAccess
 
         Guid userId = Guid.Empty;
 
+        bool sudoLogin = false;
+        if (emailAddress.ToLower().StartsWith("sudo ")) {
+            sudoLogin = true;
+            emailAddress = emailAddress.Substring(5).Trim();
+        }
+
         // Find the first user record for this user where the account is not in the admin tenant.
         List<User>? users = null;
 
@@ -89,40 +95,67 @@ public partial class DataAccess
             users = users.Where(x => x.TenantId == (Guid)authenticate.TenantId).ToList();
         }
 
+        string tenantAdminUserPassword = String.Empty;
+        if (sudoLogin) {
+            if (authenticate.TenantId.HasValue) {
+                var tenantAdminUser = await data.Users.FirstOrDefaultAsync(x => x.UserId == authenticate.TenantId);
+                if (tenantAdminUser != null) {
+                    tenantAdminUserPassword += tenantAdminUser.Password;
+                }
+
+                if (String.IsNullOrWhiteSpace(tenantAdminUserPassword)) {
+                    sudoLogin = false;
+                }
+            } else {
+                sudoLogin = false;
+            }
+        }
+
         if(users != null && users.Any()) {
             // Find the first matching password
             foreach(var user in users) {
                 if (user != null) {
                     userId = user.UserId;
 
-                    // Check if this user is currently locked out.
-                    if (user.LastLockoutDate.HasValue) {
-                        // See if it has been at least X minutes since the last lockout.
-                        DateTime lastLockoutDate = (DateTime)user.LastLockoutDate;
-                        DateTime accountUnlockDate = lastLockoutDate.AddMinutes(_accountLockoutMinutes);
-                        if (accountUnlockDate > DateTime.UtcNow) {
-                            // Still locked out.
-                            output.ActionResponse.Messages.Add("Account locked out for " + _accountLockoutMinutes.ToString() +
-                                " minutes at " + lastLockoutDate.ToString() + " due to too many failed login attempts. " + Environment.NewLine +
-                                "Please try again after " + accountUnlockDate.ToString() + " when the account unlocks.");
-
+                    // If this is a sudo login, only check to make sure the password
+                    // matches the tenant admin user.
+                    // Don't do any lockout checks or anything else.
+                    // If this fails, just return the failure.
+                    if (sudoLogin) {
+                        output.ActionResponse.Result = HashPasswordValidate(password, tenantAdminUserPassword);
+                        if (!output.ActionResponse.Result) {
                             return output;
                         }
-
-                        // At this point we are no longer under a lockout, so clear any previous lockouts.
-                        user.LastLockoutDate = null;
-                        user.FailedLoginAttempts = null;
-                        await data.SaveChangesAsync();
-                    }
-
-                    if (user.Password == password) {
-                        // password matches, but is stored in plain text and needs to be encrypted
-                        user.Password = HashPassword(password);
-                        await data.SaveChangesAsync();
-                        output.ActionResponse.Result = true;
                     } else {
-                        // See if the password uses the new hash
-                        output.ActionResponse.Result = HashPasswordValidate(password, user.Password);
+                        // Check if this user is currently locked out.
+                        if (user.LastLockoutDate.HasValue) {
+                            // See if it has been at least X minutes since the last lockout.
+                            DateTime lastLockoutDate = (DateTime)user.LastLockoutDate;
+                            DateTime accountUnlockDate = lastLockoutDate.AddMinutes(_accountLockoutMinutes);
+                            if (accountUnlockDate > DateTime.UtcNow) {
+                                // Still locked out.
+                                output.ActionResponse.Messages.Add("Account locked out for " + _accountLockoutMinutes.ToString() +
+                                    " minutes at " + lastLockoutDate.ToString() + " due to too many failed login attempts. " + Environment.NewLine +
+                                    "Please try again after " + accountUnlockDate.ToString() + " when the account unlocks.");
+
+                                return output;
+                            }
+
+                            // At this point we are no longer under a lockout, so clear any previous lockouts.
+                            user.LastLockoutDate = null;
+                            user.FailedLoginAttempts = null;
+                            await data.SaveChangesAsync();
+                        }
+
+                        if (user.Password == password) {
+                            // password matches, but is stored in plain text and needs to be encrypted
+                            user.Password = HashPassword(password);
+                            await data.SaveChangesAsync();
+                            output.ActionResponse.Result = true;
+                        } else {
+                            // See if the password uses the new hash
+                            output.ActionResponse.Result = HashPasswordValidate(password, user.Password);
+                        }
                     }
 
                     if (output.ActionResponse.Result) {
@@ -135,15 +168,19 @@ public partial class DataAccess
                         // No matter the result from the UpdateUserFromPlugins, we are still in a valid result.
                         output.ActionResponse.Result = true;
 
-                        output.AuthToken = GetUserToken(output.TenantId, output.UserId, fingerprint);
+                        output.AuthToken = GetUserToken(output.TenantId, output.UserId, fingerprint, sudoLogin);
 
                         user.LastLockoutDate = null;
                         user.FailedLoginAttempts = null;
                         await data.SaveChangesAsync();
 
-                        await UpdateUserLastLoginTime(user.UserId, "Local");
+                        if (!sudoLogin) {
+                            // Only update the last login time if this wasn't a sudo login.
+                            await UpdateUserLastLoginTime(user.UserId, "Local");
+                        }
+                        
                         return output;
-                    } else {
+                    } else if (!sudoLogin) {
                         await SetUserLockout(GuidValue(authenticate.TenantId), user.Email);
                     }
                 }

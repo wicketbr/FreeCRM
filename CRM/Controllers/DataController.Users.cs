@@ -139,7 +139,7 @@ public partial class DataController
         if (CurrentUser.Admin || CurrentUser.UserId == id) {
             var output = await da.GetUser(id, false, CurrentUser);
             if (output.ActionResponse.Result) {
-                output.AuthToken = da.GetUserToken(output.TenantId, output.UserId, _fingerprint);
+                output.AuthToken = da.GetUserToken(output.TenantId, output.UserId, _fingerprint, CurrentUser.Sudo);
             }
             return Ok(output);
         } else {

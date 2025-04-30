@@ -50,7 +50,10 @@ public partial class DataController
 
         if (CurrentUser.Enabled) {
             output = await da.GetBlazorDataModel(CurrentUser, _fingerprint);
-            await da.UpdateUserLastLoginTime(CurrentUser.UserId);
+
+            if (!CurrentUser.Sudo) {
+                await da.UpdateUserLastLoginTime(CurrentUser.UserId);
+            }
         } else {
             output = da.GetBlazorDataModel();
         }
@@ -67,7 +70,10 @@ public partial class DataController
 
         if (CurrentUser.Enabled) {
             output = await da.GetBlazorDataModel(CurrentUser, _fingerprint);
-            await da.UpdateUserLastLoginTime(CurrentUser.UserId);
+
+            if (!CurrentUser.Sudo) {
+                await da.UpdateUserLastLoginTime(CurrentUser.UserId);
+            }
         } else {
             output = await da.GetBlazorDataModelByTenantCode(TenantCode);
         }
@@ -159,7 +165,7 @@ public partial class DataController
     [Route("~/api/Data/GetVersionInfo")]
     public async Task<ActionResult<DataObjects.VersionInfo>> GetVersionInfo()
     {
-        if (CurrentUser.Enabled) {
+        if (CurrentUser.Enabled && !CurrentUser.Sudo) {
             await da.UpdateUserLastLoginTime(CurrentUser.UserId);
         }
 

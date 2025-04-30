@@ -873,13 +873,13 @@ public partial class DataAccess
                 await ValidateMainAdminUser(CurrentUser.UserId);
             }
 
-            CurrentUser.AuthToken = GetUserToken(CurrentUser.TenantId, CurrentUser.UserId, fingerprint);
+            CurrentUser.AuthToken = GetUserToken(CurrentUser.TenantId, CurrentUser.UserId, fingerprint, CurrentUser.Sudo);
 
             List<DataObjects.Language> languages = new List<DataObjects.Language>();
             List<DataObjects.Tenant> tenants = new List<DataObjects.Tenant>();
             List<DataObjects.User> users = new List<DataObjects.User>();
 
-            var allUsers = await GetUsersForEmailAddress(CurrentUser.Email, fingerprint);
+            var allUsers = await GetUsersForEmailAddress(CurrentUser.Email, fingerprint, CurrentUser.Sudo);
             if (allUsers != null && allUsers.Any()) {
                 users = allUsers;
             }

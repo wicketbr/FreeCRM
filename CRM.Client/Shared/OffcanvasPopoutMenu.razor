@@ -89,6 +89,9 @@
         @if (Model.LoggedIn) {
             <div class="mb-2">
                 <div class="menu-user-name">
+                    @if (Model.User.Sudo) {
+                        <span>(SUDO) </span>
+                    }
                     <span>@Model.User.FirstName</span>
                     <span>@Model.User.LastName</span>
                 </div>

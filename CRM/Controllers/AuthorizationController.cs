@@ -334,15 +334,17 @@ public class AuthorizationController : ControllerBase
                                     await da.UpdateUserFromPlugins(user.UserId);
 
                                     if (String.IsNullOrWhiteSpace(user.AuthToken)) {
-                                        user.AuthToken = da.GetUserToken(TenantId, user.UserId, _fingerprint);
+                                        user.AuthToken = da.GetUserToken(TenantId, user.UserId, _fingerprint, user.Sudo);
                                     }
                                     await CustomAuthorization.AddAuthetication(user, context, _fingerprint, Source);
 
                                     // Write out the user token
-                                    CookieWrite("user-token", da.GetUserToken(TenantId, user.UserId, _fingerprint));
+                                    CookieWrite("user-token", da.GetUserToken(TenantId, user.UserId, _fingerprint, user.Sudo));
                                     CookieWrite("Login-Method", Source);
 
-                                    await da.UpdateUserLastLoginTime(user.UserId, Source);
+                                    if (!user.Sudo) {
+                                        await da.UpdateUserLastLoginTime(user.UserId, Source);
+                                    }
                                 }
                             }
                         }
