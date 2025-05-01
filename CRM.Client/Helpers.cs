@@ -989,12 +989,26 @@ public static class Helpers
         }
 
         if (!String.IsNullOrEmpty(DepartmentName) || !String.IsNullOrEmpty(Location)) {
-            if(Model.FeatureEnabledDepartments || Model.FeatureEnabledLocation) {
+            if(
+                Model.FeatureEnabledDepartments
+                // {{ModuleItemStart:Locations}}
+                || Model.FeatureEnabledLocation
+                // {{ModuleItemEnd:Locations}}
+            ) {
                 output += " [";
-                if (!String.IsNullOrEmpty(Location) && !String.IsNullOrEmpty(DepartmentName) && Model.FeatureEnabledDepartments && Model.FeatureEnabledLocation) {
+                if (
+                    !String.IsNullOrEmpty(DepartmentName)
+                    && Model.FeatureEnabledDepartments
+                    // {{ModuleItemStart:Locations}}
+                    && !String.IsNullOrEmpty(Location)
+                    && Model.FeatureEnabledLocation
+                    // {{ModuleItemEnd:Locations}}
+                ) {
                     output += Location + "/" + DepartmentName;
+                // {{ModuleItemStart:Locations}}
                 } else if (!String.IsNullOrEmpty(Location) && Model.FeatureEnabledLocation) {
                     output += Location;
+                // {{ModuleItemEnd:Locations}}
                 } else if (Model.FeatureEnabledDepartments) {
                     output += DepartmentName;
                 }

@@ -157,6 +157,7 @@
                             </button>
                         </li>
                     }
+                    <!-- {{ModuleItemStart:Services}} -->
                     @if (_appointment.Meeting && Model.FeatureEnabledServices) {
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tabApptServicesButton" data-bs-toggle="tab" data-bs-target="#tabApptServices"
@@ -165,6 +166,8 @@
                             </button>
                         </li>
                     }
+                    <!-- {{ModuleItemEnd:Services}} -->
+                    <!-- {{ModuleItemStart:Tags}} -->
                     @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInAppointments == true)){
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tabApptTagsButton" data-bs-toggle="tab" data-bs-target="#tabApptTags"
@@ -173,6 +176,7 @@
                             </button>
                         </li>
                     }
+                    <!-- {{ModuleItemEnd:Tags}} -->
                 </ul>
 
                 <div class="mb-2 tab-content tab-content-settings">
@@ -320,6 +324,7 @@
                         }
                     </div>
 
+                    <!-- {{ModuleItemStart:Services}} -->
                     @if (Model.FeatureEnabledServices) {
                         <div id="tabApptServices" class="tab-pane" role="tabpanel" aria-labelledby="tabApptServicesButton">
                             @if (Model.FeatureEnabledServices && Model.Services.Any(x => x.Enabled == true && x.Deleted == false)) {
@@ -371,7 +376,9 @@
                             }
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Services}} -->
 
+                    <!-- {{ModuleItemStart:Tags}} -->
                     @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInAppointments == true)) {
                         <div id="tabApptTags" class="tab-pane" role="tabpanel" aria-labelledby="tabApptTagsButton">
                             <div class="mb-2">
@@ -399,6 +406,7 @@
                             }
                         </div>
                     }
+                    <!-- {{ModuleItemEnd:Tags}} -->
                 </div>
 
                 <div class="mb-3">
@@ -468,11 +476,13 @@
                         <DeleteConfirmation ButtonSize="small" OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
                     }
 
+                    // {{ModuleItemStart:Invoices}}
                     @if (_appointment.Meeting && Model.FeatureEnabledInvoices) {
                         <button type="button" class="btn btn-sm btn-dark" @onclick="AppointmentInvoices">
                             <Language Tag="Invoices" IncludeIcon="true" />
                         </button>
                     }
+                    // {{ModuleItemEnd:Invoices}}
                 }
             }
         }
@@ -525,7 +535,9 @@
                 Model.NavigationId = _appointment.AppointmentId.ToString();
                 Model.ViewIsEditPage = true;
 
+                // {{ModuleItemStart:Tags}}
                 SortAppointmentTags();
+                // {{ModuleItemEnd:Tags}}
 
                 _userIsScheduled = false;
 
@@ -613,6 +625,7 @@
         });
     }
 
+    // {{ModuleItemStart:Tags}}
     protected async Task AddTag(ChangeEventArgs e)
     {
         Guid tagId = Guid.Empty;
@@ -638,6 +651,7 @@
             }
         }
     }
+    // {{ModuleItemEnd:Tags}}
 
     protected bool AllowEdit
     {
@@ -646,12 +660,15 @@
         }
     }
 
+    // {{ModuleItemStart:Invoices}}
     protected void AppointmentInvoices()
     {
         DialogService.Close();
         Helpers.NavigateTo("AppointmentInvoices/" + _appointment.AppointmentId.ToString());
     }
+    // {{ModuleItemEnd:Invoices}}
 
+    // {{ModuleItemStart:Tags}}
     protected List<DataObjects.Tag> AvailableTags
     {
         get {
@@ -664,6 +681,7 @@
             return output;
         }
     }
+    // {{ModuleItemEnd:Tags}}
 
     protected void Close()
     {
@@ -724,6 +742,7 @@
         }
     }
 
+    // {{ModuleItemStart:Tags}}
     protected void RemoveTag(string TagId)
     {
         if(_appointment.Tags != null && _appointment.Tags.Any()) {
@@ -731,6 +750,7 @@
             SortAppointmentTags();
         }
     }
+    // {{ModuleItemEnd:Tags}}
 
     protected void RemoveUserFromAppointment(Guid UserId)
     {
@@ -900,10 +920,12 @@
         }
     }
 
+    // {{ModuleItemStart:Tags}}
     protected void SortAppointmentTags()
     {
         _appointment.Tags = Helpers.SortTagList(_appointment.Tags);
     }
+    // {{ModuleItemEnd:Tags}}
 
     protected async Task UpdateAttendance(string attendance)
     {

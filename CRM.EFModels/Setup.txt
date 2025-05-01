@@ -6,7 +6,7 @@ is set as the Startup Project. The Package Manager Console can be opened by sele
 1.  Use the Scaffold-DbContext to create or update the EFModels after making changes to the
     underlying database.
 
-    Scaffold-DbContext "Data Source=(local);Initial Catalog=CRM;Persist Security Info=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "EFModels" -Context "EFDataModel" -UseDatabaseNames -Force
+    Scaffold-DbContext "Data Source=(local);Initial Catalog=CRM;Persist Security Info=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir "EFModels" -Context "EFDataModel" -UseDatabaseNames -Force -NoOnConfiguring
 
 
 

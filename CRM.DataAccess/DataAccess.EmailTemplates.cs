@@ -28,8 +28,10 @@ public partial class DataAccess
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
             try {
+                // {{ModuleItemStart:Tags}}
                 data.TagItems.RemoveRange(data.TagItems.Where(x => x.ItemId == EmailTemplateId));
                 await data.SaveChangesAsync();
+                // {{ModuleItemEnd:Tags}}
 
                 data.EmailTemplates.Remove(rec);
                 await data.SaveChangesAsync();

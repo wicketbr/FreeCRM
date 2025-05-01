@@ -138,6 +138,7 @@ public partial class DataAccess
                     // Update any LastModifiedBy values for this UserId to be the Display Name
                     string displayName = MaxStringLength(rec.FirstName + " " + rec.LastName, 100);
 
+                    // {{ModuleItemStart:Appointments}}
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentUsers WHERE UserId={0}", UserId);
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE Appointments SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
@@ -147,7 +148,8 @@ public partial class DataAccess
                     await data.Database.ExecuteSqlRawAsync("UPDATE AppointmentNotes SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE AppointmentServices SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
-                    
+                    // {{ModuleItemEnd:Appointments}}
+
                     await data.Database.ExecuteSqlRawAsync("UPDATE DepartmentGroups SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE DepartmentGroups SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
 
@@ -156,12 +158,16 @@ public partial class DataAccess
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE FileStorage SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE FileStorage SET UploadedBy={0} WHERE UploadedBy={1}", displayName, UserId.ToString());
-                    
+
+                    // {{ModuleItemStart:Locations}}
                     await data.Database.ExecuteSqlRawAsync("UPDATE Locations SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE Locations SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
+                    // {{ModuleItemEnd:Locations}}
 
+                    // {{ModuleItemStart:Services}}
                     await data.Database.ExecuteSqlRawAsync("UPDATE Services SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE Services SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
+                    // {{ModuleItemEnd:Services}}
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE Settings SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     
@@ -193,8 +199,10 @@ public partial class DataAccess
             if (ForceDeleteImmediately ||tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
                 data.Users.Remove(rec);
             } else {
+                // {{ModuleItemStart:Appointments}}
                 // Even though we aren't deleting the user, we will remove them from any events now.
                 await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentUsers WHERE UserId={0}", UserId);
+                // {{ModuleItemEnd:Appointments}}
 
                 rec.Deleted = true;
                 rec.DeletedAt = now;

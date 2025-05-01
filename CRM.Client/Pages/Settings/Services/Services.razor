@@ -39,9 +39,11 @@
                         <th style="width:1%;"></th>
                         <th style="width:1%;"><Language Tag="ServiceCode" ReplaceSpaces="true" /></th>
                         <th><Language Tag="ServiceDescription" ReplaceSpaces="true" /></th>
+                        <!-- {{ModuleItemStart:Tags}} -->
                         @if(Model.FeatureEnabledTags){
                             <th><Language Tag="Tags" ReplaceSpaces="true" /></th>
                         }
+                        <!-- {{ModuleItemEnd:Tags}} -->
                         <th class="center" style="width:1%;"><Language Tag="ServiceDefaultService" ReplaceSpaces="true" /></th>
                     </tr>
                 </thead>
@@ -56,9 +58,11 @@
                                 </td>
                                 <td>@service.Code</td>
                                 <td>@service.Description</td>
+                                <!-- {{ModuleItemStart:Tags}} -->
                                 @if (Model.FeatureEnabledTags) {
                                     <td>@((MarkupString)Helpers.RenderTags(service.Tags))</td>
                                 }
+                                <!-- {{ModuleItemEnd:Tags}} -->
                                 <td class="center">@((MarkupString)Helpers.BooleanToIcon(service.DefaultService))</td>
                             </tr>
                         }
@@ -104,9 +108,11 @@
             if (!_loadedData) {
                 _loadedData = true;
 
+                // {{ModuleItemStart:Tags}}
                 if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
                     await Helpers.LoadTags();
                 }
+                // {{ModuleItemEnd:Tags}}
 
                 await LoadData();
             }

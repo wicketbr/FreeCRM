@@ -87,17 +87,23 @@
             await Helpers.ValidateUrl(TenantCode);
 
             if (!_loadedData) {
+                // {{ModuleItemStart:Locations}}
                 if (Model.FeatureEnabledLocation && !Model.Locations.Any()) {
                     await Helpers.LoadLocations();
                 }
+                // {{ModuleItemEnd:Locations}}
 
+                // {{ModuleItemStart:Services}}
                 if (Model.FeatureEnabledServices && !Model.Services.Any()) {
                     await Helpers.LoadServices();
                 }
+                // {{ModuleItemEnd:Services}}
 
+                // {{ModuleItemStart:Tags}}
                 if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
                     await Helpers.LoadTags();
                 }
+                // {{ModuleItemEnd:Tags}}
 
                 _loadedData = true;
             }
@@ -144,6 +150,7 @@
             }
         }
 
+        // {{ModuleItemStart:Services}}
         List<DataObjects.AppointmentService> services = new List<DataObjects.AppointmentService>();
         if (Model.FeatureEnabledServices && Model.Services.Any(x => x.DefaultService == true)) {
             var defaultService = Model.Services.FirstOrDefault(x => x.DefaultService == true);
@@ -155,6 +162,7 @@
                 });
             }
         }
+        // {{ModuleItemEnd:Services}}
 
         var appt = new DataObjects.Appointment {
             TenantId = Model.TenantId,
@@ -163,7 +171,9 @@
             Meeting = true,
             Start = start,
             End = end,
+            // {{ModuleItemStart:Services}}
             Services = services,
+            // {{ModuleItemEnd:Services}}
         };
 
         await ViewAppointment(appt);

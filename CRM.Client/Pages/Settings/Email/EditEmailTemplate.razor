@@ -106,6 +106,7 @@
                                 }
                             </optgroup>
 
+                            <!-- {{ModuleItemStart:Appointments}} -->
                             @if (Model.FeatureEnabledScheduling) {
                                 <optgroup label="@(Helpers.Text("InsertFieldGroupScheduling"))">
                                     <option value="{{Appointment:Title}}"><Language Tag="InsertFieldAppointmentTitle" /></option>
@@ -118,7 +119,9 @@
                                     }
                                 </optgroup>
                             }
+                            <!-- {{ModuleItemEnd:Appointments}} -->
 
+                            <!-- {{ModuleItemStart:Services}} -->
                             @if (Model.FeatureEnabledServices) {
                                 <optgroup label="@(Helpers.Text("InsertFieldGroupServices"))">
                                     <option value="{{Service:Code}}"><Language Tag="InsertFieldServiceCode" /></option>
@@ -126,6 +129,7 @@
                                     <option value="{{Service:Rate}}"><Language Tag="InsertFieldServiceRate" /></option>
                                 </optgroup>
                             }
+                            <!-- {{ModuleItemEnd:Services}} -->
                         </select>
                         @if (Model.ImageFiles.Any()) {
                             <span class="input-group-text pointer" @onclick="InsertImage">

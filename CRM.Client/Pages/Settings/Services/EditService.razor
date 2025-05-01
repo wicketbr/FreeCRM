@@ -82,6 +82,7 @@
                 <input type="number" min="0" class="form-control" id="edit-service-rate" @bind="_service.Rate" />
             </div>
 
+            <!-- {{ModuleItemStart:Tags}} -->
             @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInServices == true)) {
                 <h2 class="subtitle"><Language Tag="Tags" /></h2>
 
@@ -109,6 +110,7 @@
                     }
                 }
             }
+            <!-- {{ModuleItemEnd:Tags}} -->
         }
     }
 }
@@ -150,9 +152,11 @@
             if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
                 _loadedData = true;
 
+                // {{ModuleItemStart:Tags}}
                 if (Model.FeatureEnabledTags && !Model.Tags.Any()) {
                     await Helpers.LoadTags();
                 }
+                // {{ModuleItemEnd:Tags}}
 
                 await LoadService();
             }

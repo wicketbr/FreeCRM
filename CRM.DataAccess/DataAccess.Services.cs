@@ -29,7 +29,9 @@ public partial class DataAccess
                 // {{ModuleItemStart:Appointments}}
                 data.AppointmentServices.RemoveRange(data.AppointmentServices.Where(x => x.ServiceId == ServiceId));
                 // {{ModuleItemEnd:Appointments}}
+                // {{ModuleItemStart:Tags}}
                 data.TagItems.RemoveRange(data.TagItems.Where(x => x.ItemId == ServiceId));
+                // {{ModuleItemEnd:Tags}}
 
                 await data.SaveChangesAsync();
             } catch (Exception ex) {

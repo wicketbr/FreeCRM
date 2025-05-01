@@ -49,8 +49,10 @@ public partial class DataAccess
                 data.AppointmentNotes.RemoveRange(data.AppointmentNotes.Where(x => x.AppointmentId == AppointmentId));
                 data.AppointmentServices.RemoveRange(data.AppointmentServices.Where(x => x.AppointmentId == AppointmentId));
                 data.AppointmentUsers.RemoveRange(data.AppointmentUsers.Where(x => x.AppointmentId == AppointmentId));
+                // {{ModuleItemStart:Tags}}
                 data.TagItems.RemoveRange(data.TagItems.Where(x => x.ItemId == AppointmentId));
-                
+                // {{ModuleItemEnd:Tags}}
+
                 await data.SaveChangesAsync();
             }catch (Exception ex) {
                 output.Messages.Add("Error Deleting Related Appointment Records for User " + AppointmentId.ToString() + ":");

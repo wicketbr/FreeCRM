@@ -283,6 +283,7 @@
             },
         };
 
+        // {{ModuleItemStart:Invoices}}
         if (Model.FeatureEnabledInvoices) {
             ActionHandlers.Add(new PagedRecordset.ActionHandler {
                 CallbackHandler = OnShowInvoices,
@@ -292,6 +293,7 @@
                     "</button>"
             });
         }
+        // {{ModuleItemEnd:Invoices}}
 
         CenterItems = new Dictionary<string, Action?>();
 

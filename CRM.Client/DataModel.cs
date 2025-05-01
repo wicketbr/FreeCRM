@@ -239,12 +239,14 @@ public class BlazorDataModel
         get { return FeatureEnabledEmployeeId && AllowUsersToManageAFeature("employeeid"); }
     }
 
+    // {{ModuleItemStart:Locations}}
     /// <summary>
     /// Indicates if users can edit their location.
     /// </summary>
     public bool AllowUsersToManageLocation {
         get { return FeatureEnabledLocation && AllowUsersToManageAFeature("location"); }
     }
+    // {{ModuleItemEnd:Locations}}
 
     /// <summary>
     /// Indicates if users can edit their name.
@@ -479,19 +481,23 @@ public class BlazorDataModel
         get { return FeatureEnabled("departments"); }
     }
 
+    // {{ModuleItemStart:Invoices}}
     /// <summary>
     /// Indicates if the Invoices feature is enabled.
     /// </summary>
     public bool FeatureEnabledInvoices {
         get { return FeatureEnabled("invoices"); }
     }
+    // {{ModuleItemEnd:Invoices}}
 
+    // {{ModuleItemStart:EmailTemplates}}
     /// <summary>
     /// Indicates if the EmailTemplates feature is enabled.
     /// </summary>
     public bool FeatureEnabledEmailTemplates {
         get { return FeatureEnabled("emailtemplates"); }
     }
+    // {{ModuleItemEnd:EmailTemplates}}
 
     /// <summary>
     /// Indicates if the EmployeeId feature is enabled.
@@ -507,33 +513,41 @@ public class BlazorDataModel
         get { return FeatureEnabled("files"); }
     }
 
+    // {{ModuleItemStart:Locations}}
     /// <summary>
     /// Indicates if the Location feature is enabled.
     /// </summary>
     public bool FeatureEnabledLocation {
         get { return FeatureEnabled("location"); }
     }
+    // {{ModuleItemEnd:Locations}}
 
+    // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// Indicates if the Scheduling feature is enabled.
     /// </summary>
     public bool FeatureEnabledScheduling {
         get { return FeatureEnabled("scheduling"); }
     }
+    // {{ModuleItemEnd:Appointments}}
 
+    // {{ModuleItemStart:Services}}
     /// <summary>
     /// Indicates if the Services feature is enabled.
     /// </summary>
     public bool FeatureEnabledServices {
         get { return FeatureEnabled("services"); }
     }
+    // {{ModuleItemEnd:Services}}
 
+    // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Indicates if the Tags feature is enabled.
     /// </summary>
     public bool FeatureEnabledTags {
         get { return FeatureEnabled("tags"); }
     }
+    // {{ModuleItemEnd:Tags}}
 
     /// <summary>
     /// Indicates if the Themes feature is enabled.
@@ -916,8 +930,33 @@ public class BlazorDataModel
     /// </summary>
     public List<string> Modules {
         get {
-            var output = new List<string> { "departments", "employeeid", "emailtemplates", "files", "invoices",
-                "location", "scheduling", "services", "tags", "themes", "udf", "usergroups", "workschedule" };
+            var output = new List<string> {
+                "departments",
+                "employeeid",
+                // {{ModuleItemStart:EmailTemplates}}
+                "emailtemplates",
+                // {{ModuleItemEnd:EmailTemplates}}
+                "files",
+                // {{ModuleItemStart:Invoices}}
+                "invoices",
+                // {{ModuleItemEnd:Invoices}}
+                // {{ModuleItemStart:Locations}}
+                "location",
+                // {{ModuleItemEnd:Locations}}
+                // {{ModuleItemStart:Appointments}}
+                "scheduling",
+                // {{ModuleItemEnd:Appointments}}
+                // {{ModuleItemStart:Services}}
+                "services",
+                // {{ModuleItemEnd:Services}}
+                // {{ModuleItemStart:Tags}}
+                "tags",
+                // {{ModuleItemEnd:Tags}}
+                "themes",
+                "udf",
+                "usergroups",
+                "workschedule",
+            };
 
             if (_GloballyDisabledModules != null && _GloballyDisabledModules.Any()) {
                 foreach (var item in _GloballyDisabledModules) {
