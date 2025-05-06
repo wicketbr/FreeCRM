@@ -25,6 +25,7 @@ using Radzen.Blazor;
 using Radzen.Blazor.Rendering;
 using static MudBlazor.Colors;
 using Plugins;
+using System.Collections;
 
 namespace CRM.Client;
 
@@ -4100,21 +4101,204 @@ public static class Helpers
     }
 
     /// <summary>
-    /// A method that can be used to update an object property when a field changes and optionally can fire a method when the change is complete.
+    /// Converts an object to an HTML table.
     /// </summary>
-    /// <param name="objectToUpdate">The object to be updated.</param>
-    /// <param name="propertyToUpdate">The name of the property to update.</param>
-    /// <param name="e">The ChangeEventArgs from the OnChange event.</param>
-    /// <param name="onChangeComplete">An optional delegate to be called when the update is complete.</param>
-    public static void OnChangeHandler<T>(object objectToUpdate, string propertyToUpdate, ChangeEventArgs e, Delegate? onChangeComplete = null)
+    /// <param name="o">The object to render.</param>
+    /// <param name="addClassToTable">An optional class to add to the table.</param>
+    /// <param name="addHeaderRowClass">An optional class to add to table rows that contain TH elements.</param>
+    /// <param name="sortByPropertyNames">Option to sort the property names alphabetically (defaults to true.)</param>
+    /// <returns></returns>
+    public static string ObjectToTable(object? o, string addClassToTable = "", string addHeaderRowClass = "", bool sortByPropertyNames = true)
     {
-        var value = GetChangeEventArgValue<T>(e);
+        var output = new System.Text.StringBuilder();
 
-        SetObjectPropertyValue(objectToUpdate, propertyToUpdate, value);
+        if (o != null) {
+            // If the object is enumerable draw a table with multiple rows.
+            // Otherwise, draw rows for each property.
+            var type = o.GetType();
 
-        if (onChangeComplete != null) {
-            onChangeComplete.DynamicInvoke();
+            if (o is IEnumerable) {
+                if (!String.IsNullOrWhiteSpace(addClassToTable)) {
+                    output.AppendLine("<table class=\"" + addClassToTable + "\">");
+                } else {
+                    output.AppendLine("<table>");
+                }
+
+                output.AppendLine("<thead>");
+
+                if (!String.IsNullOrWhiteSpace(addHeaderRowClass)) {
+                    output.AppendLine("<tr class=\"" + addHeaderRowClass + "\">");
+                } else {
+                    output.AppendLine("<tr>");
+                }
+
+                var dynamicO = (dynamic)o;
+                var firstItem = dynamicO[0];
+
+                var properties = firstItem.GetType().GetProperties();
+                var propertyNames = new List<string>();
+
+                foreach (var prop in properties) {
+                    propertyNames.Add(prop.Name);
+                }
+
+                if (sortByPropertyNames) {
+                    propertyNames = propertyNames.OrderBy(x => x).ToList();
+                }
+
+                foreach (var prop in propertyNames) {
+                    output.AppendLine("<th>" + prop + "</th>");
+                }
+
+                output.AppendLine("</tr>");
+                output.AppendLine("</thead>");
+                output.AppendLine("<tbody>");
+
+                foreach (var row in (IEnumerable)o) {
+                    output.AppendLine("<tr>");
+
+                    foreach (var prop in propertyNames) {
+                        output.AppendLine("<td>");
+
+                        var value = ObjectToTableGetPropertyValue(row, prop);
+                        if (value != null) {
+                            var thisType = value.GetType();
+
+                            if (thisType.IsGenericType) {
+                                var baseType = thisType.GetGenericArguments()[0];
+                                if (!baseType.ToString().ToLower().StartsWith("system.")) {
+                                    thisType = baseType;
+                                }
+                            }
+
+                            var thisTypeString = thisType.ToString().ToLower();
+
+                            if (thisTypeString.StartsWith("system.collections.generic.list")) {
+                                output.AppendLine(ObjectToTableListAsDIVs(value));
+                            } else if (thisTypeString.StartsWith("system.")) {
+                                output.AppendLine(value.ToString());
+                            } else if (value is IList || thisType.IsArray) {
+                                output.AppendLine(ObjectToTable(value, addClassToTable, addHeaderRowClass, sortByPropertyNames));
+                            } else if (value.GetType().GetProperties().Count() > 1) {
+                                output.AppendLine(ObjectToTable(value, addClassToTable, addHeaderRowClass, sortByPropertyNames));
+                            } else {
+                                output.AppendLine(value.ToString());
+                            }
+                        }
+
+                        output.AppendLine("</td>");
+                    }
+
+                    output.AppendLine("</tr>");
+                }
+
+                output.AppendLine("</tbody>");
+                output.AppendLine("</table>");
+            } else {
+                if (!String.IsNullOrWhiteSpace(addClassToTable)) {
+                    output.AppendLine("<table class=\"" + addClassToTable + "\">");
+                } else {
+                    output.AppendLine("<table>");
+                }
+
+                output.AppendLine("<tbody>");
+
+                foreach (var prop in type.GetProperties()) {
+                    output.AppendLine("<tr>");
+                    output.AppendLine("<td><b>" + prop.Name + "</b></td>");
+                    output.AppendLine("<td>");
+
+                    var value = prop.GetValue(o);
+
+                    if (value != null) {
+                        var thisType = value.GetType();
+
+                        if (thisType.IsGenericType) {
+                            var baseType = thisType.GetGenericArguments()[0];
+                            if (!baseType.ToString().ToLower().StartsWith("system.")) {
+                                thisType = baseType;
+                            }
+                        }
+
+                        var thisTypeString = thisType.ToString().ToLower();
+
+                        if (thisTypeString.StartsWith("system.collections.generic.list")) {
+                            output.AppendLine(ObjectToTableListAsDIVs(value));
+                        } else if (thisTypeString.StartsWith("system.")) {
+                            output.AppendLine(value.ToString());
+                        } else if (value is IList || thisType.IsArray) {
+                            output.AppendLine(ObjectToTable(value, addClassToTable, addHeaderRowClass, sortByPropertyNames));
+                        } else if (value.GetType().GetProperties().Count() > 1) {
+                            output.AppendLine(ObjectToTable(value, addClassToTable, addHeaderRowClass, sortByPropertyNames));
+                        } else {
+                            output.AppendLine(value.ToString());
+                        }
+                    }
+
+                    output.AppendLine("</td>");
+                    output.AppendLine("</tr>");
+                }
+
+                output.AppendLine("</tbody>");
+                output.AppendLine("</table>");
+            }
         }
+
+        return output.ToString();
+    }
+
+    /// <summary>
+    /// Used by the ObjectToTable function to get the value of an object property.
+    /// </summary>
+    /// <param name="o">The object.</param>
+    /// <param name="property">The property to return.</param>
+    /// <returns>The property value if it exists, or null.</returns>
+    private static object? ObjectToTableGetPropertyValue(object? o, string property)
+    {
+        if (o != null) {
+            foreach (String part in property.Split(".")) {
+                Type type = o.GetType();
+
+                System.Reflection.BindingFlags bindingAttrs = System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Static |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.NonPublic |
+                    System.Reflection.BindingFlags.IgnoreCase;
+
+                var info = type.GetProperty(part, bindingAttrs);
+                if (info != null) {
+                    var obj = info.GetValue(o, null);
+                    if (obj != null) {
+                        return obj;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Used by the ObjectToTable function to convert a list of objects to a list of DIV elements.
+    /// </summary>
+    /// <param name="o">An object that contains an enumerable collection.</param>
+    /// <returns>The items in individual DIV elements.</returns>
+    public static string ObjectToTableListAsDIVs(object? o)
+    {
+        var output = new System.Text.StringBuilder();
+
+        if (o != null) {
+            try {
+                var type = o.GetType();
+
+                var dyn = (dynamic)o;
+                foreach (var item in dyn) {
+                    output.AppendLine("<div>" + item + "</div>");
+                }
+            } catch { }
+        }
+
+        return output.ToString();
     }
 
     /// <summary>
@@ -4127,6 +4311,24 @@ public static class Helpers
     public static void OnChangeHandler(object objectToUpdate, string propertyToUpdate, object? valueToSet, Delegate? onChangeComplete = null)
     {
         SetObjectPropertyValue(objectToUpdate, propertyToUpdate, valueToSet);
+
+        if (onChangeComplete != null) {
+            onChangeComplete.DynamicInvoke();
+        }
+    }
+
+    /// <summary>
+    /// A method that can be used to update an object property when a field changes and optionally can fire a method when the change is complete.
+    /// </summary>
+    /// <param name="objectToUpdate">The object to be updated.</param>
+    /// <param name="propertyToUpdate">The name of the property to update.</param>
+    /// <param name="e">The ChangeEventArgs from the OnChange event.</param>
+    /// <param name="onChangeComplete">An optional delegate to be called when the update is complete.</param>
+    public static void OnChangeHandler<T>(object objectToUpdate, string propertyToUpdate, ChangeEventArgs e, Delegate? onChangeComplete = null)
+    {
+        var value = GetChangeEventArgValue<T>(e);
+
+        SetObjectPropertyValue(objectToUpdate, propertyToUpdate, value);
 
         if (onChangeComplete != null) {
             onChangeComplete.DynamicInvoke();
