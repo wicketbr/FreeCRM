@@ -11,6 +11,6 @@ global using JWT.Serializers;
 global using CRM.EFModels.EFModels;
 global using Microsoft.EntityFrameworkCore;
 global using System.Net.Mail;
-global using System.Data.SqlClient;
+global using Microsoft.Data.SqlClient;
 global using System.Dynamic;
 global using Utilities;
