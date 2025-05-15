@@ -310,6 +310,8 @@
         }
 
         function SetPreferredColorScheme(preferred) {
+            Loaded();
+
             if (preferred == undefined || preferred == null) {
                 preferred = "light";
             }
