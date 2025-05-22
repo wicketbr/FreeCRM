@@ -280,6 +280,9 @@
     {
         Model.OnChange -= OnDataModelUpdated;
         Model.Subscribers_OnChange.Remove(_pageName);
+
+        Model.OnSignalRUpdate -= SignalRUpdate;
+        Model.Subscribers_OnSignalRUpdate.Remove(_pageName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -315,6 +318,11 @@
         if (!Model.Subscribers_OnChange.Contains(_pageName)){
             Model.Subscribers_OnChange.Add(_pageName);
             Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
+            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
+            Model.OnSignalRUpdate += SignalRUpdate;
         }
 
         Model.View = _pageName;
@@ -516,6 +524,27 @@
             }
         } else {
             Model.UnknownError();
+        }
+    }
+
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (Model.View == _pageName && update.UpdateType == DataObjects.SignalRUpdateType.User && update.ItemId == _user.UserId && update.UserId != Model.User.UserId) {
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    Helpers.NavigateTo("Settings/Users");
+                    Model.Message_RecordDeleted("", update.UserDisplayName);
+                    break;
+
+                case "saved":
+                    var user = Helpers.DeserializeObject<DataObjects.User>(update.ObjectAsString);
+                    if (user != null) {
+                        _user = user;
+                        StateHasChanged();
+                        Model.Message_RecordUpdated("", update.UserDisplayName);
+                    }
+                    break;
+            }
         }
     }
 

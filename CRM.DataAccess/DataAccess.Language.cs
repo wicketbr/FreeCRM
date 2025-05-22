@@ -608,6 +608,7 @@ public partial class DataAccess
             { "Save", "Save" },
             { "Saved", "Saved" },
             { "SavedAt", "Saved at" },
+            { "SaveItemChanges", "Save Item Changes" },
             { "Saving", "Saving" },
             { "SavingWait", "Saving, Please Wait..." },
             { "Second", "Second" },
