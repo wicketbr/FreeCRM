@@ -8,12 +8,7 @@
     // processed and the Model has completely loaded and logged the user in before redirecting
     // to the main application home page.
 
-    protected System.Threading.Timer? timer;
-
-    public void Dispose()
-    {
-        DisposeTimer();
-    }
+    public void Dispose() {}
 
     protected override void OnAfterRender(bool firstRender)
     {
@@ -25,10 +20,7 @@
     protected override void OnInitialized()
     {
         Model.View = "processlogin";
-
-        timer = new System.Threading.Timer(async(object? stateInfo) => {
-            await CheckLogin();
-        }, new System.Threading.AutoResetEvent(false), 0, 500);
+        Helpers.SetTimeout(() => CheckLogin(), 500);
     }
 
     protected async Task CheckLogin()
@@ -37,18 +29,11 @@
 
         if (user != null && user.ActionResponse.Result) {
             if (Model.View == "processlogin") {
-                DisposeTimer();
+                await Helpers.ReloadModel();
                 Helpers.NavigateToRoot();
-            } else {
-                DisposeTimer();
             }
-        }
-    }
-
-    protected void DisposeTimer()
-    {
-        if (timer != null) {
-            timer.Dispose();
+        } else {
+            Helpers.SetTimeout(() => CheckLogin(), 500);
         }
     }
 }

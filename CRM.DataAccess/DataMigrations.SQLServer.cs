@@ -737,16 +737,16 @@ public partial class DataMigrations
             """
             IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NOT NULL
             BEGIN
-            	IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId]=N'20230204160527_001')
+            	IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId]=N'001')
             	BEGIN
             		INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-            		VALUES (N'20230204160527_001', N'1.0.0')
+            		VALUES (N'001', N'1.0.0')
             	END
             END
             """);
 
         output.Add(new DataObjects.DataMigration {
-            MigrationId = "20230204160527_001",
+            MigrationId = "001",
             Migration = m1
         });
 

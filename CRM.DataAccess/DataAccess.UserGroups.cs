@@ -222,11 +222,18 @@ public partial class DataAccess
             }
         } else {
             // There are no groups yet for this customer, so add a new group
+            var now = DateTime.UtcNow;
+
             var newGroup = new UserGroup {
                 GroupId = Guid.NewGuid(),
                 TenantId = TenantId,
                 Name = "All Users (auto-created)",
-                Enabled = true
+                Enabled = true,
+                Deleted = false,
+                Added = now,
+                AddedBy = CurrentUserIdString(CurrentUser),
+                LastModified = now,
+                LastModifiedBy = CurrentUserIdString(CurrentUser),
             };
 
             await data.UserGroups.AddAsync(newGroup);

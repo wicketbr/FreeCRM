@@ -151,13 +151,13 @@ public partial class DataMigrations
         m1.Add(
             """
             INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-            VALUES ('20230204160527_001', '7.0.2')
+            VALUES ('001', '7.0.2')
             EXCEPT
-            SELECT * FROM __EFMigrationsHistory WHERE MigrationId='20230204160527_001'
+            SELECT * FROM __EFMigrationsHistory WHERE MigrationId='001'
             """);
 
         output.Add(new DataObjects.DataMigration {
-            MigrationId = "20230204160527_001",
+            MigrationId = "001",
             Migration = m1
         });
 
@@ -204,13 +204,13 @@ public partial class DataMigrations
         m2.Add(
             """
             INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-            VALUES ('20230227163529_002', '7.0.2')
+            VALUES ('002', '7.0.2')
             EXCEPT
-            SELECT * FROM __EFMigrationsHistory WHERE MigrationId='20230227163529_002'
+            SELECT * FROM __EFMigrationsHistory WHERE MigrationId='002'
             """);
 
         output.Add(new DataObjects.DataMigration {
-            MigrationId = "20230227163529_002",
+            MigrationId = "002",
             Migration = m2
         });
 

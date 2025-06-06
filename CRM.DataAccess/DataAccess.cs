@@ -22,14 +22,14 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("5/22/2025"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/6/2025"));
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
 
     /// <summary>
     /// The migrations engine is one of the last components I will work on after getting the primary data structure defined.
     /// </summary>
-    private bool _useMigrations = false;
+    private bool _useMigrations = true;
     private string _version = "1.0.0";
 
     public DataAccess(string ConnectionString = "", string DatabaseType = "", string LocalModeUrl = "", IServiceProvider? serviceProvider = null)

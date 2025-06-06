@@ -4,7 +4,7 @@
 @implements IDisposable
 
 @if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
-    if (!String.IsNullOrWhiteSpace(LogoUrl) && Model.Tenant.TenantSettings.LogoIncludedOnHomePage) {
+    if (Model.Tenant.TenantSettings.LogoIncludedOnHomePage && !String.IsNullOrWhiteSpace(LogoUrl)) {
         <div class="home-page-logo-container">
             <img src="@LogoUrl" class="logo-homepage" />
         </div>
@@ -16,30 +16,6 @@
         }
         <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
     </h1>
-
-    <div class="mb-2">
-        <a href="@Helpers.BuildUrl("Monaco")" class="btn btn-primary">
-            Monaco Editor Testing
-        </a>
-
-        <a href="@Helpers.BuildUrl("Plugins")" class="btn btn-primary">
-            Plugin Testing
-        </a>
-
-        <a href="@Helpers.BuildUrl("TimerTest")" class="btn btn-primary">
-            Timer Test Page
-        </a>
-
-        <a href="@Helpers.BuildUrl("SortTest")" class="btn btn-primary">
-            Sort Test Page
-        </a>
-
-        <a href="@Helpers.BuildUrl("DoubleClick")" class="btn btn-primary">
-            Double-Click
-        </a>
-    </div>
-
-    <div class="mb-2">Fingerprint: @Model.Fingerprint</div>
 }
 @code {
     [Parameter] public string? TenantCode { get; set; }
@@ -48,17 +24,16 @@
     protected bool _loading = false;
     protected string _pageName = "home";
 
-    protected System.Timers.Timer _timer = new System.Timers.Timer();
-
-    public void Dispose() {
-        _timer.Dispose();
+    public void Dispose()
+    {
+        Model.Subscribers_OnChange.Remove(_pageName);
+        Model.OnChange -= OnDataModelUpdated;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) {
             Model.TenantCodeFromUrl = TenantCode;
-            Model.OnChange += OnDataModelUpdated;
         }
 
         if (Model.Loaded) {
@@ -80,12 +55,6 @@
             Model.OnChange += OnDataModelUpdated;
         }
 
-        _timer = new System.Timers.Timer();
-        _timer.Interval = 1000;
-        _timer.Elapsed += TimerExecuted;
-        _timer.AutoReset = true;
-        //_timer.Start();
-
         Model.View = _pageName;
     }
 
@@ -99,18 +68,11 @@
     protected string LogoUrl
     {
         get {
-            string output = "";
-
             if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
-                output = Model.ApplicationUrl + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
+                return Model.ApplicationUrl + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
+            } else {
+                return String.Empty;
             }
-
-            return output;
         }
-    }
-
-    protected void TimerExecuted(Object? source, System.Timers.ElapsedEventArgs e)
-    {
-        Console.WriteLine("Timer Executed");
     }
 }
