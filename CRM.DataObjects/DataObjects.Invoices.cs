@@ -5,7 +5,9 @@ public partial class DataObjects
     public class FilterInvoices : Filter
     {
         public List<Invoice>? Records { get; set; }
+        // {{ModuleItemStart:Appointments}}
         public Guid? AppointmentId { get; set; }
+        // {{ModuleItemEnd:Appointments}}
         public Guid? UserId { get; set; }
         public string? ClosedStatus { get; set; }
         public string? SentStatus { get; set; }
@@ -17,7 +19,9 @@ public partial class DataObjects
         public Guid TenantId { get; set; }
         public string? InvoiceNumber { get; set; }
         public string? PONumber { get; set; }
+        // {{ModuleItemStart:Appointments}}
         public Guid? AppointmentId { get; set; }
+        // {{ModuleItemEnd:Appointments}}
         public string? AppointmentDisplay { get; set; }
         public Guid? UserId { get; set; }
         public string? UserDisplay { get; set; }

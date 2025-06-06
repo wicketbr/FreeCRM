@@ -13,7 +13,9 @@ public partial class Invoice
 
     public string? PONumber { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public Guid? AppointmentId { get; set; }
+    // {{ModuleItemEnd:Appointments}}
 
     public Guid? UserId { get; set; }
 
@@ -47,9 +49,13 @@ public partial class Invoice
 
     public DateTime? DeletedAt { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public virtual Appointment? Appointment { get; set; }
+    // {{ModuleItemEnd:Appointments}}
 
+    // {{ModuleItemStart:Payments}}
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    // {{ModuleItemEnd:Payments}}
 
     public virtual Tenant Tenant { get; set; } = null!;
 

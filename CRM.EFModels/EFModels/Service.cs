@@ -33,5 +33,7 @@ public partial class Service
 
     public DateTime? DeletedAt { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public virtual ICollection<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
+    // {{ModuleItemEnd:Appointments}}
 }

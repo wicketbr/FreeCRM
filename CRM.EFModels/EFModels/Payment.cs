@@ -37,7 +37,9 @@ public partial class Payment
 
     public DateTime? DeletedAt { get; set; }
 
+    // {{ModuleItemStart:Invoices}}
     public virtual Invoice Invoice { get; set; } = null!;
+    // {{ModuleItemEnd:Invoices}}
 
     public virtual Tenant Tenant { get; set; } = null!;
 

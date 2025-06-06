@@ -8,7 +8,9 @@ public partial interface IDataAccess
     Task<DataObjects.Invoice> GetInvoice(Guid InvoiceId, DataObjects.User? CurrentUser = null, bool IncludeImages = false, bool IncludePDF = false);
     Task<List<DataObjects.Invoice>> GetInvoices(Guid TenantId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null);
     DataObjects.FilterInvoices GetInvoicesFiltered(DataObjects.FilterInvoices filter, DataObjects.User? CurrentUser = null);
+    // {{ModuleItemStart:Appointments}}
     Task<List<DataObjects.Invoice>> GetInvoicesForAppointment(Guid AppointmentId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null);
+    // {{ModuleItemEnd:Appointments}}
     Task<List<DataObjects.Invoice>> GetInvoicesForUser(Guid UserId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null);
     Task<DataObjects.Invoice> SaveInvoice(DataObjects.Invoice invoice, DataObjects.User? CurrentUser = null);
 }
@@ -91,7 +93,9 @@ public partial class DataAccess
                 TenantId = rec.TenantId,
                 InvoiceNumber = rec.InvoiceNumber,
                 PONumber = rec.PONumber,
+                // {{ModuleItemStart:Appointments}}
                 AppointmentId = rec.AppointmentId,
+                // {{ModuleItemEnd:Appointments}}
                 UserId = rec.UserId,
                 Title = rec.Title,
                 InvoiceItems = invoiceItems != null && invoiceItems.Any() ? invoiceItems : new List<DataObjects.InvoiceItem>(),
@@ -150,7 +154,9 @@ public partial class DataAccess
                     TenantId = rec.TenantId,
                     InvoiceNumber = rec.InvoiceNumber,
                     PONumber = rec.PONumber,
+                    // {{ModuleItemStart:Appointments}}
                     AppointmentId = rec.AppointmentId,
+                    // {{ModuleItemEnd:Appointments}}
                     UserId = rec.UserId,
                     Title = rec.Title,
                     InvoiceItems = invoiceItems != null && invoiceItems.Any() ? invoiceItems : new List<DataObjects.InvoiceItem>(),
@@ -309,11 +315,13 @@ public partial class DataAccess
             }
         }
 
-        if(output.AppointmentId.HasValue && output.AppointmentId != Guid.Empty) {
+        // {{ModuleItemStart:Appointments}}
+        if (output.AppointmentId.HasValue && output.AppointmentId != Guid.Empty) {
             recs = recs.Where(x => x.AppointmentId == output.AppointmentId);
         }
+        // {{ModuleItemEnd:Appointments}}
 
-        if(output.UserId.HasValue && output.UserId != Guid.Empty) {
+        if (output.UserId.HasValue && output.UserId != Guid.Empty) {
             recs = recs.Where(x => x.UserId == output.UserId);
         }
 
@@ -437,8 +445,8 @@ public partial class DataAccess
                     TenantId = rec.TenantId,
                     InvoiceNumber = rec.InvoiceNumber,
                     PONumber = rec.PONumber,
-                    AppointmentId = rec.AppointmentId,
                     // {{ModuleItemStart:Appointments}}
+                    AppointmentId = rec.AppointmentId,
                     AppointmentDisplay = rec.Appointment != null
                         ? rec.Appointment.Title
                         : String.Empty,
@@ -468,8 +476,9 @@ public partial class DataAccess
 
             output.Records = records;
 
+            // {{ModuleItemStart:Appointments}}
             // Only include the following columns if there is data with values for those items.
-            if(records.Any(x => x.AppointmentId != null)) {
+            if (records.Any(x => x.AppointmentId != null)) {
                 output.Columns.Add(new DataObjects.FilterColumn {
                     Align = "",
                     Label = GetLanguageItem("Appointment", language),
@@ -479,6 +488,7 @@ public partial class DataAccess
                     DataType = "string"
                 });
             }
+            // {{ModuleItemEnd:Appointments}}
 
             if (adminUser && records.Any(x => x.UserId != null)) {
                 output.Columns.Add(new DataObjects.FilterColumn {
@@ -505,6 +515,7 @@ public partial class DataAccess
         return output;
     }
 
+    // {{ModuleItemStart:Appointments}}
     public async Task<List<DataObjects.Invoice>> GetInvoicesForAppointment(Guid AppointmentId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null)
     {
         var output = new List<DataObjects.Invoice>();
@@ -554,6 +565,7 @@ public partial class DataAccess
 
         return output;
     }
+    // {{ModuleItemEnd:Appointments}}
 
     public async Task<List<DataObjects.Invoice>> GetInvoicesForUser(Guid UserId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null)
     {
@@ -581,7 +593,9 @@ public partial class DataAccess
                     TenantId = rec.TenantId,
                     InvoiceNumber = rec.InvoiceNumber,
                     PONumber = rec.PONumber,
+                    // {{ModuleItemStart:Appointments}}
                     AppointmentId = rec.AppointmentId,
+                    // {{ModuleItemEnd:Appointments}}
                     UserId = rec.UserId,
                     Title = rec.Title,
                     InvoiceItems = invoiceItems != null && invoiceItems.Any() ? invoiceItems : new List<DataObjects.InvoiceItem>(),
@@ -647,7 +661,9 @@ public partial class DataAccess
         output.PONumber = MaxStringLength(output.PONumber, 100);
         output.Title = MaxStringLength(output.Title, 255);
 
+        // {{ModuleItemStart:Appointments}}
         rec.AppointmentId = output.AppointmentId;
+        // {{ModuleItemEnd:Appointments}}
         rec.InvoiceNumber = output.InvoiceNumber;
         rec.PONumber = output.PONumber;
         rec.UserId = output.UserId;

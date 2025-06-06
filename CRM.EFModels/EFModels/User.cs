@@ -85,15 +85,21 @@ public partial class User
 
     public string? Preferences { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public virtual ICollection<AppointmentUser> AppointmentUsers { get; set; } = new List<AppointmentUser>();
+    // {{ModuleItemEnd:Appointments}}
 
     public virtual Department? Department { get; set; }
 
     public virtual ICollection<FileStorage> FileStorages { get; set; } = new List<FileStorage>();
 
+    // {{ModuleItemStart:Invoices}}
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    // {{ModuleItemEnd:Invoices}}
 
+    // {{ModuleItemStart:Payments}}
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    // {{ModuleItemEnd:Payments}}
 
     public virtual Tenant Tenant { get; set; } = null!;
 

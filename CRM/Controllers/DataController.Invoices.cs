@@ -86,6 +86,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Appointments}}
     [HttpGet]
     [Authorize(Policy = Policies.Admin)]
     [Route("~/api/Data/GetInvoicesForAppointment/{id}")]
@@ -94,6 +95,7 @@ public partial class DataController
         var output = await da.GetInvoicesForAppointment(id, false, CurrentUser);
         return Ok(output);
     }
+    // {{ModuleItemEnd:Appointments}}
 
     [HttpGet]
     [Authorize]

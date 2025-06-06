@@ -15,6 +15,7 @@ public partial class EFDataModel : DbContext
     {
     }
 
+    // {{ModuleItemStart:Appointments}}
     public virtual DbSet<Appointment> Appointments { get; set; }
 
     public virtual DbSet<AppointmentNote> AppointmentNotes { get; set; }
@@ -22,30 +23,43 @@ public partial class EFDataModel : DbContext
     public virtual DbSet<AppointmentService> AppointmentServices { get; set; }
 
     public virtual DbSet<AppointmentUser> AppointmentUsers { get; set; }
+    // {{ModuleItemEnd:Appointments}}
 
     public virtual DbSet<Department> Departments { get; set; }
 
     public virtual DbSet<DepartmentGroup> DepartmentGroups { get; set; }
 
+    // {{ModuleItemStart:EmailTemplates}}
     public virtual DbSet<EmailTemplate> EmailTemplates { get; set; }
+    // {{ModuleItemEnd:EmailTemplates}}
 
     public virtual DbSet<FileStorage> FileStorages { get; set; }
 
+    // {{ModuleItemStart:Invoices}}
     public virtual DbSet<Invoice> Invoices { get; set; }
+    // {{ModuleItemEnd:Invoices}}
 
+    // {{ModuleItemStart:Locations}}
     public virtual DbSet<Location> Locations { get; set; }
+    // {{ModuleItemEnd:Locations}}
 
+    // {{ModuleItemStart:Payments}}
     public virtual DbSet<Payment> Payments { get; set; }
+    // {{ModuleItemEnd:Payments}}
 
     public virtual DbSet<PluginCache> PluginCaches { get; set; }
 
+    // {{ModuleItemStart:Services}}
     public virtual DbSet<Service> Services { get; set; }
+    // {{ModuleItemEnd:Services}}
 
     public virtual DbSet<Setting> Settings { get; set; }
 
+    // {{ModuleItemStart:Tags}}
     public virtual DbSet<Tag> Tags { get; set; }
 
     public virtual DbSet<TagItem> TagItems { get; set; }
+    // {{ModuleItemEnd:Tags}}
 
     public virtual DbSet<Tenant> Tenants { get; set; }
 
@@ -59,6 +73,7 @@ public partial class EFDataModel : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // {{ModuleItemStart:Appointments}}
         modelBuilder.Entity<Appointment>(entity =>
         {
             entity.Property(e => e.AppointmentId).ValueGeneratedNever();
@@ -128,6 +143,7 @@ public partial class EFDataModel : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AppointmentUsers_Users");
         });
+        // {{ModuleItemEnd:Appointments}}
 
         modelBuilder.Entity<Department>(entity =>
         {
@@ -152,6 +168,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
         });
 
+        // {{ModuleItemStart:EmailTemplates}}
         modelBuilder.Entity<EmailTemplate>(entity =>
         {
             entity.Property(e => e.EmailTemplateId).ValueGeneratedNever();
@@ -162,6 +179,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
             entity.Property(e => e.Name).HasMaxLength(300);
         });
+        // {{ModuleItemEnd:EmailTemplates}}
 
         modelBuilder.Entity<FileStorage>(entity =>
         {
@@ -186,6 +204,7 @@ public partial class EFDataModel : DbContext
                 .HasConstraintName("IX_FileStorage_UserId");
         });
 
+        // {{ModuleItemStart:Invoices}}
         modelBuilder.Entity<Invoice>(entity =>
         {
             entity.Property(e => e.InvoiceId).ValueGeneratedNever();
@@ -204,9 +223,11 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.Total).HasColumnType("decimal(19, 4)");
 
+            // {{ModuleItemStart:Appointments}}
             entity.HasOne(d => d.Appointment).WithMany(p => p.Invoices)
                 .HasForeignKey(d => d.AppointmentId)
                 .HasConstraintName("FK_Invoices_Appointments");
+            // {{ModuleItemEnd:Appointments}}
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.Invoices)
                 .HasForeignKey(d => d.TenantId)
@@ -234,7 +255,9 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.PostalCode).HasMaxLength(50);
             entity.Property(e => e.State).HasMaxLength(50);
         });
+        // {{ModuleItemEnd:Invoices}}
 
+        // {{ModuleItemStart:Payments}}
         modelBuilder.Entity<Payment>(entity =>
         {
             entity.Property(e => e.PaymentId).ValueGeneratedNever();
@@ -249,10 +272,12 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.Refunded).HasColumnType("decimal(19, 4)");
             entity.Property(e => e.RefundedBy).HasMaxLength(100);
 
+            // {{ModuleItemStart:Invoices}}
             entity.HasOne(d => d.Invoice).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.InvoiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Payments_Invoices");
+            // {{ModuleItemEnd:Invoices}}
 
             entity.HasOne(d => d.Tenant).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.TenantId)
@@ -263,6 +288,7 @@ public partial class EFDataModel : DbContext
                 .HasForeignKey(d => d.UserId)
                 .HasConstraintName("FK_Payments_Users");
         });
+        // {{ModuleItemEnd:Payments}}
 
         modelBuilder.Entity<PluginCache>(entity =>
         {
@@ -279,6 +305,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.Version).HasMaxLength(100);
         });
 
+        // {{ModuleItemStart:Services}}
         modelBuilder.Entity<Service>(entity =>
         {
             entity.Property(e => e.ServiceId).ValueGeneratedNever();
@@ -291,6 +318,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.LastModifiedBy).HasMaxLength(100);
             entity.Property(e => e.Rate).HasColumnType("decimal(19, 4)");
         });
+        // {{ModuleItemEnd:Services}}
 
         modelBuilder.Entity<Setting>(entity =>
         {
@@ -302,6 +330,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.SettingType).HasMaxLength(100);
         });
 
+        // {{ModuleItemStart:Tags}}
         modelBuilder.Entity<Tag>(entity =>
         {
             entity.Property(e => e.TagId).ValueGeneratedNever();
@@ -322,6 +351,7 @@ public partial class EFDataModel : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_TagItems_Tags");
         });
+        // {{ModuleItemEnd:Tags}}
 
         modelBuilder.Entity<Tenant>(entity =>
         {

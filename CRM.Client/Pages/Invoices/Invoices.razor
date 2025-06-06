@@ -199,7 +199,9 @@
         Filter.Sort = "InvoiceCreated";
         Filter.SortOrder = "DESC";
         Filter.Page = 1;
+        // {{ModuleItemStart:Appointments}}
         Filter.AppointmentId = null;
+        // {{ModuleItemEnd:Appointments}}
         Filter.ClosedStatus = null;
         Filter.SentStatus = null;
 
@@ -532,7 +534,9 @@
         // Not all properties should be saved, so make a copy and clear out values that don't need to be saved.
         DataObjects.FilterInvoices saveFilter = new DataObjects.FilterInvoices {
             ActionResponse = new DataObjects.BooleanResponse { Result = true },
+            // {{ModuleItemStart:Appointments}}
             AppointmentId = Filter.AppointmentId,
+            // {{ModuleItemEnd:Appointments}}
             ClosedStatus = Filter.ClosedStatus,
             Columns = null,
             CultureCode = Filter.CultureCode,

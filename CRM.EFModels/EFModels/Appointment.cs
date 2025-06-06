@@ -41,11 +41,15 @@ public partial class Appointment
 
     public virtual ICollection<AppointmentNote> AppointmentNotes { get; set; } = new List<AppointmentNote>();
 
+    // {{ModuleItemStart:Appointments}}
     public virtual ICollection<AppointmentService> AppointmentServices { get; set; } = new List<AppointmentService>();
 
     public virtual ICollection<AppointmentUser> AppointmentUsers { get; set; } = new List<AppointmentUser>();
+    // {{ModuleItemEnd:Appointments}}
 
+    // {{ModuleItemStart:Invoices}}
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    // {{ModuleItemEnd:Invoices}}
 
     public virtual Location? Location { get; set; }
 }

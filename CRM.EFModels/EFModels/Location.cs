@@ -39,5 +39,7 @@ public partial class Location
 
     public DateTime? DeletedAt { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    // {{ModuleItemEnd:Appointments}}
 }
