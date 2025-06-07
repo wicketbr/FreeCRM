@@ -71,6 +71,7 @@ public partial class DataMigrations
             """
             );
 
+        // {{ModuleItemStart:Services}}
         m1.Add(
             """
             IF OBJECT_ID(N'[AppointmentServices]') IS NULL
@@ -91,6 +92,7 @@ public partial class DataMigrations
             END
             """
             );
+        // {{ModuleItemEnd:Services}}
 
         m1.Add(
             """
