@@ -59,7 +59,7 @@ public partial class DataAccess: IDisposable, IDataAccess
                     break;
 
                 case "postgresql":
-                    //optionsBuilder.UseNpgsql(_connectionString, options => options.EnableRetryOnFailure());
+                    optionsBuilder.UseNpgsql(_connectionString, options => options.EnableRetryOnFailure());
                     break;
 
                 case "sqlite":

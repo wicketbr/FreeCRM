@@ -71,6 +71,13 @@ public partial class EFDataModel : DbContext
 
     public virtual DbSet<UserInGroup> UserInGroups { get; set; }
 
+    // The OnConfiguring override is only commented out and used to build the migration scripts.
+    // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    // => optionsBuilder.UseSqlite("Data Source=C:\\Working\\CRM.db");
+    // => optionsBuilder.UseMySQL("Server=localhost;Database=CRM;User=admin;Password=admin");
+    // => optionsBuilder.UseNpgsql("Host=localhost;Database=CRM;Username=postgres;Password=admin");
+    // => optionsBuilder.UseSqlServer("Data Source=(local);Initial Catalog=CRM;Persist Security Info=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;TrustServerCertificate=True;");
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // {{ModuleItemStart:Appointments}}
