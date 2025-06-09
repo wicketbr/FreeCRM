@@ -759,18 +759,20 @@ public partial class DataAccess
     {
         List<string> output = new List<string>();
 
-        var recs = await data.Settings
-            .Where(x => x.TenantId == TenantId && x.SettingName != null && x.SettingName.ToLower().StartsWith("language_"))
-            .ToListAsync();
+        try {
+            var recs = await data.Settings
+                .Where(x => x.TenantId == TenantId && x.SettingName != null && x.SettingName.ToLower().StartsWith("language_"))
+                .ToListAsync();
 
-        if (recs != null && recs.Any()) {
-            foreach (var rec in recs) {
-                string culture = StringValue(rec.SettingName).Substring(9);
-                if (!String.IsNullOrWhiteSpace(culture)) {
-                    output.Add(culture);
+            if (recs != null && recs.Any()) {
+                foreach (var rec in recs) {
+                    string culture = StringValue(rec.SettingName).Substring(9);
+                    if (!String.IsNullOrWhiteSpace(culture)) {
+                        output.Add(culture);
+                    }
                 }
             }
-        }
+        } catch {}
 
         return output;
     }

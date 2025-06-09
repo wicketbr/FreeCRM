@@ -467,7 +467,6 @@ public partial class DataMigrations
             CREATE INDEX "IX_AppointmentNotes_AppointmentId" ON "AppointmentNotes" ("AppointmentId");
             """);
 
-        // {{ModuleItemStart:Appointments}}
         // {{ModuleItemStart:Locations}}
         m1.Add(
             """
@@ -488,7 +487,6 @@ public partial class DataMigrations
             CREATE INDEX "IX_AppointmentServices_ServiceId" ON "AppointmentServices" ("ServiceId");
             """);
         // {{ModuleItemEnd:Services}}
-        // {{ModuleItemEnd:Appointments}}
 
         m1.Add(
             """
