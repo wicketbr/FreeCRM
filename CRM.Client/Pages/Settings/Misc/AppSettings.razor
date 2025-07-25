@@ -266,10 +266,10 @@
     {
         string value = "";
 
-        if (!String.IsNullOrWhiteSpace(field)) {
-            switch (field.ToLower()) {
-            }
-        }
+        //if (!String.IsNullOrWhiteSpace(field)) {
+            // switch (field.ToLower()) {
+            // }
+        //}
 
         Model.ClearMessages();
         if (!String.IsNullOrWhiteSpace(value)) {
@@ -277,9 +277,6 @@
             if(response != null) {
                 if (response.Result) {
                     string decrypted = Helpers.StringValue(response.Messages[0]);
-
-                    switch (field.ToLower()) {
-                    }
                 } else {
                     Model.ErrorMessages(response.Messages);
                 }
@@ -293,10 +290,10 @@
     {
         string value = "";
 
-        if (!String.IsNullOrWhiteSpace(field)) {
-            switch (field.ToLower()) {
-            }
-        }
+        // if (!String.IsNullOrWhiteSpace(field)) {
+        //     switch (field.ToLower()) {
+        //     }
+        // }
 
         Model.ClearMessages();
         if (!String.IsNullOrWhiteSpace(value)) {
@@ -304,9 +301,6 @@
             if (response != null) {
                 if (response.Result) {
                     string encrypted = Helpers.StringValue(response.Messages[0]);
-
-                    switch (field.ToLower()) {
-                    }
                 } else {
                     Model.ErrorMessages(response.Messages);
                 }

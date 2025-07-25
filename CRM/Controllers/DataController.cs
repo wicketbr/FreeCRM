@@ -16,7 +16,7 @@ public partial class DataController : ControllerBase
     private IConfigurationHelper configurationHelper;
     private Plugins.IPlugins plugins;
 
-    private readonly IHubContext<crmhub>? _signalR;
+    private readonly IHubContext<crmHub>? _signalR;
 
     private string _fingerprint = "";
     private string _returnCodeAccessDenied = "{{AccessDenied}}";
@@ -24,7 +24,7 @@ public partial class DataController : ControllerBase
     public DataController(IDataAccess daInjection, 
         IHttpContextAccessor httpContextAccessor, 
         ICustomAuthentication auth, 
-        IHubContext<crmhub> hubContext, 
+        IHubContext<crmHub> hubContext, 
         IConfigurationHelper configHelper, 
         Plugins.IPlugins diPlugins)
     {

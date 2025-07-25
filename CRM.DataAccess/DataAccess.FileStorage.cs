@@ -11,7 +11,7 @@ public partial interface IDataAccess
     Task<List<string>> GetUniqueFileExtensions(Guid TenantId);
     Task<DataObjects.FileStorage> SaveFileStorage(DataObjects.FileStorage fileStorage, DataObjects.User? CurrentUser = null);
     Task<DataObjects.BooleanResponse> UndeleteFileStorage(Guid FileId);
-    Task<bool> UserCanViewFile(DataObjects.FileStorage file, DataObjects.User CurrentUser);
+    bool UserCanViewFile(DataObjects.FileStorage file, DataObjects.User CurrentUser);
 }
 
 public partial class DataAccess
@@ -416,7 +416,7 @@ public partial class DataAccess
                     x.TenantId, x.Extension, x.Bytes, x.Deleted, x.DeletedAt, x.FileId, x.FileName, x.ItemId, x.LastModified,
                     x.LastModifiedBy, x.SourceFileId, x.UploadDate, x.UploadedBy, x.UserId 
                 })
-            .Where(x => x.TenantId == TenantId && x.ItemId == null && x.UserId == null && !excludeSourceTypes.Contains(x.SourceFileId)).ToListAsync();
+            .Where(x => x.TenantId == TenantId && x.ItemId == null && x.UserId == null && x.SourceFileId != null && !excludeSourceTypes.Contains(x.SourceFileId)).ToListAsync();
         if(recs != null && recs.Any()) {
             foreach(var rec in recs) {
                 output.Add(new DataObjects.FileStorage {
@@ -615,7 +615,7 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<bool> UserCanViewFile(DataObjects.FileStorage file, DataObjects.User CurrentUser)
+    public bool UserCanViewFile(DataObjects.FileStorage file, DataObjects.User CurrentUser)
     {
         bool output = false;
 

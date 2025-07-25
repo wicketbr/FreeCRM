@@ -15,7 +15,7 @@
 
     public void Dispose() { }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender) {
             Model.TenantCodeFromUrl = TenantCode;

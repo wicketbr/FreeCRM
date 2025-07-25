@@ -147,6 +147,8 @@ namespace LoginPlugin
             Microsoft.AspNetCore.Http.HttpContext httpContext
         )
         {
+            await Task.Delay(1); // Simulate async operation
+
             var output = new List<object>();
             var messages = new List<string>();
             var result = false;
@@ -168,33 +170,33 @@ namespace LoginPlugin
             return (Result: result, Messages: messages, Objects: output);
         }
 
-        private T? GetOrPost<T>(string url, object? post = null)
-        {
-            var output = typeof(T) == typeof(System.String) ? default(T) : (T)Activator.CreateInstance(typeof(T));
+        //private T? GetOrPost<T>(string url, object? post = null)
+        //{
+        //    var output = typeof(T) == typeof(System.String) ? default(T) : (T)Activator.CreateInstance(typeof(T));
 
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        //    var client = new HttpClient();
+        //    client.DefaultRequestHeaders.Accept.Clear();
+        //    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            HttpResponseMessage? response = null;
+        //    HttpResponseMessage? response = null;
 
-            try {
-                if (post != null) {
-                    response = client.PostAsync(url, new StringContent(System.Text.Json.JsonSerializer.Serialize(post), System.Text.Encoding.UTF8, "application/json")).Result;
-                } else {
-                    response = client.GetAsync(url).Result;
-                }
+        //    try {
+        //        if (post != null) {
+        //            response = client.PostAsync(url, new StringContent(System.Text.Json.JsonSerializer.Serialize(post), System.Text.Encoding.UTF8, "application/json")).Result;
+        //        } else {
+        //            response = client.GetAsync(url).Result;
+        //        }
 
-                if (response.IsSuccessStatusCode) {
-                    var content = response.Content.ReadAsStringAsync().Result;
-                    if (!String.IsNullOrWhiteSpace(content)) {
-                        output = System.Text.Json.JsonSerializer.Deserialize<T>(content);
-                    }
-                }
-            } catch { }
+        //        if (response.IsSuccessStatusCode) {
+        //            var content = response.Content.ReadAsStringAsync().Result;
+        //            if (!String.IsNullOrWhiteSpace(content)) {
+        //                output = System.Text.Json.JsonSerializer.Deserialize<T>(content);
+        //            }
+        //        }
+        //    } catch { }
 
-            return output;
-        }
+        //    return output;
+        //}
 
         public class OktaAuthentication
         {

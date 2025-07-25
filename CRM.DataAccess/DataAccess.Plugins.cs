@@ -33,7 +33,7 @@ public partial class DataAccess
         }
 
         if (!String.IsNullOrWhiteSpace(code)) {
-            object[] objectArguments = new object[] { this, request.Plugin, CurrentUser };
+            object[] objectArguments = new object[] { this, request.Plugin, CurrentUser != null ? CurrentUser : new DataObjects.User() };
 
             // Auth types don't include the CurrentUser object.
             if (request.Plugin.Type.ToLower() == "auth") {

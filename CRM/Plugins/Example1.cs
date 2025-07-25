@@ -209,6 +209,8 @@ namespace ExamplePlugin
             DataObjects.User? currentUser
         )
         {
+            await Task.Delay(1); // Simulate async operation
+
             var messages = new List<string>();
 
             if (plugin != null) {

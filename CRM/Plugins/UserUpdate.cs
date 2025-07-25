@@ -18,16 +18,18 @@ public class UserUpdate : IPluginUserUpdate
     public async Task<(bool Result, List<string>? Messages, IEnumerable<object>? Objects)> UpdateUser(
         DataAccess da,
         Plugins.Plugin plugin,
-        DataObjects.User updateUser
+        DataObjects.User? updateUser
     )
     {
+        await Task.Delay(1); // Simulate async operation
+
         // For testing this plugin is just going to convert the user's email between uppercase and lowercase.
         // In a real-world scenario you would be looking up a user in some external system and updating properties as needed.
 
         bool result = false;
         var messages = new List<string>();
 
-        if (!String.IsNullOrWhiteSpace(updateUser.Email)) {
+        if (updateUser != null && !String.IsNullOrWhiteSpace(updateUser.Email)) {
             result = true;
 
             if (updateUser.Email == updateUser.Email.ToUpper()) {
@@ -39,6 +41,10 @@ public class UserUpdate : IPluginUserUpdate
             messages.Add("Cannot update user without an email address.");
         }
 
-        return (Result: result, Messages: messages, Objects: new object[] { updateUser });
+        if (updateUser != null) {
+            return (Result: result, Messages: messages, Objects: new object[] { updateUser });
+        } else {
+            return (Result: result, Messages: messages, Objects: null);
+        }
     }
 }

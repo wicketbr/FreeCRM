@@ -1,11 +1,15 @@
 ﻿@inject IDataAccess data
 @inject IConfigurationHelper ConfigurationHelper
 @{
-    string unique = data.UniqueId;
     string applicationUrl = data.ApplicationURL;
-    string basePath = !String.IsNullOrWhiteSpace(ConfigurationHelper.BasePath) ? ConfigurationHelper.BasePath : "/";
-    string favicon = applicationUrl + "favicon.png";
     string appVersion = data.Version;
+    string basePath = !String.IsNullOrWhiteSpace(ConfigurationHelper.BasePath) ? ConfigurationHelper.BasePath : "/";
+    string favicon96 = applicationUrl + "favicon-96x96.png";
+    string faviconAppleTouch = applicationUrl + "apple-touch-icon.png";
+    string faviconIco = applicationUrl + "favicon.ico";
+    string faviconManifest = applicationUrl + "site.webmanifest";
+    string faviconSvg = applicationUrl + "favicon.svg";
+    string unique = data.UniqueId;
 }
 <!doctype html>
 <html lang="en">
@@ -15,7 +19,11 @@
     <meta name="app:released" content="@data.Released" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="@favicon" />
+    <link rel="icon" type="image/svg+xml" href="@faviconSvg" />
+    <link rel="icon" type="image/png" href="@favicon96" sizes="96x96" />
+    <link rel="shortcut icon" href="@faviconIco" />
+    <link rel="apple-touch-icon" sizes="180x180" href="@faviconAppleTouch" />
+    <link rel="manifest" href="@faviconManifest" />
     <base href="@basePath" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="@(applicationUrl + "_content/Blazor.Bootstrap/blazor.bootstrap.css?v=" + appVersion)" />

@@ -103,7 +103,7 @@
             });
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _timer = new System.Timers.Timer();
         _timer.Interval = Timeout;

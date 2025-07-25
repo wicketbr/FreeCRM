@@ -239,7 +239,7 @@
         await Helpers.DelayedFocus("edit-group-name");
     }
 
-    protected async Task RemoveUserFromGroup(Guid UserId)
+    protected void RemoveUserFromGroup(Guid UserId)
     {
         if(_userGroup.Users != null && _userGroup.Users.Any()) {
             _userGroup.Users = _userGroup.Users.Where(x => x.UserId != UserId).ToList();

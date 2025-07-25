@@ -761,11 +761,11 @@ public partial class DataAccess
 
         try {
             var recs = await data.Settings
-                .Where(x => x.TenantId == TenantId && x.SettingName != null && x.SettingName.ToLower().StartsWith("language_"))
+                .Where(x => x.TenantId == TenantId && x.SettingName != null)
                 .ToListAsync();
 
-            if (recs != null && recs.Any()) {
-                foreach (var rec in recs) {
+            if (recs != null && recs.Any(x => x.SettingName.ToLower().StartsWith("language_"))) {
+                foreach (var rec in recs.Where(x => x.SettingName.ToLower().StartsWith("language_"))) {
                     string culture = StringValue(rec.SettingName).Substring(9);
                     if (!String.IsNullOrWhiteSpace(culture)) {
                         output.Add(culture);

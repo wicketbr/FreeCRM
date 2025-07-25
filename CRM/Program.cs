@@ -155,7 +155,7 @@ namespace CRM
 
             app.UseAntiforgery();
 
-            app.MapHub<crmhub>("/crmhub", signalRConnctionOptions => {
+            app.MapHub<crmHub>("/crmHub", signalRConnctionOptions => {
                 signalRConnctionOptions.AllowStatefulReconnects = true;
             });
 

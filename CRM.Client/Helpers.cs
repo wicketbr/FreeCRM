@@ -879,13 +879,16 @@ public static class Helpers
                                 case System.Text.Json.JsonValueKind.Array:
                                     using (var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(v))) {
                                         var dataContractJsonSerializer = new System.Runtime.Serialization.Json.DataContractJsonSerializer(typeof(List<object>));
-                                        var a = (List<object>)dataContractJsonSerializer.ReadObject(memoryStream);
+                                        var msObject = dataContractJsonSerializer.ReadObject(memoryStream);
+                                        if (msObject != null) {
+                                            var a = (List<object>)msObject;
 
-                                        var listOfTypedObjects = ListOfObjectsToTypedList(a);
-                                        if (listOfTypedObjects != null) {
-                                            output.Add(key, listOfTypedObjects);
-                                        } else {
-                                            output.Add(key, a);
+                                            var listOfTypedObjects = ListOfObjectsToTypedList(a);
+                                            if (listOfTypedObjects != null) {
+                                                output.Add(key, listOfTypedObjects);
+                                            } else {
+                                                output.Add(key, a);
+                                            }
                                         }
                                     }
                                     break;
@@ -895,7 +898,7 @@ public static class Helpers
                                     break;
 
                                 case System.Text.Json.JsonValueKind.Null:
-                                    output.Add(key, null);
+                                    output.Add(key, new());
                                     break;
 
                                 case System.Text.Json.JsonValueKind.Number:
@@ -2181,9 +2184,7 @@ public static class Helpers
         if (obj != null) {
             try {
                 output = DeserializeObject<T>(SerializeObject(obj));
-            } catch (Exception ex) {
-                if (ex != null) ;
-            }
+            } catch { }
         }
 
         return output;

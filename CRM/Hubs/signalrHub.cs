@@ -2,7 +2,7 @@
 
 namespace CRM.Server.Hubs
 {
-    public class crmhub : Hub
+    public class crmHub : Hub
     {
         private List<string> tenants = new List<string>();
 

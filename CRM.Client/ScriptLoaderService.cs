@@ -24,7 +24,7 @@ namespace BlazorWASMScriptLoader
         public async Task<PortableExecutableReference> GetAssemblyMetadataReference(Assembly assembly)
         {
             PortableExecutableReference? ret = null;
-            var assemblyName = assembly.GetName().Name;
+            var assemblyName = String.Empty + assembly.GetName().Name;
             if (MetadataReferenceCache.TryGetValue(assemblyName, out ret)) return ret;
             var assemblyUrl = $"./_framework/{assemblyName}.dll";
             try {

@@ -20,7 +20,7 @@ public partial class DataController
     public async Task<ActionResult<DataObjects.FileStorage>> GetFileStorage(Guid id)
     {
         var output = await da.GetFileStorage(id, CurrentUser);
-        bool allowAccess = await da.UserCanViewFile(output, CurrentUser);
+        bool allowAccess = da.UserCanViewFile(output, CurrentUser);
 
         if (allowAccess) {
             return Ok(output);

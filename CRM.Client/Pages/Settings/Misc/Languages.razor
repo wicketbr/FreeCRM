@@ -413,6 +413,8 @@
 
     protected async Task<List<(string key, string label)>?> Lookup(string search)
     {
+        await Task.Delay(0); // Simulate a delay since this method has to be async
+
         var output = new List<(string key, string label)>();
 
         var items = _language.Phrases

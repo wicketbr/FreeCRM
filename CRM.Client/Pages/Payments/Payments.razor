@@ -60,7 +60,7 @@
 
             if (!_loadedData) {
                 _loadedData = true;
-                await LoadData();
+                LoadData();
             }
         }
     }
@@ -92,7 +92,7 @@
         Helpers.NavigateTo("Settings/EditPayment/" + ItemId.ToString());
     }
 
-    protected async Task LoadData()
+    protected void LoadData()
     {
         // Always reload the data in the data model.
         _loading = true;

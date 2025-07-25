@@ -23,6 +23,8 @@ public class Example2 : IPlugin
         DataObjects.User? currentUser
     )
     {
+        await Task.Delay(1); // Simulate async operation
+
         var messages = new List<string>();
         messages.Add("Plugin: " + plugin.Name);
 

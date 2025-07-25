@@ -44,7 +44,7 @@ public partial class DataAccess
             InvoiceNumber = StringValue(invoice.InvoiceNumber),
             IssueDate = invoice.InvoiceCreated.HasValue ? (DateTime)invoice.InvoiceCreated : DateTime.Now,
             SellerAddress = new InvoiceAddress {
-                CompanyName = tenant.Name,
+                CompanyName = tenant != null ? tenant.Name : String.Empty,
                 Email = DefaultReplyToAddressForTenant(invoice.TenantId),
             },
             Logo = logo != null ? logo.Value : null,

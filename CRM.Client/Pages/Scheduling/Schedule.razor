@@ -50,7 +50,7 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    RadzenScheduler<DataObjects.Appointment> scheduler;
+    RadzenScheduler<DataObjects.Appointment> scheduler = null!;
 
     protected bool _loadedData = false;
     protected bool _loading = true;
