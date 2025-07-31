@@ -29,7 +29,7 @@ using System.Collections;
 
 namespace CRM.Client;
 
-public static class Helpers
+public static partial class Helpers
 {
     private static Radzen.DialogService DialogService = null!;
     private static HttpClient Http = null!;
