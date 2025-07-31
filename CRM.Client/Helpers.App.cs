@@ -1,10 +1,9 @@
-﻿namespace CRM.Client
+﻿namespace CRM.Client;
+
+public static partial class Helpers
 {
-    public static partial class Helpers
+    public static bool AppMethod()
     {
-        public static bool AppMethod()
-        {
-            return true;
-        }
+        return true;
     }
 }

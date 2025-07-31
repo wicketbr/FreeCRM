@@ -49,7 +49,7 @@ public enum TextCase
 /// <summary>
 /// The Model used on every page in the Blazor application to share database in the interface.
 /// </summary>
-public class BlazorDataModel
+public partial class BlazorDataModel
 {
     private List<DataObjects.ActiveUser> _ActiveUsers = new List<DataObjects.ActiveUser>();
     private DataObjects.CustomLoginProvider _AdminCustomLoginProvider = new DataObjects.CustomLoginProvider();
