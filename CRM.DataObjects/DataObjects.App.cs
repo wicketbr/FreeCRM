@@ -4,6 +4,11 @@
 
 public partial class DataObjects
 {
+    public partial class User
+    {
+        public string? MyCustomUserProperty { get; set; }
+    }
+
     public class YourClass
     {
         public string? YourProperty { get; set; }

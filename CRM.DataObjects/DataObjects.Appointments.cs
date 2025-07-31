@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class Appointment : ActionResponseObject
+    public partial class Appointment : ActionResponseObject
     {
         public Guid AppointmentId { get; set; }
         public Guid TenantId { get; set; }
@@ -31,21 +31,21 @@ public partial class DataObjects
         // {{ModuleItemEnd:Invoices}}
     }
 
-    public class AppointmentAttendanceUpdate : ActionResponseObject
+    public partial class AppointmentAttendanceUpdate : ActionResponseObject
     {
         public Guid AppointmentId { get; set; }
         public Guid UserId { get; set; }
         public string AttendanceCode { get; set; } = "invited";
     }
 
-    public class AppoinmentLoader
+    public partial class AppoinmentLoader
     {
         public Guid TenantId { get; set; }
         public DateTime? Start { get; set; }
         public DateTime? End { get; set; }
     }
 
-    public class AppointmentNote : ActionResponseObject
+    public partial class AppointmentNote : ActionResponseObject
     {
         public Guid AppointmentNoteId { get; set; }
         public Guid AppointmentId { get; set; }
@@ -59,7 +59,7 @@ public partial class DataObjects
         public DateTime? DeletedAt { get; set; }
     }
 
-    public class AppointmentService
+    public partial class AppointmentService
     {
         public Guid AppointmentServiceId { get; set; }
         public Guid ServiceId { get; set; }
@@ -70,7 +70,7 @@ public partial class DataObjects
         public DateTime? DeletedAt { get; set; }
     }
 
-    public class AppointmentUser
+    public partial class AppointmentUser
     {
         public Guid UserId { get; set; }
         public string AttendanceCode { get; set; } = "invited";

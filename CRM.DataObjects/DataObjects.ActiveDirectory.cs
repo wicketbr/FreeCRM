@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class ActiveDirectorySearchResults
+    public partial class ActiveDirectorySearchResults
     {
         public Guid TenantId { get; set; }
         public Guid? UserId { get; set; }
@@ -13,7 +13,7 @@ public partial class DataObjects
         public string? Location { get; set; }
     }
 
-    public class ActiveDirectoryUserInfo
+    public partial class ActiveDirectoryUserInfo
     {
         public Guid TenantId { get; set; }
         public Guid? UserId { get; set; }

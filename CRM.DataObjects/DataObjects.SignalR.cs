@@ -42,7 +42,7 @@ public partial class DataObjects
         UserPreferences,
     }
 
-    public class SignalRUpdate
+    public partial class SignalRUpdate
     {
         public Guid? TenantId { get; set; }
         public Guid? ItemId { get; set; }

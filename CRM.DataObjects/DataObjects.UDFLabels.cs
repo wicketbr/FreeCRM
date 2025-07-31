@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class udfLabel
+    public partial class udfLabel
     {
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }

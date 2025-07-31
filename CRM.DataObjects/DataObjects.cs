@@ -32,12 +32,12 @@ public partial class DataObjects
         Username
     }
 
-    public class ActionResponseObject
+    public partial class ActionResponseObject
     {
         public BooleanResponse ActionResponse { get; set; } = new BooleanResponse();
     }
 
-    public class ActiveUser
+    public partial class ActiveUser
     {
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
@@ -51,7 +51,7 @@ public partial class DataObjects
         public UserPreferences UserPreferences { get; set; } = new UserPreferences();
     }
 
-    public class ApplicationSettings : ActionResponseObject
+    public partial class ApplicationSettings : ActionResponseObject
     {
         public string? ApplicationURL { get; set; }
         public string? DefaultReplyToAddress { get; set; }
@@ -63,7 +63,7 @@ public partial class DataObjects
         public bool ShowTenantListingWhenMissingTenantCode { get; set; }
     }
 
-    public class ApplicationSettingsUpdate
+    public partial class ApplicationSettingsUpdate
     {
         public string? ApplicationURL { get; set; }
         public string? DefaultTenantCode { get; set; }
@@ -72,7 +72,7 @@ public partial class DataObjects
         public bool ShowTenantListingWhenMissingTenantCode { get; set; }
     }
 
-    public class Authenticate
+    public partial class Authenticate
     {
         public string? Username { get; set; }
         public string? Password { get; set; }
@@ -80,7 +80,7 @@ public partial class DataObjects
         public Guid? TenantId { get; set; }
     }
 
-    public class AuthenticationProviders
+    public partial class AuthenticationProviders
     {
         public bool UseApple { get; set; }
         public bool UseFacebook { get; set;  }
@@ -92,7 +92,7 @@ public partial class DataObjects
         public bool UseGoogle { get; set; }
     }
 
-    public class BlazorDataModelLoader
+    public partial class BlazorDataModelLoader
     {
         public List<DataObjects.ActiveUser> ActiveUsers { get; set; } = new List<ActiveUser>();
         public CustomLoginProvider AdminCustomLoginProvider { get; set; } = new CustomLoginProvider();
@@ -116,13 +116,13 @@ public partial class DataObjects
         public string Version { get; set; } = "";
     }
 
-    public class BooleanResponse
+    public partial class BooleanResponse
     {
         public List<string> Messages { get; set; } = new List<string>();
         public bool Result { get; set; }
     }
 
-    public class ConnectionStringConfig : ActionResponseObject
+    public partial class ConnectionStringConfig : ActionResponseObject
     {
         public string? ConnectionString { get; set; }
         public string? DatabaseType { get; set; }
@@ -150,7 +150,7 @@ public partial class DataObjects
         }
     }
 
-    public class CustomLoginProvider
+    public partial class CustomLoginProvider
     {
         public string Name { get; set; } = "";
         public string Icon { get; set; } = "";
@@ -158,13 +158,13 @@ public partial class DataObjects
         public string Code { get; set; } = "";
     }
 
-    public class DataMigration
+    public partial class DataMigration
     {
         public List<string> Migration { get; set; } = new List<string>();
         public string MigrationId { get; set; } = String.Empty;
     }
 
-    public class DeletedRecordCounts
+    public partial class DeletedRecordCounts
     {
         // {{ModuleItemStart:Appointments}}
         public int AppointmentNotes { get; set; }
@@ -190,7 +190,7 @@ public partial class DataObjects
         public int Users { get; set; }
     }
 
-    public class DeletedRecordItem
+    public partial class DeletedRecordItem
     {
         public Guid ItemId { get; set; }
         public string Display { get; set; } = "";
@@ -198,7 +198,7 @@ public partial class DataObjects
         public string DeletedBy { get; set; } = "";
     }
 
-    public class DeletedRecords
+    public partial class DeletedRecords
     {
         // {{ModuleItemStart:Appointments}}
         public List<DeletedRecordItem> AppointmentNotes { get; set; } = new List<DeletedRecordItem>();
@@ -224,13 +224,13 @@ public partial class DataObjects
         public List<DeletedRecordItem> Users { get; set; } = new List<DeletedRecordItem>();
     }
 
-    public class Dictionary
+    public partial class Dictionary
     {
         public string? Key { get; set; }
         public string? Value { get; set; }
     }
 
-    public class EmailMessage : ActionResponseObject
+    public partial class EmailMessage : ActionResponseObject
     {
         public string From { get; set; } = "";
         public string? FromDisplayName { get; set; }
@@ -243,7 +243,7 @@ public partial class DataObjects
         public List<DataObjects.FileStorage>? Files { get; set; }
     }
 
-    public class ExternalDataSource
+    public partial class ExternalDataSource
     {
         public string Name { get; set; } = String.Empty;
         public string Type { get; set; } = String.Empty;
@@ -253,7 +253,7 @@ public partial class DataObjects
         public bool Active { get; set; }
     }
 
-    public class FileStorage : ActionResponseObject
+    public partial class FileStorage : ActionResponseObject
     {
         public Guid FileId { get; set; }
         public Guid TenantId { get; set; }
@@ -272,7 +272,7 @@ public partial class DataObjects
         public DateTime? DeletedAt { get; set; }
     }
 
-    public class Filter : ActionResponseObject
+    public partial class Filter : ActionResponseObject
     {
         public Guid TenantId { get; set; }
         public Guid? FilterId { get; set; }
@@ -296,7 +296,7 @@ public partial class DataObjects
         public string? CultureCode { get; set; }
     }
 
-    public class FilterColumn
+    public partial class FilterColumn
     {
         public string? Align { get; set; }
         public string? Label { get; set; }
@@ -308,7 +308,7 @@ public partial class DataObjects
         public string? BooleanIcon { get; set; }
     }
 
-    public class FilterFileStorage : Filter
+    public partial class FilterFileStorage : Filter
     {
         public List<FileStorage>? Records { get; set; }
         public List<string> AvailableExtensions { get; set; } = new List<string>();
@@ -317,7 +317,7 @@ public partial class DataObjects
         public string[]? Source { get; set; } = new string[] { };
     }
 
-    public class FilterUsers : Filter
+    public partial class FilterUsers : Filter
     {
         public List<User>? Records { get; set; }
         public Guid[]? FilterDepartments { get; set; } = new Guid[] { };
@@ -335,7 +335,7 @@ public partial class DataObjects
         public string? udf10 { get; set; }
     }
 
-    public class Language
+    public partial class Language
     {
         public Guid TenantId { get; set; }
         public string Culture { get; set; } = String.Empty;
@@ -343,7 +343,7 @@ public partial class DataObjects
         public List<DataObjects.OptionPair> Phrases { get; set; } = new List<OptionPair>();
     }
 
-    public class ListItem : ActionResponseObject
+    public partial class ListItem : ActionResponseObject
     {
         public Guid Id { get; set; }
         public Guid TenantId { get; set; }
@@ -353,20 +353,20 @@ public partial class DataObjects
         public bool Enabled { get; set; }
     }
 
-    public class LoginTenantListing
+    public partial class LoginTenantListing
     {
         public List<Tenant> Tenants { get; set; } = new List<Tenant>();
         public List<Language> Languages { get; set; } = new List<Language>();
     }
 
-    public class MailServerConfig
+    public partial class MailServerConfig
     {
         public string Type { get; set; } = "";
         public string? Config { get; set; }
         public bool AllowSendingFromIndividualEmailAddresses { get; set; }
     }
 
-    public class MailServerConfigMicrosoftGraph
+    public partial class MailServerConfigMicrosoftGraph
     {
         public string? TenantId { get; set; }
         public string? ClientId { get; set; }
@@ -374,7 +374,7 @@ public partial class DataObjects
         public string? EmailAddress { get; set; }
     }
 
-    public class MailServerConfigSMTP
+    public partial class MailServerConfigSMTP
     {
         public string? Server { get; set; }
         public int Port { get; set; }
@@ -383,18 +383,18 @@ public partial class DataObjects
         public string? Password { get; set; }
     }
 
-    public class OptionPair
+    public partial class OptionPair
     {
         public string? Id { get; set; }
         public string? Value { get; set; }
     }
 
-    public class PluginCache {
+    public partial class PluginCache {
         public Guid RecordId { get; set; }
         public Plugins.Plugin Plugin { get; set; } = new Plugins.Plugin();
     }
 
-    public class Setting : ActionResponseObject
+    public partial class Setting : ActionResponseObject
     {
         public int SettingId { get; set; }
         public string SettingName { get; set; } = null!;
@@ -407,19 +407,19 @@ public partial class DataObjects
         public string? LastModifiedBy { get; set; }
     }
 
-    public class SimplePost
+    public partial class SimplePost
     {
         public string? SingleItem { get; set; }
         public List<string> Items { get; set; } = new List<string>();
     }
 
-    public class SimpleResponse
+    public partial class SimpleResponse
     {
         public bool Result { get; set; }
         public string? Message { get; set; }
     }
 
-    public class Tenant : ActionResponseObject
+    public partial class Tenant : ActionResponseObject
     {
         public Guid TenantId { get; set; }
         public string Name { get; set; } = null!;
@@ -436,14 +436,14 @@ public partial class DataObjects
         public List<UserListing> Users { get; set; } = new List<UserListing>();
     }
 
-    public class TenantList
+    public partial class TenantList
     {
         public Guid TenantId { get; set; }
         public string Name { get; set; } = "";
         public string TenantCode { get; set; } = "";
     }
 
-    public class TenantSettings
+    public partial class TenantSettings
     {
         public List<string> AllowedFileTypes { get; set; } = new List<string>();
         public bool AllowUsersToManageAvatars { get; set; }
@@ -496,13 +496,13 @@ public partial class DataObjects
         public string? JwtRsaPublicKey { get; set; }
     }
 
-    public class Test
+    public partial class Test
     {
         public DateTime? TestDate { get; set; }
         public string? Value { get; set; }
     }
 
-    public class User : ActionResponseObject
+    public partial class User : ActionResponseObject
     {
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
@@ -556,7 +556,7 @@ public partial class DataObjects
         public bool Sudo { get; set; }
     }
 
-    public class UserAccount
+    public partial class UserAccount
     {
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
@@ -565,7 +565,7 @@ public partial class DataObjects
         public string LastName { get; set; } = "";
     }
 
-    public class UserListing
+    public partial class UserListing
     {
         public Guid UserId { get; set; }
         public string? FirstName { get; set; }
@@ -580,7 +580,7 @@ public partial class DataObjects
         public bool Admin { get; set; }
     }
 
-    public class UserPasswordReset
+    public partial class UserPasswordReset
     {
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
@@ -589,7 +589,7 @@ public partial class DataObjects
         public bool AllAccounts { get; set; }
     }
 
-    public class UserPreferences
+    public partial class UserPreferences
     {
         public int DefaultAppointmentDuration { get; set; }
         public bool EnabledItemsOnly { get; set; }
@@ -605,7 +605,7 @@ public partial class DataObjects
         public bool StickyMenus { get; set; }
     }
 
-    public class UserTenant
+    public partial class UserTenant
     {
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
@@ -613,14 +613,14 @@ public partial class DataObjects
         public string TenantName { get; set; } = null!;
     }
 
-    public class VersionInfo
+    public partial class VersionInfo
     {
         public DateOnly Released { get; set; }
         public double RunningSince { get; set; }
         public string? Version { get; set; }
     }
 
-    public class WorkSchedule
+    public partial class WorkSchedule
     {
         public bool Sunday { get; set; }
         public bool SundayAllDay { get; set; }

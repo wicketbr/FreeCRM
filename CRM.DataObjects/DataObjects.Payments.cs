@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class Payment : ActionResponseObject
+    public partial class Payment : ActionResponseObject
     {
         public Guid PaymentId { get; set; }
         public Guid TenantId { get; set; }

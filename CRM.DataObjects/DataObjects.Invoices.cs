@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class FilterInvoices : Filter
+    public partial class FilterInvoices : Filter
     {
         public List<Invoice>? Records { get; set; }
         // {{ModuleItemStart:Appointments}}
@@ -13,7 +13,7 @@ public partial class DataObjects
         public string? SentStatus { get; set; }
     }
 
-    public class Invoice : ActionResponseObject
+    public partial class Invoice : ActionResponseObject
     {
         public Guid InvoiceId { get; set; }
         public Guid TenantId { get; set; }
@@ -45,7 +45,7 @@ public partial class DataObjects
         public List<InvoiceItem> InvoiceItems { get; set; } = new List<InvoiceItem>();
     }
 
-    public class InvoiceItem
+    public partial class InvoiceItem
     {
         public Guid Id { get; set; }
         public string? Description { get; set; }

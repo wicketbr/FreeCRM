@@ -9,7 +9,7 @@ public partial class DataObjects
         Service
     }
 
-    public class Tag : ActionResponseObject
+    public partial class Tag : ActionResponseObject
     {
         public Guid TagId { get; set; }
         public Guid TenantId { get; set; }

@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class AjaxLookup : ActionResponseObject
+    public partial class AjaxLookup : ActionResponseObject
     {
         public Guid TenantId { get; set; }
         public string? Search { get; set; }
@@ -10,7 +10,7 @@ public partial class DataObjects
         public List<AjaxResults>? Results { get; set; }
     }
 
-    public class AjaxResults
+    public partial class AjaxResults
     {
         public string? label { get; set; }
         public string? value { get; set; }

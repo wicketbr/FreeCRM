@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class Location : ActionResponseObject
+    public partial class Location : ActionResponseObject
     {
         public Guid LocationId { get; set; }
         public Guid TenantId { get; set; }

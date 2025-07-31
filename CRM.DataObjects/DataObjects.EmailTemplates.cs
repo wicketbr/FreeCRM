@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class EmailTemplate : ActionResponseObject
+    public partial class EmailTemplate : ActionResponseObject
     {
         public Guid EmailTemplateId { get; set; }
         public Guid TenantId { get; set; }
@@ -18,7 +18,7 @@ public partial class DataObjects
         public List<Guid>? Tags { get; set; }
     }
 
-    public class EmailTemplateDetails
+    public partial class EmailTemplateDetails
     {
         public string? From { get; set; }
         public string? ReplyTo { get; set; }

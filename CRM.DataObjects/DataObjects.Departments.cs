@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class Department : ActionResponseObject
+    public partial class Department : ActionResponseObject
     {
         public Guid DepartmentId { get; set; }
         public Guid TenantId { get; set; }
@@ -18,7 +18,7 @@ public partial class DataObjects
         public Guid? DepartmentGroupId { get; set; }
     }
 
-    public class DepartmentGroup : ActionResponseObject
+    public partial class DepartmentGroup : ActionResponseObject
     {
         public Guid DepartmentGroupId { get; set; }
         public Guid TenantId { get; set; }

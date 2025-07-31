@@ -2,7 +2,7 @@
 
 public partial class DataObjects
 {
-    public class UserGroup : ActionResponseObject
+    public partial class UserGroup : ActionResponseObject
     {
         public Guid GroupId { get; set; }
         public Guid TenantId { get; set; }
@@ -18,7 +18,7 @@ public partial class DataObjects
         public List<UserListing>? Users { get; set; }
     }
 
-    public class UserGroupSettings
+    public partial class UserGroupSettings
     {
         public string? SomeSetting { get; set; }
     }
