@@ -10,6 +10,19 @@
     string faviconManifest = applicationUrl + "site.webmanifest";
     string faviconSvg = applicationUrl + "favicon.svg";
     string unique = data.UniqueId;
+
+    string analyticsCodeHtml = String.Empty;
+    if (!String.IsNullOrWhiteSpace(ConfigurationHelper.AnalyticsCode)) {
+        if (ConfigurationHelper.AnalyticsCode.ToLower().StartsWith("g-")) {
+            // This is a Google Analytics code, so format it accordingly.
+            analyticsCodeHtml = "<!-- Google tag (gtag.js) --> <script async src='https://www.googletagmanager.com/gtag/js?id=" + ConfigurationHelper.AnalyticsCode + "'></script> <script>   window.dataLayer = window.dataLayer || [];   function gtag(){dataLayer.push(arguments);}   gtag('js', new Date());   gtag('config', '" + ConfigurationHelper.AnalyticsCode + "'); </script>";
+        } else if (ConfigurationHelper.AnalyticsCode.ToLower().Contains("<script")) {
+            // This is a full script tag, so just use it as is.
+            analyticsCodeHtml = ConfigurationHelper.AnalyticsCode;
+        } else {
+            // Ignore this value, as it is not a known format.
+        }
+    }
 }
 <!doctype html>
 <html lang="en">
@@ -37,6 +50,9 @@
     <link rel="stylesheet" href="@Assets["css/app.css"]" />
     <link rel="stylesheet" href="@Assets["css/themes.css"]" />
     <link rel="stylesheet" href="@Assets["css/tags.css"]" />
+    @if (!String.IsNullOrWhiteSpace(analyticsCodeHtml)) {
+        @((MarkupString)analyticsCodeHtml)
+    }
     <ImportMap />
     <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>

@@ -9,6 +9,13 @@ public class ConfigurationHelper : IConfigurationHelper
         _loader = ConfigurationLoader;
     }
 
+    public string? AnalyticsCode
+    {
+        get {
+            return _loader.AnalyticsCode;
+        }
+    }
+
     public string? BasePath
     {
         get {
@@ -33,6 +40,7 @@ public class ConfigurationHelper : IConfigurationHelper
 
 public interface IConfigurationHelper
 {
+    public string? AnalyticsCode { get; }
     public string? BasePath { get; }
     ConfigurationHelperConnectionStrings ConnectionStrings { get; }
     List<string>? GloballyDisabledModules { get; }
@@ -40,6 +48,7 @@ public interface IConfigurationHelper
 
 public class ConfigurationHelperLoader
 {
+    public string? AnalyticsCode { get; set; }
     public string? BasePath { get; set; }
     public ConfigurationHelperConnectionStrings ConnectionStrings { get; set; } = new ConfigurationHelperConnectionStrings();
     public List<string>? GloballyDisabledModules { get; set; }

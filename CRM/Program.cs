@@ -99,6 +99,8 @@ namespace CRM
             }
 
             // Create DI for supported configuration items.
+            var analyticsCode = builder.Configuration.GetValue<string>("AnalyticsCode");
+
             var basePath = builder.Configuration.GetValue<string>("BasePath");
             if (!String.IsNullOrWhiteSpace(basePath) && !basePath.EndsWith("/")) {
                 basePath += "/";
@@ -115,6 +117,7 @@ namespace CRM
             }
 
             var configurationHelperLoader = new ConfigurationHelperLoader {
+                AnalyticsCode = analyticsCode,
                 BasePath = basePath,
                 ConnectionStrings = new ConfigurationHelperConnectionStrings {
                     AppData = builder.Configuration.GetConnectionString("AppData"),
