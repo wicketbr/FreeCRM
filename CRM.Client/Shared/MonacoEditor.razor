@@ -116,9 +116,16 @@
         if (_readOnly != ReadOnly) {
             _readOnly = ReadOnly;
 
-            await _editor.UpdateOptions(new BlazorMonaco.Editor.EditorUpdateOptions {
+            if (String.IsNullOrWhiteSpace(ValueToDiff)) {
+                await _editor.UpdateOptions(new BlazorMonaco.Editor.EditorUpdateOptions {
                     ReadOnly = _readOnly,
                 });
+            } else {
+                await _diffEditor.UpdateOptions(new BlazorMonaco.Editor.DiffEditorOptions {
+                    ReadOnly = _readOnly,
+                });
+            }
+
         }
     }
 
