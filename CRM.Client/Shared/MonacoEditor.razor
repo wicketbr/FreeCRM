@@ -189,6 +189,18 @@
     }
 
     /// <summary>
+    /// Sets the editor focus.
+    /// </summary>
+    public async Task Focus()
+    {
+        if (String.IsNullOrEmpty(ValueToDiff)) {
+            await _editor.Focus();
+        } else {
+            await _diffEditor.Focus();
+        }
+    }
+
+    /// <summary>
     /// Get the editor selection.
     /// </summary>
     public async Task<BlazorMonaco.Selection?> GetEditorSelection()
