@@ -3096,7 +3096,13 @@ public static partial class Helpers
         string output = String.Empty;
 
         if (!String.IsNullOrWhiteSpace(name)) {
-            var icon = Icons.FirstOrDefault(x => x.Value.Contains(name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            KeyValuePair<string, List<string>> icon = new KeyValuePair<string, List<string>>();
+
+            icon = AppIcons.FirstOrDefault(x => x.Value.Contains(name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            if (String.IsNullOrWhiteSpace(icon.Key)) {
+                icon = Icons.FirstOrDefault(x => x.Value.Contains(name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            }
+
             if (!String.IsNullOrWhiteSpace(icon.Key)) {
                 string key = icon.Key;
                 string source = String.Empty;
@@ -4760,6 +4766,8 @@ public static partial class Helpers
                 Model.Tenant = new DataObjects.Tenant();
                 Model.TenantId = Guid.Empty;
             }
+
+            await ReloadModelApp();
 
             if (!Model.Loaded) {
                 Model.Loaded = true;

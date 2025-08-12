@@ -47,7 +47,13 @@
         }
 
         if (!String.IsNullOrWhiteSpace(Name)) {
-            var icon = Helpers.Icons.FirstOrDefault(x => x.Value.Contains(Name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            KeyValuePair<string, List<string>> icon = new KeyValuePair<string, List<string>>();
+
+            icon = Helpers.AppIcons.FirstOrDefault(x => x.Value.Contains(Name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            if (String.IsNullOrWhiteSpace(icon.Key)) {
+                icon = Helpers.Icons.FirstOrDefault(x => x.Value.Contains(Name.Trim(), StringComparer.InvariantCultureIgnoreCase));
+            }
+
             if (!String.IsNullOrWhiteSpace(icon.Key)) {
                 string key = icon.Key;
 
