@@ -125,7 +125,6 @@
                     ReadOnly = _readOnly,
                 });
             }
-
         }
     }
 
@@ -306,7 +305,7 @@
                 return new BlazorMonaco.Editor.StandaloneEditorConstructionOptions {
                         AutomaticLayout = true,
                         Language = Language,
-                        Value = Value,
+                        Value = !String.IsNullOrWhiteSpace(Value) ? Value : String.Empty,
                         AutoClosingBrackets = "always",
                         AutoClosingComments = "always",
                         AutoClosingQuotes = "always",
@@ -337,7 +336,6 @@
                         FormatOnPaste = true,
                         ReadOnly = _readOnly,
                         RenderWhitespace = "all",
-
                     };
             }
         }
