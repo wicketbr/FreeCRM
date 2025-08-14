@@ -455,6 +455,13 @@ public partial class DataAccess
     {
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
+        // First, try any app-specific deletions.
+        var deleteAppRecords = await DeleteAllPendingDeletedRecordsApp(TenantId, OlderThan);
+        if (!deleteAppRecords.Result) {
+            output.Messages.AddRange(deleteAppRecords.Messages);
+            return output;
+        }
+
         try {
             // {{ModuleItemStart:Appointments}}
             var appointments = await data.Appointments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
@@ -468,8 +475,27 @@ public partial class DataAccess
                 }
             }
 
-            await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentNotes WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
-            await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
+            var appointmentNotes = await data.AppointmentNotes.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            if (appointmentNotes != null && appointmentNotes.Any()) {
+                foreach(var rec in appointmentNotes) {
+                    var result = await DeleteAppointmentNote(rec.AppointmentNoteId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
+                }
+            }
+
+            var appointmentServices = await data.AppointmentServices.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            if (appointmentServices != null && appointmentServices.Any()) {
+                foreach(var rec in appointmentServices) {
+                    var result = await DeleteAppointmentService(rec.AppointmentServiceId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
+                }
+            }
             // {{ModuleItemEnd:Appointments}}
 
             // Other items need to call their delete method to get all related data.
@@ -496,10 +522,28 @@ public partial class DataAccess
             }
 
             // {{ModuleItemStart:EmailTemplates}}
-            await data.Database.ExecuteSqlRawAsync("DELETE FROM EmailTemplates WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
+            var emailTemplates = await data.EmailTemplates.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            if (emailTemplates != null && emailTemplates.Any()) {
+                foreach(var rec in emailTemplates) {
+                    var result = await DeleteEmailTemplate(rec.EmailTemplateId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
+                }
+            }
             // {{ModuleItemEnd:EmailTemplates}}
 
-            await data.Database.ExecuteSqlRawAsync("DELETE FROM FileStorage WHERE TenantId={0} AND Deleted=1 AND (DeletedAt IS NULL OR DeletedAt > {1})", TenantId, OlderThan);
+            var fileStorage = await data.FileStorages.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            if (fileStorage != null && fileStorage.Any()) {
+                foreach (var rec in fileStorage) {
+                    var result = await DeleteFileStorage(rec.FileId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
+                }
+            }
 
             // {{ModuleItemStart:Locations}}
             var locations = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
@@ -508,9 +552,13 @@ public partial class DataAccess
                     // Clear out this location in any appointments
                     await data.Database.ExecuteSqlRawAsync("UPDATE Appointments SET LocationId = NULL WHERE LocationId={0}", rec.LocationId);
                     await data.SaveChangesAsync();
+
+                    var result = await DeleteLocation(rec.LocationId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
                 }
-                data.Locations.RemoveRange(locations);
-                await data.SaveChangesAsync();
             }
             // {{ModuleItemEnd:Locations}}
 
@@ -520,9 +568,13 @@ public partial class DataAccess
                 foreach(var rec in services) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE ServiceId={0}", rec.ServiceId);
                     await data.SaveChangesAsync();
+
+                    var result = await DeleteService(rec.ServiceId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
                 }
-                data.Services.RemoveRange(services);
-                await data.SaveChangesAsync();
             }
             // {{ModuleItemEnd:Services}}
 
@@ -533,9 +585,13 @@ public partial class DataAccess
                 foreach(var rec in tags) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM TagItems WHERE TagId={0}", rec.TagId);
                     await data.SaveChangesAsync();
+
+                    var result = await DeleteTag(rec.TagId, null, true);
+                    if (!result.Result) {
+                        output.Messages = result.Messages;
+                        return output;
+                    }
                 }
-                data.Tags.RemoveRange(tags);
-                await data.SaveChangesAsync();
             }
             // {{ModuleItemEnd:Tags}}
 

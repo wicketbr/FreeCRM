@@ -209,7 +209,7 @@ namespace ExamplePlugin
             DataObjects.User? currentUser
         )
         {
-            await Task.Delay(1); // Simulate async operation
+            await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
 
             var messages = new List<string>();
 

@@ -21,7 +21,7 @@ public class UserUpdate : IPluginUserUpdate
         DataObjects.User? updateUser
     )
     {
-        await Task.Delay(1); // Simulate async operation
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
 
         // For testing this plugin is just going to convert the user's email between uppercase and lowercase.
         // In a real-world scenario you would be looking up a user in some external system and updating properties as needed.

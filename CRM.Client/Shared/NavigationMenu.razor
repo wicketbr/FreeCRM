@@ -21,127 +21,54 @@
             <div class="navbar-collapse collapse" id="navBarToggler">
                 <ul class="navbar-nav me-auto">
                     @if (Model.LoggedIn) {
-                        // {{ModuleItemStart:Appointments}}
-                        if (Model.FeatureEnabledScheduling) {
+                        foreach(var item in MenuItems) {
+                            var itemClass = "nav-link";
+
+                            if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                                itemClass += " active";
+                            }
+
+                            if (item.AppAdminOnly) {
+                                itemClass += " app-admin-only";
+                            }
+
                             <li class="nav-item">
-                                <a class="@(Model.View == "schedule" ? "nav-link active" : "nav-link")" href="@(Helpers.BuildUrl("Schedule"))">
-                                    <Language Tag="Schedule" IncludeIcon="true" />
+                                <a class="@itemClass" href="@item.url">
+                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                        <Icon Name="@item.Icon" />
+                                    }
+                                    <span class="icon-text">
+                                        @((MarkupString)item.Title)
+                                    </span>
                                 </a>
                             </li>
                         }
-                        // {{ModuleItemEnd:Appointments}}
 
-                        // {{ModuleItemStart:Invoices}}
-                        @if (Model.FeatureEnabledInvoices) {
-                            <li class="nav-item">
-                                <a class="@(new List<string>{ "invoices", "editinvoice", "createinvoice" }.Contains(Model.View) ? "nav-link active": "nav-link")" href="@(Helpers.BuildUrl("Invoices"))">
-                                    <Language Tag="Invoices" IncludeIcon="true" />
-                                </a>
-                            </li>
-                        }
-                        // {{ModuleItemEnd:Invoices}}
-
-                        @if (Model.User.Admin) {
+                        @if (Model.User.Admin && MenuItemsAdmin.Any()) {
                             <li class="nav-item dropdown">
                                 <a class="@(AdminView ? "nav-link dropdown-toggle active": "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <Language Tag="Admin" IncludeIcon="true" />
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    @if (Model.User.AppAdmin) {
+                                    @foreach(var item in MenuItemsAdmin) {
+                                        var itemClass = "dropdown-item";
+
+                                        if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                                            itemClass += " active";
+                                        }
+
+                                        if (item.AppAdminOnly) {
+                                            itemClass += " app-admin-only";
+                                        }
+
                                         <li>
-                                            <a class="@(Model.View == "appsettings" ? "dropdown-item app-admin-only active" : "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/AppSettings"))">
-                                                <Language Tag="AppSettings" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (Model.FeatureEnabledDepartments) {
-                                        <li>
-                                            <a class="@(new List<string>{ "departmentgroups", "editdepartmentgroup" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/DepartmentGroups"))">
-                                                <Language Tag="DepartmentGroups" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="@(new List<string>{ "departments", "editdepartment" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Departments"))">
-                                                <Language Tag="Departments" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <!-- {{ModuleItemStart:EmailTemplates}} -->
-                                    @if (Model.FeatureEnabledEmailTemplates) {
-                                        <li>
-                                            <a class="@(new List<string>{ "emailtemplates", "editemailtemplate" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/EmailTemplates"))">
-                                                <Language Tag="EmailTemplates" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <!-- {{ModuleItemEnd:EmailTemplates}} -->
-                                    @if (Model.FeatureEnabledFiles) {
-                                        <li>
-                                            <a class="@(Model.View == "files" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Files"))">
-                                                <Language Tag="Files" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <li>
-                                        <a class="@(Model.View == "language" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Language"))">
-                                            <Language Tag="Language" IncludeIcon="true" />
-                                        </a>
-                                    </li>
-                                    <!-- {{ModuleItemStart:Locations}} -->
-                                    @if (Model.FeatureEnabledLocation) {
-                                        <li>
-                                            <a class="@(new List<string>{ "editlocation", "locations" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Locations"))">
-                                                <Language Tag="Locations" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <!-- {{ModuleItemEnd:Locations}} -->
-                                    <li>
-                                        <a class="@(Model.View == "settings" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings"))">
-                                            <Language Tag="Settings" IncludeIcon="true" />
-                                        </a>
-                                    </li>
-                                    <!-- {{ModuleItemStart:Services}} -->
-                                    @if (Model.FeatureEnabledServices) {
-                                        <li>
-                                            <a class="@(new List<string>{ "editservice", "services" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Services"))">
-                                                <Language Tag="Services" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <!-- {{ModuleItemEnd:Services}} -->
-                                    <!-- {{ModuleItemStart:Tags}} -->
-                                    @if (Model.FeatureEnabledTags) {
-                                        <li>
-                                            <a class="@(new List<string>{ "edittag", "tags" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Tags"))">
-                                                <Language Tag="Tags" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <!-- {{ModuleItemEnd:Tags}} -->
-                                    @if (Model.User.AppAdmin) {
-                                        <li>
-                                            <a class="@(new List<string>{ "edittenant", "tenants" }.Contains(Model.View) ? "dropdown-item app-admin-only active": "dropdown-item app-admin-only")" href="@(Helpers.BuildUrl("Settings/Tenants"))">
-                                                <Language Tag="Tenants" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    @if (Model.FeatureEnabledUDF) {
-                                        <li>
-                                            <a class="@(Model.View == "udf" ? "dropdown-item active" : "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UDF"))">
-                                                <Language Tag="UserDefinedFields" IncludeIcon="true" />
-                                            </a>
-                                        </li>
-                                    }
-                                    <li>
-                                        <a class="@(new List<string>{ "edituser", "users" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/Users"))">
-                                            <Language Tag="Users" IncludeIcon="true" />
-                                        </a>
-                                    </li>
-                                    @if (Model.FeatureEnabledUserGroups) {
-                                        <li>
-                                            <a class="@(new List<string>{ "editusergroup", "usergroups" }.Contains(Model.View) ? "dropdown-item active": "dropdown-item")" href="@(Helpers.BuildUrl("Settings/UserGroups"))">
-                                                <Language Tag="UserGroups" IncludeIcon="true" />
+                                            <a class="@itemClass" href="@item.url">
+                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                    <Icon Name="@item.Icon" />
+                                                }
+                                                <span class="icon-text">
+                                                    @((MarkupString)item.Title)
+                                                </span>
                                             </a>
                                         </li>
                                     }
@@ -232,35 +159,12 @@
 
     protected bool AdminView {
         get {
-            bool output = false;
-
-            switch (Model.View) {
-                case "appsettings":
-                case "editdepartment":
-                case "editdepartmentgroup":
-                case "editlocation":
-                case "editservice":
-                case "edittag":
-                case "edittenant":
-                case "edituser":
-                case "editusergroup":
-                case "departmentgroups":
-                case "departments":
-                case "files":
-                case "language":
-                case "locations":
-                case "services":
-                case "settings":
-                case "tags":
-                case "tenants":
-                case "udf":
-                case "users":
-                case "usergroups":
-                    output = true;
-                    break;
+            var adminMenuItems = MenuItemsAdmin.Select(x => x.PageNames).SelectMany(x => x).ToList();
+            if (adminMenuItems.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                return true;
             }
 
-            return output;
+            return false;
         }
     }
 
@@ -271,6 +175,212 @@
             if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
                 output = Helpers.BaseUri + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
             }
+
+            return output;
+        }
+    }
+
+    protected List<DataObjects.MenuItem> MenuItems
+    {
+        get
+        {
+            var output = new List<DataObjects.MenuItem> { };
+
+            // {{ModuleItemStart:Appointments}}
+            if (Model.FeatureEnabledScheduling) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Schedule"),
+                    Icon = "Schedule",
+                    PageNames = new List<string> { "schedule" },
+                    url = Helpers.BuildUrl("Schedule"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Appointments}}
+
+            // {{ModuleItemStart:Invoices}}
+            @if (Model.FeatureEnabledInvoices) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Invoices"),
+                    Icon = "Invoices",
+                    PageNames = new List<string> { "invoices", "editinvoice", "createinvoice" },
+                    url = Helpers.BuildUrl("Invoices"),
+                    SortOrder = 2000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Invoices}}
+
+            output.AddRange(Helpers.MenuItemsApp);
+
+            output = output.OrderBy(x => x.SortOrder).ThenBy(x => x.Title).ToList();
+
+            return output;
+        }
+    }
+
+    protected List<DataObjects.MenuItem> MenuItemsAdmin {
+        get {
+            var output = new List<DataObjects.MenuItem> { };
+
+            @if (Model.User.AppAdmin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("AppSettings"),
+                    Icon = "AppSettings",
+                    PageNames = new List<string> { "appsettings" },
+                    url = Helpers.BuildUrl("Settings/AppSettings"),
+                    SortOrder = 1000,
+                    AppAdminOnly = true,
+                });
+            }
+
+            // {{ModuleItemStart:Departments}}
+            @if (Model.FeatureEnabledDepartments) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("DepartmentGroups"),
+                    Icon = "DepartmentGroups",
+                    PageNames = new List<string> { "departmentgroups", "editdepartmentgroup" },
+                    url = Helpers.BuildUrl("Settings/DepartmentGroups"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Departments"),
+                    Icon = "Departments",
+                    PageNames = new List<string> { "departments", "editdepartment" },
+                    url = Helpers.BuildUrl("Settings/Departments"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Departments}}
+
+            // {{ModuleItemStart:EmailTemplates}}
+            @if (Model.FeatureEnabledEmailTemplates) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("EmailTemplates"),
+                    Icon = "EmailTemplates",
+                    PageNames = new List<string> { "emailtemplates", "editemailtemplate" },
+                    url = Helpers.BuildUrl("Settings/EmailTemplates"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            @if (Model.FeatureEnabledFiles) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Files"),
+                    Icon = "Files",
+                    PageNames = new List<string> { "files" },
+                    url = Helpers.BuildUrl("Settings/Files"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            output.Add(new DataObjects.MenuItem {
+                Title = Helpers.Text("Language"),
+                Icon = "Language",
+                PageNames = new List<string> { "language" },
+                url = Helpers.BuildUrl("Settings/Language"),
+                SortOrder = 1000,
+                AppAdminOnly = false,
+            });
+            
+            // {{ModuleItemStart:Locations}}
+            @if (Model.FeatureEnabledLocation) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Locations"),
+                    Icon = "Locations",
+                    PageNames = new List<string> { "editlocation", "locations" },
+                    url = Helpers.BuildUrl("Settings/Locations"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Locations}}
+
+            output.Add(new DataObjects.MenuItem {
+                Title = Helpers.Text("Settings"),
+                Icon = "Settings",
+                PageNames = new List<string> { "settings" },
+                url = Helpers.BuildUrl("Settings"),
+                SortOrder = 1000,
+                AppAdminOnly = false,
+            });
+
+            // {{ModuleItemStart:Services}}
+            @if (Model.FeatureEnabledServices) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Services"),
+                    Icon = "Services",
+                    PageNames = new List<string> { "editservice", "services" },
+                    url = Helpers.BuildUrl("Settings/Services"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Services}}
+            
+            // {{ModuleItemStart:Tags}}
+            @if (Model.FeatureEnabledTags) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Tags"),
+                    Icon = "Tags",
+                    PageNames = new List<string> { "edittag", "tags" },
+                    url = Helpers.BuildUrl("Settings/Tags"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Tags}}
+            @if (Model.User.AppAdmin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Tenants"),
+                    Icon = "Tenants",
+                    PageNames = new List<string> { "edittenant", "tenants" },
+                    url = Helpers.BuildUrl("Settings/Tenants"),
+                    SortOrder = 1000,
+                    AppAdminOnly = true,
+                });
+            }
+            @if (Model.FeatureEnabledUDF) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("UserDefinedFields"),
+                    Icon = "UserDefinedFields",
+                    PageNames = new List<string> { "udf" },
+                    url = Helpers.BuildUrl("Settings/UDF"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            output.Add(new DataObjects.MenuItem {
+                Title = Helpers.Text("Users"),
+                Icon = "Users",
+                PageNames = new List<string> { "edituser", "users" },
+                url = Helpers.BuildUrl("Settings/Users"),
+                SortOrder = 1000,
+                AppAdminOnly = false,
+            });
+
+            @if (Model.FeatureEnabledUserGroups) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("UserGroups"),
+                    Icon = "UserGroups",
+                    PageNames = new List<string> { "editusergroup", "usergroups" },
+                    url = Helpers.BuildUrl("Settings/UserGroups"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            output.AddRange(Helpers.MenuItemsAdminApp);
+
+            output = output.OrderBy(x => x.SortOrder).ThenBy(x => x.Title).ToList();
 
             return output;
         }

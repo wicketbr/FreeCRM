@@ -147,7 +147,7 @@ namespace LoginPlugin
             Microsoft.AspNetCore.Http.HttpContext httpContext
         )
         {
-            await Task.Delay(1); // Simulate async operation
+            await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
 
             var output = new List<object>();
             var messages = new List<string>();

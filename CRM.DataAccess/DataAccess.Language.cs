@@ -727,11 +727,22 @@ public partial class DataAccess
             { "WorkScheduleStart", "Start" },
         };
 
-        foreach (var item in language) {
+        // First, add any items from the app language.
+        foreach(var item in AppLanguage) {
             output.Phrases.Add(new DataObjects.OptionPair {
                 Id = item.Key,
                 Value = item.Value
             });
+        }
+
+        // Next, add any items from the default language.
+        foreach (var item in language) {
+            if (!output.Phrases.Any(x => x.Id != null && x.Id.ToLower() == item.Key.ToLower())) {
+                output.Phrases.Add(new DataObjects.OptionPair {
+                    Id = item.Key,
+                    Value = item.Value
+                });
+            }
         }
 
         return output;

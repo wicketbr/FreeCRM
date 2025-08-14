@@ -383,6 +383,16 @@ public partial class DataObjects
         public string? Password { get; set; }
     }
 
+    public class MenuItem
+    {
+        public string Title { get; set; } = "";
+        public string? Icon { get; set; }
+        public string url { get; set; } = "";
+        public List<string> PageNames { get; set; } = new List<string>();
+        public bool AppAdminOnly { get; set; }
+        public int SortOrder { get; set; }
+    }
+
     public partial class OptionPair
     {
         public string? Id { get; set; }
