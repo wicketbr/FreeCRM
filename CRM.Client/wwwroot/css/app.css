@@ -48,7 +48,7 @@ html {
     .sticky-menu-icon {
         display: inline-block;
         cursor: pointer;
-        opacity:0.5;
+        opacity:0.2;
         font-size:.9rem;
         vertical-align:top;
     }
