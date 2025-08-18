@@ -876,6 +876,10 @@ public partial class BlazorDataModel
                 output = true;
             }
 
+            if (!output) {
+                output = HaveDeletedRecordsApp;
+            }
+
             return output;
         }
     }

@@ -38,6 +38,58 @@ public partial class DataAccess
         return output;
     }
 
+    private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp(Guid TenantId, DataObjects.DeletedRecordCounts deletedRecordCounts)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = deletedRecordCounts;
+
+        // Do any lookups for your app-specific deleted record counts here and add them to the output.
+        // output.MyCount = await data.MyTable.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+
+        return output;
+    }
+
+    private async Task<DataObjects.DeletedRecords> GetDeletedRecordsApp(Guid TenantId, DataObjects.DeletedRecords deletedRecords)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = deletedRecords;
+
+        // Do any lookups for your app-specific deleted records here and add them to the output.
+
+        return output;
+    }
+
+    private async Task<DataObjects.BooleanResponse> UndeleteRecordApp(string? Type, Guid RecordId, DataObjects.User CurrentUser)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = new DataObjects.BooleanResponse();
+
+        try {
+            if (!String.IsNullOrWhiteSpace(Type)) {
+                switch (Type.ToLower()) {
+                    case "this":
+                        // Add code to undelete the record of type "this" here.
+                        output.Result = true;
+                        break;
+
+                    default:
+                        output.Messages.Add("Invalid Delete Record Type '" + Type + "'");
+                        break;
+                }
+            }
+        } catch (Exception ex) {
+            output.Messages.Add("Error Undeleting '" + Type + "' " + RecordId.ToString() + " - " + RecurseExceptionAsString(ex));
+        }
+
+        // Do any app-specific undelete logic here. See the main UndeleteRecord method for an example.
+        output.Result = true; // Remove this line once you implement your logic.
+
+        return output;
+    }
+
     public DataObjects.BooleanResponse YourMethod()
     {
         return new DataObjects.BooleanResponse { Result = true, Messages = new List<string> { "Your Messages" } };

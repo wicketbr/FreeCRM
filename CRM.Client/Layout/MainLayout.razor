@@ -666,11 +666,11 @@
                     break;
 
                 default:
-                    await Helpers.ConsoleLog("Unknown SignalR Update Type Received");
+                    await Helpers.ProcessSignalRUpdateApp(update);
                     break;
             }
 
-            if (message.Contains("delete")) {
+            if (message.Contains("delete") || message.Contains("undelete")) {
                 await Helpers.GetDeletedRecordCount();
                 StateHasChanged();
             }

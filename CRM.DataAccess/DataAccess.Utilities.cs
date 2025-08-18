@@ -1080,6 +1080,8 @@ public partial class DataAccess
             Users = users,
         };
 
+        output = await GetDeletedRecordCountsApp(TenantId, output);
+
         return output;
     }
 
@@ -1310,6 +1312,8 @@ public partial class DataAccess
             UserGroups = userGroups,
             Users = users,
         };
+
+        output = await GetDeletedRecordsApp(TenantId, output);
 
         return output;
     }
@@ -2297,7 +2301,7 @@ public partial class DataAccess
                         break;
 
                     default:
-                        output.Messages.Add("Invalid Delete Record Type '" + Type + "'");
+                        output = await UndeleteRecordApp(Type, RecordId, CurrentUser);
                         break;
                 }
             } else {

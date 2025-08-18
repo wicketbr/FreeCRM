@@ -1,4 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using BlazorBootstrap;
+using Blazored.LocalStorage;
+using CRM.Client.Pages.Settings.Email;
+using CRM.Client.Pages.Settings.Locations;
+using CRM.Client.Pages.Settings.Services;
+using CRM.Client.Pages.Settings.Tags;
+using CRM.Client.Pages.Settings.Users;
+using CRM.Client.Shared;
+using Humanizer;
+using Humanizer.Localisation;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Extensions.Primitives;
+using Microsoft.JSInterop;
+using MudBlazor.Utilities;
+using Plugins;
+using Radzen;
+using Radzen.Blazor;
+using Radzen.Blazor.Markdown;
+using Radzen.Blazor.Rendering;
+using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Net.Http.Json;
@@ -9,23 +31,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using BlazorBootstrap;
-using Blazored.LocalStorage;
-using CRM.Client.Shared;
-using Humanizer;
-using Humanizer.Localisation;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Extensions.Primitives;
-using Microsoft.JSInterop;
-using MudBlazor.Utilities;
-using Radzen;
-using Radzen.Blazor;
-using Radzen.Blazor.Rendering;
 using static MudBlazor.Colors;
-using Plugins;
-using System.Collections;
 
 namespace CRM.Client;
 
@@ -1919,6 +1925,97 @@ public static partial class Helpers
         if (deletedRecordCounts != null) {
             Model.DeletedRecordCounts = deletedRecordCounts;
         }
+    }
+
+    /// <summary>
+    /// Gets the deleted records from the API endpoint.
+    /// </summary>
+    /// <returns></returns>
+    public static async Task<DataObjects.DeletedRecords> GetDeletedRecords()
+    {
+        var output = new DataObjects.DeletedRecords();
+
+        var result = await GetOrPost<DataObjects.DeletedRecords>("api/Data/GetDeletedRecords");
+        if (result != null) {
+            output = result;
+        }
+
+        // Also update the counts on the Main Model
+
+        // {{ModuleItemStart:Appointments}}
+        Model.DeletedRecordCounts.AppointmentNotes = output.AppointmentNotes.Count();
+        Model.DeletedRecordCounts.Appointments = output.Appointments.Count();
+        Model.DeletedRecordCounts.AppointmentServices = output.AppointmentServices.Count();
+        // {{ModuleItemEnd:Appointments}}
+
+        Model.DeletedRecordCounts.DepartmentGroups = output.DepartmentGroups.Count();
+        Model.DeletedRecordCounts.Departments = output.Departments.Count();
+
+        // {{ModuleItemStart:EmailTemplates}}
+        Model.DeletedRecordCounts.EmailTemplates = output.EmailTemplates.Count();
+        // {{ModuleItemEnd:EmailTemplates}}
+
+        Model.DeletedRecordCounts.FileStorage = output.FileStorage.Count();
+
+        // {{ModuleItemStart:Locations}}
+        Model.DeletedRecordCounts.Locations = output.Locations.Count();
+        // {{ModuleItemEnd:Locations}}
+
+        // {{ModuleItemStart:Services}}
+        Model.DeletedRecordCounts.Services = output.Services.Count();
+        // {{ModuleItemEnd:Services}}
+
+        // {{ModuleItemStart:Tags}}
+        Model.DeletedRecordCounts.Tags = output.Tags.Count();
+        // {{ModuleItemEnd:Tags}}
+
+        Model.DeletedRecordCounts.UserGroups = output.UserGroups.Count();
+        Model.DeletedRecordCounts.Users = output.Users.Count();
+
+        UpdateModelDeletedRecordCountsForAppItems(output);
+
+        return output;
+    }
+
+    /// <summary>
+    /// Gets the list of deleted record types.
+    /// </summary>
+    /// <returns>A list of strings.</returns>
+    public static List<string> GetDeletedRecordTypes()
+    {
+        var output = new List<string> {
+            // {{ModuleItemStart:Appointments}}
+            "Appointment",
+            "AppointmentNote",
+            "AppointmentService",
+            // {{ModuleItemEnd:Appointments}}
+            "Department",
+            "DepartmentGroup",
+            // {{ModuleItemStart:EmailTemplates}}
+            "EmailTemplate",
+            // {{ModuleItemEnd:EmailTemplates}}
+            "FileStorage",
+            // {{ModuleItemStart:Locations}}
+            "Location",
+            // {{ModuleItemEnd:Locations}}
+            // {{ModuleItemStart:Services}}
+            "Service",
+            // {{ModuleItemEnd:Services}}
+            // {{ModuleItemStart:Tags}}
+            "Tag",
+            // {{ModuleItemEnd:Tags}}
+            "User",
+            "UserGroup"
+        };
+
+        var appDeletedRecordTypes = GetDeletedRecordTypesApp();
+        if (appDeletedRecordTypes != null && appDeletedRecordTypes.Any()) {
+            output.AddRange(appDeletedRecordTypes);
+        }
+
+        output = output.OrderBy(x => x).ToList();
+
+        return output;
     }
 
     /// <summary>

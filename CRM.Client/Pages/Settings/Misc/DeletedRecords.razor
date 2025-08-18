@@ -14,30 +14,7 @@
         <LoadingMessage />
     } else {
         if (Model.HaveDeletedRecords) {
-            var deletedRecordTypes = new List<string> {
-                // {{ModuleItemStart:Appointments}}
-                "Appointment",
-                "AppointmentNote",
-                "AppointmentService",
-                // {{ModuleItemEnd:Appointments}}
-                "Department",
-                "DepartmentGroup",
-                // {{ModuleItemStart:EmailTemplates}}
-                "EmailTemplate",
-                // {{ModuleItemEnd:EmailTemplates}}
-                "FileStorage",
-                // {{ModuleItemStart:Locations}}
-                "Location",
-                // {{ModuleItemEnd:Locations}}
-                // {{ModuleItemStart:Services}}
-                "Service",
-                // {{ModuleItemEnd:Services}}
-                // {{ModuleItemStart:Tags}}
-                "Tag",
-                // {{ModuleItemEnd:Tags}}
-                "User",
-                "UserGroup"
-            };
+            var deletedRecordTypes = Helpers.GetDeletedRecordTypes();
 
             <div class="@Model.StickyMenuClass">
                 <h1 class="page-title">
@@ -118,6 +95,12 @@
 
                     case "UserGroup":
                         deletedRecords = _DeletedRecords.UserGroups;
+                        break;
+
+                    default:
+                        // Check for app-specific types.
+                        deletedRecords = Helpers.GetDeletedRecordsForAppType(_DeletedRecords, deletedRecordType);
+                        deletedRecordTypeLanguageTag = Helpers.GetDeletedRecordsLanguageTagForAppType(deletedRecordType);
                         break;
                 }
 
@@ -255,35 +238,9 @@
         // Always reload the data in the data model.
         _loading = true;
 
-        var deletedRecords = await Helpers.GetOrPost<DataObjects.DeletedRecords>("api/Data/GetDeletedRecords");
+        var deletedRecords = await Helpers.GetDeletedRecords();
         if(deletedRecords != null) {
             _DeletedRecords = deletedRecords;
-
-            // Also update the counts on the Main Model
-            Model.DeletedRecordCounts = new DataObjects.DeletedRecordCounts {
-                // {{ModuleItemStart:Appointments}}
-                AppointmentNotes = _DeletedRecords.AppointmentNotes.Count(),
-                Appointments = _DeletedRecords.Appointments.Count(),
-                AppointmentServices = _DeletedRecords.AppointmentServices.Count(),
-                // {{ModuleItemEnd:Appointments}}
-                DepartmentGroups = _DeletedRecords.DepartmentGroups.Count(),
-                Departments = _DeletedRecords.Departments.Count(),
-                // {{ModuleItemStart:EmailTemplates}}
-                EmailTemplates = _DeletedRecords.EmailTemplates.Count(),
-                // {{ModuleItemEnd:EmailTemplates}}
-                FileStorage = _DeletedRecords.FileStorage.Count(),
-                // {{ModuleItemStart:Locations}}
-                Locations = _DeletedRecords.Locations.Count(),
-                // {{ModuleItemEnd:Locations}}
-                // {{ModuleItemStart:Services}}
-                Services = _DeletedRecords.Services.Count(),
-                // {{ModuleItemEnd:Services}}
-                // {{ModuleItemStart:Tags}}
-                Tags = _DeletedRecords.Tags.Count(),
-                // {{ModuleItemEnd:Tags}}
-                UserGroups = _DeletedRecords.UserGroups.Count(),
-                Users = _DeletedRecords.Users.Count(),
-            };
 
             _loading = false;
         } else {
