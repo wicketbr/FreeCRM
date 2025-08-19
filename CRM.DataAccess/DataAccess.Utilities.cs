@@ -724,7 +724,7 @@ public partial class DataAccess
                     break;
 
                 default:
-                    output.Messages.Add("Invalid Delete Record Type '" + Type + "'");
+                    output = await DeleteRecordImmediatelyApp(Type, RecordId, CurrentUser);
                     break;
             }
         } else {

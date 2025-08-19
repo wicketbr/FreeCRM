@@ -38,6 +38,31 @@ public partial class DataAccess
         return output;
     }
 
+    /// <summary>
+    /// Use this method to immediately delete any app-specific records.
+    /// Return true if the item was deleted successfully.
+    /// Otherwise, return false and include any error messages in the Messages property.
+    /// </summary>
+    private async Task<DataObjects.BooleanResponse> DeleteRecordImmediatelyApp(string? Type, Guid RecordId, DataObjects.User CurrentUser)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = new DataObjects.BooleanResponse();
+
+        if (!String.IsNullOrWhiteSpace(Type)) {
+            switch (Type.ToLower()) {
+                case "mytype":
+                    //output = await DeleteMyItemType(RecordId, CurrentUser);
+                    break;
+            }
+        }
+
+        // Remove this line once you implement your logic.
+        output.Result = true;
+
+        return output;
+    }
+
     private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp(Guid TenantId, DataObjects.DeletedRecordCounts deletedRecordCounts)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.

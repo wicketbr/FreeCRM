@@ -1,9 +1,17 @@
 ﻿using BlazorBootstrap;
 using Blazored.LocalStorage;
+// {{ModuleItemStart:EmailTemplates}}
 using CRM.Client.Pages.Settings.Email;
+// {{ModuleItemEnd:EmailTemplates}}
+// {{ModuleItemStart:Locations}}
 using CRM.Client.Pages.Settings.Locations;
+// {{ModuleItemEnd:Locations}}
+// {{ModuleItemStart:Services}}
 using CRM.Client.Pages.Settings.Services;
+// {{ModuleItemEnd:Services}}
+// {{ModuleItemStart:Tags}}
 using CRM.Client.Pages.Settings.Tags;
+// {{ModuleItemEnd:Tags}}
 using CRM.Client.Pages.Settings.Users;
 using CRM.Client.Shared;
 using Humanizer;
