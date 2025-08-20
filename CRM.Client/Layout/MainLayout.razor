@@ -606,6 +606,105 @@
                 case DataObjects.SignalRUpdateType.UDF:
                     break;
 
+                case DataObjects.SignalRUpdateType.Undelete:
+                    // Not all undelete types require reloading data, but those that do are handled here.
+                    switch(message) {
+                        // {{ModuleItemStart:Appointments}}
+                        case "appointment":
+                            break;
+
+                        case "appointmentnote":
+                            break;
+
+                        case "appointmentservice":
+                            break;
+                        // {{ModuleItemEnd:Appointments}}
+
+                        case "departmentgroup":
+                            var undeletedDepartmentGroup = Helpers.DeserializeObject<DataObjects.DepartmentGroup>(update.ObjectAsString);
+                            if (undeletedDepartmentGroup != null) {
+                                var modelDepartmentGroups = Model.DepartmentGroups.ToList();
+                                modelDepartmentGroups = modelDepartmentGroups.Where(x => x.DepartmentGroupId != undeletedDepartmentGroup.DepartmentGroupId).ToList();
+                                modelDepartmentGroups.Add(undeletedDepartmentGroup);
+                                Model.DepartmentGroups = modelDepartmentGroups;
+                            }
+                            break;
+
+                        case "department":
+                            var undeletedDepartment = Helpers.DeserializeObject<DataObjects.Department>(update.ObjectAsString);
+                            if (undeletedDepartment != null) {
+                                var modelDepartments = Model.Departments.ToList();
+                                modelDepartments = modelDepartments.Where(x => x.DepartmentId != undeletedDepartment.DepartmentId).ToList();
+                                modelDepartments.Add(undeletedDepartment);
+                                Model.Departments = modelDepartments;
+                            }
+                            break;
+
+                        // {{ModuleItemStart:EmailTemplates}}
+                        case "emailtemplate":
+                            var undeletedEmailTemplate = Helpers.DeserializeObject<DataObjects.EmailTemplate>(update.ObjectAsString);
+                            if (undeletedEmailTemplate != null) {
+                                var modelEmailTemplates = Model.EmailTemplates.ToList();
+                                modelEmailTemplates = modelEmailTemplates.Where(x => x.EmailTemplateId != undeletedEmailTemplate.EmailTemplateId).ToList();
+                                modelEmailTemplates.Add(undeletedEmailTemplate);
+                                Model.EmailTemplates = modelEmailTemplates;
+                            }
+                            break;
+                        // {{ModuleItemEnd:EmailTemplates}}
+
+                        case "filestorage":
+                            break;
+
+                        // {{ModuleItemStart:Locations}}
+                        case "location":
+                            var undeletedLocation = Helpers.DeserializeObject<DataObjects.Location>(update.ObjectAsString);
+                            if (undeletedLocation != null) {
+                                var modelLocations = Model.Locations.ToList();
+                                modelLocations = modelLocations.Where(x => x.LocationId != undeletedLocation.LocationId).ToList();
+                                modelLocations.Add(undeletedLocation);
+                                Model.Locations = modelLocations;
+                            }
+                            break;
+                        // {{ModuleItemEnd:Locations}}
+
+                        // {{ModuleItemStart:Services}}
+                        case "service":
+                            var undeletedService = Helpers.DeserializeObject<DataObjects.Service>(update.ObjectAsString);
+                            if (undeletedService != null) {
+                                var modelServices = Model.Services.ToList();
+                                modelServices = modelServices.Where(x => x.ServiceId != undeletedService.ServiceId).ToList();
+                                modelServices.Add(undeletedService);
+                                Model.Services = modelServices;
+                            }
+                            break;
+                        // {{ModuleItemEnd:Services}}
+
+                        // {{ModuleItemStart:Tags}}
+                        case "tag":
+                            await Helpers.LoadTags();
+                            break;
+                        // {{ModuleItemEnd:Tags}}
+
+                        case "user":
+                            await Helpers.ReloadTenantUsers();
+                            break;
+
+                        case "usergroup":
+                            var undeletedUserGroup = Helpers.DeserializeObject<DataObjects.UserGroup>(update.ObjectAsString);
+                            if (undeletedUserGroup != null) {
+                                var modelUserGroups = Model.UserGroups.ToList();
+                                modelUserGroups = modelUserGroups.Where(x => x.GroupId != undeletedUserGroup.GroupId).ToList();
+                                modelUserGroups.Add(undeletedUserGroup);
+                                Model.UserGroups = modelUserGroups;
+                            }
+                            break;
+
+                        default:
+                            await Helpers.ProcessSignalRUpdateAppUndelete(update);
+                            break;
+                    }
+                    break;
+
                 case DataObjects.SignalRUpdateType.Unknown:
                     await Helpers.ConsoleLog("Unknown SignalR Update Type Received");
                     break;
@@ -670,7 +769,7 @@
                     break;
             }
 
-            if (message.Contains("delete") || message.Contains("undelete")) {
+            if (message.Contains("delete") || message.Contains("undelete") || update.UpdateType == DataObjects.SignalRUpdateType.Undelete) {
                 await Helpers.GetDeletedRecordCount();
                 StateHasChanged();
             }

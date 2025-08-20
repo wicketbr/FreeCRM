@@ -234,7 +234,9 @@
     /// <summary>
     /// Insert a value into the editor at the current cursor position.
     /// </summary>
-    public async Task InsertValue(string value)
+    /// <param name="value">The value to be inserted.</param>
+    /// <param name="MaintainIndentLevel">An option to maintain the indent level for multi-line inserts when the cursor is not at the start of the line (defaults to true.)</param>
+    public async Task InsertValue(string value, bool MaintainIndentLevel = true)
     {
         BlazorMonaco.Selection? selection = null;
 
@@ -242,6 +244,23 @@
             selection = await _editor.GetSelection();
         } else {
             selection = await _diffEditor.ModifiedEditor.GetSelection();
+        }
+
+        if (MaintainIndentLevel && selection.StartColumn > 1 && value.Contains(System.Environment.NewLine)) {
+            // The current cursor position is indented.
+            // So, split the value into each line and add padding to all additional
+            // lines after the first line to indent the entire item being inserted.
+            var padding = new String(' ', selection.StartColumn - 1);
+
+            var lines = value.Split(new[] { System.Environment.NewLine }, StringSplitOptions.None);
+            value = String.Empty;
+
+            foreach (var line in lines.Index()) {
+                if (line.Index > 0) {
+                    value += System.Environment.NewLine + padding;
+                }
+                value += line.Item;
+            }
         }
 
         var edits = new List<BlazorMonaco.Editor.IdentifiedSingleEditOperation>();

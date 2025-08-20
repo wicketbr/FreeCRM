@@ -63,6 +63,33 @@ public partial class DataAccess
         return output;
     }
 
+    /// <summary>
+    /// This method is called when the tenant is being deleted to delete app-specific data for the tenant.
+    /// </summary>
+    private async Task<DataObjects.BooleanResponse> DeleteTenantApp(Guid TenantId)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = new DataObjects.BooleanResponse();
+
+        try {
+            // Implement your app-specific tenant deletion logic here to remove records from tables that are specific to your app.
+            // Example:
+            // data.MyTable.RemoveRange(data.MyTable.Where(x => x.TenantId == TenantId));
+            // await data.SaveChangesAsync();
+        } catch (Exception ex) {
+            output.Messages.Add("An Error Occurred in DeleteTenantApp");
+            output.Messages.AddRange(RecurseException(ex));
+        }
+
+        output.Result = output.Messages.Count == 0;
+
+        return output;
+    }
+
+    /// <summary>
+    /// This method is called to add any app-specific deleted record counts to the output.
+    /// </summary>
     private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp(Guid TenantId, DataObjects.DeletedRecordCounts deletedRecordCounts)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
@@ -75,6 +102,9 @@ public partial class DataAccess
         return output;
     }
 
+    /// <summary>
+    /// This method is called to add any app-specific deleted records to the output.
+    /// </summary>
     private async Task<DataObjects.DeletedRecords> GetDeletedRecordsApp(Guid TenantId, DataObjects.DeletedRecords deletedRecords)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
@@ -86,6 +116,9 @@ public partial class DataAccess
         return output;
     }
 
+    /// <summary>
+    /// This method is called to undelete any app-specific records.
+    /// </summary>
     private async Task<DataObjects.BooleanResponse> UndeleteRecordApp(string? Type, Guid RecordId, DataObjects.User CurrentUser)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
@@ -94,15 +127,30 @@ public partial class DataAccess
 
         try {
             if (!String.IsNullOrWhiteSpace(Type)) {
+                object? obj = null;
+                bool sendSignalRUpdate = false;
+
                 switch (Type.ToLower()) {
                     case "this":
                         // Add code to undelete the record of type "this" here.
                         output.Result = true;
+                        sendSignalRUpdate = true;
                         break;
 
                     default:
                         output.Messages.Add("Invalid Delete Record Type '" + Type + "'");
                         break;
+                }
+
+                if (sendSignalRUpdate) {
+                    await SignalRUpdate(new DataObjects.SignalRUpdate {
+                        TenantId = CurrentUser.TenantId,
+                        ItemId = RecordId,
+                        UpdateType = DataObjects.SignalRUpdateType.Undelete,
+                        Message = Type,
+                        Object = obj,
+                        UserId = CurrentUserId(CurrentUser),
+                    });
                 }
             }
         } catch (Exception ex) {

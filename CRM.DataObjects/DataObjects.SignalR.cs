@@ -35,6 +35,7 @@ public partial class DataObjects
         // {{ModuleItemEnd:Tags}}
         Tenant,
         UDF,
+        Undelete,
         Unknown,
         User,
         UserAttendance,

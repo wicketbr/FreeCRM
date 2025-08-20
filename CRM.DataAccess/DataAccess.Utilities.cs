@@ -2145,6 +2145,9 @@ public partial class DataAccess
 
         try {
             if (!String.IsNullOrWhiteSpace(Type)) {
+                object? obj = null;
+                bool sendSignalRUpdate = false;
+
                 switch (Type.ToLower()) {
                     // {{ModuleItemStart:Appointments}}
                     case "appointment":
@@ -2154,6 +2157,9 @@ public partial class DataAccess
                             recAppt.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetAppointment(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2166,6 +2172,9 @@ public partial class DataAccess
                             recApptNote.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetAppointmentNote(RecordId);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2178,6 +2187,7 @@ public partial class DataAccess
                             recApptService.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2191,6 +2201,9 @@ public partial class DataAccess
                             recDeptGroup.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetDepartmentGroup(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2203,6 +2216,9 @@ public partial class DataAccess
                             recDept.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetDepartment(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2216,6 +2232,9 @@ public partial class DataAccess
                             recEmailTemplate.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetEmailTemplate(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2229,6 +2248,9 @@ public partial class DataAccess
                             recFile.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetFileStorage(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2242,6 +2264,9 @@ public partial class DataAccess
                             recLocation.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetLocation(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2256,6 +2281,9 @@ public partial class DataAccess
                             recService.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetService(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2270,6 +2298,9 @@ public partial class DataAccess
                             recTag.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetTag(RecordId, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2283,6 +2314,9 @@ public partial class DataAccess
                             recUserGroup.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetUserGroup(RecordId, true, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2295,6 +2329,9 @@ public partial class DataAccess
                             recUser.DeletedAt = null;
                             await data.SaveChangesAsync();
                             output.Result = true;
+                            sendSignalRUpdate = true;
+
+                            obj = await GetUser(RecordId, false, CurrentUser);
                         } else {
                             output.Messages.Add(Type + " Record '" + RecordId.ToString() + "' Not Found");
                         }
@@ -2304,18 +2341,23 @@ public partial class DataAccess
                         output = await UndeleteRecordApp(Type, RecordId, CurrentUser);
                         break;
                 }
+
+                if (sendSignalRUpdate) {
+                    await SignalRUpdate(new DataObjects.SignalRUpdate {
+                        TenantId = CurrentUser.TenantId,
+                        ItemId = RecordId,
+                        UpdateType = DataObjects.SignalRUpdateType.Undelete,
+                        Message = Type,
+                        Object = obj,
+                        UserId = CurrentUserId(CurrentUser),
+                    });
+                }
             } else {
                 output.Messages.Add("Missing Required Data Type");
             }
         } catch (Exception ex) {
             output.Messages.Add("Error Undeleting '" + Type + "' " + RecordId.ToString() + " - " + RecurseExceptionAsString(ex));
         }
-
-        await SignalRUpdate(new DataObjects.SignalRUpdate {
-            TenantId = CurrentUser.TenantId,
-            UpdateType = DataObjects.SignalRUpdateType.Unknown,
-            Message = "Undelete Record",
-        });
 
         return output;
     }

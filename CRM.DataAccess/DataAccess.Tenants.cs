@@ -94,6 +94,15 @@ public partial class DataAccess
             
             data.Tenants.RemoveRange(data.Tenants.Where(x => x.TenantId == TenantId));
             await data.SaveChangesAsync();
+
+            var deleteTenantApp = await DeleteTenantApp(TenantId);
+            if (!deleteTenantApp.Result) {
+                if (deleteTenantApp.Messages.Any()) {
+                    output.Messages.AddRange(deleteTenantApp.Messages);
+                } else {
+                    output.Messages.Add("An unknown error occurred calling DeleteTenantId");
+                }
+            }
         } catch (Exception ex) {
             output.Messages.Add("An error occurred attempting to delete the tenant '" + TenantId.ToString() + "'");
             output.Messages.AddRange(RecurseException(ex));

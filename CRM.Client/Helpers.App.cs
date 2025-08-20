@@ -1,4 +1,6 @@
-﻿namespace CRM.Client;
+﻿using System.Net.NetworkInformation;
+
+namespace CRM.Client;
 
 public static partial class Helpers
 {
@@ -109,6 +111,17 @@ public static partial class Helpers
                     await Helpers.ConsoleLog("Unknown SignalR Update Type Received");
                     break;
             }
+        }
+    }
+
+    public static async Task ProcessSignalRUpdateAppUndelete(DataObjects.SignalRUpdate update)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        switch (Helpers.StringLower(update.Message)) {
+            case "this":
+                // Add code to reload your app-specific data based on the undelete type.
+                break;
         }
     }
 
