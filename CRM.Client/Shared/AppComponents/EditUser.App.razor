@@ -1,0 +1,61 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific settings on the Edit User page.
+
+    // The edit user interface uses a table for layout, so we need to follow that structure in this file as well.
+
+    @if (!Value.Admin) {
+        @*<tr>
+            <td>
+                <div class="form-check form-switch right">
+                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" />
+                </div>
+            </td>
+            <td><label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label></td>
+        </tr>*@
+    }
+}
+
+@code {
+    /// <summary>
+    /// The Tenant object bound with the @bind-Value directive.
+    /// </summary>
+    [Parameter] public DataObjects.User Value { get; set; } = new DataObjects.User();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.User> ValueChanged { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+
+    protected void ValueHasChanged() {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}

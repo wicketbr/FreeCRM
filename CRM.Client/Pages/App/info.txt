@@ -1,0 +1,5 @@
+Place your app-specific pages in this folder for easier upgrading to future versions of the app.
+
+You can add folders below this App folder to organize your pages further.
+
+A future tool for migrating changes to a fresh instance of the CRM will look in this folder for any custom pages you have created.

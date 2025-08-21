@@ -1,0 +1,57 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific settings on the Edit Department page.
+
+    @*<div class="mb-2">
+        <label for="app-editDepartmentGroup-MyProperty">
+            <Language Tag="MyProperty" />
+        </label>
+        <input id="app-editDepartmentGroup-MyProperty" class="form-control"
+                @bind="Value.MyProperty" 
+                @bind:after="ValueHasChanged" />
+    </div>*@
+}
+
+@code {
+    /// <summary>
+    /// The Tenant object bound with the @bind-Value directive.
+    /// </summary>
+    [Parameter] public DataObjects.DepartmentGroup Value { get; set; } = new DataObjects.DepartmentGroup();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.DepartmentGroup> ValueChanged { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+
+    protected void ValueHasChanged() {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}

@@ -73,6 +73,15 @@
                         <Language Tag="SettingsEmail" />
                     </button>
                 </li>
+
+                @if (_appSettings.Enabled && _appSettings.ShowAppSettingsTab) {
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tabAppSettingsButton" data-bs-toggle="tab" data-bs-target="#tabAppSettings"
+                                type="button" role="tab" aria-controls="home" aria-selected="true">
+                            <Language Tag="AppSettings" />
+                        </button>
+                    </li>
+                }
             </ul>
         </div>
 
@@ -185,6 +194,10 @@
                         }
                     </div>
                 </div>
+
+                @if (_appSettings.Enabled) {
+                    <Settings_App Module="General" @bind-Value="_tenant" />
+                }
             </div>
             
             @if (Model.FeatureEnabledThemes) {
@@ -246,7 +259,9 @@
                         <input type="text" id="edit-setting-theme-css-font-import" class="form-control" @bind="_tenant.TenantSettings.ThemeFontCssImport" />
                     </div>
 
-
+                    @if (_appSettings.Enabled) {
+                        <Settings_App Module="Theme" @bind-Value="_tenant" />
+                    }
                 </div>
             }
             
@@ -268,6 +283,10 @@
                             <label for="edit-tenant-allowUsersToSignUpForLocalLogin" class="form-check-label"><Language Tag="AllowUsersToSignUpAtLogin" /></label>
                         </div>
                     </div>
+                }
+
+                @if (_appSettings.Enabled) {
+                    <Settings_App Module="Authentication" @bind-Value="_tenant" />
                 }
             </div>
 
@@ -379,6 +398,10 @@
                             <label for="opt-in-workschedule" class="form-check-label"><Language Tag="FeatureOptInWorkSchedule" /></label>
                         </div>
                     }
+
+                    @if (_appSettings.Enabled) {
+                        <Settings_App Module="OptionalFeatures" @bind-Value="_tenant" />
+                    }
                 </div>
             }
 
@@ -388,7 +411,16 @@
                     <input type="text" class="form-control" id="edit-tenant-defaultReplyToAddress" @bind="_tenant.TenantSettings.DefaultReplyToAddress" />
                 </div>
 
+                @if (_appSettings.Enabled) {
+                    <Settings_App Module="Email" @bind-Value="_tenant" />
+                }
             </div>
+
+            @if (_appSettings.Enabled) {
+                <div id="tabAppSettings" class="tab-pane" role="tabpanel" aria-labelledby="tabAppSettingsButton">
+                    <Settings_App @bind-Value="_tenant" />
+                </div>
+            }
 
             @if (Model.FeatureEnabledWorkSchedule) {
                 <div id="tabWorkSchedule" class="tab-pane" role="tabpanel" aria-labelledby="tabWorkScheduleButton">
@@ -517,6 +549,10 @@
 
                         </tbody>
                     </table>
+
+                    @if (_appSettings.Enabled) {
+                        <Settings_App Module="WorkSchedule" @bind-Value="_tenant" />
+                    }
                 </div>
             }
             
@@ -555,6 +591,8 @@
     protected bool _optInUserGroups = false;
     protected bool _optInWorkSchedule = false;
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
+
+    protected Settings_App _appSettings = new Settings_App();
 
     protected string _deletePreference = "";
 

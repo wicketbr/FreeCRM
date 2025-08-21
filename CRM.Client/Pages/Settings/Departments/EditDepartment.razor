@@ -72,6 +72,8 @@
                 <label for="edit-department-enabled" class="form-check-label"><Language Tag="Enabled" /></label>
             </div>
 
+            <EditDepartment_App @bind-Value="_dept" />
+
             @if (!_newDepartment) {
                 <div class="mb-2">
                     <hr />

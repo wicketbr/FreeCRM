@@ -49,6 +49,8 @@
                        class="@Helpers.MissingValue(_deptGroup.DepartmentGroupName,"form-control")" />
             </div>
 
+            <EditDepartmentGroup_App @bind-Value="_deptGroup" />
+
             @if (!_newDepartmentGroup) {
                 <div class="mb-2">
                     <hr />

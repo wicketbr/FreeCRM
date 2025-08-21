@@ -207,6 +207,8 @@
                         <td><label for="edit-user-admin-@_user.UserId" class="form-check-label"><Language Tag="Admin" /></label></td>
                     </tr>
 
+                    <EditUser_App @bind-Value="_user" />
+
                     <!-- {{ModuleItemStart:Appointments}} -->
                     @if (!_user.Admin && Model.FeatureEnabledScheduling) {
                         <tr>

@@ -1,0 +1,101 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific settings on the Settings page.
+    // Enabled must be set to true for any of these to render.
+    // You can add items to the bottom of each built-in module by adding your settings
+    // to the named areas below (general, theme, authentication, optionalfeatures, workschedule, email).
+    // If you have the ShowAppSettingsTab then an additional tab will be shown in the Settings page
+    // named AppSettings which will render the code in the default case below.
+
+    switch(Helpers.StringLower(Module)) {
+        case "general":
+            break;
+
+        case "theme":
+            break;
+
+        case "authentication":
+            break;
+
+        case "optionalfeatures":
+            break;
+
+        case "workschedule":
+            break;
+
+        case "email":
+            break;
+
+        default:
+            if (ShowAppSettingsTab) {
+                @*<div class="mb-2">
+                    <label for="app-setting-MyProperty">
+                        <Language Tag="MyProperty" />
+                    </label>
+                    <input id="app-setting-MyProperty" class="form-control"
+                           @bind="Value.TenantSettings.MyProperty" 
+                           @bind:after="ValueHasChanged" />
+                </div>*@
+            }
+            break;
+    }
+}
+
+@code {
+    /// <summary>
+    /// If left as False, this component will not be rendered.
+    /// </summary>
+    [Parameter] public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// Used to show app settings in the various tabs of the Settings page.
+    /// </summary>
+    [Parameter] public string? Module { get; set; }
+
+    /// <summary>
+    /// Set to true to show the App Settings tab in the Settings page.
+    /// </summary>
+    [Parameter] public bool ShowAppSettingsTab { get; set; } = false;
+
+    /// <summary>
+    /// The Tenant object bound with the @bind-Value directive.
+    /// </summary>
+    [Parameter] public DataObjects.Tenant Value { get; set; } = new DataObjects.Tenant();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.Tenant> ValueChanged { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+
+    protected void ValueHasChanged() {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}
