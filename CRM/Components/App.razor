@@ -53,6 +53,7 @@
     @if (!String.IsNullOrWhiteSpace(analyticsCodeHtml)) {
         @((MarkupString)analyticsCodeHtml)
     }
+    <Modules_App Module="head" />
     <ImportMap />
     <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>
@@ -71,6 +72,7 @@
     <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js?v=" + appVersion)"></script>
     <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js?v=" + appVersion)"></script>
     <script src="_framework/blazor.web.js"></script>
+    <Modules_App Module="body" />
 
     <script type="text/javascript">
         let dotNetHelper;
@@ -342,7 +344,7 @@
 
             if (preferred == "auto") {
                 let colorScheme = getComputedStyle(document.body, ':after').content;
-                let preferred = colorScheme.indexOf("dark") > -1 ? "dark" : "light";
+                preferred = colorScheme.indexOf("dark") > -1 ? "dark" : "light";
             }
 
             let setTheme = "";
@@ -423,5 +425,7 @@
             }
         }
     </script>
+
+    <Modules_App Module="javascript" />
 </body>
 </html>

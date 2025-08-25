@@ -916,6 +916,8 @@ public partial class DataAccess
         output.UseTenantCodeInUrl = UseTenantCodeInUrl;
         output.Version = Version;
 
+        output = GetBlazorDataModelApp(output).Result;
+
         return output;
     }
 
@@ -983,6 +985,8 @@ public partial class DataAccess
             output.Users = users;
             output.UseTenantCodeInUrl = UseTenantCodeInUrl;
             output.Version = Version;
+
+            output = await GetBlazorDataModelApp(output, CurrentUser);
         }
 
         return output;
@@ -1023,6 +1027,8 @@ public partial class DataAccess
             output.Users = new List<DataObjects.User>();
             output.UseTenantCodeInUrl = UseTenantCodeInUrl;
             output.Version = Version;
+
+            output = await GetBlazorDataModelApp(output);
         } else {
             output = GetBlazorDataModel();
         }

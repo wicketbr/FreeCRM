@@ -2,6 +2,8 @@
 
 public partial class BlazorDataModel
 {
+    private List<string> _MyValues = new List<string>();
+
     private bool HaveDeletedRecordsApp {
         get {
             bool output = false;
@@ -18,5 +20,22 @@ public partial class BlazorDataModel
     public bool MyCustomDataModelMethod()
     {
         return true;
+    }
+
+    /// <summary>
+    /// An example of implementing a custom property in your data model.
+    /// </summary>
+    public List<string> MyValues {
+        get {
+            return _MyValues;
+        }
+
+        set {
+            if (!ObjectsAreEqual(_MyValues, value)) {
+                _MyValues = value;
+                _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
+        }
     }
 }

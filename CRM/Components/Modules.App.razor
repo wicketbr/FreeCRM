@@ -1,0 +1,41 @@
+﻿@code {
+    // Use this file for any app-specific javascript for the main App.razor page.
+    [Parameter] public string Module { get; set; } = String.Empty;
+}
+
+@switch (Module) {
+    case "head":
+        // Add any custom elements to the head tag here.
+        @* <link rel="stylesheet" href="some.css" /> *@
+        break;
+
+    case "body":
+        // Add any custom elements to the body tag here.
+        @* <script src="some.js"></script> *@
+        break;
+
+    case "javascript":
+        // Add any custom javascript here.
+        <script type="text/javascript">
+            const onReadyApp = (callback) => {
+                if (document.readyState!='loading') {
+                    callback();
+                } else if (document.addEventListener) {
+                    document.addEventListener('DOMContentLoaded', callback);
+                } else {
+                    document.attachEvent('onreadystatechange', function() {
+                        if (document.readyState=='complete') callback();
+                    });
+                }
+            };
+
+            onReadyApp(() => {
+                // myFunction();
+            });
+
+            function myFunction(){
+                // console.log("My Function");
+            }
+        </script>
+        break;
+}

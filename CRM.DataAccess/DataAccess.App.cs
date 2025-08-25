@@ -88,6 +88,21 @@ public partial class DataAccess
     }
 
     /// <summary>
+    /// Called by the main GetBlazorDataModel method to load any app-specific data into the Blazor data model.
+    /// </summary>
+    /// <param name="CurrentUser">The User object for the current user, if loaded.</param>
+    /// <returns></returns>
+    private async Task<DataObjects.BlazorDataModelLoader> GetBlazorDataModelApp(DataObjects.BlazorDataModelLoader blazorDataModelLoader, DataObjects.User? CurrentUser = null)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+        var output = blazorDataModelLoader;
+
+        // Update any app-specific data model properties here.
+
+        return output;
+    }
+
+    /// <summary>
     /// This method is called to add any app-specific deleted record counts to the output.
     /// </summary>
     private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp(Guid TenantId, DataObjects.DeletedRecordCounts deletedRecordCounts)

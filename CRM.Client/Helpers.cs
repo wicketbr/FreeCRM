@@ -485,6 +485,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Converts C# code to a plugin object.
+    /// </summary>
+    /// <param name="code">The C# code.</param>
+    /// <returns>A nullable Plugin object.</returns>
     public static Plugins.Plugin? ConvertCodeToPlugin(string? code)
     {
         Plugins.Plugin? output = null;
@@ -964,6 +969,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Converts an object that was serialized as JSON back into a Dictionary&lt;string, object&gt; object.
+    /// </summary>
+    /// <param name="o">A nullable object.</param>
+    /// <returns>A dictionary of string, object values.</returns>
     public static Dictionary<string, object> DictionaryFromJsonObject(object? o)
     {
         var output = new Dictionary<string, object>();
@@ -1184,6 +1194,13 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Opens a dialog to edit a user.
+    /// </summary>
+    /// <param name="UserId">The unique user id.</param>
+    /// <param name="OnSaved">The callback handler to handle the save method.</param>
+    /// <param name="width">The width of the dialog (defaults to "auto".)</param>
+    /// <param name="height">The height of the dialog (defaults to "auto".)</param>
     public static async Task EditUser(Guid UserId, Delegate? OnSaved = null, string width = "auto", string height = "auto")
     {
         Dictionary<string, object> parameters = new Dictionary<string, object>();
@@ -1247,6 +1264,12 @@ public static partial class Helpers
     }
     // {{ModuleItemEnd:EmailTemplates}}
 
+    /// <summary>
+    /// Executes a plugin and returns the results.
+    /// </summary>
+    /// <param name="plugin">The Plugin object to be executed.</param>
+    /// <param name="objects">Any objects being passed to this plugin code.</param>
+    /// <returns>A PluginExecuteResult object.</returns>
     public static async Task<PluginExecuteResult> ExecutePlugin(Plugin plugin, object[]? objects = null)
     {
         var output = new PluginExecuteResult {
@@ -1322,6 +1345,12 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Finds the first line in the code that starts with the given text.
+    /// </summary>
+    /// <param name="code">The code to check.</param>
+    /// <param name="startsWith">The text to find.</param>
+    /// <returns>The first line that starts with the given text.</returns>
     public static string FindFirstLineStartingWith(string code, string startsWith)
     {
         string output = String.Empty;
@@ -2060,6 +2089,10 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets the unique browser fingerprint.
+    /// </summary>
+    /// <returns>A string containing the unique browser fingerprint.</returns>
     public static async Task<string> GetFingerprint()
     {
         var output = await jsRuntime.InvokeAsync<string>("GetFingerprint");
@@ -2559,6 +2592,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Returns the type for a given object.
+    /// </summary>
+    /// <param name="o">A nullable object.</param>
+    /// <returns>A string containing the object type.</returns>
     public static string GetObjectType(object? o)
     {
         string output = String.Empty;
@@ -2685,6 +2723,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets the code namespace from the plugin code.
+    /// </summary>
+    /// <param name="code">The C# code.</param>
+    /// <returns>The code namespace.</returns>
     public static string GetPluginNamespace(string code)
     {
         string output = String.Empty;
@@ -2697,6 +2740,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets the code class from the plugin code.
+    /// </summary>
+    /// <param name="code">The C# code.</param>
+    /// <returns>The code class.</returns>
     public static string GetPluginClass(string code)
     {
         string output = String.Empty;
@@ -2718,6 +2766,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets the default value for a given prompt type.
+    /// </summary>
+    /// <param name="type">The PluginPromptType enum.</param>
+    /// <returns>The default value for the given type.</returns>
     public static string[] GetPromptDefaultValue(PluginPromptType type)
     {
         var output = new string[] { "" };
@@ -2767,6 +2820,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets a prompt item value as a string.
+    /// </summary>
+    /// <param name="o">A nullable object.</param>
+    /// <returns>The value as a string.</returns>
     public static string GetPromptItemValueAsString(object? o)
     {
         string output = String.Empty;
@@ -4102,6 +4160,9 @@ public static partial class Helpers
         }
     }
 
+    /// <summary>
+    /// The name of the CSS class that marks a field as missing if no value is provided.
+    /// </summary>
     public static string MissingValueClass {
         get {
             return "m-r";
@@ -4548,6 +4609,12 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Converts the results of executing a plugin to a friendly string.
+    /// </summary>
+    /// <param name="result">The PluginExecuteResult object.</param>
+    /// <param name="includeObjects">An option to include objects in the output (defaults to false.)</param>
+    /// <returns>The results of the plugin execution formatted as a string.</returns>
     public static string PluginResultToString(Plugins.PluginExecuteResult result, bool includeObjects = false)
     {
         System.Text.StringBuilder output = new StringBuilder();
@@ -5170,6 +5237,10 @@ public static partial class Helpers
         return o;
     }
 
+    /// <summary>
+    /// Calls the jsInterop method to set the theme.
+    /// </summary>
+    /// <param name="theme">The theme to be set.</param>
     public static async void SetTheme(string theme)
     {
         Model.Theme = theme;
@@ -5237,6 +5308,11 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Splits a string based on newline characters.
+    /// </summary>
+    /// <param name="input">The string to split.</param>
+    /// <returns>A list of strings.</returns>
     public static List<string> SplitStringIntoLines(string? input)
     {
         var output = new List<string>();
@@ -5727,6 +5803,9 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets the Uri from the NavManager.
+    /// </summary>
     public static string Uri
     {
         get {

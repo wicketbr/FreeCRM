@@ -429,6 +429,10 @@ public partial class BlazorDataModel
         }
     }
 
+    /// <summary>
+    /// A helper invoked from javascript to pass messages from the .NET Helper back into the data model.
+    /// </summary>
+    /// <param name="messages"></param>
     public void DotNetHelperHandler(List<string> messages)
     {
         _DotNetHelperMessages = messages;
@@ -576,75 +580,6 @@ public partial class BlazorDataModel
     public bool FeatureEnabledWorkSchedule {
         get { return FeatureEnabled("workschedule"); }
     }
-
-    //public string GetPluginValueAsString(object? o, PluginPromptType type)
-    //{
-    //    string output = String.Empty;
-
-    //    if (o != null) {
-    //        switch (type) {
-    //            case PluginPromptType.Checkbox:
-    //                var boolValue = (bool)o;
-    //                output = boolValue.ToString();
-    //                break;
-
-    //            case PluginPromptType.CheckboxList:
-    //                var boolValues = (List<bool>)o;
-    //                output = String.Join(",", boolValues);
-    //                break;
-
-    //            case PluginPromptType.Date:
-    //                var d = (DateOnly)o;
-    //                output = d.ToString();
-    //                break;
-
-    //            case PluginPromptType.DateTime:
-    //                var dt = (DateTime)o;
-    //                output = dt.ToString();
-    //                break;
-
-    //            case PluginPromptType.File:
-    //                break;
-
-    //            case PluginPromptType.Multiselect:
-    //                var multiValues = (List<string>)o;
-    //                output = String.Join(",", multiValues);
-    //                break;
-
-    //            case PluginPromptType.Number:
-    //                var numberValue = (double)o;
-    //                output = numberValue.ToString();
-    //                break;
-
-    //            case PluginPromptType.Password:
-    //                output += (string)o;
-    //                break;
-
-    //            case PluginPromptType.Radio:
-    //                output += (string)o;
-    //                break;
-
-    //            case PluginPromptType.Select:
-    //                output += (string)o;
-    //                break;
-
-    //            case PluginPromptType.Text:
-    //                output += (string)o;
-    //                break;
-
-    //            case PluginPromptType.Textarea:
-    //                output += (string)o;
-    //                break;
-
-    //            case PluginPromptType.Time:
-    //                var t = (TimeOnly)o;
-    //                output = t.ToString();
-    //                break;
-    //        }
-    //    }
-
-    //    return output;
-    //}
 
     /// <summary>
     /// The default language collection for the application.
@@ -811,6 +746,8 @@ public partial class BlazorDataModel
                 Text = message,
                 MessageType = MessageType.Danger,
             }, AutoHide, RemovePreviousMessages, ReplaceLineBreaks);
+        } else {
+            UnknownError();
         }
     }
 
@@ -1518,6 +1455,9 @@ public partial class BlazorDataModel
         }
     }
 
+    /// <summary>
+    /// The CSS class for the sticky menu based on whether or not the menu is pinned.
+    /// </summary>
     public string StickyMenuClass {
         get {
             string output = "sticky-menu-unpinned";
