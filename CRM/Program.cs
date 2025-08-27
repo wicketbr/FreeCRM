@@ -10,11 +10,11 @@ using System.Security.Claims;
 
 namespace CRM
 {
-    public class Program
+    public partial class Program
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = AppModifyBuilderStart(WebApplication.CreateBuilder(args));
 
             builder.Services.AddControllersWithViews();
 
@@ -116,26 +116,33 @@ namespace CRM
                 }
             }
 
-            var configurationHelperLoader = new ConfigurationHelperLoader {
+            var configurationHelperLoader = ConfigurationHelpersLoadApp(new ConfigurationHelperLoader {
                 AnalyticsCode = analyticsCode,
                 BasePath = basePath,
                 ConnectionStrings = new ConfigurationHelperConnectionStrings {
                     AppData = builder.Configuration.GetConnectionString("AppData"),
                 },
                 GloballyDisabledModules = disabled,
-            };
+            }, builder);
+
             builder.Services.AddTransient<IConfigurationHelper>(x => ActivatorUtilities.CreateInstance<ConfigurationHelper>(x, configurationHelperLoader));
 
-            builder.Services.AddAuthorization(options => {
-                options.AddPolicy("AppAdmin", policy => policy.RequireClaim(ClaimTypes.Role, "AppAdmin"));
-                options.AddPolicy("Admin", policy => policy.RequireClaim(ClaimTypes.Role, "Admin"));
-                options.AddPolicy("CanBeScheduled", policy => policy.RequireClaim(ClaimTypes.Role, "CanBeScheduled"));
-                options.AddPolicy("ManageAppointments", policy => policy.RequireClaim(ClaimTypes.Role, "ManageAppointments"));
-                options.AddPolicy("ManageFiles", policy => policy.RequireClaim(ClaimTypes.Role, "ManageFiles"));
-                options.AddPolicy("PreventPasswordChange", policy => policy.RequireClaim(ClaimTypes.Role, "PreventPasswordChange"));
+            var policies = new List<string> {
+                "AppAdmin",
+                "Admin",
+                "CanBeScheduled",
+                "ManageAppointments",
+                "ManageFiles",
+                "PreventPasswordChange",
+            };
+            policies.AddRange(AuthenticationPoliciesApp);
+            builder.Services.AddAuthorization(options => { 
+                foreach(var p in policies) {
+                    options.AddPolicy(p, policy => policy.RequireClaim(ClaimTypes.Role, p));
+                }
             });
 
-            var app = builder.Build();
+            var app = AppModifyStart(AppModifyBuilderEnd(builder).Build());
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment()) {
@@ -172,7 +179,7 @@ namespace CRM
 
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
-            app.Run();
+            AppModifyEnd(app).Run();
         }
     }
 }

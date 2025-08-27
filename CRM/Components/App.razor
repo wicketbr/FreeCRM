@@ -370,7 +370,7 @@
                 let el = document.getElementById("body-element");
                 if (el != undefined && el != null) {
                     el.setAttribute("data-bs-theme", setTheme);
-                    el.classList.remove();
+                    el.classList = "";
 
                     if (setClass != "") {
                         el.classList.add(setClass);

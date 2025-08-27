@@ -1,6 +1,6 @@
 ﻿namespace CRM;
 
-public class ConfigurationHelper : IConfigurationHelper
+public partial class ConfigurationHelper : IConfigurationHelper
 {
     private ConfigurationHelperLoader _loader = new ConfigurationHelperLoader();
 
@@ -38,7 +38,7 @@ public class ConfigurationHelper : IConfigurationHelper
     }
 }
 
-public interface IConfigurationHelper
+public partial interface IConfigurationHelper
 {
     public string? AnalyticsCode { get; }
     public string? BasePath { get; }
@@ -46,7 +46,7 @@ public interface IConfigurationHelper
     List<string>? GloballyDisabledModules { get; }
 }
 
-public class ConfigurationHelperLoader
+public partial class ConfigurationHelperLoader
 {
     public string? AnalyticsCode { get; set; }
     public string? BasePath { get; set; }
@@ -54,7 +54,7 @@ public class ConfigurationHelperLoader
     public List<string>? GloballyDisabledModules { get; set; }
 }
 
-public class ConfigurationHelperConnectionStrings
+public partial class ConfigurationHelperConnectionStrings
 {
     public string? AppData { get; set; }
 }
