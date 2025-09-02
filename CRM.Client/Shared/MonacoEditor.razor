@@ -9,19 +9,19 @@
 
 @if (String.IsNullOrWhiteSpace(ValueToDiff)) {
     <StandaloneCodeEditor @ref="_editor"
-                          Id="@EditorId"
-                          CssClass="@Class"
-                          OnDidChangeModelContent="EditorUpdated"
-                          OnDidChangeCursorPosition="EditorUpdated_CursorPosition"
-                          ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => { return StandaloneEditorConstructionOptions; })" />
+            Id="@EditorId"
+            CssClass="@Class"
+            OnDidChangeModelContent="EditorUpdated"
+            OnDidChangeCursorPosition="EditorUpdated_CursorPosition"
+            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => { return StandaloneEditorConstructionOptions; })" />
 } else {
     <StandaloneDiffEditor @ref="_diffEditor"
-                          Id="@EditorId"
-                          CssClass="@Class"
-                          OnDidChangeModelContentModified="EditorUpdated"
-                          OnDidChangeCursorPositionModified="EditorUpdated_CursorPosition"
-                          OnDidInit="InitDiffEditor"
-                          ConstructionOptions="@((BlazorMonaco.Editor.StandaloneDiffEditor editor) => { return StandaloneEditorConstructionOptionsDiff; })" />
+            Id="@EditorId"
+            CssClass="@Class"
+            OnDidChangeModelContentModified="EditorUpdated"
+            OnDidChangeCursorPositionModified="EditorUpdated_CursorPosition"
+            OnDidInit="InitDiffEditor"
+            ConstructionOptions="@((BlazorMonaco.Editor.StandaloneDiffEditor editor) => { return StandaloneEditorConstructionOptionsDiff; })" />
 }
 
 @code {
@@ -52,9 +52,14 @@
     [Parameter] public string Language { get; set; } = MonacoLanguage.plaintext;
 
     /// <summary>
-    /// OPTIONAL: The maximum height for the editor (defaults to 300px.)
+    /// OPTIONAL: The minimum height for the editor (defaults to 300px.)
     /// </summary>
     [Parameter] public string MinHeight { get; set; } = "300px;";
+
+    /// <summary>
+    /// OPTIONAL: The placeholder text to display when the editor is empty.
+    /// </summary>
+    [Parameter] public string PlaceholderText { get; set; } = "";
 
     /// <summary>
     /// OPTIONAL: Set to true to make the editor read-only.
@@ -322,18 +327,24 @@
                 return ConstructorOptions;
             } else {
                 return new BlazorMonaco.Editor.StandaloneEditorConstructionOptions {
-                        AutomaticLayout = true,
-                        Language = Language,
-                        Value = !String.IsNullOrWhiteSpace(Value) ? Value : String.Empty,
-                        AutoClosingBrackets = "always",
-                        AutoClosingComments = "always",
-                        AutoClosingQuotes = "always",
-                        DragAndDrop = true,
-                        FormatOnPaste = true,
-                        FormatOnType = true,
-                        ReadOnly = _readOnly,
-                        RenderWhitespace = "all",
-                    };
+                    AutomaticLayout = true,
+                    ColorDecorators = true,
+                    ColorDecoratorsActivatedOn = "clickAndHover",
+                    DefaultColorDecorators = true,
+                    Language = Language,
+                    Minimap = new BlazorMonaco.Editor.EditorMinimapOptions {
+                        Autohide = true,
+                        Enabled = true,
+                    },
+                    MouseWheelZoom = true,
+                    Placeholder = PlaceholderText,
+                    ReadOnly = _readOnly,
+                    RenderWhitespace = "all",
+                    ScrollBeyondLastLine = false,
+                    Value = !String.IsNullOrWhiteSpace(Value) ? Value : String.Empty,
+                    WordWrap = "on",
+                    WrappingIndent = "same",
+                };
             }
         }
     }
@@ -344,18 +355,24 @@
                 return ConstructorOptionsForDiffEditor;
             } else {
                 return new BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions {
-                        AutomaticLayout = true,
-                        OriginalEditable = false,
-                        RenderSideBySide = true,
-                        UseInlineViewWhenSpaceIsLimited = true,
-                        AutoClosingBrackets = "always",
-                        AutoClosingComments = "always",
-                        AutoClosingQuotes = "always",
-                        DragAndDrop = true,
-                        FormatOnPaste = true,
-                        ReadOnly = _readOnly,
-                        RenderWhitespace = "all",
-                    };
+                    AutomaticLayout = true,
+                    ColorDecorators = true,
+                    ColorDecoratorsActivatedOn = "clickAndHover",
+                    DefaultColorDecorators = true,
+                    Minimap = new BlazorMonaco.Editor.EditorMinimapOptions {
+                        Autohide = true,
+                        Enabled = true,
+                    },
+                    MouseWheelZoom = true,
+                    OriginalEditable = false,
+                    ReadOnly = _readOnly,
+                    RenderSideBySide = true,
+                    RenderWhitespace = "all",
+                    ScrollBeyondLastLine = false,
+                    UseInlineViewWhenSpaceIsLimited = true,
+                    WordWrap = "on",
+                    WrappingIndent = "same",
+                };
             }
         }
     }
@@ -367,7 +384,7 @@
     }
 
     /// <summary>
-    /// A static class for the Monaco languag options.
+    /// A static class for the Monaco language options.
     /// </summary>
     public static class MonacoLanguage
     {

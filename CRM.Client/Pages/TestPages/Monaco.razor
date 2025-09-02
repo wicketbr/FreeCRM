@@ -9,6 +9,7 @@
     <MonacoEditor 
             Id="my-monaco-editor"
             Language="@MonacoEditor.MonacoLanguage.html"
+            PlaceholderText="Enter Your HTML Here"
             ReadOnly="@_monacoReadOnly"
             ValueToDiff="@_monacoContentToDiff"
             @bind-Value="_monacoContent" />
@@ -65,7 +66,7 @@
     protected override void OnInitialized()
     {
         _monacoContent = "<div>" + Environment.NewLine + "\tSome sample <b>HTML</b> content." + Environment.NewLine + "</div>";
-        _monacoContentToDiff = _monacoContent;
+        //_monacoContentToDiff = _monacoContent;
 
         if (!Model.Subscribers_OnChange.Contains(_pageName)){
             Model.Subscribers_OnChange.Add(_pageName);
