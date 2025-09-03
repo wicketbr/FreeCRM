@@ -1382,7 +1382,7 @@ public partial class DataAccess
 
                 // Cache this response for a while so that multiple calls to this by the API call to get the current user
                 // and the CustomAuthenticationHandler will not result in multiple lookups in the database.
-                CacheStore.SetCacheItem(TenantId, "user-from-token-" + Token, output, DateTimeOffset.Now.AddMinutes(5));
+                CacheStore.SetCacheItem(TenantId, "user-from-token-" + Token, output, DateTimeOffset.Now.AddSeconds(5));
             }
         }
 
