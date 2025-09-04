@@ -1,4 +1,13 @@
-﻿@code {
+﻿@inject IDataAccess data
+@inject IConfigurationHelper ConfigurationHelper
+
+@{
+    string applicationUrl = data.ApplicationURL;
+    string appVersion = data.Version;
+    string basePath = !String.IsNullOrWhiteSpace(ConfigurationHelper.BasePath) ? ConfigurationHelper.BasePath : "/";
+}
+
+@code {
     // Use this file for any app-specific javascript for the main App.razor page.
     [Parameter] public string Module { get; set; } = String.Empty;
 }
@@ -7,11 +16,13 @@
     case "head":
         // Add any custom elements to the head tag here.
         @* <link rel="stylesheet" href="some.css" /> *@
+        @* <link rel="stylesheet" href="@(applicationUrl + "_content/Path/To/CSS.css?v=" + appVersion)" /> *@
         break;
 
     case "body":
         // Add any custom elements to the body tag here.
         @* <script src="some.js"></script> *@
+        @* <script src="@(applicationUrl + "_content/Path/To/Javascript.js?v=" + appVersion)"></script> *@
         break;
 
     case "javascript":
