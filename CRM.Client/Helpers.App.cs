@@ -125,9 +125,9 @@ public static partial class Helpers
         }
     }
 
-    private async static Task ReloadModelApp()
+    private async static Task ReloadModelApp(DataObjects.BlazorDataModelLoader? blazorDataModelLoader)
     {
-
+        // Called from the main ReloadModel method in Helpers to load app-specific data.
     }
 
     private static void UpdateModelDeletedRecordCountsForAppItems(DataObjects.DeletedRecords deletedRecords)

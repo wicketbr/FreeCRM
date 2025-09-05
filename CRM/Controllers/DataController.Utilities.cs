@@ -179,11 +179,14 @@ public partial class DataController
     public async Task SignalRUpdate(DataObjects.SignalRUpdate update)
     {
         if (_signalR != null) {
-            if (update.TenantId.HasValue) {
-                await _signalR.Clients.Group(((Guid)update.TenantId).ToString()).SendAsync("SignalRUpdate", update);
-            } else {
-                // This is a non-tenant-specific update.
-                await _signalR.Clients.All.SendAsync("SignalRUpdate", update);
+            var processedInApp = await SignalRUpdateApp(update);
+            if (!processedInApp) {
+                if (update.TenantId.HasValue) {
+                    await _signalR.Clients.Group(((Guid)update.TenantId).ToString()).SendAsync("SignalRUpdate", update);
+                } else {
+                    // This is a non-tenant-specific update.
+                    await _signalR.Clients.All.SendAsync("SignalRUpdate", update);
+                }
             }
         }
     }
