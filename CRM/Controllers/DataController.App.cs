@@ -20,7 +20,7 @@ public partial class DataController
         return Ok(output);
     }
 
-    public async Task<bool> SignalRUpdateApp(DataObjects.SignalRUpdate update)
+    private async Task<bool> SignalRUpdateApp(DataObjects.SignalRUpdate update)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
         
