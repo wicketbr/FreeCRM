@@ -135,14 +135,16 @@
                             .OrderBy(x => x.Name)
                             .ToList();
                         break;
-                }
 
+                    default:
+                        output = Helpers.AvailableTagListApp(Module, _initialTags);
+                        break;
+                }
             } else {
                 output = Model.Tags.Where(x => !_initialTags.Contains(x.TagId) && x.Enabled == true)
                     .OrderBy(x => x.Name)
                     .ToList();
             }
-
 
             return output;
         }

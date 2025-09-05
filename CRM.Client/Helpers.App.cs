@@ -19,6 +19,23 @@ public static partial class Helpers
         return true;
     }
 
+    public static List<DataObjects.Tag> AvailableTagListApp(DataObjects.TagModule? Module, List<Guid> ExcludeTags)
+    {
+        var output = new List<DataObjects.Tag>();
+
+        if (Module != null) {
+            switch (Module) {
+                //case DataObjects.TagModule.AppTagType:
+                //    output = Model.Tags.Where(x => !ExcludeTags.Contains(x.TagId) && x.UseInAppTagType == true)
+                //        .OrderBy(x => x.Name)
+                //        .ToList();
+                //    break;
+            }
+        }
+
+        return output;
+    }
+
     private static List<string> GetDeletedRecordTypesApp()
     {
         var output = new List<string>();
