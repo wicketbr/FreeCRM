@@ -276,6 +276,8 @@
     protected string _title = "";
     protected DataObjects.User _user = new DataObjects.User();
 
+    protected EditUser_App AppModule = new EditUser_App();
+
     protected string _pageName = "edituser";
 
     public void Dispose()
@@ -502,6 +504,17 @@
         if (String.IsNullOrWhiteSpace(_user.Email)) {
             errors.Add(Helpers.MissingRequiredField("Email"));
             if (focus == "") { focus = "edit-user-email"; }
+        }
+
+        var saveApp = AppModule.Save(_user);
+        if (!saveApp.Result) {
+            if (saveApp.Messages.Any()) {
+                errors.AddRange(saveApp.Messages);
+            }
+
+            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+                focus = saveApp.Focus;
+            }
         }
 
         if (errors.Any()) {

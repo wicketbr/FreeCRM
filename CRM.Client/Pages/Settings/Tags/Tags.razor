@@ -46,9 +46,16 @@
                         <th style="width:1%;"></th>
                         <th><Language Tag="TagName" ReplaceSpaces="true" /></th>
                         <th><Language Tag="TagPreview" ReplaceSpaces="true" /></th>
+                        <!-- {{ModuleItemStart:Appointments}} -->
                         <th class="center" style="width:1%;"><Icon Name="Schedule" Title="TagUseInAppointments" /></th>
+                        <!-- {{ModuleItemEnd:Appointments}} -->
+                        <!-- {{ModuleItemStart:EmailTemplates}} -->
                         <th class="center" style="width:1%;"><Icon Name="EmailTemplates" Title="TagUseInEmailTemplates" /></th>
+                        <!-- {{ModuleItemEnd:EmailTemplates}} -->
+                        <!-- {{ModuleItemStart:Services}} -->
                         <th class="center" style="width:1%;"><Icon Name="Service" Title="TagUseInServices" /></th>
+                        <!-- {{ModuleItemEnd:Services}} -->
+                        <EditTag_App Area="th" />
                         <th class="center" style="width:1%;"><Language Tag="Enabled" ReplaceSpaces="true" /></th>
                     </tr>
                 </thead>
@@ -72,9 +79,16 @@
                                 <td>
                                     @((MarkupString)Helpers.RenderTag(tag))
                                 </td>
+                                <!-- {{ModuleItemStart:Appointments}} -->
                                 <td class="center">@((MarkupString)Helpers.BooleanToIcon(tag.UseInAppointments))</td>
+                                <!-- {{ModuleItemEnd:Appointments}} -->
+                                <!-- {{ModuleItemStart:EmailTemplates}} -->
                                 <td class="center">@((MarkupString)Helpers.BooleanToIcon(tag.UseInEmailTemplates))</td>
+                                <!-- {{ModuleItemEnd:EmailTemplates}} -->
+                                <!-- {{ModuleItemStart:Services}} -->
                                 <td class="center">@((MarkupString)Helpers.BooleanToIcon(tag.UseInServices))</td>
+                                <!-- {{ModuleItemEnd:Services}} -->
+                                <EditTag_App Value="tag" Area="td" />
                                 <td class="center">@((MarkupString)Helpers.BooleanToIcon(tag.Enabled))</td>
                             </tr>
                         }

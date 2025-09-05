@@ -3,18 +3,19 @@
 @inject BlazorDataModel Model
 
 @{
-    // This component is used to display application-specific settings on the Edit User page.
+    // This component is used to display application-specific settings on the Tags and Edit Tag page.
+    switch(Helpers.StringLower(Area)) {
+        case "th":
+            // Add any additional header cells here for the tag listing on the Tags page.
+            break;
 
-    // The edit user interface uses a table for layout, so we need to follow that structure in this file as well.
-    @if (!Value.Admin) {
-        @*<tr>
-            <td>
-                <div class="form-check form-switch right">
-                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" />
-                </div>
-            </td>
-            <td><label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label></td>
-        </tr>*@
+        case "td":
+            // Add any additional cells here for each tag row on the Tags page.
+            break;
+
+        case "edit":
+            // Add any additional fields here for the Edit Tag page.
+            break;
     }
 }
 
@@ -24,12 +25,12 @@
     /// <summary>
     /// The Tenant object bound with the @bind-Value directive.
     /// </summary>
-    [Parameter] public DataObjects.User Value { get; set; } = new DataObjects.User();
+    [Parameter] public DataObjects.Tag Value { get; set; } = new DataObjects.Tag();
 
     /// <summary>
     /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
     /// </summary>
-    [Parameter] public EventCallback<DataObjects.User> ValueChanged { get; set; }
+    [Parameter] public EventCallback<DataObjects.Tag> ValueChanged { get; set; }
 
     public void Dispose() { 
         Model.OnChange -= StateHasChanged;
@@ -55,7 +56,7 @@
     //     // Do any work here that needs to be done after the component is rendered or parameters are set.
     // }
 
-    public DataObjects.ModuleAction Save(DataObjects.User user) {
+    public DataObjects.ModuleAction Save(DataObjects.Tag tag) {
         var output = new DataObjects.ModuleAction { Result = true };
 
         // Perform and pre-save checks here. Return false if there is an error and include any error messages.

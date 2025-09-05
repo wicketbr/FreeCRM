@@ -393,6 +393,13 @@ public partial class DataObjects
         public int SortOrder { get; set; }
     }
 
+    public class ModuleAction
+    {
+        public bool Result { get; set; }
+        public List<string> Messages { get; set; } = new List<string>();
+        public string? Focus { get; set; }
+    }
+
     public partial class OptionPair
     {
         public string? Id { get; set; }

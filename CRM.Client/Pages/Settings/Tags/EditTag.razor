@@ -95,20 +95,28 @@
                 </h2>
             </div>
 
+            <!-- {{ModuleItemStart:Appointments}} -->
             <div class="mb-2 form-check form-switch">
                 <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInAppointments" @bind="_tag.UseInAppointments" />
                 <label for="edit-tag-UseInAppointments" class="form-check-label"><Language Tag="TagUseInAppointments" /></label>
             </div>
+            <!-- {{ModuleItemEnd:Appointments}} -->
 
+            <!-- {{ModuleItemStart:EmailTemplates}} -->
             <div class="mb-2 form-check form-switch">
                 <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInEmailTemplates" @bind="_tag.UseInEmailTemplates" />
                 <label for="edit-tag-UseInEmailTemplates" class="form-check-label"><Language Tag="TagUseInEmailTemplates" /></label>
             </div>
+            <!-- {{ModuleItemEnd:EmailTemplates}} -->
 
+            <!-- {{ModuleItemStart:Services}} -->
             <div class="mb-2 form-check form-switch">
                 <input type="checkbox" role="switch" class="form-check-input" id="edit-tag-UseInServices" @bind="_tag.UseInServices" />
                 <label for="edit-tag-UseInServices" class="form-check-label"><Language Tag="TagUseInServices" /></label>
             </div>
+            <!-- {{ModuleItemEnd:Services}} -->
+
+            <EditTag_App Area="edit" Value="_tag" />
         }
     }
 }
@@ -123,6 +131,8 @@
     protected DataObjects.Tag _tag = new DataObjects.Tag();
 
     protected string _pageName = "edittag";
+
+    protected EditTag_App AppModule = new EditTag_App();
 
     public void Dispose()
     {
@@ -255,8 +265,49 @@
             if (focus == "") { focus = "edit-tag-Name"; }
         }
 
-        if(!_tag.UseInAppointments && !_tag.UseInEmailTemplates && !_tag.UseInServices) {
+        // If using built-in modules make sure at least one is selected.
+        // Some of these may have been removed by the utility to remove unusued modules, so this may look odd if you
+        // have removed Appointments, EmailTemplates, and Services.
+        bool missingModule = false;
+        // {{ModuleItemStart:Services}}
+        missingModule = true;
+        // {{ModuleItemEnd:Services}}
+
+        // {{ModuleItemStart:EmailTemplates}}
+        missingModule = true;
+        // {{ModuleItemEnd:EmailTemplates}}
+
+        // {{ModuleItemStart:Services}}
+        missingModule = true;
+        // {{ModuleItemEnd:Services}}
+
+        if (missingModule) {
+            // {{ModuleItemStart:Services}}
+            if (_tag.UseInAppointments) { missingModule = false; }
+            // {{ModuleItemEnd:Services}}
+
+            // {{ModuleItemStart:EmailTemplates}}
+            if (_tag.UseInEmailTemplates) { missingModule = false; }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            // {{ModuleItemStart:Services}}
+            if (_tag.UseInServices) { missingModule = false; }
+            // {{ModuleItemEnd:Services}}
+        }
+
+        if(missingModule) {
             errors.Add(Helpers.Text("TagMustBeEnabledForAtLeastOneModule"));
+        }
+
+        var saveApp = AppModule.Save(_tag);
+        if (!saveApp.Result) {
+            if (saveApp.Messages.Any()) {
+                errors.AddRange(saveApp.Messages);
+            }
+
+            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+                focus = saveApp.Focus;
+            }
         }
 
         if (errors.Any()) {
