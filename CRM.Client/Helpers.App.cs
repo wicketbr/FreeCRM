@@ -18,7 +18,8 @@ public static partial class Helpers
     {
         return true;
     }
-
+    
+    // {{ModuleItemStart:Tags}}
     public static List<DataObjects.Tag> AvailableTagListApp(DataObjects.TagModule? Module, List<Guid> ExcludeTags)
     {
         var output = new List<DataObjects.Tag>();
@@ -35,7 +36,8 @@ public static partial class Helpers
 
         return output;
     }
-
+    // {{ModuleItemEnd:Tags}}
+    
     private static List<string> GetDeletedRecordTypesApp()
     {
         var output = new List<string>();
