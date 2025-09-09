@@ -22,6 +22,11 @@ public partial class DataAccess
         }
     }
 
+    private void DataAccessAppInit()
+    {
+        // Add any app-specific initialization logic here.
+    }
+
     /// <summary>
     /// Use this method to delete any pending records for your app-specific tables.
     /// Return true if everything was deleted successfully.

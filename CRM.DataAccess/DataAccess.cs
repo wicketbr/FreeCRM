@@ -43,6 +43,8 @@ public partial class DataAccess: IDisposable, IDataAccess
             _connectionString = ConnectionString;
         }
 
+        DataAccessAppInit();
+
         var optionsBuilder = new DbContextOptionsBuilder<EFDataModel>();
 
         // Both the Connection String and Database Type parameters are required.
