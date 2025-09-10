@@ -1,0 +1,47 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    env:
+      SOLUTION_FILE: CRM.sln
+      PROJECT_FILE: CRM/CRM.csproj
+      TEST_ENDPOINT: /api/Data/GetVersionInfo
+      POSSIBLE_PORTS: "5201 7048 15497"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET 9
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore ${{ env.SOLUTION_FILE }}
+
+    - name: Build solution (${{ matrix.configuration }})
+      run: dotnet build ${{ env.SOLUTION_FILE }} --configuration ${{ matrix.configuration }} --no-restore
+
+    - name: Publish project (${{ matrix.configuration }})
+      run: dotnet publish ${{ env.PROJECT_FILE }} --configuration ${{ matrix.configuration }} --no-build --output ./publish/${{ matrix.configuration }}
+
+    - name: Upload published artifact (${{ matrix.configuration }})
+      uses: actions/upload-artifact@v4
+      with:
+        name: WebApp-${{ matrix.configuration }}
+        path: ./publish/${{ matrix.configuration }}

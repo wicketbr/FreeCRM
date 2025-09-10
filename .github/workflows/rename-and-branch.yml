@@ -1,0 +1,259 @@
+name: Rename and Branch
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      selections:
+        description: "Comma-separated highest→lowest to remove (overrides matrix)"
+        required: false
+        default: ""
+      delay_ms:
+        description: "Delay (ms) between lines sent to the apps"
+        required: false
+        default: "1000"
+      app_name:
+        description: "New application name for the rename tool (overrides matrix)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  feeder:
+    name: Job 1 • Build feeder
+    runs-on: windows-latest
+    steps:
+      - name: Setup .NET SDK 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Create feeder project
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path tools\StdInFeeder | Out-Null
+          $code = @'
+          using System;
+          using System.Diagnostics;
+          using System.IO;
+          using System.Text;
+          using System.Threading.Tasks;
+          class Program {
+              static int Main(string[] args) {
+                  string exe = null;
+                  string inputPath = null;
+                  int delay = 500;
+                  string killOn = null;
+                  int killDelay = 200;
+                  bool killTriggered = false;
+                  for (int i = 0; i < args.Length; i++) {
+                      switch (args[i]) {
+                          case "--exe":        exe = args[++i]; break;
+                          case "--input":      inputPath = args[++i]; break;
+                          case "--delay":      delay = int.Parse(args[++i]); break;
+                          case "--kill-on":    killOn = args[++i]; break;
+                          case "--kill-delay": killDelay = int.Parse(args[++i]); break;
+                      }
+                  }
+                  if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe)) {
+                      Console.Error.WriteLine($"Target exe not found: {exe}"); return 2;
+                  }
+                  if (string.IsNullOrWhiteSpace(inputPath) || !File.Exists(inputPath)) {
+                      Console.Error.WriteLine($"Input file not found: {inputPath}"); return 3;
+                  }
+                  var psi = new ProcessStartInfo {
+                      FileName = exe,
+                      UseShellExecute = false,
+                      RedirectStandardInput = true,
+                      RedirectStandardOutput = true,
+                      RedirectStandardError = true,
+                      CreateNoWindow = true
+                  };
+                  using var p = new Process { StartInfo = psi };
+                  p.OutputDataReceived += (_, e) => {
+                      if (e.Data != null) {
+                          Console.WriteLine(e.Data);
+                          if (!string.IsNullOrEmpty(killOn) &&
+                              e.Data.IndexOf(killOn, StringComparison.OrdinalIgnoreCase) >= 0 &&
+                              !killTriggered) {
+                              killTriggered = true;
+                              _ = Task.Run(() => {
+                                  try {
+                                      System.Threading.Thread.Sleep(killDelay);
+                                      if (!p.HasExited) {
+                                          try { p.CloseMainWindow(); } catch { }
+                                          if (!p.HasExited) p.Kill(true);
+                                      }
+                                  } catch { }
+                              });
+                          }
+                      }
+                  };
+                  p.ErrorDataReceived += (_, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); };
+                  if (!p.Start()) return 4;
+                  p.BeginOutputReadLine();
+                  p.BeginErrorReadLine();
+                  foreach (var line in File.ReadAllLines(inputPath, Encoding.ASCII)) {
+                      p.StandardInput.WriteLine(line);
+                      p.StandardInput.Flush();
+                      System.Threading.Thread.Sleep(delay);
+                  }
+                  p.StandardInput.Close();
+                  p.WaitForExit();
+                  return killTriggered ? 0 : p.ExitCode;
+              }
+          }
+          '@
+          Set-Content -Path tools\StdInFeeder\Program.cs -Value $code -Encoding UTF8
+
+          $proj = @'
+          <Project Sdk="Microsoft.NET.Sdk">
+            <PropertyGroup>
+              <OutputType>Exe</OutputType>
+              <TargetFramework>net8.0</TargetFramework>
+              <PublishSingleFile>true</PublishSingleFile>
+              <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+              <SelfContained>false</SelfContained>
+            </PropertyGroup>
+          </Project>
+          '@
+          Set-Content -Path tools\StdInFeeder\StdInFeeder.csproj -Value $proj -Encoding UTF8
+
+      - name: Publish feeder
+        shell: pwsh
+        run: dotnet publish tools\StdInFeeder -c Release -o tools\StdInFeeder\out
+
+      - name: Upload feeder artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stdin_feeder
+          path: tools/StdInFeeder/out
+
+  project:
+    name: Job 2 • Process ${{ matrix.project.name }}
+    runs-on: windows-latest
+    needs: feeder
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: FreeCICD
+            branch: FreeCICD_base
+            selections: "6,5,4,3,2,1"
+          - name: FreeLLM
+            branch: FreeLLM_base
+            selections: "7,6,5,4,3,2,1"
+          - name: FreeManager
+            branch: FreeManager_base
+            selections: "7,6,5,4,3,2,1"
+          - name: PJProcessor
+            branch: PJProcessor_base
+            selections: "7,6,5,4,3,2,1"
+          - name: Touchpoints
+            branch: Touchpoints_base
+            selections: "7,6,5,4,3,2,1"
+            
+    env:
+      SELECTIONS: ${{ github.event.inputs.selections || matrix.project.selections }}
+      APP_NAME:  ${{ github.event.inputs.app_name || matrix.project.name }}
+      BASE_BRANCH: ${{ matrix.project.branch }}
+      DELAY_MS:  ${{ github.event.inputs.delay_ms || '1000' }}
+      REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
+      RENAME_EXE: '.\Rename FreeCRM.exe'
+      FEEDER_EXE: '.\tools\StdInFeeder\out\StdInFeeder.exe'
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          path: _base
+          fetch-depth: 0
+
+      - name: Checkout app branch
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: ${{ env.APP_NAME }}
+          path: _app
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+
+      - name: Download feeder artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: stdin_feeder
+          path: _main/tools/StdInFeeder/out
+
+      - name: Run remove modules helper
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:REMOVE_EXE
+          $targets = $env:SELECTIONS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^\d+$' } | ForEach-Object { [int]$_ } | Sort-Object -Descending
+          foreach ($n in $targets) {
+            Set-Content -Path input.txt -Value @("$n","x") -Encoding ASCII
+            & $env:FEEDER_EXE --exe "$exe" --input "input.txt" --delay $env:DELAY_MS
+            if ($LASTEXITCODE -ne 0) { throw "Remove run failed for selection $n (exit $LASTEXITCODE)" }
+            Remove-Item input.txt -Force
+          }
+
+      - name: Run rename helper
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:RENAME_EXE
+          if ($env:APP_NAME -notmatch '^[A-Za-z]+$') { throw "APP_NAME '$env:APP_NAME' is invalid." }
+          Set-Content -Path rename.txt -Value @($env:APP_NAME) -Encoding ASCII
+          & $env:FEEDER_EXE --exe "$exe" --input "rename.txt" --delay 500 --kill-on "press any key" --kill-delay 200
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+          Remove-Item rename.txt -Force
+
+      - name: Snapshot source after changes
+        shell: pwsh
+        run: |
+          $src = Join-Path $pwd "_main"
+          $dst = Join-Path $pwd "artifacts\source_after_changes_$($env:APP_NAME)"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME).zip"
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+          Remove-Item -Recurse -Force "$src\.github","$src\artifacts" -ErrorAction SilentlyContinue
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Expand-Archive -Path $zip -DestinationPath $dst -Force
+
+      - name: Upload source_after_changes
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_after_changes_${{ env.APP_NAME }}
+          path: artifacts/source_after_changes_${{ env.APP_NAME }}
+
+      - name: Push to base branch
+        shell: pwsh
+        run: |
+          cd _base
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\artifacts\source_after_changes_$($env:APP_NAME)\*" -Destination . -Recurse -Force
+          git add -A
+          $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
+          git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
+          git push origin HEAD:${env:BASE_BRANCH} --force
