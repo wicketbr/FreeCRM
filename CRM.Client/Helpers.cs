@@ -3368,6 +3368,7 @@ public static partial class Helpers
                 // {{ModuleItemStart:Appointments}}
                 { "fa:fa-regular fa-note-sticky",                new List<string> { "AppointmentNoteAdd" }},
                 // {{ModuleItemEnd:Appointments}}
+                { "fa:fa-regular fa-square",                     new List<string> { "Unchecked" }},
                 { "fa:fa-regular fa-square-check",               new List<string> { "Checked" }},
                 { "fa:fa-regular fa-square-plus",                new List<string> { "Add", "AddLanguage", "AddNewEmailTemplate", "AddNewUserGroup", "CreateInvoiceForUser", "InvoiceAddItem" }},
                 { "fa:fa-regular fa-sun",                        new List<string> { "Theme", "ThemeLight" }},
