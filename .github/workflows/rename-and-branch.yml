@@ -1,4 +1,4 @@
-name: Rename • (Optional) Build/Test • (Optional) Branch Push
+name: Rename • Build/Test • (Optional) Branch Push
 
 on:
   push:
@@ -16,49 +16,47 @@ on:
         required: false
         default: ""
       run_build_test:
-        description: "Run build/publish after rename?"
+        description: "Run build/publish after rename (Job 1 only)?"
         type: boolean
         default: false
       skip_push:
-        description: "Skip pushing regenerated source to BASE_BRANCH (useful for test runs)"
+        description: "Skip pushing regenerated source to BASE_BRANCH in Job 1"
         type: boolean
         default: true
-      run_combo_tests:
-        description: "Also run extra selection combos (keep:Tags + remove:all) across all projects"
-        type: boolean
-        default: true
-      run_pair_tests:
-        description: "Run all pairwise keep: combinations (C(7,2)=21) across all projects"
-        type: boolean
-        default: false
 
 permissions:
   contents: write
 
 jobs:
+  # ---------------------------
+  # Job 1: PRODUCTION RUNS
+  # ---------------------------
   project:
     name: Job 1 • Process ${{ matrix.project.name }}
     runs-on: windows-latest
-
     strategy:
       fail-fast: false
+      max-parallel: 3
+    strategy:
+      fail-fast: false
+      max-parallel: 3
       matrix:
         project:
           - name: FreeCICD
             branch: FreeCICD_base
-            selections: "keep:Tags"
+            selections: 'keep:Tags'
           - name: FreeLLM
             branch: FreeLLM_base
-            selections: "remove:all"
+            selections: 'remove:all'
           - name: FreeManager
             branch: FreeManager_base
-            selections: "remove:all"
+            selections: 'remove:all'
           - name: PJProcessor
             branch: PJProcessor_base
-            selections: "remove:all"
+            selections: 'remove:all'
           - name: Touchpoints
             branch: Touchpoints_base
-            selections: "remove:all"
+            selections: 'remove:all'
 
     env:
       SELECTIONS:  ${{ github.event.inputs.selections || matrix.project.selections }}
@@ -99,27 +97,23 @@ jobs:
             9.0.x
             8.0.x
 
+      - name: Install wasm-tools workload (Blazor WASM)
+        run: dotnet workload install wasm-tools
+
       - name: Run remove modules (CLI)
         shell: pwsh
         run: |
           cd _main
           $exe = $env:REMOVE_EXE
           if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
-
           $arg = ($env:SELECTIONS ?? '').Trim()
-          if ([string]::IsNullOrWhiteSpace($arg)) {
-            Write-Host "SELECTIONS empty: skipping removal."
-            exit 0
-          }
-
-          # Normalize: no spaces; canonicalize directive
+          if ([string]::IsNullOrWhiteSpace($arg)) { Write-Host "SELECTIONS empty: skipping removal."; exit 0 }
           $arg = ($arg -replace '\s','')
           if ($arg -match '^(?i)(keep|remove):') {
             $arg = ($arg -replace '^(?i)keep:','keep:' -replace '^(?i)remove:','remove:')
           } else {
             throw "SELECTIONS must start with 'keep:' or 'remove:'. Got '$arg'"
           }
-
           Write-Host "Running removal with: $arg"
           & "$exe" $arg
           if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
@@ -130,11 +124,9 @@ jobs:
           cd _main
           $exe = $env:RENAME_EXE
           if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
-
           if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
             throw "APP_NAME '$env:APP_NAME' is invalid. Use letters/numbers only and start with a letter."
           }
-
           Write-Host "Renaming to: $env:APP_NAME"
           & "$exe" "$env:APP_NAME"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
@@ -144,12 +136,9 @@ jobs:
         shell: pwsh
         run: |
           cd _main
-
-          # Detect solution & project after rename
           $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
           if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
           if (-not $sln) { throw "Could not find a .sln file after rename." }
-
           $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
           if (-not $proj) {
             $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Where-Object { $_.DirectoryName -match [regex]::Escape($env:APP_NAME) } | Select-Object -First 1
@@ -157,18 +146,11 @@ jobs:
           if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
           if (-not $proj) { throw "Could not find a .csproj file after rename." }
 
-          Write-Host "Solution: $($sln.FullName)"
-          Write-Host "Project : $($proj.FullName)"
-
           dotnet --info
           dotnet restore "$($sln.FullName)"
-
           foreach ($cfg in @('Debug','Release')) {
-            Write-Host "=== Building $cfg ==="
             dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
-
             $outDir = Join-Path $pwd "publish\$cfg"
-            Write-Host "=== Publishing $cfg to $outDir ==="
             dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
           }
 
@@ -219,37 +201,39 @@ jobs:
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
 
+  # ---------------------------
+  # Job 2: SINGLE-MODULE TESTS (no push)
+  # ---------------------------
   combo-tests:
-    name: Job 2 • Combo Tests (${{ matrix.project.name }} / ${{ matrix.selections }})
+    name: Job 2 • Single-Module Tests (${{ matrix.test.id }} / ${{ matrix.test.selections }})
     runs-on: windows-latest
-    if: ${{ github.event.inputs.run_combo_tests == 'true' }}
+    needs: project
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
-        project:
-          - name: FreeCICD
-            branch: FreeCICD_base
-          - name: FreeLLM
-            branch: FreeLLM_base
-          - name: FreeManager
-            branch: FreeManager_base
-          - name: PJProcessor
-            branch: PJProcessor_base
-          - name: Touchpoints
-            branch: Touchpoints_base
-        selections: [ "keep:Tags", "remove:all" ]
+        test:
+          - { id: 'T01', selections: 'keep:Appointments' }
+          - { id: 'T02', selections: 'remove:Appointments' }
+          - { id: 'T03', selections: 'keep:EmailTemplates' }
+          - { id: 'T04', selections: 'remove:EmailTemplates' }
+          - { id: 'T05', selections: 'keep:Invoices' }
+          - { id: 'T06', selections: 'remove:Invoices' }
+          - { id: 'T07', selections: 'keep:Locations' }
+          - { id: 'T08', selections: 'remove:Locations' }
+          - { id: 'T09', selections: 'keep:Payments' }
+          - { id: 'T10', selections: 'remove:Payments' }
+          - { id: 'T11', selections: 'keep:Services' }
+          - { id: 'T12', selections: 'remove:Services' }
+          - { id: 'T13', selections: 'keep:Tags' }
+          - { id: 'T14', selections: 'remove:Tags' }
 
     env:
-      SELECTIONS:  ${{ matrix.selections }}
-      APP_NAME:    ${{ matrix.project.name }}
-      BASE_BRANCH: ${{ matrix.project.branch }}
       REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
       RENAME_EXE:  '.\Rename FreeCRM.exe'
-      RUN_BUILD_TEST: 'true'
-      SKIP_PUSH:   'true'
 
     steps:
-      - name: Checkout main branch (fresh for each combo)
+      - name: Checkout main (fresh)
         uses: actions/checkout@v4
         with:
           ref: main
@@ -263,36 +247,44 @@ jobs:
             9.0.x
             8.0.x
 
-      - name: Remove modules (combo)
+      - name: Install wasm-tools workload (Blazor WASM)
+        run: dotnet workload install wasm-tools
+
+      - name: Remove modules (single)
         shell: pwsh
         run: |
           cd _main
           $exe = $env:REMOVE_EXE
           if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
-          $arg = ($env:SELECTIONS -replace '\s','')
-          $arg = ($arg -replace '^(?i)keep:','keep:' -replace '^(?i)remove:','remove:')
-          Write-Host "Running removal with: $arg"
-          & "$exe" $arg
+          $sel = '${{ matrix.test.selections }}' -replace '\s',''
+          Write-Host "Running removal with: $sel"
+          & "$exe" $sel
           if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
 
-      - name: Rename (combo)
+      - name: Rename (single) with generic test name
         shell: pwsh
         run: |
           cd _main
           $exe = $env:RENAME_EXE
           if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
-          if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') { throw "Invalid APP_NAME '$env:APP_NAME'." }
-          & "$exe" "$env:APP_NAME"
+          $sel = '${{ matrix.test.selections }}'
+          $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
+          $appName = "$appName" + "_${{ matrix.test.id }}"
+          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestApp_${{ matrix.test.id }}" }
+          Write-Host "Using test app name: $appName"
+          & "$exe" "$appName"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build & Publish (Debug/Release)
         shell: pwsh
         run: |
           cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
+          $app = $env:APP_NAME
+          $sln  = Get-ChildItem -Recurse -File -Filter "$app.sln" | Select-Object -First 1
           if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
-          if (-not $sln) { throw "Could not find a .sln file after rename." }
-          $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
+          if (-not $sln) { throw "Could not find a .sln after rename." }
+          $proj = Get-ChildItem -Recurse -File -Filter "$app.csproj" | Select-Object -First 1
           if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
@@ -304,69 +296,57 @@ jobs:
       - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v4
         with:
-          name: Combo-${{ env.APP_NAME }}-${{ matrix.selections }}-Debug
+          name: Single-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
           path: _main/publish/Debug
           if-no-files-found: warn
 
       - name: Upload artifacts (Release)
         uses: actions/upload-artifact@v4
         with:
-          name: Combo-${{ env.APP_NAME }}-${{ matrix.selections }}-Release
+          name: Single-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
           if-no-files-found: warn
 
+  # ---------------------------
+  # Job 3: PAIRWISE KEEP TESTS (no push)
+  # ---------------------------
   pair-keep-tests:
-    name: Job 3 • Pairwise Keep Tests (${{ matrix.project.name }} / keep:${{ matrix.keep_pair }})
+    name: Job 3 • Pairwise Keep Tests (${{ matrix.test.id }} / keep:${{ matrix.test.keep_pair }})
     runs-on: windows-latest
-    if: ${{ github.event.inputs.run_pair_tests == 'true' }}
+    needs: combo-tests
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
-        project:
-          - name: FreeCICD
-            branch: FreeCICD_base
-          - name: FreeLLM
-            branch: FreeLLM_base
-          - name: FreeManager
-            branch: FreeManager_base
-          - name: PJProcessor
-            branch: PJProcessor_base
-          - name: Touchpoints
-            branch: Touchpoints_base
-        keep_pair:
-          - "Appointments,EmailTemplates"
-          - "Appointments,Invoices"
-          - "Appointments,Locations"
-          - "Appointments,Payments"
-          - "Appointments,Services"
-          - "Appointments,Tags"
-          - "EmailTemplates,Invoices"
-          - "EmailTemplates,Locations"
-          - "EmailTemplates,Payments"
-          - "EmailTemplates,Services"
-          - "EmailTemplates,Tags"
-          - "Invoices,Locations"
-          - "Invoices,Payments"
-          - "Invoices,Services"
-          - "Invoices,Tags"
-          - "Locations,Payments"
-          - "Locations,Services"
-          - "Locations,Tags"
-          - "Payments,Services"
-          - "Payments,Tags"
-          - "Services,Tags"
+        test:
+          - { id: 'T15', keep_pair: 'Appointments,EmailTemplates' }
+          - { id: 'T16', keep_pair: 'Appointments,Invoices' }
+          - { id: 'T17', keep_pair: 'Appointments,Locations' }
+          - { id: 'T18', keep_pair: 'Appointments,Payments' }
+          - { id: 'T19', keep_pair: 'Appointments,Services' }
+          - { id: 'T20', keep_pair: 'Appointments,Tags' }
+          - { id: 'T21', keep_pair: 'EmailTemplates,Invoices' }
+          - { id: 'T22', keep_pair: 'EmailTemplates,Locations' }
+          - { id: 'T23', keep_pair: 'EmailTemplates,Payments' }
+          - { id: 'T24', keep_pair: 'EmailTemplates,Services' }
+          - { id: 'T25', keep_pair: 'EmailTemplates,Tags' }
+          - { id: 'T26', keep_pair: 'Invoices,Locations' }
+          - { id: 'T27', keep_pair: 'Invoices,Payments' }
+          - { id: 'T28', keep_pair: 'Invoices,Services' }
+          - { id: 'T29', keep_pair: 'Invoices,Tags' }
+          - { id: 'T30', keep_pair: 'Locations,Payments' }
+          - { id: 'T31', keep_pair: 'Locations,Services' }
+          - { id: 'T32', keep_pair: 'Locations,Tags' }
+          - { id: 'T33', keep_pair: 'Payments,Services' }
+          - { id: 'T34', keep_pair: 'Payments,Tags' }
+          - { id: 'T35', keep_pair: 'Services,Tags' }
 
     env:
-      SELECTIONS:  ${{ format('keep:{0}', matrix.keep_pair) }}
-      APP_NAME:    ${{ matrix.project.name }}
-      BASE_BRANCH: ${{ matrix.project.branch }}
       REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
       RENAME_EXE:  '.\Rename FreeCRM.exe'
-      RUN_BUILD_TEST: 'true'
-      SKIP_PUSH:   'true'
 
     steps:
-      - name: Checkout main branch (fresh for each pair)
+      - name: Checkout main (fresh)
         uses: actions/checkout@v4
         with:
           ref: main
@@ -379,6 +359,9 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
+
+      - name: Install wasm-tools workload (Blazor WASM)
+        run: dotnet workload install wasm-tools
 
       - name: Remove modules (pair keep)
         shell: pwsh
@@ -386,29 +369,35 @@ jobs:
           cd _main
           $exe = $env:REMOVE_EXE
           if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
-          $arg = ($env:SELECTIONS -replace '\s','')
+          $arg = 'keep:${{ matrix.test.keep_pair }}' -replace '\s',''
           Write-Host "Running removal with: $arg"
           & "$exe" $arg
           if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
 
-      - name: Rename (pair keep)
+      - name: Rename (pair keep) with generic test name
         shell: pwsh
         run: |
           cd _main
           $exe = $env:RENAME_EXE
           if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
-          if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') { throw "Invalid APP_NAME '$env:APP_NAME'." }
-          & "$exe" "$env:APP_NAME"
+          $pair = '${{ matrix.test.keep_pair }}'
+          $appName = 'TestKeep' + ($pair -replace '[^A-Za-z0-9]','')
+          $appName = "$appName" + "_${{ matrix.test.id }}"
+          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestKeepPair_${{ matrix.test.id }}" }
+          Write-Host "Using test app name: $appName"
+          & "$exe" "$appName"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build & Publish (Debug/Release)
         shell: pwsh
         run: |
           cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
+          $app = $env:APP_NAME
+          $sln  = Get-ChildItem -Recurse -File -Filter "$app.sln" | Select-Object -First 1
           if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
-          if (-not $sln) { throw "Could not find a .sln file after rename." }
-          $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
+          if (-not $sln) { throw "Could not find a .sln after rename." }
+          $proj = Get-ChildItem -Recurse -File -Filter "$app.csproj" | Select-Object -First 1
           if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
@@ -420,13 +409,13 @@ jobs:
       - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v4
         with:
-          name: Pair-${{ env.APP_NAME }}-keep:${{ matrix.keep_pair }}-Debug
+          name: Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
           path: _main/publish/Debug
           if-no-files-found: warn
 
       - name: Upload artifacts (Release)
         uses: actions/upload-artifact@v4
         with:
-          name: Pair-${{ env.APP_NAME }}-keep:${{ matrix.keep_pair }}-Release
+          name: Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
           if-no-files-found: warn
