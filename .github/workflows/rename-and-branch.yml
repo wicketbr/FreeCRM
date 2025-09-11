@@ -36,7 +36,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 18
       matrix:
         project:
           - name: FreeCICD
@@ -208,7 +208,7 @@ jobs:
     needs: project
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 18
       matrix:
         test:
           - { id: 'T01', selections: 'keep:Appointments' }
@@ -315,7 +315,7 @@ jobs:
     needs: combo-tests
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 18
       matrix:
         test:
           - { id: 'T15', keep_pair: 'Appointments,EmailTemplates' }
