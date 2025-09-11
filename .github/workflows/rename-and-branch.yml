@@ -1,4 +1,4 @@
-name: Rename and Branch
+name: Rename • (Optional) Build/Test • (Optional) Branch Push
 
 on:
   push:
@@ -8,13 +8,29 @@ on:
   workflow_dispatch:
     inputs:
       selections:
-        description: "Optional: keep:Tags | remove:all | remove:Module1,Module2"
+        description: "Optional: keep:Tags | remove:all | keep:Appointments,Services | etc."
         required: false
         default: ""
       app_name:
         description: "New application name for the rename tool (overrides matrix)"
         required: false
         default: ""
+      run_build_test:
+        description: "Run build/publish after rename?"
+        type: boolean
+        default: false
+      skip_push:
+        description: "Skip pushing regenerated source to BASE_BRANCH (useful for test runs)"
+        type: boolean
+        default: true
+      run_combo_tests:
+        description: "Also run extra selection combos (keep:Tags + remove:all) across all projects"
+        type: boolean
+        default: true
+      run_pair_tests:
+        description: "Run all pairwise keep: combinations (C(7,2)=21) across all projects"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -50,6 +66,8 @@ jobs:
       BASE_BRANCH: ${{ matrix.project.branch }}
       REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
       RENAME_EXE:  '.\Rename FreeCRM.exe'
+      RUN_BUILD_TEST: ${{ github.event.inputs.run_build_test && 'true' || 'false' }}
+      SKIP_PUSH:   ${{ github.event.inputs.skip_push && 'true' || 'false' }}
 
     steps:
       - name: Checkout main branch
@@ -66,7 +84,7 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      - name: Checkout app branch
+      - name: Checkout app branch (if exists)
         uses: actions/checkout@v4
         continue-on-error: true
         with:
@@ -74,7 +92,7 @@ jobs:
           path: _app
           fetch-depth: 0
 
-      - name: Setup .NET (ensure runtimes for the tools)
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
@@ -94,9 +112,13 @@ jobs:
             exit 0
           }
 
-          # Remove all spaces just in case, and normalize remove:all casing
+          # Normalize: no spaces; canonicalize directive
           $arg = ($arg -replace '\s','')
-          if ($arg -match '^(?i)remove:all$') { $arg = 'remove:all' }
+          if ($arg -match '^(?i)(keep|remove):') {
+            $arg = ($arg -replace '^(?i)keep:','keep:' -replace '^(?i)remove:','remove:')
+          } else {
+            throw "SELECTIONS must start with 'keep:' or 'remove:'. Got '$arg'"
+          }
 
           Write-Host "Running removal with: $arg"
           & "$exe" $arg
@@ -109,7 +131,6 @@ jobs:
           $exe = $env:RENAME_EXE
           if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
 
-          # Letters/numbers only, start with a letter; tweak if your tool accepts other chars
           if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
             throw "APP_NAME '$env:APP_NAME' is invalid. Use letters/numbers only and start with a letter."
           }
@@ -117,6 +138,55 @@ jobs:
           Write-Host "Renaming to: $env:APP_NAME"
           & "$exe" "$env:APP_NAME"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+
+      - name: Build & Publish (Debug/Release) — optional
+        if: ${{ env.RUN_BUILD_TEST == 'true' }}
+        shell: pwsh
+        run: |
+          cd _main
+
+          # Detect solution & project after rename
+          $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .sln file after rename." }
+
+          $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
+          if (-not $proj) {
+            $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Where-Object { $_.DirectoryName -match [regex]::Escape($env:APP_NAME) } | Select-Object -First 1
+          }
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+          if (-not $proj) { throw "Could not find a .csproj file after rename." }
+
+          Write-Host "Solution: $($sln.FullName)"
+          Write-Host "Project : $($proj.FullName)"
+
+          dotnet --info
+          dotnet restore "$($sln.FullName)"
+
+          foreach ($cfg in @('Debug','Release')) {
+            Write-Host "=== Building $cfg ==="
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+
+            $outDir = Join-Path $pwd "publish\$cfg"
+            Write-Host "=== Publishing $cfg to $outDir ==="
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
+          }
+
+      - name: Upload published artifacts — optional (Debug)
+        if: ${{ env.RUN_BUILD_TEST == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebApp-${{ env.APP_NAME }}-${{ matrix.project.selections || env.SELECTIONS }}-Debug
+          path: _main/publish/Debug
+          if-no-files-found: warn
+
+      - name: Upload published artifacts — optional (Release)
+        if: ${{ env.RUN_BUILD_TEST == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: WebApp-${{ env.APP_NAME }}-${{ matrix.project.selections || env.SELECTIONS }}-Release
+          path: _main/publish/Release
+          if-no-files-found: warn
 
       - name: Snapshot source after changes
         shell: pwsh
@@ -135,7 +205,8 @@ jobs:
           name: source_after_changes_${{ env.APP_NAME }}
           path: artifacts/source_after_changes_${{ env.APP_NAME }}
 
-      - name: Push to base branch
+      - name: Push to base branch (skippable)
+        if: ${{ env.SKIP_PUSH != 'true' && env.BASE_BRANCH != '' }}
         shell: pwsh
         run: |
           cd _base
@@ -147,3 +218,215 @@ jobs:
           $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
+
+  combo-tests:
+    name: Job 2 • Combo Tests (${{ matrix.project.name }} / ${{ matrix.selections }})
+    runs-on: windows-latest
+    if: ${{ github.event.inputs.run_combo_tests == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: FreeCICD
+            branch: FreeCICD_base
+          - name: FreeLLM
+            branch: FreeLLM_base
+          - name: FreeManager
+            branch: FreeManager_base
+          - name: PJProcessor
+            branch: PJProcessor_base
+          - name: Touchpoints
+            branch: Touchpoints_base
+        selections: [ "keep:Tags", "remove:all" ]
+
+    env:
+      SELECTIONS:  ${{ matrix.selections }}
+      APP_NAME:    ${{ matrix.project.name }}
+      BASE_BRANCH: ${{ matrix.project.branch }}
+      REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
+      RENAME_EXE:  '.\Rename FreeCRM.exe'
+      RUN_BUILD_TEST: 'true'
+      SKIP_PUSH:   'true'
+
+    steps:
+      - name: Checkout main branch (fresh for each combo)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+
+      - name: Remove modules (combo)
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:REMOVE_EXE
+          if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
+          $arg = ($env:SELECTIONS -replace '\s','')
+          $arg = ($arg -replace '^(?i)keep:','keep:' -replace '^(?i)remove:','remove:')
+          Write-Host "Running removal with: $arg"
+          & "$exe" $arg
+          if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
+
+      - name: Rename (combo)
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:RENAME_EXE
+          if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
+          if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') { throw "Invalid APP_NAME '$env:APP_NAME'." }
+          & "$exe" "$env:APP_NAME"
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+
+      - name: Build & Publish (Debug/Release)
+        shell: pwsh
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .sln file after rename." }
+          $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+          dotnet restore "$($sln.FullName)"
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            $outDir = Join-Path $pwd "publish\$cfg"
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
+          }
+
+      - name: Upload artifacts (Debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Combo-${{ env.APP_NAME }}-${{ matrix.selections }}-Debug
+          path: _main/publish/Debug
+          if-no-files-found: warn
+
+      - name: Upload artifacts (Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Combo-${{ env.APP_NAME }}-${{ matrix.selections }}-Release
+          path: _main/publish/Release
+          if-no-files-found: warn
+
+  pair-keep-tests:
+    name: Job 3 • Pairwise Keep Tests (${{ matrix.project.name }} / keep:${{ matrix.keep_pair }})
+    runs-on: windows-latest
+    if: ${{ github.event.inputs.run_pair_tests == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: FreeCICD
+            branch: FreeCICD_base
+          - name: FreeLLM
+            branch: FreeLLM_base
+          - name: FreeManager
+            branch: FreeManager_base
+          - name: PJProcessor
+            branch: PJProcessor_base
+          - name: Touchpoints
+            branch: Touchpoints_base
+        keep_pair:
+          - "Appointments,EmailTemplates"
+          - "Appointments,Invoices"
+          - "Appointments,Locations"
+          - "Appointments,Payments"
+          - "Appointments,Services"
+          - "Appointments,Tags"
+          - "EmailTemplates,Invoices"
+          - "EmailTemplates,Locations"
+          - "EmailTemplates,Payments"
+          - "EmailTemplates,Services"
+          - "EmailTemplates,Tags"
+          - "Invoices,Locations"
+          - "Invoices,Payments"
+          - "Invoices,Services"
+          - "Invoices,Tags"
+          - "Locations,Payments"
+          - "Locations,Services"
+          - "Locations,Tags"
+          - "Payments,Services"
+          - "Payments,Tags"
+          - "Services,Tags"
+
+    env:
+      SELECTIONS:  ${{ format('keep:{0}', matrix.keep_pair) }}
+      APP_NAME:    ${{ matrix.project.name }}
+      BASE_BRANCH: ${{ matrix.project.branch }}
+      REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
+      RENAME_EXE:  '.\Rename FreeCRM.exe'
+      RUN_BUILD_TEST: 'true'
+      SKIP_PUSH:   'true'
+
+    steps:
+      - name: Checkout main branch (fresh for each pair)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+
+      - name: Remove modules (pair keep)
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:REMOVE_EXE
+          if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
+          $arg = ($env:SELECTIONS -replace '\s','')
+          Write-Host "Running removal with: $arg"
+          & "$exe" $arg
+          if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
+
+      - name: Rename (pair keep)
+        shell: pwsh
+        run: |
+          cd _main
+          $exe = $env:RENAME_EXE
+          if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
+          if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') { throw "Invalid APP_NAME '$env:APP_NAME'." }
+          & "$exe" "$env:APP_NAME"
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+
+      - name: Build & Publish (Debug/Release)
+        shell: pwsh
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).sln" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .sln file after rename." }
+          $proj = Get-ChildItem -Recurse -File -Filter "$($env:APP_NAME).csproj" | Select-Object -First 1
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+          dotnet restore "$($sln.FullName)"
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            $outDir = Join-Path $pwd "publish\$cfg"
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
+          }
+
+      - name: Upload artifacts (Debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pair-${{ env.APP_NAME }}-keep:${{ matrix.keep_pair }}-Debug
+          path: _main/publish/Debug
+          if-no-files-found: warn
+
+      - name: Upload artifacts (Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pair-${{ env.APP_NAME }}-keep:${{ matrix.keep_pair }}-Release
+          path: _main/publish/Release
+          if-no-files-found: warn
