@@ -3,6 +3,8 @@
 @inject BlazorDataModel Model
 
 @{
+    // {{ModuleItemStart:Tags}}
+
     // This component is used to display application-specific settings on the Tags and Edit Tag page.
     switch(Helpers.StringLower(Area)) {
         case "th":
@@ -69,4 +71,6 @@
         ValueChanged.InvokeAsync(Value);
         StateHasChanged();
     }
+
+    // {{ModuleItemEnd:Tags}}
 }
