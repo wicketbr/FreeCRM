@@ -292,6 +292,18 @@ jobs:
             dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
           }
 
+      - name: Run tests & collect results (TRX + coverage)
+        shell: pwsh
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
+          foreach ($cfg in @('Debug','Release')) {
+            $resDir = Join-Path $pwd "test-results\$cfg"
+            New-Item -ItemType Directory -Force -Path $resDir | Out-Null
+            dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx;LogFileName=$env:APP_NAME-$cfg.trx" -r $resDir --collect "XPlat Code Coverage"
+          }
+
       - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v4
         with:
@@ -304,6 +316,14 @@ jobs:
         with:
           name: Single-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
+          if-no-files-found: warn
+
+      - name: Upload test results (all)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tests-Single-${{ matrix.test.id }}-${{ env.APP_NAME }}
+          path: _main/test-results
           if-no-files-found: warn
 
   # ---------------------------
@@ -406,6 +426,18 @@ jobs:
             dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
           }
 
+      - name: Run tests & collect results (TRX + coverage)
+        shell: pwsh
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
+          foreach ($cfg in @('Debug','Release')) {
+            $resDir = Join-Path $pwd "test-results\$cfg"
+            New-Item -ItemType Directory -Force -Path $resDir | Out-Null
+            dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx;LogFileName=$env:APP_NAME-$cfg.trx" -r $resDir --collect "XPlat Code Coverage"
+          }
+
       - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v4
         with:
@@ -418,4 +450,12 @@ jobs:
         with:
           name: Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
+          if-no-files-found: warn
+
+      - name: Upload test results (all)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tests-Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}
+          path: _main/test-results
           if-no-files-found: warn
