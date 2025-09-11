@@ -37,9 +37,6 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 3
-    strategy:
-      fail-fast: false
-      max-parallel: 3
       matrix:
         project:
           - name: FreeCICD
@@ -98,6 +95,7 @@ jobs:
             8.0.x
 
       - name: Install wasm-tools workload (Blazor WASM)
+        shell: pwsh
         run: dotnet workload install wasm-tools
 
       - name: Run remove modules (CLI)
@@ -248,6 +246,7 @@ jobs:
             8.0.x
 
       - name: Install wasm-tools workload (Blazor WASM)
+        shell: pwsh
         run: dotnet workload install wasm-tools
 
       - name: Remove modules (single)
@@ -361,6 +360,7 @@ jobs:
             8.0.x
 
       - name: Install wasm-tools workload (Blazor WASM)
+        shell: pwsh
         run: dotnet workload install wasm-tools
 
       - name: Remove modules (pair keep)
