@@ -26,6 +26,24 @@ jobs:
       with:
         fetch-depth: 0
 
+    # --- NEW: Snapshot repo before any restore/build/publish ---
+    - name: Create repository snapshot (pre-build)
+      shell: pwsh
+      run: |
+        $zip = Join-Path $env:RUNNER_TEMP "repo_snapshot_${{ github.run_id }}.zip"
+        # Zip the working tree "as is" right after checkout
+        Compress-Archive -Path "$env:GITHUB_WORKSPACE\*" -DestinationPath $zip -Force
+        "REPO_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Upload repository snapshot (once)
+      if: ${{ matrix.configuration == 'Debug' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: RepoSnapshot
+        path: ${{ env.REPO_ZIP }}
+        if-no-files-found: error
+    # -----------------------------------------------------------
+
     - name: Setup .NET 9
       uses: actions/setup-dotnet@v4
       with:
@@ -45,3 +63,4 @@ jobs:
       with:
         name: WebApp-${{ matrix.configuration }}
         path: ./publish/${{ matrix.configuration }}
+        if-no-files-found: error
