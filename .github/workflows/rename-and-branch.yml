@@ -8,13 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       selections:
-        description: "Comma-separated highest→lowest to remove (overrides matrix)"
+        description: "Optional: keep:Tags | remove:all | remove:Module1,Module2"
         required: false
         default: ""
-      delay_ms:
-        description: "Delay (ms) between lines sent to the apps"
-        required: false
-        default: "1000"
       app_name:
         description: "New application name for the rename tool (overrides matrix)"
         required: false
@@ -24,120 +20,9 @@ permissions:
   contents: write
 
 jobs:
-  feeder:
-    name: Job 1 • Build feeder
-    runs-on: windows-latest
-    steps:
-      - name: Setup .NET SDK 8
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Create feeder project
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path tools\StdInFeeder | Out-Null
-          $code = @'
-          using System;
-          using System.Diagnostics;
-          using System.IO;
-          using System.Text;
-          using System.Threading.Tasks;
-          class Program {
-              static int Main(string[] args) {
-                  string exe = null;
-                  string inputPath = null;
-                  int delay = 500;
-                  string killOn = null;
-                  int killDelay = 200;
-                  bool killTriggered = false;
-                  for (int i = 0; i < args.Length; i++) {
-                      switch (args[i]) {
-                          case "--exe":        exe = args[++i]; break;
-                          case "--input":      inputPath = args[++i]; break;
-                          case "--delay":      delay = int.Parse(args[++i]); break;
-                          case "--kill-on":    killOn = args[++i]; break;
-                          case "--kill-delay": killDelay = int.Parse(args[++i]); break;
-                      }
-                  }
-                  if (string.IsNullOrWhiteSpace(exe) || !File.Exists(exe)) {
-                      Console.Error.WriteLine($"Target exe not found: {exe}"); return 2;
-                  }
-                  if (string.IsNullOrWhiteSpace(inputPath) || !File.Exists(inputPath)) {
-                      Console.Error.WriteLine($"Input file not found: {inputPath}"); return 3;
-                  }
-                  var psi = new ProcessStartInfo {
-                      FileName = exe,
-                      UseShellExecute = false,
-                      RedirectStandardInput = true,
-                      RedirectStandardOutput = true,
-                      RedirectStandardError = true,
-                      CreateNoWindow = true
-                  };
-                  using var p = new Process { StartInfo = psi };
-                  p.OutputDataReceived += (_, e) => {
-                      if (e.Data != null) {
-                          Console.WriteLine(e.Data);
-                          if (!string.IsNullOrEmpty(killOn) &&
-                              e.Data.IndexOf(killOn, StringComparison.OrdinalIgnoreCase) >= 0 &&
-                              !killTriggered) {
-                              killTriggered = true;
-                              _ = Task.Run(() => {
-                                  try {
-                                      System.Threading.Thread.Sleep(killDelay);
-                                      if (!p.HasExited) {
-                                          try { p.CloseMainWindow(); } catch { }
-                                          if (!p.HasExited) p.Kill(true);
-                                      }
-                                  } catch { }
-                              });
-                          }
-                      }
-                  };
-                  p.ErrorDataReceived += (_, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); };
-                  if (!p.Start()) return 4;
-                  p.BeginOutputReadLine();
-                  p.BeginErrorReadLine();
-                  foreach (var line in File.ReadAllLines(inputPath, Encoding.ASCII)) {
-                      p.StandardInput.WriteLine(line);
-                      p.StandardInput.Flush();
-                      System.Threading.Thread.Sleep(delay);
-                  }
-                  p.StandardInput.Close();
-                  p.WaitForExit();
-                  return killTriggered ? 0 : p.ExitCode;
-              }
-          }
-          '@
-          Set-Content -Path tools\StdInFeeder\Program.cs -Value $code -Encoding UTF8
-
-          $proj = @'
-          <Project Sdk="Microsoft.NET.Sdk">
-            <PropertyGroup>
-              <OutputType>Exe</OutputType>
-              <TargetFramework>net8.0</TargetFramework>
-              <PublishSingleFile>true</PublishSingleFile>
-              <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-              <SelfContained>false</SelfContained>
-            </PropertyGroup>
-          </Project>
-          '@
-          Set-Content -Path tools\StdInFeeder\StdInFeeder.csproj -Value $proj -Encoding UTF8
-
-      - name: Publish feeder
-        shell: pwsh
-        run: dotnet publish tools\StdInFeeder -c Release -o tools\StdInFeeder\out
-
-      - name: Upload feeder artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: stdin_feeder
-          path: tools/StdInFeeder/out
-
   project:
-    name: Job 2 • Process ${{ matrix.project.name }}
+    name: Job 1 • Process ${{ matrix.project.name }}
     runs-on: windows-latest
-    needs: feeder
 
     strategy:
       fail-fast: false
@@ -145,28 +30,26 @@ jobs:
         project:
           - name: FreeCICD
             branch: FreeCICD_base
-            selections: "6,5,4,3,2,1"
+            selections: "keep:Tags"
           - name: FreeLLM
             branch: FreeLLM_base
-            selections: "7,6,5,4,3,2,1"
+            selections: "remove:all"
           - name: FreeManager
             branch: FreeManager_base
-            selections: "7,6,5,4,3,2,1"
+            selections: "remove:all"
           - name: PJProcessor
             branch: PJProcessor_base
-            selections: "7,6,5,4,3,2,1"
+            selections: "remove:all"
           - name: Touchpoints
             branch: Touchpoints_base
-            selections: "7,6,5,4,3,2,1"
-            
+            selections: "remove:all"
+
     env:
-      SELECTIONS: ${{ github.event.inputs.selections || matrix.project.selections }}
-      APP_NAME:  ${{ github.event.inputs.app_name || matrix.project.name }}
+      SELECTIONS:  ${{ github.event.inputs.selections || matrix.project.selections }}
+      APP_NAME:    ${{ github.event.inputs.app_name || matrix.project.name }}
       BASE_BRANCH: ${{ matrix.project.branch }}
-      DELAY_MS:  ${{ github.event.inputs.delay_ms || '1000' }}
-      REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
-      RENAME_EXE: '.\Rename FreeCRM.exe'
-      FEEDER_EXE: '.\tools\StdInFeeder\out\StdInFeeder.exe'
+      REMOVE_EXE:  '.\Remove Modules from FreeCRM.exe'
+      RENAME_EXE:  '.\Rename FreeCRM.exe'
 
     steps:
       - name: Checkout main branch
@@ -191,42 +74,49 @@ jobs:
           path: _app
           fetch-depth: 0
 
-      - name: Setup .NET
+      - name: Setup .NET (ensure runtimes for the tools)
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             9.0.x
             8.0.x
 
-      - name: Download feeder artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: stdin_feeder
-          path: _main/tools/StdInFeeder/out
-
-      - name: Run remove modules helper
+      - name: Run remove modules (CLI)
         shell: pwsh
         run: |
           cd _main
           $exe = $env:REMOVE_EXE
-          $targets = $env:SELECTIONS -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^\d+$' } | ForEach-Object { [int]$_ } | Sort-Object -Descending
-          foreach ($n in $targets) {
-            Set-Content -Path input.txt -Value @("$n","x") -Encoding ASCII
-            & $env:FEEDER_EXE --exe "$exe" --input "input.txt" --delay $env:DELAY_MS
-            if ($LASTEXITCODE -ne 0) { throw "Remove run failed for selection $n (exit $LASTEXITCODE)" }
-            Remove-Item input.txt -Force
+          if (!(Test-Path $exe)) { throw "Remove tool not found: $exe" }
+
+          $arg = ($env:SELECTIONS ?? '').Trim()
+          if ([string]::IsNullOrWhiteSpace($arg)) {
+            Write-Host "SELECTIONS empty: skipping removal."
+            exit 0
           }
 
-      - name: Run rename helper
+          # Remove all spaces just in case, and normalize remove:all casing
+          $arg = ($arg -replace '\s','')
+          if ($arg -match '^(?i)remove:all$') { $arg = 'remove:all' }
+
+          Write-Host "Running removal with: $arg"
+          & "$exe" $arg
+          if ($LASTEXITCODE -ne 0) { throw "Remove run failed (exit $LASTEXITCODE)" }
+
+      - name: Run rename (CLI)
         shell: pwsh
         run: |
           cd _main
           $exe = $env:RENAME_EXE
-          if ($env:APP_NAME -notmatch '^[A-Za-z]+$') { throw "APP_NAME '$env:APP_NAME' is invalid." }
-          Set-Content -Path rename.txt -Value @($env:APP_NAME) -Encoding ASCII
-          & $env:FEEDER_EXE --exe "$exe" --input "rename.txt" --delay 500 --kill-on "press any key" --kill-delay 200
+          if (!(Test-Path $exe)) { throw "Rename tool not found: $exe" }
+
+          # Letters/numbers only, start with a letter; tweak if your tool accepts other chars
+          if ($env:APP_NAME -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
+            throw "APP_NAME '$env:APP_NAME' is invalid. Use letters/numbers only and start with a letter."
+          }
+
+          Write-Host "Renaming to: $env:APP_NAME"
+          & "$exe" "$env:APP_NAME"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
-          Remove-Item rename.txt -Force
 
       - name: Snapshot source after changes
         shell: pwsh
