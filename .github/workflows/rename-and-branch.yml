@@ -46,7 +46,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 18
       matrix:
         project:
           - name: FreeCICD
@@ -163,7 +163,7 @@ jobs:
     needs: project
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 18
       matrix:
         test:
           # ---- Add explicit keep/remove cases here ----
