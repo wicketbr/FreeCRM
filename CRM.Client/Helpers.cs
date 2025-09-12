@@ -5728,6 +5728,8 @@ public static partial class Helpers
 
         Dictionary<string, object> parameters = new Dictionary<string, object>();
         parameters.Add("OnUploadComplete", OnUploadComplete);
+        parameters.Add("InDialog", true);
+
         if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
             parameters.Add("UploadInstructions", UploadInstructions);
         }
