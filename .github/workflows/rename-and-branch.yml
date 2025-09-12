@@ -2,17 +2,17 @@
 # Workflow: Rename, Build, Test, and Push to Base Branch
 #
 # Purpose:
-#   1. Run rename/remove tools to generate project variants (Job 1).
-#   2. Push modified source code back into the *_base branches (Job 1).
-#   3. Build, test, and publish Debug/Release outputs for selected keep/remove
-#      variants (Job 2).
+#   1) Job 1 ("project"): run the remove/rename CLIs, snapshot the result, and
+#      push the sanitized source back to the *_base branch.
+#   2) Job 2 ("build-test"): for an explicit matrix of keep/remove variants,
+#      snapshot sources (pre-build), then build, test, and publish Debug/Release.
 #
 # Notes:
-#   - Git identity is explicitly configured inside the _base repo to avoid the
-#     "Author identity unknown" error in local commits.
-#   - Only Job 1 pushes back to *_base branches.
-#   - Job 2 uses an explicit matrix list — add/remove entries as needed.
-#   - Any regex in comments is explained inline.
+#   - Git identity is configured *inside* the _base repo just before committing,
+#     which avoids "fatal: not in a git directory".
+#   - Pushing uses a sanitized snapshot staged under artifacts/source_after_changes_*
+#     so we never copy workflow files or transient artifacts back to the base branch.
+#   - Any regex we use is explained inline near the command that uses it.
 # ============================================================================
 
 name: Rename • Build/Test • (Optional) Branch Push
@@ -32,20 +32,21 @@ env:
   RENAME_EXE: '.\Rename FreeCRM.exe'
   DOTNET_VERSION: 9.0.x
 
+# Use PowerShell consistently on Windows steps without repeating shell each time
 defaults:
   run:
     shell: pwsh
 
 jobs:
   # ==========================================================================
-  # JOB 1: PRODUCTION RUNS — Rename/Remove, Push to *_base branch
+  # JOB 1: PRODUCTION RUNS — Rename/Remove, Snapshot, Push to *_base branch
   # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
-      max-parallel: 18
+      max-parallel: 10
       matrix:
         project:
           - name: FreeCICD
@@ -70,6 +71,7 @@ jobs:
       BASE_BRANCH: ${{ matrix.project.branch }}
 
     steps:
+      # --------------------------- Checkout ----------------------------------
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
@@ -84,12 +86,13 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      # Ensure .NET runtime/SDK is present before running the EXEs
+      # --------------------------- .NET Setup --------------------------------
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      # ---------------------- Run rename/remove tools ------------------------
       - name: Run remove modules
         run: |
           cd _main
@@ -100,45 +103,53 @@ jobs:
         run: |
           cd _main
           if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
-          # Regex ^[A-Za-z][A-Za-z0-9]*$:
-          #  - ^ and $ anchor start/end of the string
-          #  - First char must be a letter (A–Z or a–z)
-          #  - Remaining chars must be letters or digits
+          # Regex explanation:
+          #   ^[A-Za-z][A-Za-z0-9]*$
+          #     - ^ / $ : start and end of the string
+          #     - [A-Za-z] : first character must be a letter
+          #     - [A-Za-z0-9]* : remaining characters are letters or numbers
           if ("${{ env.APP_NAME }}" -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
             throw "APP_NAME '${{ env.APP_NAME }}' is invalid. Use letters/numbers only and start with a letter."
           }
           & "${{ env.RENAME_EXE }}" "${{ env.APP_NAME }}"
 
-      - name: Snapshot source after rename/remove
+      # ----------------------- Snapshot source state -------------------------
+      - name: Snapshot source after rename/remove (sanitized for push)
         run: |
           $src = Join-Path $pwd "_main"
-          $zip = Join-Path $env:RUNNER_TEMP "snapshot_${{ env.APP_NAME }}.zip"
-          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
-          "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $dst = Join-Path $pwd "artifacts\source_after_changes_$($env:APP_NAME)"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME).zip"
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
 
-      - name: Upload source snapshot
+          # Remove CI folders from source prior to snapshotting to avoid copying
+          # workflows/artifacts into the base branch.
+          Remove-Item -Recurse -Force "$src\.github","$src\artifacts" -ErrorAction SilentlyContinue
+
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Expand-Archive -Path $zip -DestinationPath $dst -Force
+
+      - name: Upload source snapshot (post-rename)
         uses: actions/upload-artifact@v4
         with:
           name: source_after_changes_${{ env.APP_NAME }}
-          path: ${{ env.SNAPSHOT_PATH }}
-          if-no-files-found: warn
+          path: artifacts/source_after_changes_${{ env.APP_NAME }}
 
-      # Configure identity INSIDE the _base repo (fixes "not in a git directory")
-      - name: Configure Git identity (local to _base)
-        if: ${{ env.BASE_BRANCH != '' }}
-        run: |
-          git -C _base config user.name  "github-actions[bot]"
-          git -C _base config user.email "github-actions[bot]@users.noreply.github.com"
-
+      # -------------------- Push changes back to base branch -----------------
       - name: Push to base branch
         if: ${{ env.BASE_BRANCH != '' }}
         run: |
           cd _base
-          # Wipe existing contents (except .git) and replace with modified source
+
+          # Configure identity INSIDE the git repo to avoid "not in a git directory"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Wipe existing contents (except .git) and replace with sanitized snapshot
           Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
-          Copy-Item -Path "$env:GITHUB_WORKSPACE\_main\*" -Destination . -Recurse -Force
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\artifacts\source_after_changes_$($env:APP_NAME)\*" -Destination . -Recurse -Force
+
           git add -A
-          # Grab the latest commit message from main to reference in the regen
+          # Use latest commit message from origin/main to aid traceability
           $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
@@ -152,7 +163,7 @@ jobs:
     needs: project
     strategy:
       fail-fast: false
-      max-parallel: 18
+      max-parallel: 10
       matrix:
         test:
           # ---- Add explicit keep/remove cases here ----
@@ -170,7 +181,7 @@ jobs:
           - { id: 'T12', selections: 'remove:Services' }
           - { id: 'T13', selections: 'keep:Tags' }
           - { id: 'T14', selections: 'remove:Tags' }
-          # Later: just keep adding flat entries here for pairwise, etc.
+          # Later: keep adding flat entries here for pairwise, triples, etc.
 
     steps:
       - name: Checkout main
@@ -180,7 +191,7 @@ jobs:
           path: _main
           fetch-depth: 0
 
-      - name: Setup .NET SDKs
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
@@ -188,68 +199,91 @@ jobs:
       - name: Remove modules
         run: |
           cd _main
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
           & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
 
-      - name: Rename project
+      - name: Rename project (derive test app name)
         run: |
           cd _main
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
+
           $sel = '${{ matrix.test.selections }}'
-          # The three -replace operations below build a clean variant name:
-          # 1) 'keep:'   → 'Keep'     (prefix keep selections with 'Keep')
-          # 2) 'remove:' → 'Remove'   (prefix remove selections with 'Remove')
-          # 3) '[^A-Za-z0-9]' → ''    (strip all non-alphanumeric characters)
-          $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
+          # The three regex replacements below produce a readable app name:
+          #   - 'keep:'    -> 'Keep'      (label the selection type)
+          #   - 'remove:'  -> 'Remove'    (label the selection type)
+          #   - '[^A-Za-z0-9]' -> ''      (strip any non-alphanumeric chars)
+          $appName = 'Test' + (
+            $sel -replace 'keep:','Keep' `
+                 -replace 'remove:','Remove' `
+                 -replace '[^A-Za-z0-9]',''
+          )
           $appName = "$appName" + "_${{ matrix.test.id }}"
+
+          # Regex explanation:
+          #   ^[A-Za-z][A-Za-z0-9_]*$
+          #     - start with a letter
+          #     - followed by letters/numbers/underscore (allow _ from our suffix)
+          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestApp_${{ matrix.test.id }}" }
+
           & "${{ env.RENAME_EXE }}" "$appName"
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+
           "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # ---- Snapshot after rename/remove, before build (variant-specific) ----
-      - name: Snapshot source before build
+      # ----------------------- Snapshot (pre-build) --------------------------
+      - name: Snapshot source (pre-build) for ${{ matrix.test.id }}
         run: |
           $src = Join-Path $pwd "_main"
-          $zip = Join-Path $env:RUNNER_TEMP "snapshot_${{ env.APP_NAME }}.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME)_${{ matrix.test.id }}.zip"
           Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
           "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Upload variant snapshot
+      - name: Upload source snapshot (pre-build)
         uses: actions/upload-artifact@v4
         with:
-          name: source_after_changes_${{ env.APP_NAME }}
+          name: source_after_changes_${{ matrix.test.id }}_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
-          if-no-files-found: warn
 
+      # ------------------------- Build & Publish -----------------------------
       - name: Build & Publish (Debug/Release)
         run: |
           cd _main
-          $sln  = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
-          $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1
+          $sln  = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.sln" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .sln after rename." }
+
+          $proj = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.csproj" | Select-Object -First 1
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
-            dotnet build   "$($sln.FullName)"  --configuration $cfg --no-restore
-            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output "publish\$cfg"
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            $outDir = Join-Path $pwd "publish\$cfg"
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
           }
 
-      - name: Run tests
+      # ------------------------------ Tests ----------------------------------
+      - name: Run tests (Debug/Release)
         run: |
           cd _main
           $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
           foreach ($cfg in @('Debug','Release')) {
             dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
           }
 
-      - name: Upload artifacts (Debug)
+      # -------------------------- Upload Artifacts ---------------------------
+      - name: Upload published artifact (Debug)
         uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
           path: _main/publish/Debug
-          if-no-files-found: warn
 
-      - name: Upload artifacts (Release)
+      - name: Upload published artifact (Release)
         uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
-          if-no-files-found: warn
 
       - name: Upload test results
         if: always()
@@ -257,4 +291,3 @@ jobs:
         with:
           name: Tests-${{ matrix.test.id }}-${{ env.APP_NAME }}
           path: _main/test-results
-          if-no-files-found: warn
