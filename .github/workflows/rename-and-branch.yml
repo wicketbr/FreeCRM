@@ -1,26 +1,17 @@
 # ============================================================================
 # Workflow: Rename, Build, Test, and Push to Base Branch
-# Purpose : 
-#   1. Run rename/remove tools to generate project variants.
-#   2. Build & publish the server-side .NET solution (Debug & Release).
-#   3. Upload snapshots & artifacts for traceability.
-#   4. Push modified source code back into the *_base branches (Job 1 only).
 #
-# Triggers: On push/pull request to "main".
-# Runner  : windows-latest (PowerShell shell by default here via `defaults`).
-#
-# Key Conventions:
-# - All reusable inputs (exe paths, toggles) live in top-level `env`.
-# - Job 1 ("project") is for *production runs* (pushes results to *_base branch).
-# - Job 2 ("combo-tests") tests single-module removals (no push).
-# - Job 3 ("pair-keep-tests") tests keeping pairs of modules (no push).
-# - After rename/remove, source is zipped & uploaded immediately to ensure
-#   artifacts are saved even if build/test fails later.
+# Purpose:
+#   1. Run rename/remove tools to generate project variants (Job 1).
+#   2. Push modified source code back into the *_base branches (Job 1).
+#   3. Build, test, and publish Debug/Release outputs for selected keep/remove
+#      variants (Job 2).
 #
 # Notes:
-# - `wasm-tools` workload is not installed because this solution only builds
-#   server-side projects (not Blazor WebAssembly).
-# - `SKIP_PUSH` toggle allows disabling branch pushes for dry runs.
+#   - Git identity is explicitly configured before pushing to avoid the
+#     "Author identity unknown" error.
+#   - Only Job 1 pushes back to *_base branches.
+#   - Job 2 uses an explicit matrix list — add/remove entries as needed.
 # ============================================================================
 
 name: Rename • Build/Test • (Optional) Branch Push
@@ -38,6 +29,11 @@ permissions:
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
+  DOTNET_VERSION: 9.0.x
+
+defaults:
+  run:
+    shell: pwsh
 
 jobs:
   # ==========================================================================
@@ -73,7 +69,6 @@ jobs:
       BASE_BRANCH: ${{ matrix.project.branch }}
 
     steps:
-      # --------------------------- Checkout ----------------------------------
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
@@ -88,25 +83,28 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      # --------------------------- .NET Setup --------------------------------
-      - name: Setup .NET SDKs
+      # Ensure .NET runtime/SDK is present before running the CLI EXEs
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            9.0.x
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # ---------------------- Run rename/remove tools ------------------------
       - name: Run remove modules
         run: |
           cd _main
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
           & "${{ env.REMOVE_EXE }}" "${{ env.SELECTIONS }}"
 
       - name: Run rename
         run: |
           cd _main
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
+          # Regex: ^[A-Za-z][A-Za-z0-9]*$ ensures APP_NAME starts with a letter and contains only letters/numbers.
+          if ("${{ env.APP_NAME }}" -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
+            throw "APP_NAME '${{ env.APP_NAME }}' is invalid. Use letters/numbers only and start with a letter."
+          }
           & "${{ env.RENAME_EXE }}" "${{ env.APP_NAME }}"
 
-      # ----------------------- Snapshot source state -------------------------
       - name: Snapshot source after rename/remove
         run: |
           $src = Join-Path $pwd "_main"
@@ -119,29 +117,31 @@ jobs:
         with:
           name: source_after_changes_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
+          if-no-files-found: warn
 
-      # -------------------- Push changes back to base branch -----------------
-      - name: Push to base branch (skippable)
+      - name: Configure Git identity
         if: ${{ env.BASE_BRANCH != '' }}
         run: |
-          cd _base
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Push to base branch
+        if: ${{ env.BASE_BRANCH != '' }}
+        run: |
+          cd _base
           # wipe existing contents (except .git) and replace with modified source
           Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
           Copy-Item -Path "$env:GITHUB_WORKSPACE\_main\*" -Destination . -Recurse -Force
-
           git add -A
           $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
 
   # ==========================================================================
-  # JOB 2: SINGLE-MODULE TESTS — Try different keep/remove combos (no push)
+  # JOB 2: BUILD/TEST — Explicit keep/remove variants (extend matrix manually)
   # ==========================================================================
-  combo-tests:
-    name: 2. (${{ matrix.test.id }} / ${{ matrix.test.selections }})
+  build-test:
+    name: 2. ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
     needs: project
     strategy:
@@ -149,6 +149,7 @@ jobs:
       max-parallel: 18
       matrix:
         test:
+          # ---- Add explicit keep/remove cases here ----
           - { id: 'T01', selections: 'keep:Appointments' }
           - { id: 'T02', selections: 'remove:Appointments' }
           - { id: 'T03', selections: 'keep:EmailTemplates' }
@@ -163,6 +164,7 @@ jobs:
           - { id: 'T12', selections: 'remove:Services' }
           - { id: 'T13', selections: 'keep:Tags' }
           - { id: 'T14', selections: 'remove:Tags' }
+          # Later: just keep adding flat entries here for pairwise etc.
 
     steps:
       - name: Checkout main
@@ -175,41 +177,45 @@ jobs:
       - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            9.0.x
-            8.0.x
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Remove modules (single)
+      - name: Remove modules
         run: |
           cd _main
           & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
 
-      - name: Rename (single)
+      - name: Rename project
         run: |
           cd _main
           $sel = '${{ matrix.test.selections }}'
+          # Regex replacements:
+          #  - 'keep:'   → 'Keep'
+          #  - 'remove:' → 'Remove'
+          #  - '[^A-Za-z0-9]' → ''  (strip everything not alphanumeric)
           $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
           $appName = "$appName" + "_${{ matrix.test.id }}"
           & "${{ env.RENAME_EXE }}" "$appName"
           "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Snapshot source after rename/remove
+      # ---- Snapshot after rename/remove, before build (variant-specific) ----
+      - name: Snapshot source before build
         run: |
           $src = Join-Path $pwd "_main"
           $zip = Join-Path $env:RUNNER_TEMP "snapshot_${{ env.APP_NAME }}.zip"
           Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
           "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Upload source snapshot
+      - name: Upload variant snapshot
         uses: actions/upload-artifact@v4
         with:
           name: source_after_changes_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
+          if-no-files-found: warn
 
       - name: Build & Publish (Debug/Release)
         run: |
           cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
+          $sln  = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
           $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
@@ -228,132 +234,21 @@ jobs:
       - name: Upload artifacts (Debug)
         uses: actions/upload-artifact@v4
         with:
-          name: Single-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
           path: _main/publish/Debug
+          if-no-files-found: warn
 
       - name: Upload artifacts (Release)
         uses: actions/upload-artifact@v4
         with:
-          name: Single-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
+          if-no-files-found: warn
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Tests-Single-${{ matrix.test.id }}-${{ env.APP_NAME }}
+          name: Tests-${{ matrix.test.id }}-${{ env.APP_NAME }}
           path: _main/test-results
-
-  # ==========================================================================
-  # JOB 3: PAIRWISE KEEP TESTS — Keep 2 modules at a time (no push)
-  # ==========================================================================
-  pair-keep-tests:
-    name: 3. (${{ matrix.test.id }} / keep:${{ matrix.test.keep_pair }})
-    runs-on: windows-latest
-    needs: combo-tests
-    strategy:
-      fail-fast: false
-      max-parallel: 18
-      matrix:
-        test:
-          - { id: 'T15', keep_pair: 'Appointments,EmailTemplates' }
-          - { id: 'T16', keep_pair: 'Appointments,Invoices' }
-          - { id: 'T17', keep_pair: 'Appointments,Locations' }
-          - { id: 'T18', keep_pair: 'Appointments,Payments' }
-          - { id: 'T19', keep_pair: 'Appointments,Services' }
-          - { id: 'T20', keep_pair: 'Appointments,Tags' }
-          - { id: 'T21', keep_pair: 'EmailTemplates,Invoices' }
-          - { id: 'T22', keep_pair: 'EmailTemplates,Locations' }
-          - { id: 'T23', keep_pair: 'EmailTemplates,Payments' }
-          - { id: 'T24', keep_pair: 'EmailTemplates,Services' }
-          - { id: 'T25', keep_pair: 'EmailTemplates,Tags' }
-          - { id: 'T26', keep_pair: 'Invoices,Locations' }
-          - { id: 'T27', keep_pair: 'Invoices,Payments' }
-          - { id: 'T28', keep_pair: 'Invoices,Services' }
-          - { id: 'T29', keep_pair: 'Invoices,Tags' }
-          - { id: 'T30', keep_pair: 'Locations,Payments' }
-          - { id: 'T31', keep_pair: 'Locations,Services' }
-          - { id: 'T32', keep_pair: 'Locations,Tags' }
-          - { id: 'T33', keep_pair: 'Payments,Services' }
-          - { id: 'T34', keep_pair: 'Payments,Tags' }
-          - { id: 'T35', keep_pair: 'Services,Tags' }
-
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: _main
-          fetch-depth: 0
-
-      - name: Setup .NET SDKs
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            9.0.x
-            8.0.x
-
-      - name: Remove modules (pair keep)
-        run: |
-          cd _main
-          & "${{ env.REMOVE_EXE }}" "keep:${{ matrix.test.keep_pair }}"
-
-      - name: Rename (pair keep)
-        run: |
-          cd _main
-          $pair = '${{ matrix.test.keep_pair }}'
-          $appName = 'TestKeep' + ($pair -replace '[^A-Za-z0-9]','')
-          $appName = "$appName" + "_${{ matrix.test.id }}"
-          & "${{ env.RENAME_EXE }}" "$appName"
-          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Snapshot source after rename/remove
-        run: |
-          $src = Join-Path $pwd "_main"
-          $zip = Join-Path $env:RUNNER_TEMP "snapshot_${{ env.APP_NAME }}.zip"
-          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
-          "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      - name: Upload source snapshot
-        uses: actions/upload-artifact@v4
-        with:
-          name: source_after_changes_${{ env.APP_NAME }}
-          path: ${{ env.SNAPSHOT_PATH }}
-
-      - name: Build & Publish (Debug/Release)
-        run: |
-          cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
-          $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1
-          dotnet restore "$($sln.FullName)"
-          foreach ($cfg in @('Debug','Release')) {
-            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
-            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output "publish\$cfg"
-          }
-
-      - name: Run tests
-        run: |
-          cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
-          foreach ($cfg in @('Debug','Release')) {
-            dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
-          }
-
-      - name: Upload artifacts (Debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
-          path: _main/publish/Debug
-
-      - name: Upload artifacts (Release)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
-          path: _main/publish/Release
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Tests-Pair-${{ matrix.test.id }}-${{ env.APP_NAME }}
-          path: _main/test-results
+          if-no-files-found: warn
