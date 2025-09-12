@@ -41,7 +41,7 @@ env:
 
 jobs:
   # ==========================================================================
-  # JOB 1: PRODUCTION RUNS — Rename/Remove, Build, Push to *_base branch
+  # JOB 1: PRODUCTION RUNS — Rename/Remove, Push to *_base branch
   # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
@@ -71,8 +71,6 @@ jobs:
       SELECTIONS:  ${{ matrix.project.selections }}
       APP_NAME:    ${{ matrix.project.name }}
       BASE_BRANCH: ${{ matrix.project.branch }}
-      RUN_BUILD_TEST: 'true'
-      SKIP_PUSH:   'false'   # Set to 'true' if you want to skip pushing
 
     steps:
       # --------------------------- Checkout ----------------------------------
@@ -96,7 +94,6 @@ jobs:
         with:
           dotnet-version: |
             9.0.x
-            8.0.x
 
       # ---------------------- Run rename/remove tools ------------------------
       - name: Run remove modules
@@ -125,7 +122,7 @@ jobs:
 
       # -------------------- Push changes back to base branch -----------------
       - name: Push to base branch (skippable)
-        if: ${{ env.SKIP_PUSH != 'true' && env.BASE_BRANCH != '' }}
+        if: ${{ env.BASE_BRANCH != '' }}
         run: |
           cd _base
           git config user.name "github-actions[bot]"
