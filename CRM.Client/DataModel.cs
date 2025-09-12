@@ -1020,7 +1020,7 @@ public partial class BlazorDataModel
             message =
                 "<div class='d-flex align-items-center'>\n" +
                 "  <div class='spinner-grow me-2' role='status'></div>\n" +
-                "  <div class='me-auto toast-large'>" + LoadingMessage + "</div>\n" +
+                "  <div class='me-auto toast-large'>" + Helpers.Text("LoadingWait") + "</div>\n" +
                 "</div>\n";
         } else {
             message = ReplaceLanguageTagsInString(message);
