@@ -123,30 +123,6 @@ jobs:
           name: source_after_changes_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
 
-      # -------------------------- Build & Publish ----------------------------
-      - name: Build & Publish (Debug/Release)
-        run: |
-          cd _main
-          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
-          $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1
-          dotnet restore "$($sln.FullName)"
-          foreach ($cfg in @('Debug','Release')) {
-            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
-            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output "publish\$cfg"
-          }
-
-      - name: Upload artifacts (Debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebApp-${{ env.APP_NAME }}-Debug
-          path: _main/publish/Debug
-
-      - name: Upload artifacts (Release)
-        uses: actions/upload-artifact@v4
-        with:
-          name: WebApp-${{ env.APP_NAME }}-Release
-          path: _main/publish/Release
-
       # -------------------- Push changes back to base branch -----------------
       - name: Push to base branch (skippable)
         if: ${{ env.SKIP_PUSH != 'true' && env.BASE_BRANCH != '' }}
