@@ -8,10 +8,11 @@
 #      variants (Job 2).
 #
 # Notes:
-#   - Git identity is explicitly configured before pushing to avoid the
-#     "Author identity unknown" error.
+#   - Git identity is explicitly configured inside the _base repo to avoid the
+#     "Author identity unknown" error in local commits.
 #   - Only Job 1 pushes back to *_base branches.
 #   - Job 2 uses an explicit matrix list — add/remove entries as needed.
+#   - Any regex in comments is explained inline.
 # ============================================================================
 
 name: Rename • Build/Test • (Optional) Branch Push
@@ -83,7 +84,7 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      # Ensure .NET runtime/SDK is present before running the CLI EXEs
+      # Ensure .NET runtime/SDK is present before running the EXEs
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -99,7 +100,10 @@ jobs:
         run: |
           cd _main
           if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
-          # Regex: ^[A-Za-z][A-Za-z0-9]*$ ensures APP_NAME starts with a letter and contains only letters/numbers.
+          # Regex ^[A-Za-z][A-Za-z0-9]*$:
+          #  - ^ and $ anchor start/end of the string
+          #  - First char must be a letter (A–Z or a–z)
+          #  - Remaining chars must be letters or digits
           if ("${{ env.APP_NAME }}" -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
             throw "APP_NAME '${{ env.APP_NAME }}' is invalid. Use letters/numbers only and start with a letter."
           }
@@ -119,20 +123,22 @@ jobs:
           path: ${{ env.SNAPSHOT_PATH }}
           if-no-files-found: warn
 
-      - name: Configure Git identity
+      # Configure identity INSIDE the _base repo (fixes "not in a git directory")
+      - name: Configure Git identity (local to _base)
         if: ${{ env.BASE_BRANCH != '' }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git -C _base config user.name  "github-actions[bot]"
+          git -C _base config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Push to base branch
         if: ${{ env.BASE_BRANCH != '' }}
         run: |
           cd _base
-          # wipe existing contents (except .git) and replace with modified source
+          # Wipe existing contents (except .git) and replace with modified source
           Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
           Copy-Item -Path "$env:GITHUB_WORKSPACE\_main\*" -Destination . -Recurse -Force
           git add -A
+          # Grab the latest commit message from main to reference in the regen
           $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
@@ -164,7 +170,7 @@ jobs:
           - { id: 'T12', selections: 'remove:Services' }
           - { id: 'T13', selections: 'keep:Tags' }
           - { id: 'T14', selections: 'remove:Tags' }
-          # Later: just keep adding flat entries here for pairwise etc.
+          # Later: just keep adding flat entries here for pairwise, etc.
 
     steps:
       - name: Checkout main
@@ -188,10 +194,10 @@ jobs:
         run: |
           cd _main
           $sel = '${{ matrix.test.selections }}'
-          # Regex replacements:
-          #  - 'keep:'   → 'Keep'
-          #  - 'remove:' → 'Remove'
-          #  - '[^A-Za-z0-9]' → ''  (strip everything not alphanumeric)
+          # The three -replace operations below build a clean variant name:
+          # 1) 'keep:'   → 'Keep'     (prefix keep selections with 'Keep')
+          # 2) 'remove:' → 'Remove'   (prefix remove selections with 'Remove')
+          # 3) '[^A-Za-z0-9]' → ''    (strip all non-alphanumeric characters)
           $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
           $appName = "$appName" + "_${{ matrix.test.id }}"
           & "${{ env.RENAME_EXE }}" "$appName"
@@ -219,7 +225,7 @@ jobs:
           $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
-            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            dotnet build   "$($sln.FullName)"  --configuration $cfg --no-restore
             dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output "publish\$cfg"
           }
 
