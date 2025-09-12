@@ -32,7 +32,7 @@ jobs:
   # Job 1: PRODUCTION RUNS
   # ---------------------------
   project:
-    name: Job 1 • Process ${{ matrix.project.name }}
+    name: 1. ${{ matrix.project.name }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -203,7 +203,7 @@ jobs:
   # Job 2: SINGLE-MODULE TESTS (no push)
   # ---------------------------
   combo-tests:
-    name: Job 2 • Single-Module Tests (${{ matrix.test.id }} / ${{ matrix.test.selections }})
+    name: 2. (${{ matrix.test.id }} / ${{ matrix.test.selections }})
     runs-on: windows-latest
     needs: project
     strategy:
@@ -330,7 +330,7 @@ jobs:
   # Job 3: PAIRWISE KEEP TESTS (no push)
   # ---------------------------
   pair-keep-tests:
-    name: Job 3 • Pairwise Keep Tests (${{ matrix.test.id }} / keep:${{ matrix.test.keep_pair }})
+    name: 3. (${{ matrix.test.id }} / keep:${{ matrix.test.keep_pair }})
     runs-on: windows-latest
     needs: combo-tests
     strategy:
