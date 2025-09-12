@@ -1,3 +1,28 @@
+# ============================================================================
+# Workflow: Rename, Build, Test, and Push to Base Branch
+# Purpose : 
+#   1. Run rename/remove tools to generate project variants.
+#   2. Build & publish the server-side .NET solution (Debug & Release).
+#   3. Upload snapshots & artifacts for traceability.
+#   4. Push modified source code back into the *_base branches (Job 1 only).
+#
+# Triggers: On push/pull request to "main".
+# Runner  : windows-latest (PowerShell shell by default here via `defaults`).
+#
+# Key Conventions:
+# - All reusable inputs (exe paths, toggles) live in top-level `env`.
+# - Job 1 ("project") is for *production runs* (pushes results to *_base branch).
+# - Job 2 ("combo-tests") tests single-module removals (no push).
+# - Job 3 ("pair-keep-tests") tests keeping pairs of modules (no push).
+# - After rename/remove, source is zipped & uploaded immediately to ensure
+#   artifacts are saved even if build/test fails later.
+#
+# Notes:
+# - `wasm-tools` workload is not installed because this solution only builds
+#   server-side projects (not Blazor WebAssembly).
+# - `SKIP_PUSH` toggle allows disabling branch pushes for dry runs.
+# ============================================================================
+
 name: Rename • Build/Test • (Optional) Branch Push
 
 on:
@@ -9,13 +34,14 @@ on:
 permissions:
   contents: write
 
+# ---- Global environment shared across all jobs -----------------------------
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
 
 jobs:
   # ==========================================================================
-  # JOB 1: PRODUCTION RUNS
+  # JOB 1: PRODUCTION RUNS — Rename/Remove, Build, Push to *_base branch
   # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
@@ -46,9 +72,10 @@ jobs:
       APP_NAME:    ${{ matrix.project.name }}
       BASE_BRANCH: ${{ matrix.project.branch }}
       RUN_BUILD_TEST: 'true'
-      SKIP_PUSH:   'true'
+      SKIP_PUSH:   'false'   # Set to 'true' if you want to skip pushing
 
     steps:
+      # --------------------------- Checkout ----------------------------------
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
@@ -63,6 +90,7 @@ jobs:
           path: _base
           fetch-depth: 0
 
+      # --------------------------- .NET Setup --------------------------------
       - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
@@ -70,9 +98,7 @@ jobs:
             9.0.x
             8.0.x
 
-      - name: Install wasm-tools workload (Blazor WASM)
-        run: dotnet workload install wasm-tools
-
+      # ---------------------- Run rename/remove tools ------------------------
       - name: Run remove modules
         run: |
           cd _main
@@ -83,6 +109,7 @@ jobs:
           cd _main
           & "${{ env.RENAME_EXE }}" "${{ env.APP_NAME }}"
 
+      # ----------------------- Snapshot source state -------------------------
       - name: Snapshot source after rename/remove
         run: |
           $src = Join-Path $pwd "_main"
@@ -96,6 +123,7 @@ jobs:
           name: source_after_changes_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
 
+      # -------------------------- Build & Publish ----------------------------
       - name: Build & Publish (Debug/Release)
         run: |
           cd _main
@@ -119,8 +147,25 @@ jobs:
           name: WebApp-${{ env.APP_NAME }}-Release
           path: _main/publish/Release
 
+      # -------------------- Push changes back to base branch -----------------
+      - name: Push to base branch (skippable)
+        if: ${{ env.SKIP_PUSH != 'true' && env.BASE_BRANCH != '' }}
+        run: |
+          cd _base
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # wipe existing contents (except .git) and replace with modified source
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\_main\*" -Destination . -Recurse -Force
+
+          git add -A
+          $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
+          git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
+          git push origin HEAD:${env:BASE_BRANCH} --force
+
   # ==========================================================================
-  # JOB 2: SINGLE-MODULE TESTS
+  # JOB 2: SINGLE-MODULE TESTS — Try different keep/remove combos (no push)
   # ==========================================================================
   combo-tests:
     name: 2. (${{ matrix.test.id }} / ${{ matrix.test.selections }})
@@ -160,9 +205,6 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
-
-      - name: Install wasm-tools workload
-        run: dotnet workload install wasm-tools
 
       - name: Remove modules (single)
         run: |
@@ -230,7 +272,7 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 3: PAIRWISE KEEP TESTS
+  # JOB 3: PAIRWISE KEEP TESTS — Keep 2 modules at a time (no push)
   # ==========================================================================
   pair-keep-tests:
     name: 3. (${{ matrix.test.id }} / keep:${{ matrix.test.keep_pair }})
@@ -277,9 +319,6 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
-
-      - name: Install wasm-tools workload
-        run: dotnet workload install wasm-tools
 
       - name: Remove modules (pair keep)
         run: |
