@@ -4,7 +4,6 @@
 
 @{
     // {{ModuleItemStart:Tags}}
-
     // This component is used to display application-specific settings on the Tags and Edit Tag page.
     switch(Helpers.StringLower(Area)) {
         case "th":
@@ -19,9 +18,11 @@
             // Add any additional fields here for the Edit Tag page.
             break;
     }
+    // {{ModuleItemEnd:Tags}}
 }
 
 @code {
+    // {{ModuleItemStart:Tags}}
     [Parameter] public string Area { get; set; } = String.Empty;
 
     /// <summary>
@@ -34,9 +35,11 @@
     /// </summary>
     [Parameter] public EventCallback<DataObjects.Tag> ValueChanged { get; set; }
 
-    public void Dispose() { 
+    // {{ModuleItemEnd:Tags}}
+    public void Dispose() {
         Model.OnChange -= StateHasChanged;
     }
+    // {{ModuleItemStart:Tags}}
 
     protected override void OnInitialized()
     {
@@ -71,6 +74,5 @@
         ValueChanged.InvokeAsync(Value);
         StateHasChanged();
     }
-
     // {{ModuleItemEnd:Tags}}
 }

@@ -2204,6 +2204,7 @@ public static partial class Helpers
         return output;
     }
 
+    // {{ModuleItemStart:Locations}}
     // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// Gets the style for a given location.
@@ -2245,6 +2246,7 @@ public static partial class Helpers
         return output;
     }
     // {{ModuleItemEnd:Appointments}}
+    // {{ModuleItemEnd:Locations}}
 
     /// <summary>
     /// Shows a dialog to get a new password.

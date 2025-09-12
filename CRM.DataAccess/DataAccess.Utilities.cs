@@ -1128,14 +1128,18 @@ public partial class DataAccess
 
         List<DataObjects.DeletedRecordItem> appointmentServices = new List<DataObjects.DeletedRecordItem>();
         var appointmentServiceRecords = await data.AppointmentServices
+            // {{ModuleItemStart:Services}}
             .Include(x => x.Service)
+            // {{ModuleItemEnd:Services}}
             .Where(x => x.TenantId == TenantId && x.Deleted == true).ToListAsync();
         if (appointmentServiceRecords != null && appointmentServiceRecords.Any()) {
             foreach (var item in appointmentServiceRecords) {
                 appointmentServices.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
+                    // {{ModuleItemStart:Services}}
                     Display = StringValue(item.Service.Description),
+                    // {{ModuleItemEnd:Services}}
                     ItemId = item.AppointmentServiceId,
                 });
             }

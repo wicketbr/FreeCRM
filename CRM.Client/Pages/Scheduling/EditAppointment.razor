@@ -118,6 +118,7 @@
                     <textarea id="edit-appt-Note" class="form-control" @bind="_appointment.Note" @bind:event="oninput" rows="@Helpers.LinesInString(_appointment.Note, 1)" />
                 </div>
 
+                // {{ModuleItemStart:Locations}}
                 @if (Model.Locations.Any(x => x.Enabled == true)) {
                     <div class="input-group mb-2">
                         <span class="input-group-text">
@@ -133,6 +134,7 @@
                         </select>
                     </div>
                 }
+                // {{ModuleItemEnd:Locations}}
 
                 <ul class="nav nav-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
@@ -182,12 +184,14 @@
                 <div class="mb-2 tab-content tab-content-settings">
                     <div id="tabApptStyle" class="tab-pane active" role="tabpanel" aria-labelledby="tabApptStyleButton">
                         <div class="row mb-2">
+                            <!-- {{ModuleItemStart:Locations}} -->
                             @if (LocationHasColors) {
                                 <div class="col col-12">
                                     <Language Tag="OverrideLocationColors" />
                                     <Tooltip TipText="@Helpers.Text("OverrideLocationColorsInfo")" />
                                 </div>
                             }
+                            <!-- {{ModuleItemEnd:Locations}} -->
 
                             <div class="col col-6">
                                 <div class="input-group">
@@ -607,6 +611,7 @@
         await Helpers.QuickAction("appointmentnote", quickActionOnComplete);
     }
 
+    // {{ModuleItemStart:Services}}
     protected void AddService()
     {
         // If there is a single service set that.
@@ -624,6 +629,7 @@
             Fee = fee,
         });
     }
+    // {{ModuleItemEnd:Services}}
 
     // {{ModuleItemStart:Tags}}
     protected async Task AddTag(ChangeEventArgs e)
@@ -724,6 +730,7 @@
         service.Deleted = true;
     }
 
+    // {{ModuleItemStart:Locations}}
     protected bool LocationHasColors
     {
         get {
@@ -741,6 +748,7 @@
             return output;
         }
     }
+    // {{ModuleItemEnd:Locations}}
 
     // {{ModuleItemStart:Tags}}
     protected void RemoveTag(string TagId)
@@ -830,6 +838,7 @@
             } catch { }
         }
 
+        // {{ModuleItemStart:Services}}
         service.ServiceId = serviceId;
 
         decimal fee = service.Fee;
@@ -840,6 +849,7 @@
                 service.Fee = serviceItem.Rate;
             }
         }
+        // {{ModuleItemEnd:Services}}
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

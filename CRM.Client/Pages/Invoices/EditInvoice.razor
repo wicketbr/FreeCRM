@@ -337,7 +337,9 @@
 
         if(deleted != null) {
             if (deleted.Result) {
+                // {{ModuleItemStart:Tags}}
                 Model.Tags = Model.Tags.Where(x => x.TagId.ToString() != id).ToList();
+                // {{ModuleItemEnd:Tags}}
 
                 Helpers.NavigateTo("Invoices");
             } else {

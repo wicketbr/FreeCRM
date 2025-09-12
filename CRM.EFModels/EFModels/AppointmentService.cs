@@ -25,5 +25,7 @@ public partial class AppointmentService
 
     public virtual Appointment Appointment { get; set; } = null!;
 
+    // {{ModuleItemStart:Services}}
     public virtual Service Service { get; set; } = null!;
+    // {{ModuleItemEnd:Services}}
 }

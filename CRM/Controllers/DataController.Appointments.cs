@@ -50,6 +50,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Invoices}}
     [HttpGet]
     [Authorize(Policy = Policies.Admin)]
     [Route("~/api/Data/GetAppointmentWithInvoices/{id}")]
@@ -58,6 +59,7 @@ public partial class DataController
         var output = await da.GetAppointmentWithInvoices(id, CurrentUser);
         return Ok(output);
     }
+    // {{ModuleItemEnd:Invoices}}
 
     [HttpPost]
     [Authorize(Policy = Policies.ManageAppointments)]
@@ -68,6 +70,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Invoices}}
     [HttpPost]
     [Authorize(Policy = Policies.Admin)]
     [Route("~/api/Data/SaveAppointmentInvoices")]
@@ -76,6 +79,7 @@ public partial class DataController
         var output = await da.SaveAppointmentInvoices(appointment, CurrentUser);
         return Ok(output);
     }
+    // {{ModuleItemEnd:Invoices}}
 
     [HttpPost]
     [Authorize(Policy = Policies.ManageAppointments)]

@@ -95,9 +95,11 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.Start).HasColumnType("datetime");
             entity.Property(e => e.Title).HasMaxLength(200);
 
+            // {{ModuleItemStart:Locations}}
             entity.HasOne(d => d.Location).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.LocationId)
                 .HasConstraintName("FK_Appointments_Locations");
+            // {{ModuleItemEnd:Locations}}
         });
 
         modelBuilder.Entity<AppointmentNote>(entity =>
@@ -128,10 +130,12 @@ public partial class EFDataModel : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AppointmentServices_Appointments");
 
+            // {{ModuleItemStart:Services}}
             entity.HasOne(d => d.Service).WithMany(p => p.AppointmentServices)
                 .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_AppointmentServices_Services");
+            // {{ModuleItemEnd:Services}}
         });
 
         modelBuilder.Entity<AppointmentUser>(entity =>
@@ -246,6 +250,7 @@ public partial class EFDataModel : DbContext
                 .HasConstraintName("FK_Invoices_Users");
         });
 
+        // {{ModuleItemStart:Locations}}
         modelBuilder.Entity<Location>(entity =>
         {
             entity.Property(e => e.LocationId).ValueGeneratedNever();
@@ -262,6 +267,7 @@ public partial class EFDataModel : DbContext
             entity.Property(e => e.PostalCode).HasMaxLength(50);
             entity.Property(e => e.State).HasMaxLength(50);
         });
+        // {{ModuleItemEnd:Locations}}
         // {{ModuleItemEnd:Invoices}}
 
         // {{ModuleItemStart:Payments}}
