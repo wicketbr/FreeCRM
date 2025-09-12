@@ -9,90 +9,44 @@ on:
 permissions:
   contents: write
 
-# ============================================================================
-# CENTRALIZED CONFIGURATION
-# ============================================================================
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
 
-x-matrix-projects: &matrix-projects
-  project:
-    - name: FreeCICD
-      branch: FreeCICD_base
-      selections: 'keep:Tags'
-    - name: FreeLLM
-      branch: FreeLLM_base
-      selections: 'remove:all'
-    - name: FreeManager
-      branch: FreeManager_base
-      selections: 'remove:all'
-    - name: PJProcessor
-      branch: PJProcessor_base
-      selections: 'remove:all'
-    - name: Touchpoints
-      branch: Touchpoints_base
-      selections: 'remove:all'
-
-x-matrix-tests: &matrix-tests
-  test:
-    - { id: 'T01', selections: 'keep:Appointments' }
-    - { id: 'T02', selections: 'remove:Appointments' }
-    - { id: 'T03', selections: 'keep:EmailTemplates' }
-    - { id: 'T04', selections: 'remove:EmailTemplates' }
-    - { id: 'T05', selections: 'keep:Invoices' }
-    - { id: 'T06', selections: 'remove:Invoices' }
-    - { id: 'T07', selections: 'keep:Locations' }
-    - { id: 'T08', selections: 'remove:Locations' }
-    - { id: 'T09', selections: 'keep:Payments' }
-    - { id: 'T10', selections: 'remove:Payments' }
-    - { id: 'T11', selections: 'keep:Services' }
-    - { id: 'T12', selections: 'remove:Services' }
-    - { id: 'T13', selections: 'keep:Tags' }
-    - { id: 'T14', selections: 'remove:Tags' }
-
-x-matrix-pairs: &matrix-pairs
-  test:
-    - { id: 'T15', keep_pair: 'Appointments,EmailTemplates' }
-    - { id: 'T16', keep_pair: 'Appointments,Invoices' }
-    - { id: 'T17', keep_pair: 'Appointments,Locations' }
-    - { id: 'T18', keep_pair: 'Appointments,Payments' }
-    - { id: 'T19', keep_pair: 'Appointments,Services' }
-    - { id: 'T20', keep_pair: 'Appointments,Tags' }
-    - { id: 'T21', keep_pair: 'EmailTemplates,Invoices' }
-    - { id: 'T22', keep_pair: 'EmailTemplates,Locations' }
-    - { id: 'T23', keep_pair: 'EmailTemplates,Payments' }
-    - { id: 'T24', keep_pair: 'EmailTemplates,Services' }
-    - { id: 'T25', keep_pair: 'EmailTemplates,Tags' }
-    - { id: 'T26', keep_pair: 'Invoices,Locations' }
-    - { id: 'T27', keep_pair: 'Invoices,Payments' }
-    - { id: 'T28', keep_pair: 'Invoices,Services' }
-    - { id: 'T29', keep_pair: 'Invoices,Tags' }
-    - { id: 'T30', keep_pair: 'Locations,Payments' }
-    - { id: 'T31', keep_pair: 'Locations,Services' }
-    - { id: 'T32', keep_pair: 'Locations,Tags' }
-    - { id: 'T33', keep_pair: 'Payments,Services' }
-    - { id: 'T34', keep_pair: 'Payments,Tags' }
-    - { id: 'T35', keep_pair: 'Services,Tags' }
-
-# ============================================================================
-# JOB 1: PRODUCTION RUNS
-# ============================================================================
 jobs:
+  # ==========================================================================
+  # JOB 1: PRODUCTION RUNS
+  # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       max-parallel: 18
-      matrix: *matrix-projects
+      matrix:
+        project:
+          - name: FreeCICD
+            branch: FreeCICD_base
+            selections: 'keep:Tags'
+          - name: FreeLLM
+            branch: FreeLLM_base
+            selections: 'remove:all'
+          - name: FreeManager
+            branch: FreeManager_base
+            selections: 'remove:all'
+          - name: PJProcessor
+            branch: PJProcessor_base
+            selections: 'remove:all'
+          - name: Touchpoints
+            branch: Touchpoints_base
+            selections: 'remove:all'
 
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
       APP_NAME:    ${{ matrix.project.name }}
       BASE_BRANCH: ${{ matrix.project.branch }}
-      RUN_BUILD_TEST: 'true'   # always run build/test here
-      SKIP_PUSH:   'true'      # change to false if you want pushes
+      RUN_BUILD_TEST: 'true'
+      SKIP_PUSH:   'true'
 
     steps:
       - name: Checkout main branch
@@ -115,6 +69,9 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
+
+      - name: Install wasm-tools workload (Blazor WASM)
+        run: dotnet workload install wasm-tools
 
       - name: Run remove modules
         run: |
@@ -172,7 +129,22 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 18
-      matrix: *matrix-tests
+      matrix:
+        test:
+          - { id: 'T01', selections: 'keep:Appointments' }
+          - { id: 'T02', selections: 'remove:Appointments' }
+          - { id: 'T03', selections: 'keep:EmailTemplates' }
+          - { id: 'T04', selections: 'remove:EmailTemplates' }
+          - { id: 'T05', selections: 'keep:Invoices' }
+          - { id: 'T06', selections: 'remove:Invoices' }
+          - { id: 'T07', selections: 'keep:Locations' }
+          - { id: 'T08', selections: 'remove:Locations' }
+          - { id: 'T09', selections: 'keep:Payments' }
+          - { id: 'T10', selections: 'remove:Payments' }
+          - { id: 'T11', selections: 'keep:Services' }
+          - { id: 'T12', selections: 'remove:Services' }
+          - { id: 'T13', selections: 'keep:Tags' }
+          - { id: 'T14', selections: 'remove:Tags' }
 
     steps:
       - name: Checkout main
@@ -188,6 +160,9 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
 
       - name: Remove modules (single)
         run: |
@@ -264,7 +239,29 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 18
-      matrix: *matrix-pairs
+      matrix:
+        test:
+          - { id: 'T15', keep_pair: 'Appointments,EmailTemplates' }
+          - { id: 'T16', keep_pair: 'Appointments,Invoices' }
+          - { id: 'T17', keep_pair: 'Appointments,Locations' }
+          - { id: 'T18', keep_pair: 'Appointments,Payments' }
+          - { id: 'T19', keep_pair: 'Appointments,Services' }
+          - { id: 'T20', keep_pair: 'Appointments,Tags' }
+          - { id: 'T21', keep_pair: 'EmailTemplates,Invoices' }
+          - { id: 'T22', keep_pair: 'EmailTemplates,Locations' }
+          - { id: 'T23', keep_pair: 'EmailTemplates,Payments' }
+          - { id: 'T24', keep_pair: 'EmailTemplates,Services' }
+          - { id: 'T25', keep_pair: 'EmailTemplates,Tags' }
+          - { id: 'T26', keep_pair: 'Invoices,Locations' }
+          - { id: 'T27', keep_pair: 'Invoices,Payments' }
+          - { id: 'T28', keep_pair: 'Invoices,Services' }
+          - { id: 'T29', keep_pair: 'Invoices,Tags' }
+          - { id: 'T30', keep_pair: 'Locations,Payments' }
+          - { id: 'T31', keep_pair: 'Locations,Services' }
+          - { id: 'T32', keep_pair: 'Locations,Tags' }
+          - { id: 'T33', keep_pair: 'Payments,Services' }
+          - { id: 'T34', keep_pair: 'Payments,Tags' }
+          - { id: 'T35', keep_pair: 'Services,Tags' }
 
     steps:
       - name: Checkout main
@@ -280,7 +277,10 @@ jobs:
           dotnet-version: |
             9.0.x
             8.0.x
-            
+
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+
       - name: Remove modules (pair keep)
         run: |
           cd _main
