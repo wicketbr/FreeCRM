@@ -381,6 +381,7 @@
                 InvoiceItems = _defaults.InvoiceItems,
             };
 
+            // {{ModuleItemStart:Services}}
             if (!userInvoice.InvoiceItems.Any() && _appointment.Services != null && _appointment.Services.Any()) {
                 if (!Model.Services.Any()) {
                     await Helpers.LoadServices();
@@ -398,6 +399,7 @@
                     }
                 }
             }
+            // {{ModuleItemEnd:Services}}
 
             _appointment.Invoices.Add(userInvoice);
             StateHasChanged();
@@ -471,6 +473,7 @@
                             Title = Helpers.Text("InvoiceForAppointment") + " " + _appointment.Title,
                             InvoiceItems = new List<DataObjects.InvoiceItem>(),
                         };
+                        // {{ModuleItemStart:Services}}
                         if (_appointment.Services != null && _appointment.Services.Any()) {
                             if (!Model.Services.Any()) {
                                 await Helpers.LoadServices();
@@ -488,7 +491,7 @@
                                 }
                             }
                         }
-
+                        // {{ModuleItemEnd:Services}}
                     } else {
                         Model.ErrorMessages(appt.ActionResponse.Messages);
                     }

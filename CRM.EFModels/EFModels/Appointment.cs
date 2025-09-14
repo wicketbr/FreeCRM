@@ -51,5 +51,7 @@ public partial class Appointment
     public virtual ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
     // {{ModuleItemEnd:Invoices}}
 
+    // {{ModuleItemStart:Locations}}
     public virtual Location? Location { get; set; }
+    // {{ModuleItemEnd:Locations}}
 }

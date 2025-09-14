@@ -142,6 +142,7 @@
         DateTime start = Convert.ToDateTime(DateTime.Now.ToShortDateString() + " 12:00 PM");
         DateTime end = start.AddMinutes(minutes);
 
+        // {{ModuleItemStart:Locations}}
         Guid? defaultLocationId = null;
         if (Model.Locations.Any()) {
             var defaultLocation = Model.Locations.FirstOrDefault(x => x.DefaultLocation == true);
@@ -149,6 +150,7 @@
                 defaultLocationId = defaultLocation.LocationId;  
             }
         }
+        // {{ModuleItemEnd:Locations}}
 
         // {{ModuleItemStart:Services}}
         List<DataObjects.AppointmentService> services = new List<DataObjects.AppointmentService>();
@@ -167,7 +169,9 @@
         var appt = new DataObjects.Appointment {
             TenantId = Model.TenantId,
             AppointmentId = Guid.Empty,
+            // {{ModuleItemStart:Locations}}
             LocationId = defaultLocationId,
+            // {{ModuleItemEnd:Locations}}
             Meeting = true,
             Start = start,
             End = end,
@@ -366,13 +370,14 @@
         if (args.Data.Deleted) {
             args.Attributes["class"] = "rz-event-content deleted";
         } else {
+            // {{ModuleItemStart:Locations}}
             // See if this location has any special color formatting.
             var style = await Helpers.GetLocationStyle(args.Data.LocationId, args.Data);
 
             if (!String.IsNullOrWhiteSpace(style)) {
                 args.Attributes["style"] = style;
             }
-
+            // {{ModuleItemEnd:Locations}}
             args.Attributes["class"] = "rz-event-content";
         }
     }

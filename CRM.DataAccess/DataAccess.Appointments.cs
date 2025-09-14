@@ -247,7 +247,9 @@ public partial class DataAccess
                 Notes = await GetAppointmentNotes(AppointmentId),
                 Services = new List<DataObjects.AppointmentService>(),
                 Start = rec.Start,
+                // {{ModuleItemStart:Tags}}
                 Tags = await GetTagsForItem(rec.TenantId, AppointmentId),
+                // {{ModuleItemEnd:Tags}}
                 Title = rec.Title,
                 Users = new List<DataObjects.AppointmentUser>(),
             };
@@ -435,7 +437,9 @@ public partial class DataAccess
                     Notes = new List<DataObjects.AppointmentNote>(),
                     Services = new List<DataObjects.AppointmentService>(),
                     Start = rec.Start,
+                    // {{ModuleItemStart:Tags}}
                     Tags = await GetTagsForItem(rec.TenantId, rec.AppointmentId),
+                    // {{ModuleItemEnd:Tags}}
                     Title = rec.Title,
                     Users = new List<DataObjects.AppointmentUser>(),
                 };
@@ -542,7 +546,9 @@ public partial class DataAccess
             output.Users = await SaveAppointmentUsers(output);
             output.Services = await SaveAppointmentServices(output, CurrentUser);
 
+            // {{ModuleItemStart:Tags}}
             await SaveItemTags(output.TenantId, output.AppointmentId, output.Tags);
+            // {{ModuleItemEnd:Tags}}
 
             output.ActionResponse.Result = true;
 

@@ -113,7 +113,9 @@ public partial class DataAccess
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 Rate = rec.Rate,
                 ServiceId = rec.ServiceId,
+                // {{ModuleItemStart:Tags}}
                 Tags = await GetTagsForItem(rec.TenantId, ServiceId),
+                // {{ModuleItemEnd:Tags}}
                 TenantId = rec.TenantId,
             };
 
@@ -155,7 +157,9 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Rate = rec.Rate,
                     ServiceId = rec.ServiceId,
+                    // {{ModuleItemStart:Tags}}
                     Tags = await GetTagsForItem(TenantId, rec.ServiceId),
+                    // {{ModuleItemEnd:Tags}}
                     TenantId = rec.TenantId,
                 });
             }
@@ -234,7 +238,9 @@ public partial class DataAccess
             }
             await data.SaveChangesAsync();
 
+            // {{ModuleItemStart:Tags}}
             await SaveItemTags(output.TenantId, output.ServiceId, output.Tags);
+            // {{ModuleItemEnd:Tags}}
 
             output.ActionResponse.Result = true;
 

@@ -100,7 +100,9 @@ public partial class DataAccess
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 Deleted = rec.Deleted,
                 DeletedAt = rec.DeletedAt,
+                // {{ModuleItemStart:Tags}}
                 Tags = await GetTagsForItem(rec.TenantId, EmailTemplateId),
+                // {{ModuleItemEnd:Tags}}
             };
         } else {
             output.ActionResponse.Messages.Add("Email Template '" + EmailTemplateId.ToString() + "' No Longer Exists");
@@ -138,7 +140,9 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
+                    // {{ModuleItemStart:Tags}}
                     Tags = await GetTagsForItem(rec.TenantId, rec.EmailTemplateId),
+                    // {{ModuleItemEnd:Tags}}
                 });
             }
         }
@@ -204,7 +208,9 @@ public partial class DataAccess
             }
             await data.SaveChangesAsync();
 
+            // {{ModuleItemStart:Tags}}
             await SaveItemTags(output.TenantId, output.EmailTemplateId, output.Tags);
+            // {{ModuleItemEnd:Tags}}
 
             output.ActionResponse.Result = true;
 
