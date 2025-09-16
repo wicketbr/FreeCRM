@@ -82,11 +82,12 @@ html {
 }
 
 #users-on-same-page {
-    z-index: 3;
+    z-index: 5;
     width:500px;
     max-width:80%;
-    position: sticky;
-    top: 59px;
+    position: fixed;
+    top: 65px;
+    right:5px;
 }
 
 #users-on-same-page table tbody tr td:first-child {

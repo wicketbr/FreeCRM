@@ -115,6 +115,20 @@ public partial class DataController
 
     [HttpGet]
     [AllowAnonymous]
+    [Route("~/api/Data/GetGloballyEnabledModules")]
+    public ActionResult<List<string>> GetGloballyEnabledModules()
+    {
+        var output = new List<string>();
+
+        if(configurationHelper.GloballyEnabledModules != null && configurationHelper.GloballyEnabledModules.Any()) {
+            output = configurationHelper.GloballyEnabledModules;
+        }
+
+        return Ok(output);
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
     [Route("~/api/Data/GetStartupState")]
     public DataObjects.BooleanResponse GetStartupState()
     {
