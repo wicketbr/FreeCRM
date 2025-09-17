@@ -1,0 +1,50 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific items on the about page.
+
+    <h1 class="page-title">
+        <Language Tag="About" IncludeIcon="true" />
+    </h1>
+
+    <div class="mb-2">
+        A free, open-source CRM (Customer Relationship Management) system.
+        Use this as-is to run your business, or use this as a starting point
+        for building your own application on this framework.
+    </div>
+
+    if (!Model.LoggedIn) {
+        <a href="@(Helpers.BuildUrl("Login"))" class="btn btn-primary">
+            <Icon Name="Back" />
+            <Language Tag="BackToLogin" />
+        </a>
+    }
+}
+
+@code {
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+}
