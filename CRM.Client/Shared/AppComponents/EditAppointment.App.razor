@@ -1,0 +1,118 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific items on the Edit Appointment page.
+    // Enabled must be set to true for any of these to render.
+    // You can add items to the bottom of each built-in module by adding your settings
+    // to the named areas below (general, theme, authentication, optionalfeatures, workschedule, email).
+    // If you have the ShowAppSettingsTab then an additional tab will be shown in the Settings page
+    // named AppSettings which will render the code in the default case below.
+
+    if (Enabled) {
+        switch (Helpers.StringLower(Module)) {
+            case "top":
+                // Anything to show at the top of the form before other content and just after the title field
+                break;
+
+            case "style":
+                break;
+
+            case "attendees":
+                break;
+
+            case "notes":
+                break;
+
+            case "services":
+                break;
+
+            case "tags":
+                break;
+
+            case "bottom":
+                // Anything to show at the bottom of the form just before the buttons
+                break;
+
+            default:
+                if (ShowAppointmentTab) {
+                    @*<div class="mb-2">
+                        <label for="app-appointment-MyProperty">
+                            <Language Tag="Title" />
+                        </label>
+                        <input id="app-appointment-MyProperty" class="form-control"
+                               @bind="Value.Title" 
+                               @bind:after="ValueHasChanged" />
+                    </div>*@
+                }
+                break;
+        }
+    }
+}
+
+@code {
+    /// <summary>
+    /// Mirrors the AllowEdit flag in the main Edit Appointment page.
+    /// </summary>
+    [Parameter] public bool AllowEdit { get; set; }
+
+    /// <summary>
+    /// If left as False, this component will not be rendered.
+    /// </summary>
+    [Parameter] public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// Used to show app settings in the various tabs of the Settings page.
+    /// </summary>
+    [Parameter] public string? Module { get; set; }
+
+    /// <summary>
+    /// Set to true to show the App Settings tab in the Settings page.
+    /// </summary>
+    [Parameter] public bool ShowAppointmentTab { get; set; } = false;
+
+    /// <summary>
+    /// The text to show on the app-specific tab if ShowAppointmentTab is enabled.
+    /// </summary>
+    [Parameter] public string TabText { get; set; } = "App Items";
+
+    /// <summary>
+    /// The Tenant object bound with the @bind-Value directive.
+    /// </summary>
+    [Parameter] public DataObjects.Appointment Value { get; set; } = new DataObjects.Appointment();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.Appointment> ValueChanged { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+
+    protected void ValueHasChanged() {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}

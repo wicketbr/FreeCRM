@@ -174,10 +174,10 @@ public partial class DataAccess
                     List<string> tenantUrls = new List<string>();
 
                     foreach(var tenantId in tenants) {
-                        var tenantSettings = GetTenantSettings(tenantId);
-                        if (!String.IsNullOrWhiteSpace(tenantSettings.ApplicationUrl) && hostUrl.ToLower().StartsWith(tenantSettings.ApplicationUrl.ToLower())) {
-                            if (!tenantUrls.Contains(tenantSettings.ApplicationUrl)) {
-                                tenantUrls.Add(tenantSettings.ApplicationUrl);
+                        var settings = GetSetting<DataObjects.TenantSettings>("Settings", DataObjects.SettingType.Object, tenantId);
+                        if (settings != null && !String.IsNullOrWhiteSpace(settings.ApplicationUrl) && hostUrl.ToLower().StartsWith(settings.ApplicationUrl.ToLower())) {
+                            if (!tenantUrls.Contains(settings.ApplicationUrl)) {
+                                tenantUrls.Add(settings.ApplicationUrl);
                             }
                         }
                     }
