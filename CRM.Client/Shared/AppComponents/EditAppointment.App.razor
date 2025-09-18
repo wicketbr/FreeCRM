@@ -3,6 +3,7 @@
 @inject BlazorDataModel Model
 
 @{
+    // {{ModuleItemStart:Appointments}}
     // This component is used to display application-specific items on the Edit Appointment page.
     // Enabled must be set to true for any of these to render.
     // You can add items to the bottom of each built-in module by adding your settings
@@ -49,9 +50,11 @@
                 break;
         }
     }
+    // {{ModuleItemEnd:Appointments}}
 }
 
 @code {
+    // {{ModuleItemStart:Appointments}}
     /// <summary>
     /// Mirrors the AllowEdit flag in the main Edit Appointment page.
     /// </summary>
@@ -86,11 +89,13 @@
     /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
     /// </summary>
     [Parameter] public EventCallback<DataObjects.Appointment> ValueChanged { get; set; }
+    // {{ModuleItemEnd:Appointments}}
 
     public void Dispose() { 
         Model.OnChange -= StateHasChanged;
     }
 
+    // {{ModuleItemStart:Appointments}}
     protected override void OnInitialized()
     {
         Model.OnChange += StateHasChanged;
@@ -115,4 +120,5 @@
         ValueChanged.InvokeAsync(Value);
         StateHasChanged();
     }
+    // {{ModuleItemEnd:Appointments}}
 }
