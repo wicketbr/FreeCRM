@@ -316,7 +316,9 @@ public partial class BlazorDataModel
     /// Gets or sets the base URL for the application.
     /// </summary>
     public string ApplicationUrl {
-        get { return _ApplicationUrl; }
+        get { 
+            return !String.IsNullOrWhiteSpace(_Tenant.TenantSettings.ApplicationUrl) ? _Tenant.TenantSettings.ApplicationUrl : _ApplicationUrl; 
+        }
         set {
             if (_ApplicationUrl != value) {
                 _ApplicationUrl = value;
@@ -327,9 +329,41 @@ public partial class BlazorDataModel
     }
 
     /// <summary>
-    /// Gets or sets the full URL to the application, which is the root plus a Tenant Code if they are used in the URL.
+    /// Gets the base default URL for the application, regardless of any tenant-specific ApplicationUrl setting.
+    /// </summary>
+    public string ApplicationUrlDefault {
+        get {
+            return _ApplicationUrl;
+        }
+    }
+
+    /// <summary>
+    /// Gets the full URL to the application, which is the root plus a Tenant Code if they are used in the URL.
     /// </summary>
     public string ApplicationUrlFull {
+        get {
+            string output = ApplicationUrl;
+
+            if (_UseTenantCodeInUrl) {
+                if (!output.EndsWith("/")) {
+                    output += "/";
+                }
+
+                if (!String.IsNullOrWhiteSpace(_Tenant.TenantCode)) {
+                    output += _Tenant.TenantCode + "/";
+                } else if (!String.IsNullOrWhiteSpace(_TenantCodeFromUrl)) {
+                    output += _TenantCodeFromUrl + "/";
+                }
+            }
+
+            return output;
+        }
+    }
+
+    /// <summary>
+    /// Gets the full URL to the application, which is the root plus a Tenant Code if they are used in the URL, regardless of any tenant-specific ApplicationUrl setting.
+    /// </summary>
+    public string ApplicationUrlFullDefault {
         get {
             string output = _ApplicationUrl;
 

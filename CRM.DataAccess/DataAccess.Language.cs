@@ -299,6 +299,8 @@ public partial class DataAccess
             { "AllowUsersToManageBasicProfileInfoElements", "Select the User Profile Elements Users Can Edit" },
             { "AllowUsersToResetLocalPasswordsAtLogin", "Allow Users to Reset Passwords on the Local Login Form" },
             { "AllowUsersToSignUpAtLogin", "Allow Users to Sign Up for an Account on the Local Login Form" },
+            { "ApplicationUrl", "Application URL" },
+            { "ApplicationUrlInfo", "Enter an optional override base URL for this tenant." },
             { "AppSettings", "Application Settings" },
             { "AppTitle", _appName },
             { "AppUrl", "Application URL" },

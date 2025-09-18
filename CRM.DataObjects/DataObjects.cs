@@ -469,6 +469,7 @@ public partial class DataObjects
         public bool AllowUsersToResetPasswordsForLocalLogin { get; set; }
         public bool AllowUsersToSignUpForLocalLogin { get; set; }
         public string? AppIcon { get; set; }
+        public string? ApplicationUrl { get; set; }
         public string? CustomAuthenticationButtonClass { get; set; }
         [Sensitive]
         public string? CustomAuthenticationCode { get; set; }

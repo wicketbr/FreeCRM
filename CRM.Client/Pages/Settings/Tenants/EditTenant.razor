@@ -68,6 +68,12 @@
             <input id="edit-tenant-code" type="text" class="@Helpers.MissingValue(_tenant.TenantCode, "form-control")" @bind="_tenant.TenantCode" @bind:event="oninput" />
         </div>
 
+        <div class="mb-2">
+            <label for="edit-tenant-ApplicationUrl"><Language Tag="ApplicationUrl" /></label>
+            <span class="note">- <Language Tag="ApplicationUrlInfo" /></span>
+            <input type="text" id="edit-tenant-ApplicationUrl" class="form-control" @bind="_tenant.TenantSettings.ApplicationUrl" />
+        </div>
+
         @if (Model.Modules.Any()) {
             <div class="card mb-2">
                 <div class="card-header text-bg-primary text-white"><Language Tag="DisabledFeatures" /></div>
