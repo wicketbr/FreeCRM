@@ -36,6 +36,13 @@ public partial class ConfigurationHelper : IConfigurationHelper
             return _loader.GloballyDisabledModules;
         }
     }
+
+    public List<string>? GloballyEnabledModules
+    {
+        get {
+            return _loader.GloballyEnabledModules;
+        }
+    }
 }
 
 public partial interface IConfigurationHelper
@@ -44,6 +51,7 @@ public partial interface IConfigurationHelper
     public string? BasePath { get; }
     ConfigurationHelperConnectionStrings ConnectionStrings { get; }
     List<string>? GloballyDisabledModules { get; }
+    List<string>? GloballyEnabledModules { get; }
 }
 
 public partial class ConfigurationHelperLoader
@@ -52,6 +60,7 @@ public partial class ConfigurationHelperLoader
     public string? BasePath { get; set; }
     public ConfigurationHelperConnectionStrings ConnectionStrings { get; set; } = new ConfigurationHelperConnectionStrings();
     public List<string>? GloballyDisabledModules { get; set; }
+    public List<string>? GloballyEnabledModules { get; set; }
 }
 
 public partial class ConfigurationHelperConnectionStrings

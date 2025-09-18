@@ -187,9 +187,12 @@
                     <Language Tag="Logout" IncludeIcon="true" />
                 </div>
             }
-            <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
-                <Language Tag="About" IncludeIcon="true" />
-            </div>
+
+            @if (!Model.Tenant.TenantSettings.HideAbout) {
+                <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
+                    <Language Tag="About" IncludeIcon="true" />
+                </div>
+            }
         }
 
         @if (!String.IsNullOrWhiteSpace(Model.Version)) {

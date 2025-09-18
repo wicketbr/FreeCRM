@@ -435,6 +435,7 @@ public partial class DataAccess
             { "GraphTenantId", "Tenant ID" },
             { "Help", "Help" },
             { "Hide", "Hide" },
+            { "HideAbout", "Hide the About Page" },
             { "HideHelp", "Hide Help" },
             { "HideFilter", "Hide Filter" },
             { "HomeMenuText", "Home" },

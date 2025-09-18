@@ -52,6 +52,13 @@
         </div>
 
         <div class="mb-2">
+            <div class="form-check form-switch">
+                <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-HideAbout" @bind="_tenant.TenantSettings.HideAbout" />
+                <label for="edit-tenant-HideAbout" class="form-check-label"><Language Tag="HideAbout" /></label>
+            </div>
+        </div>
+
+        <div class="mb-2">
             <label for="edit-tenant-name"><Language Tag="TenantName" Required="true" /></label>
             <input id="edit-tenant-name" type="text" class="@Helpers.MissingValue(_tenant.Name, "form-control")" @bind="_tenant.Name" @bind:event="oninput" />
         </div>

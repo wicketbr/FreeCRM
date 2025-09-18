@@ -750,9 +750,10 @@
             // Add any options that aren't blocked by the AppAdmin
             _availableOptInOptions = new List<string>();
             var blockedOptions = _tenant.TenantSettings.ModuleHideElements;
+            var enabledOptions = Model.GloballyEnabledModules != null ? Model.GloballyEnabledModules : new List<string>();
 
             foreach(var item in Model.Modules) {
-                if (!blockedOptions.Contains(item)) {
+                if (!blockedOptions.Contains(item) && !enabledOptions.Contains(item)) {
                     _availableOptInOptions.Add(item);
                 }
             }

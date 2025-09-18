@@ -222,6 +222,9 @@
 
             List<string>? globallyDisabledModules = await Helpers.GetOrPost<List<string>>("api/Data/GetGloballyDisabledModules");
             Model.GloballyDisabledModules = globallyDisabledModules;
+
+            List<string>? globallyEnabledModules = await Helpers.GetOrPost<List<string>>("api/Data/GetGloballyEnabledModules");
+            Model.GloballyEnabledModules = globallyEnabledModules;
         }
 
         if (String.IsNullOrWhiteSpace(Model.Fingerprint)) {

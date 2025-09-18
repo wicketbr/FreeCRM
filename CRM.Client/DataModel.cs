@@ -70,6 +70,7 @@ public partial class BlazorDataModel
     // {{ModuleItemEnd:EmailTemplates}}
     private string _Fingerprint = "";
     private List<string>? _GloballyDisabledModules = null;
+    private List<string>? _GloballyEnabledModules = null;
     private List<DataObjects.FileStorage> _ImageFiles = new List<DataObjects.FileStorage>();
     private DataObjects.Language _Language = new DataObjects.Language();
     private List<DataObjects.Language> _Languages = new List<DataObjects.Language>();
@@ -456,6 +457,14 @@ public partial class BlazorDataModel
             }
         }
 
+        // See if this is globally enabled.
+        if (_GloballyEnabledModules != null && _GloballyEnabledModules.Any()) {
+            var globallyEnabled = _GloballyEnabledModules.Contains(feature.ToLower());
+            if (globallyEnabled) {
+                return true;
+            }
+        }
+
         // See if this is blocked for this tenant.
         bool blocked = false;
         if (_Tenant.TenantSettings.ModuleHideElements != null && _Tenant.TenantSettings.ModuleHideElements.Any()) {
@@ -773,6 +782,20 @@ public partial class BlazorDataModel
         set {
             if (!ObjectsAreEqual(_GloballyDisabledModules, value)) {
                 _GloballyDisabledModules = value;
+                _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the items that have been globally enabled in the appsettings.json file.
+    /// </summary>
+    public List<string>? GloballyEnabledModules {
+        get { return _GloballyEnabledModules; }
+        set {
+            if (!ObjectsAreEqual(_GloballyEnabledModules, value)) {
+                _GloballyEnabledModules = value;
                 _ModelUpdated = DateTime.UtcNow;
                 NotifyDataChanged();
             }

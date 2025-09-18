@@ -116,6 +116,16 @@ namespace CRM
                 }
             }
 
+            List<string> enabled = new List<string>();
+            var globallyEnabledModules = builder.Configuration.GetSection("GloballyEnabledModules").GetChildren();
+            if (globallyEnabledModules != null && globallyEnabledModules.Any()) {
+                foreach(var item in globallyEnabledModules.ToArray().Select(c => c.Value).ToList()) {
+                    if (!String.IsNullOrWhiteSpace(item)) {
+                        enabled.Add(item.ToLower());
+                    }
+                }
+            }
+
             var configurationHelperLoader = ConfigurationHelpersLoadApp(new ConfigurationHelperLoader {
                 AnalyticsCode = analyticsCode,
                 BasePath = basePath,
@@ -123,6 +133,7 @@ namespace CRM
                     AppData = builder.Configuration.GetConnectionString("AppData"),
                 },
                 GloballyDisabledModules = disabled,
+                GloballyEnabledModules = enabled,
             }, builder);
 
             builder.Services.AddTransient<IConfigurationHelper>(x => ActivatorUtilities.CreateInstance<ConfigurationHelper>(x, configurationHelperLoader));
