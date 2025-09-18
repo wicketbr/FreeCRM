@@ -12,7 +12,7 @@
     // named AppSettings which will render the code in the default case below.
 
     if (Enabled) {
-        switch (Helpers.StringLower(Module)) {
+        switch (Helpers.StringLower(Area)) {
             case "top":
                 // Anything to show at the top of the form before other content and just after the title field
                 break;
@@ -66,12 +66,12 @@
     [Parameter] public bool Enabled { get; set; } = false;
 
     /// <summary>
-    /// Used to show app settings in the various tabs of the Settings page.
+    /// Used to show app settings in the various tabs of the edit appointment page.
     /// </summary>
-    [Parameter] public string? Module { get; set; }
+    [Parameter] public string? Area { get; set; }
 
     /// <summary>
-    /// Set to true to show the App Settings tab in the Settings page.
+    /// Set to true to show the App Settings tab on the page.
     /// </summary>
     [Parameter] public bool ShowAppointmentTab { get; set; } = false;
 
@@ -115,6 +115,15 @@
     // {
     //     // Do any work here that needs to be done after the component is rendered or parameters are set.
     // }
+
+    public DataObjects.ModuleAction Save(DataObjects.Appointment appointment) {
+        var output = new DataObjects.ModuleAction { Result = true };
+
+        // Perform and pre-save checks here. Return false if there is an error and include any error messages.
+        // Optionally set the focus to a specific field by setting output.FocusField to the field element id.
+
+        return output;
+    }
 
     protected void ValueHasChanged() {
         ValueChanged.InvokeAsync(Value);
