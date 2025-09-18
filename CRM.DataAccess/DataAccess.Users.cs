@@ -302,7 +302,7 @@ public partial class DataAccess
         DataObjects.User output = new DataObjects.User();
         output.ActionResponse = GetNewActionResponse();
 
-        var applicationURL = ApplicationURL;
+        var applicationURL = ApplicationUrl(user.TenantId);
 
         if (String.IsNullOrWhiteSpace(applicationURL)) {
             output.ActionResponse.Messages.Add("Unable to Determine Referring Website Address");
@@ -2417,7 +2417,7 @@ public partial class DataAccess
             return output;
         }
 
-        var appUrl = ApplicationURL;
+        var appUrl = ApplicationUrl(user.TenantId);
         string websiteName = WebsiteName(appUrl);
         if (String.IsNullOrWhiteSpace(websiteName)) {
             websiteName = StringValue(appUrl);

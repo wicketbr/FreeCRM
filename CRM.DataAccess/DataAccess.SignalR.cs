@@ -9,7 +9,7 @@ public partial class DataAccess
 {
     public async Task SignalRUpdate(DataObjects.SignalRUpdate update)
     {
-        var baseURL = ApplicationURL;
+        var baseURL = ApplicationUrl(update.TenantId);
         if (String.IsNullOrEmpty(baseURL)) {
             baseURL = String.Empty;
         }

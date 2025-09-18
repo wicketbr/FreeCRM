@@ -14,6 +14,8 @@ public partial interface IDataAccess
     bool AdminUser(DataObjects.User? user);
     string AppendWithComma(string Original, string New);
     string ApplicationURL { get; }
+    string ApplicationUrl(Guid? TenantId);
+    string ApplicationUrl(Microsoft.AspNetCore.Http.HttpContext? context);
     string AppName { get; }
     bool BooleanValue(bool? value);
     string BytesToFileSizeLabel(long? bytes, List<string>? labels = null);
@@ -121,6 +123,73 @@ public partial class DataAccess
             }
             return output;
         }
+    }
+
+    public string ApplicationUrl(Guid? TenantId)
+    {
+        if (!TenantId.HasValue) {
+            return ApplicationURL;
+        }
+
+        string output = StringValue(CacheStore.GetCachedItem<string>(TenantId.Value, "ApplicationURL"));
+        if (String.IsNullOrWhiteSpace(output)) {
+            var tenantSettings = GetTenantSettings(TenantId.Value);
+            output = StringValue(tenantSettings.ApplicationUrl);
+
+            if (!String.IsNullOrWhiteSpace(output)) {
+                CacheStore.SetCacheItem(TenantId.Value, "ApplicationURL", output);
+            }
+        }
+
+        if (String.IsNullOrEmpty(output)) {
+            // This tenant does not use a custom Application URL, so return the main application URL.
+            output = ApplicationURL;
+        }
+
+        return output;
+    }
+
+    public string ApplicationUrl(Microsoft.AspNetCore.Http.HttpContext? context)
+    {
+        string output = ApplicationURL;
+
+        if (context != null) {
+            var host = context.Request.Host.ToString();
+
+            if (!String.IsNullOrWhiteSpace(host)) {
+                string hostName = host;
+                if ((!context.Request.IsHttps && hostName.EndsWith(":80")) || (context.Request.IsHttps && hostName.EndsWith(":443"))) {
+                    hostName = hostName.Substring(0, hostName.IndexOf(":"));
+                }
+
+                var path = context.Request.Path.ToString();
+
+                string hostUrl =
+                    (context.Request.IsHttps ? "https://" : "http://") +
+                    hostName + path;
+
+                // Find any tenants with a matching Application URL. The longest match wins.
+                var tenants = data.Tenants.Where(x => x.Enabled == true).Select(x => x.TenantId).ToList();
+                if (tenants != null && tenants.Any()) {
+                    List<string> tenantUrls = new List<string>();
+
+                    foreach(var tenantId in tenants) {
+                        var tenantSettings = GetTenantSettings(tenantId);
+                        if (!String.IsNullOrWhiteSpace(tenantSettings.ApplicationUrl) && hostUrl.ToLower().StartsWith(tenantSettings.ApplicationUrl.ToLower())) {
+                            if (!tenantUrls.Contains(tenantSettings.ApplicationUrl)) {
+                                tenantUrls.Add(tenantSettings.ApplicationUrl);
+                            }
+                        }
+                    }
+
+                    if (tenantUrls.Any()) {
+                        output = tenantUrls.OrderByDescending(x => x.Length).First();
+                    }
+                }
+            }
+        }
+
+        return output;
     }
 
     public string AppName {
@@ -2381,10 +2450,16 @@ public partial class DataAccess
 
     public void UpdateApplicationURL(string? url)
     {
-        if (!String.IsNullOrWhiteSpace(url) && url.ToLower() != ApplicationURL.ToLower() && url.ToLower().StartsWith("https://")) {
+        // Only set the application URL if it is not already set.
+        if (!String.IsNullOrWhiteSpace(url) && String.IsNullOrWhiteSpace(ApplicationURL)) {
             SaveSetting("ApplicationURL", DataObjects.SettingType.Text, url);
             CacheStore.SetCacheItem(Guid.Empty, "ApplicationURL", url);
         }
+
+        //if (!String.IsNullOrWhiteSpace(url) && url.ToLower() != ApplicationURL.ToLower() && url.ToLower().StartsWith("https://")) {
+        //    SaveSetting("ApplicationURL", DataObjects.SettingType.Text, url);
+        //    CacheStore.SetCacheItem(Guid.Empty, "ApplicationURL", url);
+        //}
     }
 
     private DataObjects.EmailMessage UpdateEmailReplyAddress(Guid TenantId, DataObjects.EmailMessage message)
