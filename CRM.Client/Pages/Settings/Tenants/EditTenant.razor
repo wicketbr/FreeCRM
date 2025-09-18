@@ -350,6 +350,8 @@ namespace CustomAuthenticationProvider {
     protected string _title = "";
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
 
+    protected EditTenant_App AppModule = new EditTenant_App();
+
     protected string _pageName = "edittenant";
 
     public void Dispose()
@@ -572,6 +574,17 @@ namespace CustomAuthenticationProvider {
             errors.Add(Helpers.MissingRequiredField("TenantCode"));
             if(focus == "") {
                 focus = "edit-tenant-code";
+            }
+        }
+
+        var saveApp = AppModule.Save(_tenant);
+        if (!saveApp.Result) {
+            if (saveApp.Messages.Any()) {
+                errors.AddRange(saveApp.Messages);
+            }
+
+            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+                focus = saveApp.Focus;
             }
         }
 

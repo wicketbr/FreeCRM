@@ -74,7 +74,7 @@
                     </button>
                 </li>
 
-                @if (_appSettings.Enabled && _appSettings.ShowAppSettingsTab) {
+                @if (AppModule.Enabled && AppModule.ShowAppSettingsTab) {
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="tabAppSettingsButton" data-bs-toggle="tab" data-bs-target="#tabAppSettings"
                                 type="button" role="tab" aria-controls="home" aria-selected="true">
@@ -195,8 +195,8 @@
                     </div>
                 </div>
 
-                @if (_appSettings.Enabled) {
-                    <Settings_App Module="General" @bind-Value="_tenant" />
+                @if (AppModule.Enabled) {
+                    <Settings_App Area="General" @bind-Value="_tenant" />
                 }
             </div>
             
@@ -259,8 +259,8 @@
                         <input type="text" id="edit-setting-theme-css-font-import" class="form-control" @bind="_tenant.TenantSettings.ThemeFontCssImport" />
                     </div>
 
-                    @if (_appSettings.Enabled) {
-                        <Settings_App Module="Theme" @bind-Value="_tenant" />
+                    @if (AppModule.Enabled) {
+                        <Settings_App Area="Theme" @bind-Value="_tenant" />
                     }
                 </div>
             }
@@ -285,8 +285,8 @@
                     </div>
                 }
 
-                @if (_appSettings.Enabled) {
-                    <Settings_App Module="Authentication" @bind-Value="_tenant" />
+                @if (AppModule.Enabled) {
+                    <Settings_App Area="Authentication" @bind-Value="_tenant" />
                 }
             </div>
 
@@ -399,8 +399,8 @@
                         </div>
                     }
 
-                    @if (_appSettings.Enabled) {
-                        <Settings_App Module="OptionalFeatures" @bind-Value="_tenant" />
+                    @if (AppModule.Enabled) {
+                        <Settings_App Area="OptionalFeatures" @bind-Value="_tenant" />
                     }
                 </div>
             }
@@ -411,12 +411,12 @@
                     <input type="text" class="form-control" id="edit-tenant-defaultReplyToAddress" @bind="_tenant.TenantSettings.DefaultReplyToAddress" />
                 </div>
 
-                @if (_appSettings.Enabled) {
-                    <Settings_App Module="Email" @bind-Value="_tenant" />
+                @if (AppModule.Enabled) {
+                    <Settings_App Area="Email" @bind-Value="_tenant" />
                 }
             </div>
 
-            @if (_appSettings.Enabled) {
+            @if (AppModule.Enabled) {
                 <div id="tabAppSettings" class="tab-pane" role="tabpanel" aria-labelledby="tabAppSettingsButton">
                     <Settings_App @bind-Value="_tenant" />
                 </div>
@@ -550,8 +550,8 @@
                         </tbody>
                     </table>
 
-                    @if (_appSettings.Enabled) {
-                        <Settings_App Module="WorkSchedule" @bind-Value="_tenant" />
+                    @if (AppModule.Enabled) {
+                        <Settings_App Area="WorkSchedule" @bind-Value="_tenant" />
                     }
                 </div>
             }
@@ -592,7 +592,7 @@
     protected bool _optInWorkSchedule = false;
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
 
-    protected Settings_App _appSettings = new Settings_App();
+    protected Settings_App AppModule = new Settings_App();
 
     protected string _deletePreference = "";
 
@@ -851,6 +851,21 @@
         if (_availableOptInOptions.Contains("workschedule") && _optInWorkSchedule) { optIn.Add("workschedule"); }
 
         _tenant.TenantSettings.ModuleOptInElements = optIn;
+
+        if (AppModule.Enabled) {
+            var saveApp = AppModule.Save(_tenant);
+            if (!saveApp.Result) {
+                if (saveApp.Messages.Any()) {
+                    Model.ErrorMessages(saveApp.Messages);
+                }
+
+                if (!String.IsNullOrWhiteSpace(saveApp.Focus)) {
+                    await Helpers.DelayedFocus(saveApp.Focus);
+                }
+
+                return;
+            }
+        }
 
         var saved = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/SaveTenant", _tenant);
 

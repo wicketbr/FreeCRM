@@ -10,7 +10,7 @@
     // If you have the ShowAppSettingsTab then an additional tab will be shown in the Settings page
     // named AppSettings which will render the code in the default case below.
 
-    switch(Helpers.StringLower(Module)) {
+    switch(Helpers.StringLower(Area)) {
         case "general":
             break;
 
@@ -53,7 +53,7 @@
     /// <summary>
     /// Used to show app settings in the various tabs of the Settings page.
     /// </summary>
-    [Parameter] public string? Module { get; set; }
+    [Parameter] public string? Area { get; set; }
 
     /// <summary>
     /// Set to true to show the App Settings tab in the Settings page.
@@ -93,6 +93,15 @@
     // {
     //     // Do any work here that needs to be done after the component is rendered or parameters are set.
     // }
+
+    public DataObjects.ModuleAction Save(DataObjects.Tenant tenant) {
+        var output = new DataObjects.ModuleAction { Result = true };
+
+        // Perform and pre-save checks here. Return false if there is an error and include any error messages.
+        // Optionally set the focus to a specific field by setting output.FocusField to the field element id.
+
+        return output;
+    }
 
     protected void ValueHasChanged() {
         ValueChanged.InvokeAsync(Value);

@@ -45,8 +45,8 @@
                            class="@Helpers.MissingValue(_appointment.Title, "form-control")" />
                 </div>
 
-                @if (_editAppointment_App.Enabled) {
-                    <EditAppointment_App Module="Top" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                @if (AppModule.Enabled) {
+                    <EditAppointment_App Area="Top" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                 }
 
                 <div class="mb-2">
@@ -183,11 +183,11 @@
                         </li>
                     }
                     <!-- {{ModuleItemEnd:Tags}} -->
-                    @if (_editAppointment_App.Enabled && _editAppointment_App.ShowAppointmentTab) {
+                    @if (AppModule.Enabled && AppModule.ShowAppointmentTab) {
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="tabApptAppButton" data-bs-toggle="tab" data-bs-target="#tabApptApp"
                                     type="button" role="tab" aria-controls="home" aria-selected="true">
-                                @((MarkupString)_editAppointment_App.TabText)
+                                @((MarkupString)AppModule.TabText)
                             </button>
                         </li>
                     }
@@ -240,8 +240,8 @@
                             </div>
                         </div>
 
-                        @if (_editAppointment_App.Enabled) {
-                            <EditAppointment_App Module="Style" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                        @if (AppModule.Enabled) {
+                            <EditAppointment_App Area="Style" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                         }
                     </div>
 
@@ -310,8 +310,8 @@
                                 }
                             </div>
 
-                            @if (_editAppointment_App.Enabled) {
-                                <EditAppointment_App Module="Attendees" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                            @if (AppModule.Enabled) {
+                                <EditAppointment_App Area="Attendees" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                             }
                         </div>
                     }
@@ -347,8 +347,8 @@
                             </div>
                         }
 
-                        @if (_editAppointment_App.Enabled) {
-                            <EditAppointment_App Module="Notes" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                        @if (AppModule.Enabled) {
+                            <EditAppointment_App Area="Notes" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                         }
                     </div>
 
@@ -403,8 +403,8 @@
                                 </div>
                             }
 
-                            @if (_editAppointment_App.Enabled) {
-                                <EditAppointment_App Module="Services" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                            @if (AppModule.Enabled) {
+                                <EditAppointment_App Area="Services" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                             }
                         </div>
                     }
@@ -438,13 +438,12 @@
                             }
                         </div>
 
-                        @if (_editAppointment_App.Enabled) {
-                            <EditAppointment_App Module="Tags" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                        @if (AppModule.Enabled) {
+                            <EditAppointment_App Area="Tags" AllowEdit="AllowEdit" @bind-Value="_appointment" />
                         }
                     }
                     <!-- {{ModuleItemEnd:Tags}} -->
-
-                    @if (_editAppointment_App.Enabled && _editAppointment_App.ShowAppointmentTab) {
+                    @if (AppModule.Enabled && AppModule.ShowAppointmentTab) {
                         <div id="tabApptApp" class="tab-pane" role="tabpanel" aria-labelledby="tabApptAppButton">
                             <EditAppointment_App AllowEdit="AllowEdit" @bind-Value="_appointment" />
                         </div>
@@ -495,8 +494,8 @@
                 }
             }
 
-            @if (_editAppointment_App.Enabled) {
-                <EditAppointment_App Module="Bottom" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+            @if (AppModule.Enabled) {
+                <EditAppointment_App Area="Bottom" AllowEdit="AllowEdit" @bind-Value="_appointment" />
             }
 
             <button type="button" class="btn btn-sm btn-dark" @onclick="Close">
@@ -552,7 +551,7 @@
 
     protected DataObjects.Appointment _appointment = new DataObjects.Appointment();
 
-    protected EditAppointment_App _editAppointment_App = new EditAppointment_App();
+    protected EditAppointment_App AppModule = new EditAppointment_App();
 
     [Parameter]
     public DataObjects.Appointment? Appointment { get; set; }
@@ -861,6 +860,22 @@
 
         _appointment.Start = start;
         _appointment.End = end;
+
+        if (AppModule.Enabled) {
+            var saveApp = AppModule.Save(_appointment);
+
+            if (!saveApp.Result) {
+                if (saveApp.Messages.Any()) {
+                    Model.ErrorMessages(saveApp.Messages);
+                }
+
+                if (!String.IsNullOrWhiteSpace(saveApp.Focus)) {
+                    await Helpers.DelayedFocus(saveApp.Focus);
+                }
+
+                return;
+            }
+        }
 
         _visible = false;
         DialogService.Close();
