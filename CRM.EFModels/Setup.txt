@@ -12,6 +12,24 @@ is set as the Startup Project. The Package Manager Console can be opened by sele
 
 
 
+	****** STOP HERE ******
+
+	Unless you are building a solution to deploy to customers where you will be coding your data migrations,
+	do not continue with any further steps. Once you have created your initial database by running the app,
+	go into the DataAccess.cs file and set _useMigrations to false.
+
+	If you are going to be building coded migrations, the following steps are only used to build the migration
+	class file. You still then have to manually modify the DataMigrations.DBTYPE.cs files in the DataAccess
+	project to manually create the correct SQL statements for the supported database types.
+
+	For most users, you will simply want to use a database-first design approach. Let the code build your initial
+	database, then set _useMigrations to false. Any further changes you make to your database design
+	will only require re-running the Scaffold-DbContext command above to update your EF models.
+
+
+
+
+
 2.  Remove or comment out the following OnConfiguring override in the \EFModels\EFDataModel.cs file before deploying:
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
