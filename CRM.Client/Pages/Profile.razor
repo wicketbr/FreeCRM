@@ -18,14 +18,17 @@
             <div class="card mb-2">
                 <div class="card-header text-bg-primary text-white">
                     <Language Tag="ManageAvatar" IncludeIcon="true" />&nbsp;
-                    @if (UserHasAvatarPhoto) {
-                        <button type="button" class="btn btn-danger btn-sm" @onclick="DeleteAvatarPhoto">
-                            <Language Tag="DeleteAvatar" IncludeIcon="true" />
+
+                    <div class="btn-group" role="group">
+                        @if (UserHasAvatarPhoto) {
+                            <button type="button" class="btn btn-danger btn-sm" @onclick="DeleteAvatarPhoto">
+                                <Language Tag="DeleteAvatar" IncludeIcon="true" />
+                            </button>
+                        }
+                        <button type="button" class="btn btn-success btn-sm" @onclick="UploadAvatarImage">
+                            <Language Tag="UploadFile" IncludeIcon="true" />
                         </button>
-                    }
-                    <button type="button" class="btn btn-success btn-sm" @onclick="UploadAvatarImage">
-                        <Language Tag="UploadFile" IncludeIcon="true" />
-                    </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if (UserHasAvatarPhoto) {

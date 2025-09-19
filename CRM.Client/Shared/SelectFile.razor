@@ -6,7 +6,7 @@
 } else {
     <div class="mt-2">
         @if (_showCancelButton || _showRefreshButton) {
-            <div class="mb-2">
+            <div class="btn-group mb-2" role="group">
                 @if (_showCancelButton) {
                     <button type="button" class="btn btn-dark" @onclick="Cancel">
                         <Language Tag="Cancel" IncludeIcon="true" />

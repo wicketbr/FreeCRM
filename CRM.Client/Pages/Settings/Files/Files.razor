@@ -426,7 +426,7 @@
                 parameters.Add("OnComplete", onComplete);
                 parameters.Add("OnDelete", onDelete);
 
-                await DialogService.OpenAsync<ManageFile>(Helpers.IconAndText("ManageFile"), parameters, new Radzen.DialogOptions() {
+                await DialogService.OpenAsync<ManageFile>(Helpers.Text("ManageFile"), parameters, new Radzen.DialogOptions() {
                     AutoFocusFirstElement = false,
                     Draggable = false,    
                     Resizable = false,

@@ -210,7 +210,7 @@
                             <input type="password" class="form-control" id="login-password" @bind="password" @ref="loginPassword" @onkeyup="CheckForEnterKey" @bind:event="oninput" />
                         </div>
 
-                        <div class="mb-2 center">
+                        <div class="btn-group mb-2 center" role="group">
                             @if (AvailableLoginOptions.Count() > 1) {
                                 <button type="button" class="btn btn-dark" @onclick="Back">
                                     <Language Tag="Back" IncludeIcon="true" />
@@ -264,13 +264,15 @@
                         class="@Helpers.MissingValue(_user.Password, "form-control")" />
                     </div>
 
-                    <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
-                        <Language Tag="BackToLogin" IncludeIcon="true" />
-                    </button>
+                    <div class="btn-group mb-2" role="group">
+                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                            <Language Tag="BackToLogin" IncludeIcon="true" />
+                        </button>
 
-                    <button type="button" class="btn btn-success" @onclick="ForgotPasswordReset" disabled="@ResetPasswordDisabled">
-                        <Language Tag="ResetPassword" IncludeIcon="true" />
-                    </button>
+                        <button type="button" class="btn btn-success" @onclick="ForgotPasswordReset" disabled="@ResetPasswordDisabled">
+                            <Language Tag="ResetPassword" IncludeIcon="true" />
+                        </button>
+                    </div>
                     break;
 
                 case "forgotpasswordvalidate":
@@ -288,7 +290,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-2 center">
+                    <div class="btn-group mb-2 center" role="group">
                         <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
                             <Language Tag="BackToLogin" IncludeIcon="true" />
                         </button>
@@ -341,7 +343,7 @@
                         <div class="alert alert-danger"><Language Tag="NewPasswordAndConfirmDontMatch" /></div>
                     }
 
-                    <div class="mt-2 center">
+                    <div class="btn-group mt-2 center" role="group">
                         <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
                             <Language Tag="BackToLogin" IncludeIcon="true" />
                         </button>
@@ -366,7 +368,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-2 center">
+                    <div class="btn-group mb-2 center" role="group">
                         <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
                             <Language Tag="BackToLogin" IncludeIcon="true" />
                         </button>
@@ -386,7 +388,7 @@
                         OnValuesChange="DoLoginPluginWithPromptsPromptValuesChanged" />
                     </div>
 
-                    <div class="mb-2 center">
+                    <div class="btn-group mb-2 center" role="group">
                         @if (AvailableLoginOptions.Count() > 1) {
                             <button type="button" class="btn btn-dark" @onclick="Back">
                                 <Language Tag="Back" IncludeIcon="true" />
