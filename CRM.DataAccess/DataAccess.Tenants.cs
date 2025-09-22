@@ -360,6 +360,8 @@ public partial class DataAccess
 
         var recs = await data.Tenants.ToListAsync();
         if (recs != null && recs.Any()) {
+            var nonBuiltIn = new List<DataObjects.Tenant>();
+
             foreach (var rec in recs) {
                 if (rec != null) {
                     var tenant = new DataObjects.Tenant {
@@ -378,8 +380,19 @@ public partial class DataAccess
                     if (settings != null) {
                         tenant.TenantSettings = settings;
                     }
-                    output.Add(tenant);
+
+                    if (tenant.TenantId == _guid1 || tenant.TenantId == _guid2) {
+                        output.Add(tenant);
+                    } else {
+                        nonBuiltIn.Add(tenant);
+                    }
                 }
+            }
+
+            output = output.OrderBy(x => x.TenantId.ToString()).ToList();
+
+            if (nonBuiltIn.Any()) {
+                output.AddRange(nonBuiltIn.OrderBy(x => x.Name).ToList());
             }
         }
 
