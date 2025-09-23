@@ -5471,6 +5471,8 @@ public static partial class Helpers
 
             if (!String.IsNullOrWhiteSpace(user.AuthToken)) {
                 await CookieWrite("user-token", user.AuthToken);
+            } else {
+                await CookieWrite("user-token", "");
             }
         }else {
             Model.User = new DataObjects.User();
