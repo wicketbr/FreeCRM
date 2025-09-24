@@ -862,6 +862,8 @@ public partial class DataAccess
             }
         };
 
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "Username", language, CurrentUser));
+
         var settings = GetTenantSettings(output.TenantId);
         List<string> blockedModules = settings.ModuleHideElements;
         List<string> optIn = settings.ModuleOptInElements;
@@ -881,6 +883,8 @@ public partial class DataAccess
             });
         }
 
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "EmployeeId", language, CurrentUser));
+
         if (showDepartments) {
             output.Columns.Add(new DataObjects.FilterColumn {
                 Align = "",
@@ -892,6 +896,8 @@ public partial class DataAccess
             });
         }
 
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "Departments", language, CurrentUser));
+
         output.Columns.Add(new DataObjects.FilterColumn {
             Align = "center",
             Label = "icon:RecordsTableIconEnabled",
@@ -900,6 +906,8 @@ public partial class DataAccess
             DataElementName = "enabled",
             DataType = "boolean"
         });
+
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "Enabled", language, CurrentUser));
 
         output.Columns.Add(new DataObjects.FilterColumn {
             Align = "center",
@@ -910,6 +918,8 @@ public partial class DataAccess
             DataType = "boolean"
         });
 
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "Admin", language, CurrentUser));
+
         output.Columns.Add(new DataObjects.FilterColumn {
             Align = "",
             Label = GetLanguageItem("LastLogin", language),
@@ -919,6 +929,8 @@ public partial class DataAccess
             DataType = "datetime"
         });
 
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "LastLogin", language, CurrentUser));
+
         output.Columns.Add(new DataObjects.FilterColumn { 
             Align = "center",
             Label = "#",
@@ -927,6 +939,8 @@ public partial class DataAccess
             DataElementName = "failedLoginAttempts",
             DataType = "number",
         });
+
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "FailedLoginAttempts", language, CurrentUser));
 
         // See if any UDF labels need to be included in the column output
         var udfLabels = await GetUDFLabels(output.TenantId, false);
@@ -950,6 +964,8 @@ public partial class DataAccess
                 }
             }
         }
+
+        output.Columns.AddRange(GetFilterColumnsApp("Users", "UDF", language, CurrentUser));
 
         IQueryable<User>? recs = null;
 

@@ -233,6 +233,8 @@ public partial class DataAccess
             }
         };
 
+        output.Columns.AddRange(GetFilterColumnsApp("Invoices", "InvoiceDueDate", language, CurrentUser));
+
         if (adminUser) {
             output.Columns.Add(new DataObjects.FilterColumn {
                 Align = "",
@@ -244,6 +246,8 @@ public partial class DataAccess
             });
         }
 
+        output.Columns.AddRange(GetFilterColumnsApp("Invoices", "InvoiceSendDate", language, CurrentUser));
+
         output.Columns.Add(new DataObjects.FilterColumn {
             Align = "",
             Label = GetLanguageItem("InvoiceSent", language),
@@ -253,6 +257,8 @@ public partial class DataAccess
             DataType = "DateTime"
         });
 
+        output.Columns.AddRange(GetFilterColumnsApp("Invoices", "InvoiceSent", language, CurrentUser));
+
         output.Columns.Add(new DataObjects.FilterColumn {
             Align = "",
             Label = GetLanguageItem("InvoiceTotal", language),
@@ -261,6 +267,8 @@ public partial class DataAccess
             DataElementName = "Total",
             DataType = "currency"
         });
+
+        output.Columns.AddRange(GetFilterColumnsApp("Invoices", "Total", language, CurrentUser));
 
         IQueryable<Invoice>? recs = null;
 

@@ -155,6 +155,18 @@ namespace CRM
 
             var app = AppModifyStart(AppModifyBuilderEnd(builder).Build());
 
+            bool openIdForceHttps = false;
+            try {
+                openIdForceHttps = builder.Configuration.GetValue<bool>("AuthenticationProviders:OpenId:ForceHttps");
+            } catch { }
+            if (openIdForceHttps) {
+                app.Use((context, next) => {
+                    context.Request.Scheme = "https";
+                    context.Response.Headers.Append("Content-Security-Policy", "frame-ancestors 'self' login.wsu.edu cms.em.wsu.edu futurecoug.wsu.edu");
+                    return next(context);
+                });
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment()) {
                 app.UseWebAssemblyDebugging();

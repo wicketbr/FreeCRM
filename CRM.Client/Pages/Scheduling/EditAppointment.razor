@@ -473,7 +473,7 @@
                             <Language Tag="UpdatingWait" />
                         </div>
                     } else {
-                        <div class="mb-2">
+                        <div class="btn-group mb-2" role="group">
                             <button type="button"
                             @onclick="@(() => UpdateAttendance("accepted"))"
                                     class="@(_userAttendance == "accepted" ? "btn btn-sm btn-success" : "btn btn-sm btn-dark")">
@@ -498,38 +498,40 @@
                 <EditAppointment_App Area="Bottom" AllowEdit="AllowEdit" @bind-Value="_appointment" />
             }
 
-            <button type="button" class="btn btn-sm btn-dark" @onclick="Close">
-                @if(_newAppointment){
-                    <Language Tag="Cancel" IncludeIcon="true" />
-                } else {
-                    <Language Tag="Close" IncludeIcon="true" />
-                }
-            </button>
-            @if (AllowEdit) {
-                @if (OnComplete != null) {
-                    <button type="button" class="btn btn-sm btn-success" @onclick="Save">
-                        <Language Tag="Save" IncludeIcon="true" />
-                    </button>
-                }
-
-                @if (!_newAppointment) {
-                    <button type="button" class="btn btn-sm btn-primary" @onclick="AddNote">
-                        <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
-                    </button>
-
-                    @if (OnDelete != null) {
-                        <DeleteConfirmation ButtonSize="small" OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+            <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-sm btn-dark" @onclick="Close">
+                    @if (_newAppointment) {
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    } else {
+                        <Language Tag="Close" IncludeIcon="true" />
                     }
-
-                    // {{ModuleItemStart:Invoices}}
-                    @if (_appointment.Meeting && Model.FeatureEnabledInvoices) {
-                        <button type="button" class="btn btn-sm btn-dark" @onclick="AppointmentInvoices">
-                            <Language Tag="Invoices" IncludeIcon="true" />
+                </button>
+                @if (AllowEdit) {
+                    @if (OnComplete != null) {
+                        <button type="button" class="btn btn-sm btn-success" @onclick="Save">
+                            <Language Tag="Save" IncludeIcon="true" />
                         </button>
                     }
-                    // {{ModuleItemEnd:Invoices}}
+
+                    @if (!_newAppointment) {
+                        <button type="button" class="btn btn-sm btn-primary" @onclick="AddNote">
+                            <Language Tag="AppointmentNoteAdd" IncludeIcon="true" />
+                        </button>
+
+                        @if (OnDelete != null) {
+                            <DeleteConfirmation ButtonSize="small" OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                        }
+
+                        // {{ModuleItemStart:Invoices}}
+                        @if (_appointment.Meeting && Model.FeatureEnabledInvoices) {
+                            <button type="button" class="btn btn-sm btn-dark" @onclick="AppointmentInvoices">
+                                <Language Tag="Invoices" IncludeIcon="true" />
+                            </button>
+                        }
+                        // {{ModuleItemEnd:Invoices}}
+                    }
                 }
-            }
+            </div>
         }
     }
 }

@@ -376,6 +376,7 @@ public partial class DataAccess
             { "Edit", "Edit" },
             { "EditAll", "Edit All" },
             { "EditHTML", "Edit HTML" },
+            { "EditItem", "Edit Item" },
             { "EditLanguage", "Edit Language" },
             { "EditLanguageInfo", "To edit a language item use the lookup field below to find the text you wish to edit. Warning: clicking the Edit All option takes a while to load and is very resource heavy, as there are a lot of language items to load into the editing interface." },
             { "EditNotes", "Edit Notes" },

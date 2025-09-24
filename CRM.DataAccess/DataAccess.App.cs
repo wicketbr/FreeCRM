@@ -123,6 +123,24 @@ public partial class DataAccess
     }
 
     /// <summary>
+    /// This method is called to add any app-specific filter columns to the filter output.
+    /// </summary>
+    /// <param name="Type">The filter type (eg: Users, Invoices, etc.)</param>
+    /// <param name="Position">The position in the column orders (see calling code for details.)</param>
+    /// <param name="CurrentUser">The current user object, if one exists</param>
+    /// <returns>A list of FilterColumn objects</returns>
+    private List<DataObjects.FilterColumn> GetFilterColumnsApp(string Type, string Position, DataObjects.Language Language, DataObjects.User? CurrentUser = null)
+    {
+        var output = new List<DataObjects.FilterColumn>();
+        // Add any app-specific filter columns here.
+        // Example:
+        // if (Type.ToLower() == "users" && Position.ToLower() == "username") {
+        //     output.Add(new DataObjects.FilterColumn { Name = "MyColumn", Type = "string", Title = "My Column", Placeholder = "My Column", Width = 150 });
+        // }
+        return output;
+    }
+
+    /// <summary>
     /// This method is called to add any app-specific deleted records to the output.
     /// </summary>
     private async Task<DataObjects.DeletedRecords> GetDeletedRecordsApp(Guid TenantId, DataObjects.DeletedRecords deletedRecords)

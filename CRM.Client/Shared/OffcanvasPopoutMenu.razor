@@ -36,13 +36,15 @@
                     <input type="text" id="quickadd-user-Email" class="form-control" @bind="Model.QuickAddUser.Email" />
                 </div>
 
-                <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddUserSave">
-                    <Language Tag="Save" IncludeIcon="true" />
-                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddUserSave">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
 
-                <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
-                    <Language Tag="Cancel" IncludeIcon="true" />
-                </button>
+                    <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                </div>
                 break;
 
             case "addusersaving":
@@ -67,13 +69,15 @@
                     <textarea id="quickadd-appointment-note" rows="8" class="form-control" @bind="Model.QuickAddAppointmentNote.Note"></textarea>
                 </div>
 
-                <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddAppointmentNoteSave">
-                    <Language Tag="Save" IncludeIcon="true" />
-                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddAppointmentNoteSave">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
 
-                <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
-                    <Language Tag="Cancel" IncludeIcon="true" />
-                </button>
+                    <button type="button" class="btn btn-dark btn-sm" @onclick="QuickActionClose">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                </div>
                 break;
             // {{ModuleItemEnd:Appointments}}
         }
