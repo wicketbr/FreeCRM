@@ -4,31 +4,19 @@
 @implements IDisposable
 
 @if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
-    if (Model.Tenant.TenantSettings.LogoIncludedOnHomePage && !String.IsNullOrWhiteSpace(LogoUrl)) {
-        <div class="home-page-logo-container">
-            <img src="@LogoUrl" class="logo-homepage" />
-        </div>
-    }
-
-    <h1 class="page-title">
-        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
-            <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
-        }
-        <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
-    </h1>
-
     <Index_App />
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
-    protected bool _loading = false;
     protected string _pageName = "home";
+
+    Index_App AppModule = new Index_App();
 
     public void Dispose()
     {
-        Model.Subscribers_OnChange.Remove(_pageName);
         Model.OnChange -= OnDataModelUpdated;
     }
 
@@ -43,6 +31,7 @@
                 if (!_loadedData) {
                     _loadedData = true;
                     await Helpers.ValidateUrl(TenantCode, true);
+                    await AppModule.LoadData();
                 }
             } else {
                 Helpers.NavigateToLogin();
@@ -50,31 +39,15 @@
         }
     }
 
-    protected override void OnInitialized()
-    {
-        if (!Model.Subscribers_OnChange.Contains(_pageName)){
-            Model.Subscribers_OnChange.Add(_pageName);
-            Model.OnChange += OnDataModelUpdated;
-        }
-
-        Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
+    protected void OnDataModelUpdated() {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
     }
 
-    protected string LogoUrl
+    protected override void OnInitialized()
     {
-        get {
-            if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
-                return Model.ApplicationUrl + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
-            } else {
-                return String.Empty;
-            }
-        }
+        Model.View = _pageName;
+        Model.OnChange += StateHasChanged;
     }
 }
