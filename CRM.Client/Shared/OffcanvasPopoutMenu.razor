@@ -128,7 +128,7 @@
                             <Icon Name="TenantCurrent" />
                             @if (tenantDisplayName.Length > 40) {
                                 string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
-                                <span title="@tenantDisplayName">@truncatedName</span>
+                                <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
                             } else {
                                 <span class="icon-text">@tenantDisplayName</span>
                             }
