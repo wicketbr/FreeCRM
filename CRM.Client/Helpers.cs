@@ -5442,12 +5442,21 @@ public static partial class Helpers
 
         string tenantUrl = String.Empty;
 
-        if(tenant != null) {
+        if (tenant != null) {
             Model.Tenant = tenant;
 
             if (!String.IsNullOrWhiteSpace(tenant.TenantSettings.ApplicationUrl)) {
                 tenantUrl = tenant.TenantSettings.ApplicationUrl;
 
+                if (!tenantUrl.EndsWith("/")) {
+                    tenantUrl += "/";
+                }
+
+                if (Model.UseTenantCodeInUrl) {
+                    tenantUrl += tenant.TenantCode + "/";
+                }
+            } else {
+                tenantUrl = Model.ApplicationUrlDefault;
                 if (!tenantUrl.EndsWith("/")) {
                     tenantUrl += "/";
                 }
