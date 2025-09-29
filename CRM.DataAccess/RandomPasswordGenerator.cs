@@ -1,7 +1,7 @@
 ﻿/// <summary>
 /// Static class used to generate random passwords of varying lengths with varying complexity requirements.
 /// </summary>
-public static class PasswordGenerator
+public static partial class PasswordGenerator
 {
     private static string lettersUpperCase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static string lettersLowerCase = "abcdefghijklmnopqrstuvwxyz";
