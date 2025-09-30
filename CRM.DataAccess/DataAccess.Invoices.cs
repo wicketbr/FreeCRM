@@ -102,7 +102,7 @@ public partial class DataAccess
                 Notes = rec.Notes,
                 InvoiceCreated = rec.InvoiceCreated,
                 InvoiceDueDate = rec.InvoiceDueDate,
-                InvoiceSendDate = rec.InvoiceDueDate,
+                InvoiceSendDate = rec.InvoiceSendDate,
                 InvoiceSent = rec.InvoiceSent,
                 InvoiceClosed = rec.InvoiceClosed,
                 Total = rec.Total,
