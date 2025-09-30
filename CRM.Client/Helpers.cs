@@ -55,6 +55,7 @@ public static partial class Helpers
     private static NavigationManager NavManager = null!;
 
     private static bool _savingUserPreferences = false;
+    private static bool _switchingTenant = false;
     private static bool _validatingUrl = false;
 
     /// <summary>
@@ -5432,6 +5433,12 @@ public static partial class Helpers
     /// <param name="TenantId">The unique id of the tenant.</param>
     public static async Task SwitchTenant(Guid TenantId)
     {
+        if (_switchingTenant) {
+            return;
+        }
+
+        _switchingTenant = true;
+
         // Find the user for this tenant.
         var user = Model.Users.FirstOrDefault(x => x.TenantId == TenantId);
         var tenant = Model.Tenants.FirstOrDefault(x => x.TenantId == TenantId);
@@ -5442,12 +5449,21 @@ public static partial class Helpers
 
         string tenantUrl = String.Empty;
 
-        if(tenant != null) {
+        if (tenant != null) {
             Model.Tenant = tenant;
 
             if (!String.IsNullOrWhiteSpace(tenant.TenantSettings.ApplicationUrl)) {
                 tenantUrl = tenant.TenantSettings.ApplicationUrl;
 
+                if (!tenantUrl.EndsWith("/")) {
+                    tenantUrl += "/";
+                }
+
+                if (Model.UseTenantCodeInUrl) {
+                    tenantUrl += tenant.TenantCode + "/";
+                }
+            } else {
+                tenantUrl = Model.ApplicationUrlDefault;
                 if (!tenantUrl.EndsWith("/")) {
                     tenantUrl += "/";
                 }
@@ -5481,7 +5497,7 @@ public static partial class Helpers
 
         await Helpers.CookieWrite("requested-url", "");
 
-        ForceModelUpdates();
+        //ForceModelUpdates();
 
         if(user != null) {
             if (!String.IsNullOrWhiteSpace(tenantUrl)) {
@@ -5493,6 +5509,8 @@ public static partial class Helpers
         }
 
         Model.NotifyTenantChanged();
+
+        _switchingTenant = false;
     }
 
     // {{ModuleItemStart:Tags}}

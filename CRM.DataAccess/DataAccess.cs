@@ -22,7 +22,7 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("9/23/2025"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("9/29/2025"));
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
 
@@ -46,6 +46,12 @@ public partial class DataAccess: IDisposable, IDataAccess
         DataAccessAppInit();
 
         var optionsBuilder = new DbContextOptionsBuilder<EFDataModel>();
+
+        if (StringValue(_databaseType).ToLower() == "inmemory") {
+            // A connection string is not required or used for the InMemory option,
+            // so just set it to a default value if we are using the InMemory database.
+            _connectionString = "InMemory";
+        }
 
         // Both the Connection String and Database Type parameters are required.
         // Otherwise the app will redirect to the page to configure the database connection.

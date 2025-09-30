@@ -2,36 +2,50 @@
 @using Humanizer
 @inject BlazorDataModel Model
 
-@{
-    // This component is used to display application-specific items on the home page.
-    
-    @*<div class="mt-2 mb-2">
-        Added by the Index.App page.
-    </div>*@
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    if (Model.Tenant.TenantSettings.LogoIncludedOnHomePage && !String.IsNullOrWhiteSpace(LogoUrl)) {
+        <div class="home-page-logo-container">
+            <img src="@LogoUrl" class="logo-homepage" />
+        </div>
+    }
+
+    <h1 class="page-title">
+        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
+            <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
+        }
+        <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
+    </h1>
 }
 
 @code {
+    protected string _pageName = "home";
+
     public void Dispose() { 
-        Model.OnChange -= StateHasChanged;
+        Model.OnChange -= OnDataModelUpdated;
     }
 
     protected override void OnInitialized()
     {
-        Model.OnChange += StateHasChanged;
+        Model.OnChange += OnDataModelUpdated;
     }
 
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     RenderComponent();
-    // }
+    protected void OnDataModelUpdated() {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
 
-    // protected override void OnParametersSet()
-    // {
-    //     RenderComponent();
-    // }
+    public async Task LoadData() {
+        // Perform any app-specific data loading here.
+    }
 
-    // protected void RenderComponent()
-    // {
-    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
-    // }
+    protected string LogoUrl {
+        get {
+            if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
+                return Model.ApplicationUrl + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
+            } else {
+                return String.Empty;
+            }
+        }
+    }
 }
