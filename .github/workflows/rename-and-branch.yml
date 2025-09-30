@@ -64,6 +64,9 @@ jobs:
           - name: Touchpoints
             branch: Touchpoints_base
             selections: 'remove:all'
+          - name: FreeAI
+            branch: FreeAI_base
+            selections: 'remove:all'
 
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
