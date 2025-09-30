@@ -109,7 +109,7 @@ public partial class DataAccess
             { "BackgroundColorAbbreviation", "BG" },
             { "CalendarColor", "Calendar Color" },
             { "CalendarStyle", "Style" },
-            { "CanBeScheduled", "User Can Be Scheduled Take Appointments" },
+            { "CanBeScheduled", "User Can Be Scheduled to Take Appointments" },
             { "EditAppointment", "Edit Appointment" },
             { "EditAppointmentEvent", "Edit Event" },
             { "EditAppointmentMeeting", "Edit Meeting" },

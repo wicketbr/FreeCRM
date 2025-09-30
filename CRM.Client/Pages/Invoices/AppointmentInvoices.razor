@@ -46,16 +46,26 @@
                                 <Language Tag="InvoiceSendDate" />
                             </label>
                             <br />
-                            <RadzenDatePicker TValue="DateTime?" Value="@_defaults.InvoiceSendDate" id="default-invoice-InvoiceSendDate"
-                            Change="@(args => _defaults.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                            <DateTimePicker
+                                    Class="form-control"
+                                    Id="default-invoice-InvoiceSendDate"
+                                    OnUpdate="@((DateOnly? v) => _defaults.InvoiceSendDate = Helpers.DateOnlyToDateTime(v))"
+                                    TableClass="datetime-picker"
+                                    TValue="DateOnly?"
+                                    Value="Helpers.DateTimeToDateOnly(_defaults.InvoiceSendDate)" />
                         </div>
                         <div class="col col-sm-2 mb-2">
                             <label for="default-invoice-InvoiceDueDate">
                                 <Language Tag="InvoiceDue" />
                             </label>
                             <br />
-                            <RadzenDatePicker TValue="DateTime?" Value="@_defaults.InvoiceDueDate" id="default-invoice-InvoiceDueDate"
-                            Change="@(args => _defaults.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                            <DateTimePicker
+                                    Class="form-control"
+                                    Id="default-invoice-InvoiceDueDate"
+                                    OnUpdate="@((DateOnly? v) => _defaults.InvoiceDueDate = Helpers.DateOnlyToDateTime(v))"
+                                    TableClass="datetime-picker"
+                                    TValue="DateOnly?"
+                                    Value="Helpers.DateTimeToDateOnly(_defaults.InvoiceDueDate)" />
                         </div>
                         <div class="col col-sm-2">
                             <label for="default-invoice-InvoiceNumber">
@@ -124,16 +134,16 @@
                 </div>
             </div>
 
-            foreach(var user in _appointment.Users) {
-                var userInvoice = _appointment.Invoices.FirstOrDefault(x => x.UserId == user.UserId);
+            foreach(var user in _appointment.Users.Index()) {
+                var userInvoice = _appointment.Invoices.FirstOrDefault(x => x.UserId == user.Item.UserId);
 
                 <div class="card mb-4">
                     <div class="card-header text-bg-primary text-white">
-                        <span>@user.DisplayName</span>
+                        <span>@user.Item.DisplayName</span>
                     </div>
                     <div class="card-body">
                         @if(userInvoice == null) {
-                            <button type="button" class="btn btn-sm btn-success" @onclick="@(() => CreateInvoiceForUser(user.UserId))">
+                            <button type="button" class="btn btn-sm btn-success" @onclick="@(() => CreateInvoiceForUser(user.Item.UserId))">
                                 <Language Tag="CreateInvoiceForUser" IncludeIcon="true" />
                             </button>
                         } else {
@@ -141,51 +151,63 @@
                             var invoiceTotal = InvoiceTotal(userInvoice);
 
                             @if (!invoiceClosed) {
-                                <button type="button" class="btn btn-sm btn-success mb-2" @onclick="@(() => AddItemToUserInvoice(userInvoice))">
-                                    <Language Tag="InvoiceAddItem" IncludeIcon="true" />
-                                </button>
-
-                                @if (userInvoice.InvoiceId != Guid.Empty) {
-                                    <button type="button" class="btn btn-sm btn-primary mb-2" @onclick="@(() => EditItem(userInvoice.InvoiceId))">
-                                        <Language Tag="EditInvoice" IncludeIcon="true" />
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-success mb-2" @onclick="@(() => AddItemToUserInvoice(userInvoice))">
+                                        <Language Tag="InvoiceAddItem" IncludeIcon="true" />
                                     </button>
-                                }
+
+                                    @if (userInvoice.InvoiceId != Guid.Empty) {
+                                        <button type="button" class="btn btn-sm btn-primary mb-2" @onclick="@(() => EditItem(userInvoice.InvoiceId))">
+                                            <Language Tag="EditInvoice" IncludeIcon="true" />
+                                        </button>
+                                    }
+                                </div>
                             }
 
                             <div class="row">
                                 <div class="col col-sm-4 mb-2">
-                                    <label>
+                                    <label for="user-invoice-title-@user.Index.ToString()">
                                         <Language Tag="InvoiceTitle" />
                                     </label>
-                                    <input type="text" class="form-control" @bind="userInvoice.Title" />
+                                    <input type="text" class="form-control" @bind="userInvoice.Title" id="user-invoice-title-@user.Index.ToString()" />
                                 </div>
                                 <div class="col col-sm-2 mb-2">
-                                    <label>
+                                    <label for="user-invoice-send-date-@user.Index.ToString()">
                                         <Language Tag="InvoiceSendDate" />
                                     </label>
                                     <br />
-                                    <RadzenDatePicker TValue="DateTime?" Value="@userInvoice.InvoiceSendDate"
-                                    Change="@(args => userInvoice.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="@("user-invoice-send-date-" + user.Index.ToString())"
+                                            OnUpdate="@((DateOnly? v) => userInvoice.InvoiceSendDate = Helpers.DateOnlyToDateTime(v))"
+                                            TableClass="datetime-picker"
+                                            TValue="DateOnly?"
+                                            Value="Helpers.DateTimeToDateOnly(userInvoice.InvoiceSendDate)" />
                                 </div>
                                 <div class="col col-sm-2 mb-2">
-                                    <label>
+                                    <label for="user-invoice-due-date-@user.Index.ToString()">
                                         <Language Tag="InvoiceDue" />
                                     </label>
                                     <br />
-                                    <RadzenDatePicker TValue="DateTime?" Value="@userInvoice.InvoiceDueDate"
-                                    Change="@(args => userInvoice.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="@("user-invoice-due-date-" + user.Index.ToString())"
+                                            OnUpdate="@((DateOnly? v) => userInvoice.InvoiceDueDate = Helpers.DateOnlyToDateTime(v))"
+                                            TableClass="datetime-picker"
+                                            TValue="DateOnly?"
+                                            Value="Helpers.DateTimeToDateOnly(userInvoice.InvoiceDueDate)" />
                                 </div>
                                 <div class="col col-sm-2">
-                                    <label>
+                                    <label for="user-invoice-number-@user.Index.ToString()">
                                         <Language Tag="InvoiceNumber" />
                                     </label>
-                                    <input type="text" class="form-control" @bind="userInvoice.InvoiceNumber" />
+                                    <input type="text" class="form-control" @bind="userInvoice.InvoiceNumber" id="user-invoice-number-@user.Index.ToString()" />
                                 </div>
                                 <div class="col col-sm-2">
-                                    <label>
+                                    <label for="user-invoice-po-@user.Index.ToString()">
                                         <Language Tag="InvoicePO" />
                                     </label>
-                                    <input type="text" class="form-control" @bind="userInvoice.PONumber" />
+                                    <input type="text" class="form-control" @bind="userInvoice.PONumber" id="user-invoice-po-@user.Index.ToString()" />
                                 </div>
                             </div>
 
@@ -363,22 +385,22 @@
         var exists = _appointment.Invoices.FirstOrDefault(x => x.UserId == UserId);
         if(exists == null) {
             string title = !String.IsNullOrWhiteSpace(_defaults.Title)
-                ? _defaults.Title
+                ? Helpers.StringValue(_defaults.Title)
                 : Helpers.Text("InvoiceForAppointment") + " " + _appointment.Title;
 
             var userInvoice = new DataObjects.Invoice {
                 InvoiceId = Guid.Empty,    
                 TenantId = _appointment.TenantId,
-                InvoiceNumber = _defaults.InvoiceNumber,
-                PONumber = _defaults.PONumber,
+                InvoiceNumber = Helpers.StringValue(_defaults.InvoiceNumber),
+                PONumber = Helpers.StringValue(_defaults.PONumber),
                 AppointmentId = _appointment.AppointmentId,
                 UserId = UserId,
                 Title = title,
-                Notes = _defaults.Notes,
-                InvoiceCreated = _defaults.InvoiceCreated,
-                InvoiceDueDate = _defaults.InvoiceDueDate,
-                InvoiceSendDate = _defaults.InvoiceSendDate,
-                InvoiceItems = _defaults.InvoiceItems,
+                Notes = Helpers.StringValue(_defaults.Notes),
+                InvoiceCreated = Helpers.DuplicateObject<DateTime?>(_defaults.InvoiceCreated),
+                InvoiceDueDate = Helpers.DuplicateObject<DateTime?>(_defaults.InvoiceDueDate),
+                InvoiceSendDate = Helpers.DuplicateObject<DateTime?>(_defaults.InvoiceSendDate),
+                InvoiceItems = _defaults.InvoiceItems.ToList(),
             };
 
             // {{ModuleItemStart:Services}}

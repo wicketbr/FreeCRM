@@ -21,7 +21,8 @@
             </div>
         }
         @if (_files.Any()) {
-            foreach(var file in _files) {
+            <div>
+            @foreach(var file in _files) {
                 string thumbnail = Helpers.FileThumbnail(file.Extension);
                 string title = Helpers.BytesToFileSizeLabel(file.Bytes) + " - " + file.FileName;
                 bool imageFile = false;
@@ -49,6 +50,7 @@
                     <div class="auto-overflow file-name">@file.FileName</div>
                 </div>
             }
+            </div>
         } else {
             <Language Tag="NoItemsToShow" />
         }

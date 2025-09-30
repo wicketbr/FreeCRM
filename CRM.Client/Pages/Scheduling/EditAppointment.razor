@@ -3,9 +3,11 @@
 @inject HttpClient Http
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
+<div class="appointment-body">
 @if (Model.Loaded && Model.View == "schedule") {
-    @if (_loading) {
-        <LoadingMessage />
+    if (_loading) {
+        <Language Tag="LoadingWait" />
     } else {
         if (_newAppointment) {
             <div class="mb-2">
@@ -24,15 +26,16 @@
             </div>
         }
 
-        @if (_appointment.Deleted) {
+        if (_appointment.Deleted) {
             if (AllowEdit) {
-                <UndeleteMessage DeletedAt="_appointment.DeletedAt" LastModifiedBy="@_appointment.LastModifiedBy" OnUndelete="(() => _appointment.Deleted = false)" />
+                <UndeleteMessage
+                        DeletedAt="_appointment.DeletedAt"
+                        LastModifiedBy="@_appointment.LastModifiedBy"
+                        OnUndelete="(() => _appointment.Deleted = false)" />
             }
         } else {
             if (AllowEdit) {
-                <div class="mt-2">
-                    <RequiredIndicator />
-                </div>
+                <RequiredIndicator />
 
                 <div class="mb-2 input-group">
                     <span class="input-group-text">
@@ -58,55 +61,60 @@
                 </div>
 
                 <div class="mb-2">
-                    <table class="full edit-appointment">
+                    <table class="full">
                         <tbody>
                             <tr>
-                                <td>
+                                <td style="width:50%;">
                                     <label for="edit-appt-StartDate">
                                         <Language Tag="AppointmentStart" Required="true" />
                                     </label>
                                 </td>
-                                @if (!_appointment.AllDay) {
-                                    <td></td>
-                                }
-                                <td>
+                                <td style="width:50%;">
                                     <label for="edit-appt-EndDate">
                                         <Language Tag="AppointmentEnd" Required="true" />
                                     </label>
                                 </td>
-                                @if (_appointment.AllDay) {
-                                    <td></td>
-                                }else{
-                                    <td style="width:99%;"></td>
-                                }
                             </tr>
                             <tr>
-                                <td class="pad-right">
-                                    <RadzenDatePicker TValue="DateTime?" Value="@_startDate" id="edit-appt-StartDate"
-                                                      class="date-only-picker"
-                                                      Change="@(args => _startDate = args)" ShowTime="false" DateFormat="d" />
-                                </td>
-                                @if (!_appointment.AllDay) {
-                                    <td class="pad-right">
-                                        <RadzenDatePicker @bind-Value=_startTime ShowTime="true" TimeOnly="true"
-                                                          class="time-only-picker"
-                                                          DateFormat="t" HourFormat="@_hourFormat" />
-                                    </td>
+                                <td>
+                                @if (_appointment.AllDay) {
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="edit-appt-StartDate"
+                                            OnUpdate="@((DateOnly? v) => _startDate = Helpers.DateOnlyToDateTime(v))"
+                                            TableClass="datetime-picker"
+                                            TValue="DateOnly?"
+                                            Value="Helpers.DateTimeToDateOnly(_startDate)" />
+                                } else {
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="edit-appt-StartDate"
+                                            OnUpdate="@((DateTime? v) => _startDate = v)"
+                                            TableClass="datetime-picker"
+                                            TValue="DateTime?"
+                                            Value="_startDate" />
                                 }
-                                <td class="pad-right">
-                                    <RadzenDatePicker TValue="DateTime?" Value="@_endDate" id="edit-appt-EndDate"
-                                                      class="date-only-picker"
-                                                      Change="@(args => _endDate = args)" ShowTime="false" DateFormat="d" />
                                 </td>
-                                @if (!_appointment.AllDay) {
-                                    <td>
-                                        <RadzenDatePicker @bind-Value=_endTime ShowTime="true" TimeOnly="true"
-                                                          class="time-only-picker"
-                                                          DateFormat="t" HourFormat="@_hourFormat" />
-                                    </td>
-                                }else {
-                                    <td style="width:99%;"></td>
+
+                                <td>
+                                @if (_appointment.AllDay) {
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="edit-appt-EndDate"
+                                            OnUpdate="@((DateOnly? v) => _endDate = Helpers.DateOnlyToDateTime(v))"
+                                            TableClass="datetime-picker"
+                                            TValue="DateOnly?"
+                                            Value="Helpers.DateTimeToDateOnly(_endDate)" />
+                                } else {
+                                    <DateTimePicker
+                                            Class="form-control"
+                                            Id="edit-appt-EndDate"
+                                            OnUpdate="@((DateTime? v) => _endDate = v)"
+                                            TableClass="datetime-picker"
+                                            TValue="DateTime?"
+                                            Value="_endDate" />
                                 }
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -519,12 +527,17 @@
                         </button>
 
                         @if (OnDelete != null) {
-                            <DeleteConfirmation ButtonSize="small" OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                            <DeleteConfirmation
+                                    ButtonSize="small"
+                                    OnConfirmed="Delete"
+                                    CancelText="@Helpers.ConfirmButtonTextCancel"
+                                    DeleteText="@Helpers.ConfirmButtonTextDelete"
+                                    ConfirmDeleteText="@Helpers.Text("Confirm")" />
                         }
 
                         // {{ModuleItemStart:Invoices}}
                         @if (_appointment.Meeting && Model.FeatureEnabledInvoices) {
-                            <button type="button" class="btn btn-sm btn-dark" @onclick="AppointmentInvoices">
+                            <button type="button" class="btn btn-sm btn-secondary" @onclick="AppointmentInvoices">
                                 <Language Tag="Invoices" IncludeIcon="true" />
                             </button>
                         }
@@ -535,9 +548,11 @@
         }
     }
 }
+</div>
+
 @code {
     protected bool _loadedData = false;
-    protected bool _loading = false;
+    protected bool _loading = true;
     protected bool _newAppointment = false;
     protected bool _updatingAttendance = false;
     protected string _userAttendance = "";
@@ -545,9 +560,9 @@
     protected bool _visible = false;
 
     protected DateTime? _startDate;
-    protected DateTime? _startTime;
+    //protected TimeOnly? _startTime;
     protected DateTime? _endDate;
-    protected DateTime? _endTime;
+    //protected TimeOnly? _endTime;
 
     protected string _hourFormat = Convert.ToDateTime("1/1/2000 13:00:00").ToString("t").ToUpper().Contains("PM") ? "12" : "24";
 
@@ -581,6 +596,19 @@
                 _appointment = Appointment != null ? Appointment : new DataObjects.Appointment();
                 _visible = true;
 
+                if (_appointment.AppointmentId != Guid.Empty) {
+                    // Reload the item from the API endpoint.
+                    var loadEvent = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + _appointment.AppointmentId.ToString());
+                    if (loadEvent != null && loadEvent.ActionResponse.Result) {
+                        // Adjust the datetime values
+                        loadEvent.Start = loadEvent.Start.ToLocalTime();
+                        loadEvent.End = loadEvent.End.ToLocalTime();
+
+                        _appointment = loadEvent;
+                    }
+
+                }
+
                 Model.NavigationId = _appointment.AppointmentId.ToString();
                 Model.ViewIsEditPage = true;
 
@@ -601,9 +629,7 @@
                 _newAppointment = _appointment.AppointmentId == Guid.Empty;
 
                 _startDate = _appointment.Start;
-                _startTime = _appointment.Start;
                 _endDate = _appointment.End;
-                _endTime = _appointment.End;
 
                 _loading = false;
                 _loadedData = true;
@@ -832,28 +858,35 @@
                 return;
             }
 
-            start = Convert.ToDateTime(((DateTime)_startDate).ToShortDateString() + " 12:00:00 AM");
-            end = Convert.ToDateTime(((DateTime)_endDate).ToShortDateString() + " 11:59:59 PM");
+            if (_endDate < _startDate) {
+                _endDate = _startDate;
+            }
+
+            start = Convert.ToDateTime((_startDate.Value).ToShortDateString() + " 12:00:00 AM");
+            end = Convert.ToDateTime((_endDate.Value).ToShortDateString() + " 11:59:59 PM");
         } else {
             if (!_startDate.HasValue) {
                 await Helpers.DelayedFocus("edit-appt-StartDate");
                 return;
             }
-            if (!_startTime.HasValue) {
-                await Helpers.DelayedFocus("edit-appt-StartTime");
-                return;
-            }
+            // if (!_startTime.HasValue) {
+            //     await Helpers.DelayedFocus("edit-appt-StartTime");
+            //     return;
+            // }
             if (!_endDate.HasValue) {
                 await Helpers.DelayedFocus("edit-appt-EndDate");
                 return;
             }
-            if (!_endTime.HasValue) {
-                await Helpers.DelayedFocus("edit-appt-EndTime");
-                return;
-            }
+            // if (!_endTime.HasValue) {
+            //     await Helpers.DelayedFocus("edit-appt-EndTime");
+            //     return;
+            // }
 
-            start = Convert.ToDateTime(((DateTime)_startDate).ToShortDateString() + " " + ((DateTime)_startTime).ToShortTimeString());
-            end = Convert.ToDateTime(((DateTime)_endDate).ToShortDateString() + " " + ((DateTime)_endTime).ToShortTimeString());
+            //start = Convert.ToDateTime((_startDate.Value).ToShortDateString() + " " + (_startTime.Value).ToShortTimeString());
+            //end = Convert.ToDateTime((_endDate.Value).ToShortDateString() + " " + (_endTime.Value).ToShortTimeString());
+
+            start = _startDate.Value;
+            end = _endDate.Value;
 
             if(end < start) {
                 end = start;
@@ -915,14 +948,14 @@
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)
     {
-        if (_visible && Model.View == "schedule" && update.UserId != Model.User.UserId) {
+        if (_visible && Model.View == "schedule") {
             string message = update.Message.ToLower();
 
             switch (update.UpdateType) {
                 case DataObjects.SignalRUpdateType.Appointment:
                     switch (message) {
                         case "deleted":
-                            if (update.ItemId == _appointment.AppointmentId) {
+                            if (update.ItemId == _appointment.AppointmentId && update.UserId != Model.User.UserId) {
                                 Close();
                                 Model.Message_RecordDeleted("", update.UserDisplayName);
                             }
@@ -933,7 +966,11 @@
                             if (appt != null && _appointment.AppointmentId == appt.AppointmentId) {
                                 _appointment = appt;
                                 StateHasChanged();
-                                Model.Message_RecordUpdated("", update.UserDisplayName);
+
+                                if (update.UserId != Model.User.UserId) {
+                                    Model.Message_RecordUpdated("", update.UserDisplayName);
+                                }
+
                             }
                             break;
                     }
@@ -944,7 +981,10 @@
                         case "deleted":
                             _appointment.Notes = _appointment.Notes.Where(x => x.AppointmentNoteId != update.ItemId).ToList();
                             StateHasChanged();
-                            Model.Message_RecordUpdated("", update.UserDisplayName);
+
+                            if (update.UserId != Model.User.UserId) {
+                                Model.Message_RecordUpdated("", update.UserDisplayName);
+                            }
                             break;
 
                         case "saved":
@@ -957,7 +997,10 @@
                                     _appointment.Notes.Add(note);
                                 }
                                 StateHasChanged();
-                                Model.Message_RecordUpdated("", update.UserDisplayName);
+
+                                if (update.UserId != Model.User.UserId) {
+                                    Model.Message_RecordUpdated("", update.UserDisplayName);
+                                }
                             }
                             break;
                     }
@@ -969,7 +1012,10 @@
                         case "deleted":
                             _appointment.Services = _appointment.Services.Where(x => x.AppointmentServiceId != update.ItemId).ToList();
                             StateHasChanged();
-                            Model.Message_RecordUpdated("", update.UserDisplayName);
+
+                            if (update.UserId != Model.User.UserId) {
+                                Model.Message_RecordUpdated("", update.UserDisplayName);
+                            }
                             break;
 
                         case "saved":
@@ -982,7 +1028,10 @@
                                     _appointment.Services.Add(apptService);
                                 }
                                 StateHasChanged();
-                                Model.Message_RecordUpdated("", update.UserDisplayName);
+
+                                if (update.UserId != Model.User.UserId) {
+                                    Model.Message_RecordUpdated("", update.UserDisplayName);
+                                }
                             }
                             break;
                     }

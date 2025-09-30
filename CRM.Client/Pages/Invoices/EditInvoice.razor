@@ -83,18 +83,28 @@
                         <Language Tag="InvoiceSendDate" Required="true" />
                     </label>
                     <br />
-                    <RadzenDatePicker TValue="DateTime?" Value="@_invoice.InvoiceSendDate" id="edit-invoice-InvoiceSendDate"
-                        class="@ClassSendDate"
-                        Change="@(args => _invoice.InvoiceSendDate = args)" ShowTime="false" DateFormat="d" />
+                    <DateTimePicker
+                            Class="form-control"
+                            Id="edit-invoice-InvoiceSendDate"
+                            OnUpdate="@((DateOnly? v) => _invoice.InvoiceSendDate = Helpers.DateOnlyToDateTime(v))"
+                            TableClass="datetime-picker"
+                            TValue="DateOnly?"
+                            RequiredClass="m-r"
+                            Value="Helpers.DateTimeToDateOnly(_invoice.InvoiceSendDate)" />
                 </div>
                 <div class="col col-sm-2 mb-2">
                     <label for="edit-invoice-InvoiceDueDate">
                         <Language Tag="InvoiceDue" Required="true" />
                     </label>
                     <br />
-                    <RadzenDatePicker TValue="DateTime?" Value="@_invoice.InvoiceDueDate" id="edit-invoice-InvoiceDueDate"
-                        class="@ClassDueDate"
-                        Change="@(args => _invoice.InvoiceDueDate = args)" ShowTime="false" DateFormat="d" />
+                    <DateTimePicker
+                            Class="form-control"
+                            Id="edit-invoice-InvoiceDueDate"
+                            OnUpdate="@((DateOnly? v) => _invoice.InvoiceDueDate = Helpers.DateOnlyToDateTime(v))"
+                            TableClass="datetime-picker"
+                            TValue="DateOnly?"
+                            RequiredClass="m-r"
+                            Value="Helpers.DateTimeToDateOnly(_invoice.InvoiceDueDate)" />
                 </div>
                 <div class="col col-sm-2">
                     <label for="edit-invoice-InvoiceNumber">
@@ -270,28 +280,6 @@
             Helpers.NavigateTo("Invoices/" + _user.UserId.ToString());
         } else {
             Helpers.NavigateTo("Invoices");
-        }
-    }
-
-    protected string ClassDueDate
-    {
-        get {
-            string output = "";
-            if (_invoice.InvoiceDueDate == null) {
-                output += Helpers.MissingValueClass;
-            }
-            return output;
-        }
-    }
-
-    protected string ClassSendDate
-    {
-        get {
-            string output = "";
-            if (_invoice.InvoiceSendDate == null) {
-                output += Helpers.MissingValueClass;
-            }
-            return output;
         }
     }
 

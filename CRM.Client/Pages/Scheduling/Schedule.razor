@@ -343,6 +343,10 @@
                     end = args.End;
                 }
 
+                if (args.View.GetType() == typeof(Radzen.Blazor.RadzenMonthView)) {
+                    start = Convert.ToDateTime(args.Start.ToShortDateString() + " 12:00 PM");
+                    end = start.AddMinutes(minutes);
+                }
 
                 DataObjects.Appointment appt = new DataObjects.Appointment {
                         AppointmentId = Guid.Empty,
@@ -469,40 +473,17 @@
             parameters.Add("OnDelete", onDelete);
         }
 
-        // Reload the event to get the latest details
-        Model.ClearMessages();
-        Model.Message_Loading();
-
-        if (appt.AppointmentId != Guid.Empty) {
-            //Helpers.ModalMessage(Model.LoadingMessage, title);
-
-            var loadEvent = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + appt.AppointmentId.ToString());
-            if (loadEvent != null && loadEvent.ActionResponse.Result) {
-                // Adjust the datetime values
-                loadEvent.Start = loadEvent.Start.ToLocalTime();
-                loadEvent.End = loadEvent.End.ToLocalTime();
-
-                appt = loadEvent;
-            }
-
-            //Helpers.ModalClose();
-        }
-        
         parameters.Add("Appointment", appt);
-
-        Model.ClearMessages();
-        // Helpers.ModalClose();
-
-        // await System.Threading.Tasks.Task.Delay(100);
 
         await DialogService.OpenAsync<EditAppointment>(title, parameters, new Radzen.DialogOptions() {
             AutoFocusFirstElement = false,
             Resizable = false,
             Draggable = false,
-            //Width="620px",
             CloseDialogOnEsc = false,
             CloseDialogOnOverlayClick = false,
             ShowClose = false,
+            Top = "10px",
+            Width = "98%",
         });
     }
 }
