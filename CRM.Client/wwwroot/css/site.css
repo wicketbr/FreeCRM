@@ -1322,3 +1322,9 @@ label.unbold {
 .rz-dialog-titlebar-close {
     margin-right:1em;
 }
+
+.badge-count {
+    position:relative;
+    top:-8px;
+    font-size:0.6em;
+}
