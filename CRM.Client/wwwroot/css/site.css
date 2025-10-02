@@ -498,7 +498,7 @@ table.table.no-lines tr.show-lines td {
 a.btn,
 button.btn {
     margin-right:.2em;
-    margin-bottom:.2em;
+    /*margin-bottom:.2em;*/
 }
 
 h1 button.btn,
@@ -933,8 +933,10 @@ table.udf-labels tbody tr td.top {
     --rz-scheduler-view-selected-color: #555;
     --rz-scheduler-view-selected-background-color: #ddd;
     --rz-primary: #0d6efd;
-    --rz-dialog-title-padding: .75rem .75rem 0 .75rem;
-    --rz-dialog-content-padding: 0 .75rem .75rem .75rem;
+    --rz-dialog-title-padding: .5rem .5rem .5rem .5rem;
+    --rz-dialog-title-padding-block: 1rem 0;
+    --rz-dialog-title-padding-inline: .75rem 0;
+    --rz-dialog-content-padding: .75rem;
     --rz-dialog-zindex: 1080;
     
     --rz-dropdown-item-selected-background-color:#000;
@@ -1000,10 +1002,6 @@ h1.block {
 
 .appointment-calendar {
     height:calc(100vh - 160px);
-}
-
-.edit-appointment input {
-    --rz-input-font-size: .9em;
 }
 
 .date-only-picker:not(.full-width) input {
@@ -1315,4 +1313,18 @@ label.unbold {
 
 .monaco-editor-container .monaco-diff-editor {
     min-height:100px;
+}
+
+.appointment-body {
+    min-height:425px;
+}
+
+.rz-dialog-titlebar-close {
+    margin-right:1em;
+}
+
+.badge-count {
+    position:relative;
+    top:-8px;
+    font-size:0.6em;
 }

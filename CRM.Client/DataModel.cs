@@ -1284,7 +1284,22 @@ public partial class BlazorDataModel
         } else if (obj2 == null && obj1 != null) {
             return false;
         } else {
-            return System.Text.Json.JsonSerializer.Serialize(obj1) == System.Text.Json.JsonSerializer.Serialize(obj2);
+            var stringObject1 = String.Empty;
+            var stringObject2 = String.Empty;
+
+            try { 
+                stringObject1 = System.Text.Json.JsonSerializer.Serialize(obj1);
+            } catch {
+                return false;
+            }
+
+            try { 
+                stringObject2 = System.Text.Json.JsonSerializer.Serialize(obj2); 
+            } catch {
+                return false;
+            }
+
+            return stringObject1 == stringObject2;
         }
     }
 

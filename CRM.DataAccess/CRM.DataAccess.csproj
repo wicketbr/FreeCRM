@@ -13,10 +13,10 @@
     <PackageReference Include="JWTHelpers" Version="1.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.9" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageReference Include="Microsoft.Graph" Version="5.92.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.93.0" />
     <PackageReference Include="Novell.Directory.Ldap.NETStandard" Version="4.0.0" />
     <PackageReference Include="NuGet.Protocol" Version="6.14.0" />
-    <PackageReference Include="QuestPDF" Version="2025.7.1" />
+    <PackageReference Include="QuestPDF" Version="2025.7.2" />
     <PackageReference Include="System.Text.Json" Version="9.0.9" />
   </ItemGroup>
 

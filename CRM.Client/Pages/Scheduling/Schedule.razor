@@ -316,13 +316,13 @@
     void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
         // Highlight today in month view
-        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today) {
+        if (args.View.GetType() == typeof(Radzen.Blazor.RadzenMonthView) && args.Start.Date == DateTime.Today) {
             //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
             args.Attributes["class"] = "today";
         }
 
         // Highlight working hours (9-18)
-        if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 19) {
+        if ((args.View.GetType() == typeof(Radzen.Blazor.RadzenWeekView) || args.View.GetType() == typeof(Radzen.Blazor.RadzenDayView)) && args.Start.Hour > 8 && args.Start.Hour < 19) {
             args.Attributes["style"] = "background: rgba(255,220,40,.2);";
         }
     }
@@ -330,7 +330,7 @@
     async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
         if (Model.User.ManageAppointments) {
-            if (args.View.Text != "Year") {
+            if (args.View.GetType() != typeof(Radzen.Blazor.RadzenYearView) && args.View.GetType() != typeof(Radzen.Blazor.RadzenMonthView)) {
                 int minutes = Model.Tenant.TenantSettings.DefaultAppointmentDuration;
                 if (minutes == 0) {
                     minutes = 30;
@@ -342,7 +342,6 @@
                 if (args.End == args.Start) {
                     end = args.End;
                 }
-
 
                 DataObjects.Appointment appt = new DataObjects.Appointment {
                         AppointmentId = Guid.Empty,
@@ -469,40 +468,17 @@
             parameters.Add("OnDelete", onDelete);
         }
 
-        // Reload the event to get the latest details
-        Model.ClearMessages();
-        Model.Message_Loading();
-
-        if (appt.AppointmentId != Guid.Empty) {
-            //Helpers.ModalMessage(Model.LoadingMessage, title);
-
-            var loadEvent = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + appt.AppointmentId.ToString());
-            if (loadEvent != null && loadEvent.ActionResponse.Result) {
-                // Adjust the datetime values
-                loadEvent.Start = loadEvent.Start.ToLocalTime();
-                loadEvent.End = loadEvent.End.ToLocalTime();
-
-                appt = loadEvent;
-            }
-
-            //Helpers.ModalClose();
-        }
-        
         parameters.Add("Appointment", appt);
-
-        Model.ClearMessages();
-        // Helpers.ModalClose();
-
-        // await System.Threading.Tasks.Task.Delay(100);
 
         await DialogService.OpenAsync<EditAppointment>(title, parameters, new Radzen.DialogOptions() {
             AutoFocusFirstElement = false,
             Resizable = false,
             Draggable = false,
-            //Width="620px",
             CloseDialogOnEsc = false,
             CloseDialogOnOverlayClick = false,
             ShowClose = false,
+            Top = "10px",
+            Width = "98%",
         });
     }
 }
