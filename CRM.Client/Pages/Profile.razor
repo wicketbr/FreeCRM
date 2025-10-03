@@ -120,7 +120,7 @@
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
-    protected bool _loading = false;
+    protected bool _loading = true;
     protected bool _loadingUser = false;
     protected DataObjects.User _user = new DataObjects.User();
 
@@ -153,9 +153,8 @@
     {
         if (!_loadingUser) {
             if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
+                _loadingUser = true;
                 await LoadUser();
-            } else if (!Model.LoggedIn) {
-                _loading = true;
             }
         }
     }
@@ -198,8 +197,6 @@
 
     protected async Task LoadUser()
     {
-        _loadingUser = true;
-
         Model.ClearMessages();
 
         if (Model.FeatureEnabledDepartments && !Model.Departments.Any()) {

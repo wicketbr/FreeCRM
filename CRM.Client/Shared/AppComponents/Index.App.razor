@@ -9,15 +9,21 @@
         </div>
     }
 
-    <h1 class="page-title">
-        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
-            <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
-        }
-        <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
-    </h1>
+    if (_loading) {
+        <LoadingMessage />
+    } else {
+        <h1 class="page-title">
+            @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
+                <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
+            }
+            <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
+        </h1>
+    }
 }
 
 @code {
+    protected bool _loadedData = false;
+    protected bool _loading = true;
     protected string _pageName = "home";
 
     public void Dispose() { 
@@ -29,14 +35,26 @@
         Model.OnChange += OnDataModelUpdated;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
+    }
+
     protected void OnDataModelUpdated() {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
     }
 
-    public async Task LoadData() {
-        // Perform any app-specific data loading here.
+    protected async Task LoadData() {
+        // Load any app-specific data here.
+        _loading = false;
+        StateHasChanged();
     }
 
     protected string LogoUrl {

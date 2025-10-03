@@ -3023,6 +3023,51 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Gets a list of users from a list of user ids.
+    /// </summary>
+    /// <param name="UserIds">A nullable list of Guids.</param>
+    /// <returns>A list of UserListing objects.</returns>
+    public static async Task<List<DataObjects.UserListing>> GetUsers(List<Guid>? UserIds)
+    {
+        var output = new List<DataObjects.UserListing>();
+
+        if (UserIds != null && UserIds.Count > 0) {
+            foreach (var userId in UserIds) {
+                var user = Model.Tenant.Users.FirstOrDefault(x => x.UserId == userId);
+                if (user != null) {
+                    output.Add(user);
+                } else {
+                    var getUser = await GetUser(userId);
+                    if (getUser != null) {
+                        var userListingItem = new DataObjects.UserListing {
+                            UserId = getUser.UserId,
+                            FirstName = getUser.FirstName,
+                            LastName = getUser.LastName,
+                            Email = getUser.Email,
+                            Username = getUser.Username,
+                            Department = getUser.DepartmentName,
+                            Location = getUser.Location,
+                            Enabled = getUser.Enabled,
+                            Deleted = getUser.Deleted,
+                            DeletedAt = getUser.DeletedAt,
+                            Admin = getUser.Admin,
+                        };
+
+                        Model.Tenant.Users.Add(userListingItem);
+                        output.Add(userListingItem);
+                    }
+                }
+            }
+
+            if (output.Count > 0) {
+                output = output.OrderBy(x => x.FirstName).ThenBy(x => x.LastName).ToList();
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
     /// Gets a typed value from a string value.
     /// </summary>
     /// <typeparam name="T">The type of the object.</typeparam>

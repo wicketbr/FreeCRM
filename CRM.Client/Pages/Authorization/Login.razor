@@ -169,7 +169,7 @@
                     <div class="mb-2"><Language Tag="SelectTenantInfo" /></div>
 
                     @if (_tenantListing.Tenants.Any()) {
-                        <table>
+                        <table class="padded">
                             <tbody>
                                 @foreach (var tenant in _tenantListing.Tenants) {
                                     <tr>
@@ -211,33 +211,35 @@
                         </div>
 
                         <div class="btn-group mb-2 center" role="group">
-                            @if (AvailableLoginOptions.Count() > 1) {
-                                <button type="button" class="btn btn-dark" @onclick="Back">
-                                    <Language Tag="Back" IncludeIcon="true" />
-                                </button>
-                            }
+                            <div class="btn-group" role="group">
+                                @if (AvailableLoginOptions.Count() > 1) {
+                                    <button type="button" class="btn btn-dark" @onclick="Back">
+                                        <Language Tag="Back" IncludeIcon="true" />
+                                    </button>
+                                }
 
-                            <button type="button" class="btn btn-primary" @onclick="ProcessLogin" disabled="@LoginDisabled">
-                                <Language Tag="Log-In" IncludeIcon="true" />
-                            </button>
-
-                            @if (ShowSignup) {
-                                <button type="button" class="btn btn-success" @onclick="SignUp">
-                                    <Language Tag="Signup" IncludeIcon="true" />
+                                <button type="button" class="btn btn-primary" @onclick="ProcessLogin" disabled="@LoginDisabled">
+                                    <Language Tag="Log-In" IncludeIcon="true" />
                                 </button>
-                            }
 
-                            @if (ShowPasswordReset) {
-                                <button type="button" class="btn btn-warning" @onclick="ForgotPassword">
-                                    <Language Tag="ForgotPassword" IncludeIcon="true" />
-                                </button>
-                            }
+                                @if (ShowSignup) {
+                                    <button type="button" class="btn btn-success" @onclick="SignUp">
+                                        <Language Tag="Signup" IncludeIcon="true" />
+                                    </button>
+                                }
 
-                            @if (_tenantListing.Tenants.Count() > 1) {
-                                <button type="button" class="btn btn-warning" @onclick="SelectTenants">
-                                    <Language Tag="SwitchTenant" IncludeIcon="true" />
-                                </button>
-                            }
+                                @if (ShowPasswordReset) {
+                                    <button type="button" class="btn btn-warning" @onclick="ForgotPassword">
+                                        <Language Tag="ForgotPassword" IncludeIcon="true" />
+                                    </button>
+                                }
+
+                                @if (_tenantListing.Tenants.Count() > 1) {
+                                    <button type="button" class="btn btn-warning" @onclick="SelectTenants">
+                                        <Language Tag="SwitchTenant" IncludeIcon="true" />
+                                    </button>
+                                }
+                            </div>
                         </div>
                     }
                     break;
@@ -265,13 +267,15 @@
                     </div>
 
                     <div class="btn-group mb-2" role="group">
-                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
-                            <Language Tag="BackToLogin" IncludeIcon="true" />
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                                <Language Tag="BackToLogin" IncludeIcon="true" />
+                            </button>
 
-                        <button type="button" class="btn btn-success" @onclick="ForgotPasswordReset" disabled="@ResetPasswordDisabled">
-                            <Language Tag="ResetPassword" IncludeIcon="true" />
-                        </button>
+                            <button type="button" class="btn btn-success" @onclick="ForgotPasswordReset" disabled="@ResetPasswordDisabled">
+                                <Language Tag="ResetPassword" IncludeIcon="true" />
+                            </button>
+                        </div>
                     </div>
                     break;
 
@@ -344,12 +348,14 @@
                     }
 
                     <div class="btn-group mt-2 center" role="group">
-                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
-                            <Language Tag="BackToLogin" IncludeIcon="true" />
-                        </button>
-                        <button type="button" class="btn btn-success" disabled="@SignupSaveDisabled" @onclick="SignupSave">
-                            <Language Tag="SignUp" IncludeIcon="true" />
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                                <Language Tag="BackToLogin" IncludeIcon="true" />
+                            </button>
+                            <button type="button" class="btn btn-success" disabled="@SignupSaveDisabled" @onclick="SignupSave">
+                                <Language Tag="SignUp" IncludeIcon="true" />
+                            </button>
+                        </div>
                     </div>
                     break;
 
@@ -369,13 +375,15 @@
                     </div>
 
                     <div class="btn-group mb-2 center" role="group">
-                        <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
-                            <Language Tag="BackToLogin" IncludeIcon="true" />
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-dark" @onclick="ShowLocalLogin">
+                                <Language Tag="BackToLogin" IncludeIcon="true" />
+                            </button>
 
-                        <button type="button" class="btn btn-primary" @onclick="SignupValidateCode">
-                            <Language Tag="ValidateConfirmationCode" IncludeIcon="true" />
-                        </button>
+                            <button type="button" class="btn btn-primary" @onclick="SignupValidateCode">
+                                <Language Tag="ValidateConfirmationCode" IncludeIcon="true" />
+                            </button>
+                        </div>
                     </div>
                     break;
 
@@ -389,15 +397,17 @@
                     </div>
 
                     <div class="btn-group mb-2 center" role="group">
-                        @if (AvailableLoginOptions.Count() > 1) {
-                            <button type="button" class="btn btn-dark" @onclick="Back">
-                                <Language Tag="Back" IncludeIcon="true" />
-                            </button>
-                        }
+                        <div class="btn-group" role="group">
+                            @if (AvailableLoginOptions.Count() > 1) {
+                                <button type="button" class="btn btn-dark" @onclick="Back">
+                                    <Language Tag="Back" IncludeIcon="true" />
+                                </button>
+                            }
 
-                        <button type="button" class="btn btn-primary" @onclick="DoLoginPluginWithPrompts">
-                            <Language Tag="Log-In" IncludeIcon="true" />
-                        </button>
+                            <button type="button" class="btn btn-primary" @onclick="DoLoginPluginWithPrompts">
+                                <Language Tag="Log-In" IncludeIcon="true" />
+                            </button>
+                        </div>
                     </div>
                     @* </form> *@
                     break;

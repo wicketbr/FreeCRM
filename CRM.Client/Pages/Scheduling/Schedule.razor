@@ -8,28 +8,29 @@
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
 @if (Model.Loaded && Model.View == _pageName) {
-    <h1 class="page-title block">
-        @if (_loading) {
-            <LoadingMessage />
-        } else {
-            <Language Tag="Schedule" IncludeIcon="true" />
-            @if (Model.User.ManageAppointments) {
-                <button type="button" class="btn btn-success pad-left" @onclick="AddAppoinment">
-                    <Language Tag="AddAppointment" IncludeIcon="true" />
-                </button>
+    var calendarClass = Model.User.ManageAppointments 
+        ? "appointment-calendar"
+        : "appointment-calendar full-height";
+
+    @if (Model.User.ManageAppointments) {
+        <div>
+            <button type="button" class="btn btn-xs btn-success mb-2" @onclick="AddAppoinment">
+                <Language Tag="AddAppointment" IncludeIcon="true" />
+            </button>
+
+            @if (Model.HaveDeletedRecords && Model.DeletedRecordCounts.Appointments > 0) {
+                <div class="form-check form-switch header-xs ms-1">
+                    <input type="checkbox" id="schedule-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" @bind:after="UpdateSchedulerView" />
+                    <label for="schedule-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
+                </div>
             }
-        }
-    </h1>
-    @if (Model.User.ManageAppointments && Model.HaveDeletedRecords && Model.DeletedRecordCounts.Appointments > 0) {
-        <div class="form-check form-switch header">
-            <input type="checkbox" id="schedule-IncludeDeletedRecords" class="form-check-input" @bind="Model.User.UserPreferences.IncludeDeletedItems" />
-            <label for="schedule-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedRecords" /></label>
         </div>
     }
+
     <RadzenScheduler @ref=@scheduler
         AppointmentRender=@OnAppointmentRender
         AppointmentSelect=@OnAppointmentSelect 
-        class="appointment-calendar"
+        class="@calendarClass"
         Data=@ShowAppointments 
         EndProperty="End"
         LoadData=@OnAppointmentLoadData

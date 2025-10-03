@@ -176,7 +176,7 @@ public partial class DataAccess
                 Name = rec.Name,
                 TenantId = rec.TenantId,
                 TenantCode = rec.TenantCode,
-                Users = GetTenantUsers(TenantId, 500, CurrentUser),
+                Users = GetTenantUsers(TenantId, 0, CurrentUser),
             };
 
             var settings = GetTenantSettings(TenantId);
@@ -567,17 +567,19 @@ public partial class DataAccess
 
         int count = 0;
 
-        if (AdminUser(CurrentUser)) {
-            count = data.Users
-                .Include(x => x.Department)
-                .Where(x => x.TenantId == TenantId).Count();
-        } else {
-            count = data.Users
-                .Include(x => x.Department)
-                .Where(x => x.TenantId == TenantId && x.Deleted != true).Count();
+        if (MaxRecords > 0) {
+            if (AdminUser(CurrentUser)) {
+                count = data.Users
+                    .Include(x => x.Department)
+                    .Where(x => x.TenantId == TenantId).Count();
+            } else {
+                count = data.Users
+                    .Include(x => x.Department)
+                    .Where(x => x.TenantId == TenantId && x.Deleted != true).Count();
+            }
         }
 
-        if(count <= MaxRecords) {
+        if(MaxRecords < 1 || count <= MaxRecords) {
             IQueryable<User>? recs = null;
 
             if (AdminUser(CurrentUser)) {

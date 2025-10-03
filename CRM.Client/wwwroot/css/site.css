@@ -1000,8 +1000,19 @@ h1.block {
     top:-.25em;
 }
 
+.header-xs {
+    display:inline-block;
+    position:relative;
+    top:-.25em;
+    font-size:0.8em;
+}
+
 .appointment-calendar {
-    height:calc(100vh - 160px);
+    height:calc(100vh - 125px);
+}
+
+.appointment-calendar.full-height {
+    height:calc(100vh - 85px);
 }
 
 .date-only-picker:not(.full-width) input {

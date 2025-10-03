@@ -572,6 +572,7 @@
     protected string _userAttendance = "";
     protected bool _userIsScheduled = false;
     protected bool _visible = false;
+    protected bool _wasDeleted = false;
 
     protected DateTime? _startDate;
     //protected TimeOnly? _startTime;
@@ -645,6 +646,8 @@
 
                 _startDate = _appointment.Start;
                 _endDate = _appointment.End;
+
+                _wasDeleted = _appointment.Deleted;
 
                 _loading = false;
                 _loadedData = true;
@@ -842,6 +845,10 @@
 
     protected bool PreventSave {
         get {
+            if (_wasDeleted) {
+                return false;
+            }
+
             var currentJson = GetItemJson(_appointment);
 
             Console.WriteLine("Original: " + _originalItemJson);
