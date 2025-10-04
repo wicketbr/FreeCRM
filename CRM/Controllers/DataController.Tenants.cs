@@ -90,7 +90,7 @@ public partial class DataController
     [Route("~/api/Data/ReloadTenantUsers")]
     public ActionResult<List<DataObjects.UserListing>> ReloadTenantUsers()
     {
-        var output = da.GetTenantUsers(CurrentUser.TenantId, 500, CurrentUser);
+        var output = da.GetTenantUsers(CurrentUser.TenantId, 0, CurrentUser);
         return Ok(output);
     }
 

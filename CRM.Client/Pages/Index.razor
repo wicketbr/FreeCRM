@@ -13,8 +13,6 @@
     protected bool _loadedData = false;
     protected string _pageName = "home";
 
-    Index_App AppModule = new Index_App();
-
     public void Dispose()
     {
         Model.OnChange -= OnDataModelUpdated;
@@ -31,7 +29,6 @@
                 if (!_loadedData) {
                     _loadedData = true;
                     await Helpers.ValidateUrl(TenantCode, true);
-                    await AppModule.LoadData();
                 }
             } else {
                 Helpers.NavigateToLogin();
