@@ -35,13 +35,9 @@
     } else {
         <RequiredIndicator />
 
-        @if (_newTenant)
-        {
+        @if (_newTenant) {
             <div class="mb-2">
-                To add a new tenant enter the Tenant Name and Tenant Code for this tenant.
-                When saving a new tenant record some default data will be seeded for things
-                like Categories, Priorities, Resolutions, and Statuses.
-                Also, default settings will be set for this tenant.
+                <Language Tag="AddNewTenantInfo" />
             </div>
         }
         <div class="mb-2">
@@ -111,21 +107,21 @@
         <div class="mb-2">
             <label for="edit-tenant-loginOptions"><Language Tag="LoginOptions" /></label>
             <select id="edit-tenant-loginOptions" class="form-select" size="@CustomAuthenticationProviderCount" multiple @bind="_loginOptions">
-                <option value="local">Local Login</option>
+                <option value="local"><Language Tag="LoginTypeLocal" /></option>
                 @if (Model.AuthenticationProviders.UseApple) {
-                    <option value="apple">Apple</option>
+                    <option value="apple"><Language Tag="LoginTypeApple" /></option>
                 }
                 @if (Model.AuthenticationProviders.UseFacebook) {
-                    <option value="facebook">Facebook</option>
+                    <option value="facebook"><Language Tag="LoginTypeFacebook" /></option>
                 }
                 @if (Model.AuthenticationProviders.UseGoogle) {
-                    <option value="google">Google</option>
+                    <option value="google"><Language Tag="LoginTypeGoogle" /></option>
                 }
                 @if (Model.AuthenticationProviders.UseMicrosoftAccount) {
-                    <option value="microsoft">Microsoft Account</option>
+                    <option value="microsoft"><Language Tag="LoginTypeMicrosoftAccount" /></option>
                 }
                 @if (Model.AuthenticationProviders.UseOpenId) {
-                    string openIdLabel = "OpenId";
+                    string openIdLabel = Helpers.Text("LoginTypeOpenId");
                     if (!String.IsNullOrWhiteSpace(Model.AuthenticationProviders.OpenIdButtonText)){
                         openIdLabel += " (" + Model.AuthenticationProviders.OpenIdButtonText + ")";
                     }
@@ -133,13 +129,12 @@
                     <option value="openid">@openIdLabel</option>
                 }
                 @if (ShowCustomAuthenticationOptions) {
-                    <option value="custom">Custom Provider</option>
+                    <option value="custom"><Language Tag="LoginTypeCustom" /></option>
                 }
             </select>
         </div>
 
-        @if (AuthOptionLocal)
-        {
+        @if (AuthOptionLocal) {
             <div class="mb-2">
                 <div class="form-check form-switch">
                     <input type="checkbox" role="switch" class="form-check-input" id="edit-tenant-allowUsersToResetPasswordsForLocalLogin" @bind="_tenant.TenantSettings.AllowUsersToResetPasswordsForLocalLogin" />
@@ -161,7 +156,7 @@
 
             <div class="mt-4 mb-2">
                 <div class="alert alert-warning">
-                    <h2 class="display-8">Custom Authentication Provider Information</h2>
+                    <h2 class="display-8"><Language Tag="LoginTypeCustomInfo" /></h2>
                     <div class="mb-2">
                         To use a custom authentication provider requires some C# coding experience.
                         Enter your custom C# code below. The code will have full access to the
@@ -238,22 +233,22 @@ namespace CustomAuthenticationProvider {
                         </pre>
                     </div>
                     <div class="mb-2">
-                        <label for="edit-tenant-customAuthenticationName">Custom Authentication Name</label>
-                        <span class="note">- The text that will be displayed on the log in button.</span>
+                        <label for="edit-tenant-customAuthenticationName"><Language Tag="LoginTypeCustomAuthenticationName" /></label>
+                        <span class="note">- <Language Tag="LoginTypeCustomAuthenticationNameInfo" /></span>
                         <input type="text" class="form-control" id="edit-tenant-customAuthenticationName" @bind="_tenant.TenantSettings.CustomAuthenticationName" />
                     </div>
                     <div class="mb-2">
-                        <label for="edit-tenant-customAuthenticationIcon">Custom Authentication Icon</label>
-                        <span class="note">- An optional icon that will be displayed on the log in button.</span>
+                        <label for="edit-tenant-customAuthenticationIcon"><Language Tag="LoginTypeCustomAuthenticationIcon" /></label>
+                        <span class="note">- <Language Tag="LoginTypeCustomAuthenticationIconInfo" /></span>
                         <input type="text" class="form-control" id="edit-tenant-customAuthenticationIcon" @bind="_tenant.TenantSettings.CustomAuthenticationIcon" />
                     </div>
                     <div class="mb-2">
-                        <label for="edit-tenant-CustomAuthenticationButtonClass">Custom Authentication Button Class</label>
-                        <span class="note">- An optional class that will be applied to the log in button.</span>
+                        <label for="edit-tenant-CustomAuthenticationButtonClass"><Language Tag="LoginTypeCustomAuthenticationButtonClass" /></label>
+                        <span class="note">- <Language Tag="LoginTypeCustomAuthenticationButtonClassInfo" /></span>
                         <input type="text" class="form-control" id="edit-tenant-CustomAuthenticationButtonClass" @bind="_tenant.TenantSettings.CustomAuthenticationButtonClass" />
                     </div>
                     <div class="mb-2">
-                        <label for="edit-tenant-customAuthenticationCode">Custom Authentication C# Code</label>
+                        <label for="edit-tenant-customAuthenticationCode"><Language Tag="LoginTypeCustomAuthenticationButtonCSharpCode" /></label>
                         <textarea id="edit-tenant-customAuthenticationCode" class="form-control" rows="@TextareaHeightCustomAuthenticationCode" 
                         @bind="_tenant.TenantSettings.CustomAuthenticationCode" @bind:event="oninput"></textarea>
                     </div>
@@ -261,63 +256,50 @@ namespace CustomAuthenticationProvider {
             </div>
         }
 
-        @if (AuthOptionApple || AuthOptionFacebook || AuthOptionGoogle || AuthOptionMicrosoft || AuthOptionOpenId)
-        {
+        @if (AuthOptionApple || AuthOptionFacebook || AuthOptionGoogle || AuthOptionMicrosoft || AuthOptionOpenId) {
             <div class="mt-4 mb-2" data-bind="visible:AuthOptionFacebook() == true || AuthOptionGoogle() == true || AuthOptionMicrosoft() == true || AuthOptionOpenId() == true">
                 <div class="alert alert-primary">
-                    @if (AuthOptionApple)
-                    {
+                    @if (AuthOptionApple) {
                         <div>
-                            <h2 class="display-8">Apple Authentication Provider Information</h2>
+                            <h2 class="display-8"><Language Tag="LoginTypeAppleProviderInfo" /></h2>
                             <div class="mb-2">
-                                When using the Apple login option you must set the Apple ClientId, KeyId, and TeamId
-                                in the AuthenticationProviders:Apple section of the appsettings.json file.
-                                Also, your private key file must exist at the root of the web server and must be
-                                named &ldquo;SignInWithAppleKey.p8&rdquo;.
+                                <Language Tag="LoginTypeAppleProviderInfoDetails" />
                             </div>
                         </div>
                     }
 
-                    @if (AuthOptionFacebook)
-                    {
+                    @if (AuthOptionFacebook) {
                         <div>
-                            <h2 class="display-8">Facebook Authentication Provider Information</h2>
+                            <h2 class="display-8"><Language Tag="LoginTypeFacebookProviderInfo" /></h2>
                             <div class="mb-2">
-                                When using the Facebook login option you must set the Facebook AppId and AppSecret
-                                in the AuthenticationProviders:Facebook section of the appsettings.json file.
+                                <Language Tag="LoginTypeFacebookProviderInfoDetails" />
                             </div>
                         </div>
                     }
 
-                    @if (AuthOptionGoogle)
-                    {
+                    @if (AuthOptionGoogle) {
                         <div data-bind="visible:AuthOptionGoogle() == true">
-                            <h2 class="display-8">Google Authentication Provider Information</h2>
+                            <h2 class="display-8"><Language Tag="LoginTypeGoogleProviderInfo" /></h2>
                             <div class="mb-2">
-                                When using the Google login option you must set the ClientId and ClientSecret
-                                in the AuthenticationProviders:Google section of the appsettings.json file.
+                                <Language Tag="LoginTypeGoogleProviderInfoDetails" />
                             </div>
                         </div>
                     }
 
-                    @if (AuthOptionMicrosoft)
-                    {
+                    @if (AuthOptionMicrosoft) {
                         <div data-bind="visible:AuthOptionMicrosoft() == true">
-                            <h2 class="display-8">Microsoft Account Authentication Provider Information</h2>
+                            <h2 class="display-8"><Language Tag="LoginTypeMicrosoftAccountProviderInfo" /></h2>
                             <div class="mb-2">
-                                When using the Microsoft Account login option you must set the ClientId and ClientSecret
-                                in the AuthenticationProviders:MicrosoftAccount section of the appsettings.json file.
+                                <Language Tag="LoginTypeMicrosoftAccountProviderInfoDetails" />
                             </div>
                         </div>
                     }
 
-                    @if (AuthOptionOpenId)
-                    {
+                    @if (AuthOptionOpenId) {
                         <div data-bind="visible:AuthOptionOpenId() == true">
-                            <h2 class="display-8">OpenId Authentication Provider Information</h2>
+                            <h2 class="display-8"><Language Tag="LoginTypeOpenIdProviderInfo" /></h2>
                             <div class="mb-2">
-                                When using the OpenId login option you must set the ClientId, ClientSecret, and
-                                Authority settings in the AuthenticationProviders:OpenId section of the appsettings.json file.
+                                <Language Tag="LoginTypeOpenIdProviderInfoDetails" />
                             </div>
                         </div>
                     }
