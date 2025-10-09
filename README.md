@@ -16,7 +16,7 @@ The project makes heavy use of **partial classes**, **partial Razor components**
    - [Rename Tool](#rename-tool)  
    - [Module Removal Tool](#module-removal-tool)  
 6. [Configuration](#configuration)  
-7. [Contributing & Staying Up to Date](#contributing--staying-up-to-date)
+7. [Contributing & Staying Up to Date](#contributing-and-staying-up-to-date)
 
 ---
 
@@ -37,7 +37,6 @@ Because the customization surface is explicitly marked, merging upstream changes
 ## 🧱 Solution Layout
 
 ```
-
 FreeCRM.sln
 ├── CRM/                  # ASP.NET Core host for Blazor WebAssembly + REST APIs
 ├── CRM.Client/           # Blazor WebAssembly UI
@@ -47,8 +46,7 @@ FreeCRM.sln
 ├── CRM.Plugins/          # Plugin runtime and sample plugins
 ├── Rename FreeCRM.exe    # Utility to rename the solution, projects, and namespaces
 └── Remove Modules...     # Utility to strip optional modules from the base app
-
-````
+```
 
 Each project mirrors the same customization approach:  
 the base implementation ships in files such as `DataAccess.cs` or `Index.razor`,  
@@ -66,7 +64,7 @@ and your overrides live beside them in `DataAccess.App.cs` or `Index.App.razor`.
 ```bash
 dotnet restore
 dotnet build
-````
+```
 
 ### 3. Run the development server
 
@@ -103,7 +101,7 @@ Update `appsettings.Development.json` for local secrets such as OAuth keys or co
 
 ## 🛠 Utilities Included
 
-### ⚙️ [Rename Tool](#rename-tool)
+### ⚙️ Rename Tool
 
 FreeCRM ships with a **Rename Utility** (`Rename FreeCRM.exe`) that can rename the entire solution and regenerate all project GUIDs and namespaces to match your product branding.
 
@@ -123,7 +121,7 @@ This renames all projects, creates new GUIDs, and updates namespaces automatical
 
 ---
 
-### 🧹 [Module Removal Tool](#module-removal-tool)
+### 🧹 Module Removal Tool
 
 The **Module Removal Utility** (`Remove Modules from FreeCRM.exe`) lets you strip optional components you don’t need — such as:
 
@@ -177,7 +175,7 @@ Key settings live in:
 
 ---
 
-## 🤝 Contributing & Staying Up to Date
+## 🤝 Contributing and Staying Up to Date
 
 1. Keep your custom changes inside the `.App.` files whenever possible.
 2. When upstream changes are published, merge them into your branch — you’ll usually only need to reconcile a handful of `.App.` files.
