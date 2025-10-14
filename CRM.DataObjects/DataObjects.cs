@@ -383,7 +383,7 @@ public partial class DataObjects
         public string? Password { get; set; }
     }
 
-    public class MenuItem
+    public partial class MenuItem
     {
         public string Title { get; set; } = "";
         public string? Icon { get; set; }
@@ -391,6 +391,7 @@ public partial class DataObjects
         public List<string> PageNames { get; set; } = new List<string>();
         public bool AppAdminOnly { get; set; }
         public int SortOrder { get; set; }
+        public Delegate? OnClick { get; set; }
     }
 
     public class ModuleAction

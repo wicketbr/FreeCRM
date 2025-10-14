@@ -33,14 +33,25 @@
                             }
 
                             <li class="nav-item">
-                                <a class="@itemClass" href="@item.url">
-                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                        <Icon Name="@item.Icon" />
-                                    }
-                                    <span class="icon-text">
-                                        @((MarkupString)item.Title)
-                                    </span>
-                                </a>
+                                @if (item.OnClick != null) {
+                                    <a class="@itemClass" href="javascript:void('0');" @onclick="@(() => item.OnClick.DynamicInvoke())">
+                                        @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                            <Icon Name="@item.Icon" />
+                                        }
+                                        <span class="icon-text">
+                                            @((MarkupString)item.Title)
+                                        </span>
+                                    </a>
+                                } else {
+                                    <a class="@itemClass" href="@item.url">
+                                        @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                            <Icon Name="@item.Icon" />
+                                        }
+                                        <span class="icon-text">
+                                            @((MarkupString)item.Title)
+                                        </span>
+                                    </a>
+                                }
                             </li>
                         }
 
@@ -62,14 +73,25 @@
                                         }
 
                                         <li>
-                                            <a class="@itemClass" href="@item.url">
-                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                                    <Icon Name="@item.Icon" />
-                                                }
-                                                <span class="icon-text">
-                                                    @((MarkupString)item.Title)
-                                                </span>
-                                            </a>
+                                            @if (item.OnClick != null) {
+                                                <a class="@itemClass" href="javascript:void('0');" @onclick="@(() => item.OnClick.DynamicInvoke())">
+                                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                        <Icon Name="@item.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)item.Title)
+                                                    </span>
+                                                </a>
+                                            } else {
+                                                <a class="@itemClass" href="@item.url">
+                                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                        <Icon Name="@item.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)item.Title)
+                                                    </span>
+                                                </a>
+                                            }
                                         </li>
                                     }
                                 </ul>
