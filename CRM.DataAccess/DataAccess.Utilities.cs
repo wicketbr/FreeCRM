@@ -1732,8 +1732,12 @@ public partial class DataAccess
 
             if (property.IsDefined(typeof(SensitiveAttribute))) {
                 object? defaultValue = null;
-                try {
-                    defaultValue = Activator.CreateInstance(propertyType);
+                try {                    
+                    if(propertyType == typeof(System.String)) {
+                        defaultValue = string.Empty;
+                    } else {
+                        defaultValue = Activator.CreateInstance(propertyType);
+                    }
                 } catch { }
 
                 // For specific item types return a value instead of null.
