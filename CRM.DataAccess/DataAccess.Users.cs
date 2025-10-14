@@ -1328,9 +1328,11 @@ public partial class DataAccess
                         } catch { }
 
                         try {
-                            var sl = decrypted["SudoLogin"];
-                            if (sl != null) {
-                                sudoLogin = (bool)sl;
+                            if (decrypted != null && decrypted.ContainsKey("SudoLogin")) {
+                                var sl = decrypted["SudoLogin"];
+                                if (sl != null) {
+                                    sudoLogin = (bool)sl;
+                                }
                             }
                         } catch { }
 
@@ -1379,9 +1381,11 @@ public partial class DataAccess
             } catch { }
 
             try {
-                var sl = decrypted["SudoLogin"];
-                if (sl != null) {
-                    sudoLogin = (bool)sl;
+                if(decrypted != null && decrypted.ContainsKey("SudoLogin")) {
+                    var sl = decrypted["SudoLogin"];
+                    if (sl != null) {
+                        sudoLogin = (bool)sl;
+                    }
                 }
             } catch { }
 
