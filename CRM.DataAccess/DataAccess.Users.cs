@@ -1326,16 +1326,20 @@ public partial class DataAccess
 
                     Dictionary<string, object> decrypted = JwtDecode(tenant.TenantId, Token);
                     if(decrypted != null && decrypted.Any()) {
-                        try {
-                            string guid = decrypted["UserId"] + String.Empty;
-                            UserId = new Guid(guid);
-                        } catch { }
-
-                        try {
-                            tokenFingerprint += decrypted["Fingerprint"];
-                        } catch { }
+                        if (decrypted.ContainsKey("UserId")) {
+                            try {
+                                string guid = decrypted["UserId"] + String.Empty;
+                                UserId = new Guid(guid);
+                            } catch { }
+                        }
 
                         if (decrypted.ContainsKey("Fingerprint")) {
+                            try {
+                                tokenFingerprint += decrypted["Fingerprint"];
+                            } catch { }
+                        }
+
+                        if (decrypted.ContainsKey("SudoLogin")) {
                             try {
                                 var sl = decrypted["SudoLogin"];
                                 if (sl != null) {
@@ -1379,16 +1383,21 @@ public partial class DataAccess
             bool sudoLogin = false;
 
             Dictionary<string, object> decrypted = JwtDecode(TenantId, Token);
-            try {
-                string guid = decrypted["UserId"] + String.Empty;
-                UserId = new Guid(guid);
-            } catch { }
 
-            try {
-                tokenFingerprint += decrypted["Fingerprint"];
-            } catch { }
+            if (decrypted.ContainsKey("UserId")) {
+                try {
+                    string guid = decrypted["UserId"] + String.Empty;
+                    UserId = new Guid(guid);
+                } catch { }
+            }
 
             if (decrypted.ContainsKey("Fingerprint")) {
+                try {
+                    tokenFingerprint += decrypted["Fingerprint"];
+                } catch { }
+            }
+
+            if (decrypted.ContainsKey("SudoLogin")) {
                 try {
                     var sl = decrypted["SudoLogin"];
                     if (sl != null) {
