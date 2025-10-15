@@ -10,7 +10,7 @@
         @*<tr>
             <td>
                 <div class="form-check form-switch right">
-                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" />
+                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" @bind:after="ValueHasChanged" />
                 </div>
             </td>
             <td><label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label></td>

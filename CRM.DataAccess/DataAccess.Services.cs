@@ -119,6 +119,7 @@ public partial class DataAccess
                 TenantId = rec.TenantId,
             };
 
+            output = GetServiceApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Service '" + ServiceId.ToString() + "' No Longer Exists");
         }
@@ -142,7 +143,7 @@ public partial class DataAccess
 
         if (recs != null && recs.Any()) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.Service {
+                var s = new DataObjects.Service {
                     ActionResponse = GetNewActionResponse(true),
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
@@ -161,7 +162,11 @@ public partial class DataAccess
                     Tags = await GetTagsForItem(TenantId, rec.ServiceId),
                     // {{ModuleItemEnd:Tags}}
                     TenantId = rec.TenantId,
-                });
+                };
+
+                s = GetServiceApp(rec, s, CurrentUser);
+
+                output.Add(s);
             }
         }
 
@@ -231,6 +236,8 @@ public partial class DataAccess
         if (AdminUser(CurrentUser)) {
             rec.Deleted = output.Deleted;
         }
+
+        rec = SaveServiceApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

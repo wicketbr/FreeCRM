@@ -254,6 +254,8 @@ public partial class DataAccess
                 Users = new List<DataObjects.AppointmentUser>(),
             };
 
+            output = GetAppointmentApp(rec, output, CurrentUser);
+
             if(rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
                 foreach(var apptUser in rec.AppointmentUsers) {
                     output.Users.Add(new DataObjects.AppointmentUser { 
@@ -444,7 +446,9 @@ public partial class DataAccess
                     Users = new List<DataObjects.AppointmentUser>(),
                 };
 
-                if(rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
+                appt = GetAppointmentApp(rec, appt, CurrentUser);
+
+                if (rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
                     foreach(var user in rec.AppointmentUsers) {
                         appt.Users.Add(new DataObjects.AppointmentUser { 
                             UserId = user.UserId,
@@ -520,7 +524,6 @@ public partial class DataAccess
         output.Start = output.Start.ToUniversalTime();
         output.End = output.End.ToUniversalTime();
 
-
         rec.Title = output.Title;
         rec.Start = output.Start;
         rec.End = output.End;
@@ -532,8 +535,10 @@ public partial class DataAccess
         rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
         rec.BackgroundColor = output.BackgroundColor;
         rec.ForegroundColor = output.ForegroundColor;
-        
-        if(AdminUser(CurrentUser)) {
+
+        rec = SaveAppointmentApp(rec, output, CurrentUser);
+
+        if (AdminUser(CurrentUser)) {
             rec.Deleted = output.Deleted;
         }
 

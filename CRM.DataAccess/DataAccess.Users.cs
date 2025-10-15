@@ -705,6 +705,8 @@ public partial class DataAccess
                 UserPreferences = preferences,
             };
 
+            output = GetUserApp(rec, output, CurrentUser);
+
             // If the user is in multiple tenants, add all of the userid/tenantid pairs to the UserAccounts property.
             output.UserAccounts = await GetUserAccounts(output.Email);
 
@@ -1199,6 +1201,10 @@ public partial class DataAccess
             case "UDF10":
                 recs = Ascending ? recs.OrderBy(x => x.UDF10) : recs.OrderByDescending(x => x.UDF10);
                 break;
+
+            default:
+                recs = SortUsersApp(recs, StringValue(output.Sort), Ascending);
+                break;
         }
 
         if (recs != null && recs.Count() > 0) {
@@ -1282,7 +1288,9 @@ public partial class DataAccess
                     FailedLoginAttempts = IntValue(rec.FailedLoginAttempts),
                 };
 
-                if(_inMemoryDatabase && u.DepartmentId.HasValue && String.IsNullOrEmpty(u.DepartmentName)) {
+                u = GetUserApp(rec, u, CurrentUser);
+
+                if (_inMemoryDatabase && u.DepartmentId.HasValue && String.IsNullOrEmpty(u.DepartmentName)) {
                     var dept = departments.FirstOrDefault(x => x.DepartmentId == u.DepartmentId);
                     if(dept != null) {
                         u.DepartmentName = dept.DepartmentName;
@@ -1327,12 +1335,14 @@ public partial class DataAccess
                             tokenFingerprint += decrypted["Fingerprint"];
                         } catch { }
 
-                        try {
-                            var sl = decrypted["SudoLogin"];
-                            if (sl != null) {
-                                sudoLogin = (bool)sl;
-                            }
-                        } catch { }
+                        if (decrypted.ContainsKey("Fingerprint")) {
+                            try {
+                                var sl = decrypted["SudoLogin"];
+                                if (sl != null) {
+                                    sudoLogin = (bool)sl;
+                                }
+                            } catch { }
+                        }
 
                         if (UserId != Guid.Empty) {
                             if (!String.IsNullOrWhiteSpace(fingerprint) || !String.IsNullOrWhiteSpace(tokenFingerprint)) {
@@ -1378,12 +1388,14 @@ public partial class DataAccess
                 tokenFingerprint += decrypted["Fingerprint"];
             } catch { }
 
-            try {
-                var sl = decrypted["SudoLogin"];
-                if (sl != null) {
-                    sudoLogin = (bool)sl;
-                }
-            } catch { }
+            if (decrypted.ContainsKey("Fingerprint")) {
+                try {
+                    var sl = decrypted["SudoLogin"];
+                    if (sl != null) {
+                        sudoLogin = (bool)sl;
+                    }
+                } catch { }
+            }
 
             if (UserId != Guid.Empty) {
                 if (!String.IsNullOrWhiteSpace(fingerprint) || !String.IsNullOrWhiteSpace(tokenFingerprint)) {
@@ -1922,13 +1934,15 @@ public partial class DataAccess
 
         rec.LastModified = now;
 
-        if(CurrentUser != null) {
+        if (CurrentUser != null) {
             rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
 
             if (CurrentUser.Admin) {
                 rec.Deleted = output.Deleted;
             }
         }
+
+        rec = SaveUserApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {
