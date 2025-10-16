@@ -25,6 +25,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.Locations.Remove(rec);
                 await data.SaveChangesAsync();
@@ -98,6 +104,8 @@ public partial class DataAccess
                 State = rec.State,
                 TenantId = rec.TenantId,
             };
+
+            GetDataApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Location '" + LocationId.ToString() + "' No Longer Exists");
         }
@@ -119,7 +127,7 @@ public partial class DataAccess
 
         if (recs != null && recs.Any()) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.Location {
+                var l = new DataObjects.Location {
                     ActionResponse = GetNewActionResponse(true),
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
@@ -138,7 +146,11 @@ public partial class DataAccess
                     PostalCode = rec.PostalCode,
                     State = rec.State,
                     TenantId = rec.TenantId,
-                });
+                };
+
+                GetDataApp(rec, l, CurrentUser);
+
+                output.Add(l);
             }
         }
 
@@ -216,6 +228,8 @@ public partial class DataAccess
                 rec.DeletedAt = null;
             }
         }
+
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

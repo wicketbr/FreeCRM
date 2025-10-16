@@ -28,6 +28,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.Payments.Remove(rec);
                 await data.SaveChangesAsync();
@@ -101,7 +107,7 @@ public partial class DataAccess
                 DeletedAt = rec.DeletedAt,
             };
 
-            output = GetPaymentApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Payment '" + PaymentId.ToString() + "' No Longer Exists");
         }
@@ -143,7 +149,7 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                 };
 
-                p = GetPaymentApp(rec, p, CurrentUser);
+                GetDataApp(rec, p, CurrentUser);
 
                 output.Add(p);
             }
@@ -186,7 +192,7 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                 };
 
-                p = GetPaymentApp(rec, p, CurrentUser);
+                GetDataApp(rec, p, CurrentUser);
 
                 output.Add(p);
             }
@@ -252,7 +258,7 @@ public partial class DataAccess
             }
         }
 
-        rec = SavePaymentApp(rec, output, CurrentUser);
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

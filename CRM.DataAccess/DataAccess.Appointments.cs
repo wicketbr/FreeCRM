@@ -45,6 +45,12 @@ public partial class DataAccess
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
             // First, fix or delete all relational user records
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.AppointmentNotes.RemoveRange(data.AppointmentNotes.Where(x => x.AppointmentId == AppointmentId));
                 data.AppointmentServices.RemoveRange(data.AppointmentServices.Where(x => x.AppointmentId == AppointmentId));
@@ -115,6 +121,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.AppointmentNotes.Remove(rec);
                 await data.SaveChangesAsync();
@@ -169,6 +181,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.AppointmentServices.Remove(rec);
                 await data.SaveChangesAsync();
@@ -254,24 +272,28 @@ public partial class DataAccess
                 Users = new List<DataObjects.AppointmentUser>(),
             };
 
-            output = GetAppointmentApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
 
             if(rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
                 foreach(var apptUser in rec.AppointmentUsers) {
-                    output.Users.Add(new DataObjects.AppointmentUser { 
+                    var u = new DataObjects.AppointmentUser {
                         UserId = apptUser.UserId,
                         AttendanceCode = StringValue(apptUser.AttendanceCode),
                         DisplayName = apptUser.User != null
                             ? apptUser.User.FirstName + " " + apptUser.User.LastName
                             : String.Empty,
                         Fees = apptUser.Fees.HasValue ? (decimal)apptUser.Fees : 0,
-                    });
+                    };
+
+                    GetDataApp(apptUser, u, CurrentUser);
+
+                    output.Users.Add(u);
                 }
             }
 
             if(rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
                 foreach(var service in rec.AppointmentServices) {
-                    output.Services.Add(new DataObjects.AppointmentService { 
+                    var s = new DataObjects.AppointmentService {
                         AppointmentServiceId = service.AppointmentServiceId,
                         ServiceId = service.ServiceId,
                         Fee = DecimalValue(service.Fee),
@@ -279,7 +301,11 @@ public partial class DataAccess
                         DeletedAt = service.DeletedAt,
                         LastModified = service.LastModified,
                         LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
-                    });
+                    };
+
+                    GetDataApp(service, s, CurrentUser);
+
+                    output.Services.Add(s);
                 }
             }
         } else {
@@ -313,7 +339,7 @@ public partial class DataAccess
             foreach(var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
-                output.Add(new DataObjects.Invoice {
+                var i = new DataObjects.Invoice {
                     ActionResponse = GetNewActionResponse(true),
                     InvoiceId = rec.InvoiceId,
                     TenantId = rec.TenantId,
@@ -340,7 +366,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                GetDataApp(rec, i);
+
+                output.Add(i);
             }
         }
 
@@ -371,6 +401,8 @@ public partial class DataAccess
             TenantId = rec.TenantId,
         };
 
+        GetDataApp(rec, output);
+
         return output;
     }
 
@@ -381,7 +413,7 @@ public partial class DataAccess
         var recs = await data.AppointmentNotes.Where(x => x.AppointmentId == AppointmentId).ToListAsync();
         if(recs != null && recs.Any()) {
             foreach(var rec in recs) {
-                output.Add(new DataObjects.AppointmentNote { 
+                var n = new DataObjects.AppointmentNote {
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     AppointmentId = rec.AppointmentId,
@@ -392,7 +424,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Note = rec.Note,
                     TenantId = rec.TenantId,
-                });
+                };
+
+                GetDataApp(rec, n);
+
+                output.Add(n);
             }
         }
 
@@ -446,21 +482,25 @@ public partial class DataAccess
                     Users = new List<DataObjects.AppointmentUser>(),
                 };
 
-                appt = GetAppointmentApp(rec, appt, CurrentUser);
+                GetDataApp(rec, appt, CurrentUser);
 
                 if (rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
                     foreach(var user in rec.AppointmentUsers) {
-                        appt.Users.Add(new DataObjects.AppointmentUser { 
+                        var u = new DataObjects.AppointmentUser {
                             UserId = user.UserId,
                             AttendanceCode = StringValue(user.AttendanceCode),
                             Fees = DecimalValue(user.Fees),
-                        });
+                        };
+
+                        GetDataApp(user, u, CurrentUser);
+
+                        appt.Users.Add(u);
                     }
                 }
 
                 if(rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
                     foreach (var service in rec.AppointmentServices) {
-                        appt.Services.Add(new DataObjects.AppointmentService { 
+                        var s = new DataObjects.AppointmentService {
                             AppointmentServiceId = service.AppointmentServiceId,
                             Deleted = service.Deleted,
                             DeletedAt = service.DeletedAt,
@@ -468,7 +508,11 @@ public partial class DataAccess
                             LastModified = service.LastModified,
                             //LastModifiedBy = LastModifiedDisplayName(service.LastModifiedBy),
                             ServiceId = service.ServiceId,
-                        });
+                        };
+
+                        GetDataApp(service, s, CurrentUser);
+
+                        appt.Services.Add(s);
                     }
                 }
                     
@@ -536,11 +580,11 @@ public partial class DataAccess
         rec.BackgroundColor = output.BackgroundColor;
         rec.ForegroundColor = output.ForegroundColor;
 
-        rec = SaveAppointmentApp(rec, output, CurrentUser);
-
         if (AdminUser(CurrentUser)) {
             rec.Deleted = output.Deleted;
         }
+
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {
@@ -644,6 +688,8 @@ public partial class DataAccess
             rec.Deleted = output.Deleted;
         }
 
+        SaveDataApp(rec, output, CurrentUser);
+
         try {
             if (newRecord) {
                 await data.AppointmentNotes.AddAsync(rec);
@@ -711,6 +757,8 @@ public partial class DataAccess
             rec.LastModified = now;
             rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
 
+            SaveDataApp(rec, service, CurrentUser);
+
             if(rec.Deleted != service.Deleted) {
                 rec.Deleted = service.Deleted;
 
@@ -765,6 +813,8 @@ public partial class DataAccess
 
             rec.AttendanceCode = user.AttendanceCode;
             rec.Fees = user.Fees;
+
+            SaveDataApp(rec, user);
 
             if (newRecord) {
                 await data.AppointmentUsers.AddAsync(rec);

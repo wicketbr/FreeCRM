@@ -27,6 +27,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 // {{ModuleItemStart:Tags}}
                 data.TagItems.RemoveRange(data.TagItems.Where(x => x.ItemId == EmailTemplateId));
@@ -105,7 +111,7 @@ public partial class DataAccess
                 // {{ModuleItemEnd:Tags}}
             };
 
-            output = GetEmailTemplateApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Email Template '" + EmailTemplateId.ToString() + "' No Longer Exists");
         }
@@ -147,7 +153,7 @@ public partial class DataAccess
                     // {{ModuleItemEnd:Tags}}
                 };
 
-                t = GetEmailTemplateApp(rec, t, CurrentUser);
+                GetDataApp(rec, t, CurrentUser);
 
                 output.Add(t);
             }
@@ -208,7 +214,7 @@ public partial class DataAccess
             }
         }
 
-        rec = SaveEmailTemplateApp(rec, output, CurrentUser);
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

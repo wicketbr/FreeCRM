@@ -25,6 +25,12 @@ public partial class DataAccess
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
             // First, fix or delete all relational user records
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 // {{ModuleItemStart:Appointments}}
                 data.AppointmentServices.RemoveRange(data.AppointmentServices.Where(x => x.ServiceId == ServiceId));
@@ -119,7 +125,7 @@ public partial class DataAccess
                 TenantId = rec.TenantId,
             };
 
-            output = GetServiceApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Service '" + ServiceId.ToString() + "' No Longer Exists");
         }
@@ -164,7 +170,7 @@ public partial class DataAccess
                     TenantId = rec.TenantId,
                 };
 
-                s = GetServiceApp(rec, s, CurrentUser);
+                GetDataApp(rec, s, CurrentUser);
 
                 output.Add(s);
             }
@@ -237,7 +243,7 @@ public partial class DataAccess
             rec.Deleted = output.Deleted;
         }
 
-        rec = SaveServiceApp(rec, output, CurrentUser);
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

@@ -30,6 +30,12 @@ public partial class DataAccess
 
             // First, delete related data
             if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+                var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+                if (!deleteAppRecords.Result) {
+                    output.Messages.AddRange(deleteAppRecords.Messages);
+                    return output;
+                }
+
                 try {
                     var recs = await data.Users.Where(x => x.DepartmentId == DepartmentId).ToListAsync();
                     if (recs != null && recs.Any()) {
@@ -95,6 +101,12 @@ public partial class DataAccess
             var tenantSettings = GetTenantSettings(GuidValue(rec.TenantId));
 
             if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+                var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+                if (!deleteAppRecords.Result) {
+                    output.Messages.AddRange(deleteAppRecords.Messages);
+                    return output;
+                }
+
                 try {
                     var recs = await data.Departments.Where(x => x.DepartmentGroupId == DepartmentGroupId).ToListAsync();
                     if (recs != null) {
@@ -233,7 +245,7 @@ public partial class DataAccess
                 TenantId = rec.TenantId,
             };
 
-            output = GetDepartmentApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
         }
 
         return output;
@@ -265,7 +277,7 @@ public partial class DataAccess
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
             };
 
-            output = GetDepartmentGroupApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse = GetNewActionResponse(false, "Department Group '" + DepartmentGroupId.ToString() + "' Not Found");
         }
@@ -302,7 +314,7 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 };
 
-                d = GetDepartmentGroupApp(rec, d, CurrentUser);
+                GetDataApp(rec, d, CurrentUser);
 
                 output.Add(d);
             }
@@ -353,7 +365,7 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 };
 
-                d = GetDepartmentApp(rec, d, CurrentUser);
+                GetDataApp(rec, d, CurrentUser);
 
                 output.Add(d);
             }
@@ -405,7 +417,7 @@ public partial class DataAccess
                 }
             }
 
-            rec = SaveDepartmentApp(rec, output, CurrentUser);
+            SaveDataApp(rec, output, CurrentUser);
 
             try {
                 if (newRecord) {
@@ -473,7 +485,7 @@ public partial class DataAccess
                 }
             }
 
-            rec = SaveDepartmentGroupApp(rec, output, CurrentUser);
+            SaveDataApp(rec, output, CurrentUser);
 
             try {
                 if (newRecord) {
