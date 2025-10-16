@@ -104,6 +104,8 @@ public partial class DataAccess
                 Tags = await GetTagsForItem(rec.TenantId, EmailTemplateId),
                 // {{ModuleItemEnd:Tags}}
             };
+
+            output = GetEmailTemplateApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Email Template '" + EmailTemplateId.ToString() + "' No Longer Exists");
         }
@@ -127,7 +129,7 @@ public partial class DataAccess
 
         if(recs != null && recs.Any()) {
             foreach(var rec in recs) {
-                output.Add(new DataObjects.EmailTemplate {
+                var t = new DataObjects.EmailTemplate {
                     ActionResponse = GetNewActionResponse(true),
                     EmailTemplateId = rec.EmailTemplateId,
                     TenantId = rec.TenantId,
@@ -143,7 +145,11 @@ public partial class DataAccess
                     // {{ModuleItemStart:Tags}}
                     Tags = await GetTagsForItem(rec.TenantId, rec.EmailTemplateId),
                     // {{ModuleItemEnd:Tags}}
-                });
+                };
+
+                t = GetEmailTemplateApp(rec, t, CurrentUser);
+
+                output.Add(t);
             }
         }
 
@@ -201,6 +207,8 @@ public partial class DataAccess
                 rec.DeletedAt = null;
             }
         }
+
+        rec = SaveEmailTemplateApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

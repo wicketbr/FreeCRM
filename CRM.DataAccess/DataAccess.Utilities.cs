@@ -1733,7 +1733,11 @@ public partial class DataAccess
             if (property.IsDefined(typeof(SensitiveAttribute))) {
                 object? defaultValue = null;
                 try {
-                    defaultValue = Activator.CreateInstance(propertyType);
+                    if (propertyType == typeof(System.String)) {
+                        defaultValue = String.Empty;
+                    } else {
+                        defaultValue = Activator.CreateInstance(propertyType);
+                    }
                 } catch { }
 
                 // For specific item types return a value instead of null.
@@ -1757,7 +1761,6 @@ public partial class DataAccess
 
         return o;
     }
-
 
     public string Replace(string input, string replaceText, string withText)
     {

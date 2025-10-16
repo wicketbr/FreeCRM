@@ -114,6 +114,8 @@ public partial class DataAccess
                 DeletedAt = rec.DeletedAt,
             };
 
+            output = GetInvoiceApp(rec, output, CurrentUser);
+
             if (IncludeImages) {
                 output = await GenerateInvoiceImages(output, CurrentUser);
             }
@@ -148,7 +150,7 @@ public partial class DataAccess
             foreach(var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
-                output.Add(new DataObjects.Invoice {
+                var i = new DataObjects.Invoice {
                     ActionResponse = GetNewActionResponse(true),
                     InvoiceId = rec.InvoiceId,
                     TenantId = rec.TenantId,
@@ -173,7 +175,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                i = GetInvoiceApp(rec, i, CurrentUser);
+
+                output.Add(i);
             }
         }
 
@@ -479,6 +485,8 @@ public partial class DataAccess
                     //LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 };
 
+                u = GetInvoiceApp(rec, u, CurrentUser);
+
                 records.Add(u);
             }
 
@@ -544,7 +552,7 @@ public partial class DataAccess
             foreach (var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
-                output.Add(new DataObjects.Invoice {
+                var i = new DataObjects.Invoice {
                     ActionResponse = GetNewActionResponse(true),
                     InvoiceId = rec.InvoiceId,
                     TenantId = rec.TenantId,
@@ -567,7 +575,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                i = GetInvoiceApp(rec, i, CurrentUser);
+
+                output.Add(i);
             }
         }
 
@@ -595,7 +607,7 @@ public partial class DataAccess
             foreach (var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
-                output.Add(new DataObjects.Invoice {
+                var i = new DataObjects.Invoice {
                     ActionResponse = GetNewActionResponse(true),
                     InvoiceId = rec.InvoiceId,
                     TenantId = rec.TenantId,
@@ -620,7 +632,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                i = GetInvoiceApp(rec, i, CurrentUser);
+
+                output.Add(i);
             }
         }
 
@@ -694,6 +710,8 @@ public partial class DataAccess
                 rec.DeletedAt = null;
             }
         }
+
+        rec = SaveInvoiceApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

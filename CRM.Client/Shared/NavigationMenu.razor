@@ -33,18 +33,29 @@
                             }
 
                             <li class="nav-item">
-                                <a class="@itemClass" href="@item.url">
-                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                        <Icon Name="@item.Icon" />
-                                    }
-                                    <span class="icon-text">
-                                        @((MarkupString)item.Title)
-                                    </span>
-                                </a>
+                                @if (item.OnClick != null) {
+                                    <a class="@itemClass" href="javascript:void('0');" @onclick="@(() => item.OnClick.DynamicInvoke())">
+                                        @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                            <Icon Name="@item.Icon" />
+                                        }
+                                        <span class="icon-text">
+                                            @((MarkupString)item.Title)
+                                        </span>
+                                    </a>
+                                } else {
+                                    <a class="@itemClass" href="@item.url">
+                                        @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                            <Icon Name="@item.Icon" />
+                                        }
+                                        <span class="icon-text">
+                                            @((MarkupString)item.Title)
+                                        </span>
+                                    </a>
+                                }
                             </li>
                         }
 
-                        @if (Model.User.Admin && MenuItemsAdmin.Any()) {
+                        @if (MenuItemsAdmin.Any()) {
                             <li class="nav-item dropdown">
                                 <a class="@(AdminView ? "nav-link dropdown-toggle active": "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <Language Tag="Admin" IncludeIcon="true" />
@@ -62,14 +73,25 @@
                                         }
 
                                         <li>
-                                            <a class="@itemClass" href="@item.url">
-                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                                    <Icon Name="@item.Icon" />
-                                                }
-                                                <span class="icon-text">
-                                                    @((MarkupString)item.Title)
-                                                </span>
-                                            </a>
+                                            @if (item.OnClick != null) {
+                                                <a class="@itemClass" href="javascript:void('0');" @onclick="@(() => item.OnClick.DynamicInvoke())">
+                                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                        <Icon Name="@item.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)item.Title)
+                                                    </span>
+                                                </a>
+                                            } else {
+                                                <a class="@itemClass" href="@item.url">
+                                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                        <Icon Name="@item.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)item.Title)
+                                                    </span>
+                                                </a>
+                                            }
                                         </li>
                                     }
                                 </ul>
@@ -224,7 +246,7 @@
         get {
             var output = new List<DataObjects.MenuItem> { };
 
-            @if (Model.User.AppAdmin) {
+            if (Model.User.AppAdmin) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("AppSettings"),
                     Icon = "AppSettings",
@@ -236,7 +258,7 @@
             }
 
             // {{ModuleItemStart:Departments}}
-            @if (Model.FeatureEnabledDepartments) {
+            if (Model.User.Admin && Model.FeatureEnabledDepartments) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("DepartmentGroups"),
                     Icon = "DepartmentGroups",
@@ -258,7 +280,7 @@
             // {{ModuleItemEnd:Departments}}
 
             // {{ModuleItemStart:EmailTemplates}}
-            @if (Model.FeatureEnabledEmailTemplates) {
+            if (Model.User.Admin && Model.FeatureEnabledEmailTemplates) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("EmailTemplates"),
                     Icon = "EmailTemplates",
@@ -270,7 +292,7 @@
             }
             // {{ModuleItemEnd:EmailTemplates}}
 
-            @if (Model.FeatureEnabledFiles) {
+            if (Model.User.Admin && Model.FeatureEnabledFiles) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("Files"),
                     Icon = "Files",
@@ -281,17 +303,19 @@
                 });
             }
 
-            output.Add(new DataObjects.MenuItem {
-                Title = Helpers.Text("Language"),
-                Icon = "Language",
-                PageNames = new List<string> { "language" },
-                url = Helpers.BuildUrl("Settings/Language"),
-                SortOrder = 1000,
-                AppAdminOnly = false,
-            });
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Language"),
+                    Icon = "Language",
+                    PageNames = new List<string> { "language" },
+                    url = Helpers.BuildUrl("Settings/Language"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
             
             // {{ModuleItemStart:Locations}}
-            @if (Model.FeatureEnabledLocation) {
+            if (Model.User.Admin && Model.FeatureEnabledLocation) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("Locations"),
                     Icon = "Locations",
@@ -303,17 +327,19 @@
             }
             // {{ModuleItemEnd:Locations}}
 
-            output.Add(new DataObjects.MenuItem {
-                Title = Helpers.Text("Settings"),
-                Icon = "Settings",
-                PageNames = new List<string> { "settings" },
-                url = Helpers.BuildUrl("Settings"),
-                SortOrder = 1000,
-                AppAdminOnly = false,
-            });
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Settings"),
+                    Icon = "Settings",
+                    PageNames = new List<string> { "settings" },
+                    url = Helpers.BuildUrl("Settings"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
 
             // {{ModuleItemStart:Services}}
-            @if (Model.FeatureEnabledServices) {
+            if (Model.User.Admin && Model.FeatureEnabledServices) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("Services"),
                     Icon = "Services",
@@ -326,7 +352,7 @@
             // {{ModuleItemEnd:Services}}
             
             // {{ModuleItemStart:Tags}}
-            @if (Model.FeatureEnabledTags) {
+            if (Model.User.Admin && Model.FeatureEnabledTags) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("Tags"),
                     Icon = "Tags",
@@ -337,7 +363,8 @@
                 });
             }
             // {{ModuleItemEnd:Tags}}
-            @if (Model.User.AppAdmin) {
+
+            if (Model.User.AppAdmin) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("Tenants"),
                     Icon = "Tenants",
@@ -347,7 +374,8 @@
                     AppAdminOnly = true,
                 });
             }
-            @if (Model.FeatureEnabledUDF) {
+            
+            if (Model.User.Admin && Model.FeatureEnabledUDF) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("UserDefinedFields"),
                     Icon = "UserDefinedFields",
@@ -358,16 +386,18 @@
                 });
             }
 
-            output.Add(new DataObjects.MenuItem {
-                Title = Helpers.Text("Users"),
-                Icon = "Users",
-                PageNames = new List<string> { "edituser", "users" },
-                url = Helpers.BuildUrl("Settings/Users"),
-                SortOrder = 1000,
-                AppAdminOnly = false,
-            });
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Users"),
+                    Icon = "Users",
+                    PageNames = new List<string> { "edituser", "users" },
+                    url = Helpers.BuildUrl("Settings/Users"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
 
-            @if (Model.FeatureEnabledUserGroups) {
+            if (Model.User.Admin && Model.FeatureEnabledUserGroups) {
                 output.Add(new DataObjects.MenuItem {
                     Title = Helpers.Text("UserGroups"),
                     Icon = "UserGroups",

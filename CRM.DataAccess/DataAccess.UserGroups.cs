@@ -140,6 +140,8 @@ public partial class DataAccess
                 Settings = settings,
             };
 
+            output = GetUserGroupApp(rec, output, CurrentUser);
+
             if(IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
                 output.Users = new List<DataObjects.UserListing>();
 
@@ -201,7 +203,9 @@ public partial class DataAccess
                     Settings = settings,
                 };
 
-                if(IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
+                group = GetUserGroupApp(rec, group, CurrentUser);
+
+                if (IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
                     group.Users = new List<DataObjects.UserListing>();
 
                     foreach(var user in rec.UserInGroups) {
@@ -326,6 +330,8 @@ public partial class DataAccess
                     rec.Deleted = output.Deleted;
                 }
             }
+
+            rec = SaveUserGroupApp(rec, output, CurrentUser);
 
             if (newRecord) {
                 await data.UserGroups.AddAsync(rec);

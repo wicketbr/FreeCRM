@@ -232,6 +232,8 @@ public partial class DataAccess
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 TenantId = rec.TenantId,
             };
+
+            output = GetDepartmentApp(rec, output, CurrentUser);
         }
 
         return output;
@@ -262,6 +264,8 @@ public partial class DataAccess
                 LastModified = rec.LastModified,
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
             };
+
+            output = GetDepartmentGroupApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse = GetNewActionResponse(false, "Department Group '" + DepartmentGroupId.ToString() + "' Not Found");
         }
@@ -285,7 +289,7 @@ public partial class DataAccess
         
         if (recs != null && recs.Count() > 0) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.DepartmentGroup {
+                var d = new DataObjects.DepartmentGroup {
                     ActionResponse = GetNewActionResponse(true),
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
@@ -296,7 +300,11 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                     LastModified = rec.LastModified,
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
-                });
+                };
+
+                d = GetDepartmentGroupApp(rec, d, CurrentUser);
+
+                output.Add(d);
             }
         }
 
@@ -329,7 +337,7 @@ public partial class DataAccess
         
         if (recs != null && recs.Count() > 0) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.Department {
+                var d = new DataObjects.Department {
                     ActionResponse = GetNewActionResponse(true),
                     ActiveDirectoryNames = rec.ActiveDirectoryNames,
                     Added = rec.Added,
@@ -343,7 +351,11 @@ public partial class DataAccess
                     DepartmentGroupId = rec.DepartmentGroupId,
                     LastModified = rec.LastModified,
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
-                });
+                };
+
+                d = GetDepartmentApp(rec, d, CurrentUser);
+
+                output.Add(d);
             }
         }
 
@@ -392,6 +404,8 @@ public partial class DataAccess
                     rec.Deleted = output.Deleted;
                 }
             }
+
+            rec = SaveDepartmentApp(rec, output, CurrentUser);
 
             try {
                 if (newRecord) {
@@ -458,6 +472,8 @@ public partial class DataAccess
                     rec.Deleted = output.Deleted;
                 }
             }
+
+            rec = SaveDepartmentGroupApp(rec, output, CurrentUser);
 
             try {
                 if (newRecord) {

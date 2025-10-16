@@ -100,6 +100,8 @@ public partial class DataAccess
                 Deleted = rec.Deleted,
                 DeletedAt = rec.DeletedAt,
             };
+
+            output = GetPaymentApp(rec, output, CurrentUser);
         } else {
             output.ActionResponse.Messages.Add("Payment '" + PaymentId.ToString() + "' No Longer Exists");
         }
@@ -121,7 +123,7 @@ public partial class DataAccess
 
         if (recs != null && recs.Any()) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.Payment {
+                var p = new DataObjects.Payment {
                     ActionResponse = GetNewActionResponse(true),
                     PaymentId = rec.PaymentId,
                     TenantId = rec.TenantId,
@@ -139,7 +141,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                p = GetPaymentApp(rec, p, CurrentUser);
+
+                output.Add(p);
             }
         }
 
@@ -160,7 +166,7 @@ public partial class DataAccess
 
         if (recs != null && recs.Any()) {
             foreach (var rec in recs) {
-                output.Add(new DataObjects.Payment {
+                var p = new DataObjects.Payment {
                     ActionResponse = GetNewActionResponse(true),
                     PaymentId = rec.PaymentId,
                     TenantId = rec.TenantId,
@@ -178,7 +184,11 @@ public partial class DataAccess
                     LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                });
+                };
+
+                p = GetPaymentApp(rec, p, CurrentUser);
+
+                output.Add(p);
             }
         }
 
@@ -241,6 +251,8 @@ public partial class DataAccess
                 rec.DeletedAt = null;
             }
         }
+
+        rec = SavePaymentApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {
