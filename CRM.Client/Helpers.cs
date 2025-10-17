@@ -4787,6 +4787,10 @@ public static partial class Helpers
     /// <param name="OnComplete">An optional Delegate to be invoked after the action has completed.</param>
     public async static Task QuickAction(string Action, Delegate? OnComplete = null)
     {
+        if (Helpers.StringLower(Action) == "adduser" && Model.FeatureEnabledDepartments && !Model.Departments.Any()) {
+            await Helpers.LoadDepartments();
+        }
+
         Model.QuickActionOnComplete = OnComplete;
         Model.QuickAction = Action;
         await jsRuntime.InvokeVoidAsync("ShowQuickActionMenu");
@@ -4811,7 +4815,7 @@ public static partial class Helpers
         }
 
         if (focus != String.Empty) {
-            await DelayedFocus(focus);
+            SetTimeout(async() => await DelayedFocus(focus));
         }
     }
 

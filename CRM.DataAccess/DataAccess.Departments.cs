@@ -236,7 +236,7 @@ public partial class DataAccess
                 AddedBy = LastModifiedDisplayName(rec.AddedBy),
                 Deleted = rec.Deleted,
                 DeletedAt = rec.DeletedAt,
-                DepartmentGroupId = rec.DepartmentId,
+                DepartmentGroupId = rec.DepartmentGroupId,
                 DepartmentId = rec.DepartmentId,
                 DepartmentName = rec.DepartmentName,
                 Enabled = rec.Enabled,
