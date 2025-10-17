@@ -32,6 +32,12 @@ public partial class DataAccess
         var tenantSettings = GetTenantSettings(tenantId);
 
         if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
+            if (!deleteAppRecords.Result) {
+                output.Messages.AddRange(deleteAppRecords.Messages);
+                return output;
+            }
+
             try {
                 data.Invoices.Remove(rec);
                 await data.SaveChangesAsync();
@@ -114,7 +120,7 @@ public partial class DataAccess
                 DeletedAt = rec.DeletedAt,
             };
 
-            output = GetInvoiceApp(rec, output, CurrentUser);
+            GetDataApp(rec, output, CurrentUser);
 
             if (IncludeImages) {
                 output = await GenerateInvoiceImages(output, CurrentUser);
@@ -177,7 +183,7 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                 };
 
-                i = GetInvoiceApp(rec, i, CurrentUser);
+                GetDataApp(rec, i, CurrentUser);
 
                 output.Add(i);
             }
@@ -485,7 +491,7 @@ public partial class DataAccess
                     //LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 };
 
-                u = GetInvoiceApp(rec, u, CurrentUser);
+                GetDataApp(rec, u, CurrentUser);
 
                 records.Add(u);
             }
@@ -577,7 +583,7 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                 };
 
-                i = GetInvoiceApp(rec, i, CurrentUser);
+                GetDataApp(rec, i, CurrentUser);
 
                 output.Add(i);
             }
@@ -634,7 +640,7 @@ public partial class DataAccess
                     DeletedAt = rec.DeletedAt,
                 };
 
-                i = GetInvoiceApp(rec, i, CurrentUser);
+                GetDataApp(rec, i, CurrentUser);
 
                 output.Add(i);
             }
@@ -711,7 +717,7 @@ public partial class DataAccess
             }
         }
 
-        rec = SaveInvoiceApp(rec, output, CurrentUser);
+        SaveDataApp(rec, output, CurrentUser);
 
         try {
             if (newRecord) {

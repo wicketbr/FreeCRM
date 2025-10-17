@@ -69,21 +69,132 @@ public partial class DataAccess
     }
 
     /// <summary>
-    /// This method is called when the tenant is being deleted to delete app-specific data for the tenant.
+    /// Called from various delete methods to delete any app-specific records before continuing with the delete process.
     /// </summary>
-    private async Task<DataObjects.BooleanResponse> DeleteTenantApp(Guid TenantId)
+    /// <param name="Rec">The EF record object.</param>
+    /// <param name="CurrentUser">The User object for the current user, if loaded.</param>
+    /// <returns>A BooleanResponse object.</returns>
+    private async Task<DataObjects.BooleanResponse> DeleteRecordsApp(object Rec, DataObjects.User? CurrentUser = null)
     {
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
 
         var output = new DataObjects.BooleanResponse();
 
         try {
-            // Implement your app-specific tenant deletion logic here to remove records from tables that are specific to your app.
-            // Example:
-            // data.MyTable.RemoveRange(data.MyTable.Where(x => x.TenantId == TenantId));
-            // await data.SaveChangesAsync();
+            // {{ModuleItemStart:Appointments}}
+            if (Rec is EFModels.EFModels.Appointment) {
+                var rec = Rec as EFModels.EFModels.Appointment;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentNote) {
+                var rec = Rec as EFModels.EFModels.AppointmentNote;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentService) {
+                var rec = Rec as EFModels.EFModels.AppointmentService;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentUser) {
+                var rec = Rec as EFModels.EFModels.AppointmentUser;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:Appointments}}
+
+            if (Rec is EFModels.EFModels.Department) {
+                var rec = Rec as EFModels.EFModels.Department;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            if (Rec is EFModels.EFModels.DepartmentGroup) {
+                var rec = Rec as EFModels.EFModels.DepartmentGroup;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            // {{ModuleItemStart:EmailTemplates}}
+            if (Rec is EFModels.EFModels.EmailTemplate) {
+                var rec = Rec as EFModels.EFModels.EmailTemplate;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            // {{ModuleItemStart:Invoices}}
+            if (Rec is EFModels.EFModels.Invoice) {
+                var rec = Rec as EFModels.EFModels.Invoice;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:Invoices}}
+
+            // {{ModuleItemStart:Locations}}
+            if (Rec is EFModels.EFModels.Location) {
+                var rec = Rec as EFModels.EFModels.Location;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:Locations}}
+
+            // {{ModuleItemStart:Payments}}
+            if (Rec is EFModels.EFModels.Payment) {
+                var rec = Rec as EFModels.EFModels.Payment;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:Payments}}
+
+            // {{ModuleItemStart:Services}}
+            if (Rec is EFModels.EFModels.Service) {
+                var rec = Rec as EFModels.EFModels.Service;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+            // {{ModuleItemEnd:Services}}
+
+            if (Rec is EFModels.EFModels.Tenant) {
+                var rec = Rec as EFModels.EFModels.Tenant;
+                if (rec != null) {
+                    // Implement your app-specific tenant deletion logic here to remove records from tables that are specific to your app.
+                    // Example:
+                    // data.MyTable.RemoveRange(data.MyTable.Where(x => x.TenantId == TenantId));
+                    // await data.SaveChangesAsync();
+                }
+            }
+
+            if (Rec is EFModels.EFModels.User) {
+                var rec = Rec as EFModels.EFModels.User;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
+
+            if (Rec is EFModels.EFModels.UserGroup) {
+                var rec = Rec as EFModels.EFModels.UserGroup;
+                if (rec != null) {
+                    // Remove any related records.
+                }
+            }
         } catch (Exception ex) {
-            output.Messages.Add("An Error Occurred in DeleteTenantApp");
+            output.Messages.Add("An Error Occurred in DeleteUserApp");
             output.Messages.AddRange(RecurseException(ex));
         }
 
@@ -155,239 +266,368 @@ public partial class DataAccess
     }
 
     /// <summary>
-    /// This method is called to map any app-specific fields from the EF Appointment model to the Appointment data object.
+    /// This is called by various Get methods to map any app-specific fields from the EF model to the data object.
     /// </summary>
-    /// <param name="rec">The Appointment data record.</param>
-    /// <param name="appointment">The Appointment data object.</param>
+    /// <param name="Rec">The EF record object.</param>
+    /// <param name="DataObject">The DataObjects object being updated.</param>
     /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Appointment data object.</returns>
-    private DataObjects.Appointment GetAppointmentApp(EFModels.EFModels.Appointment rec, DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null)
+    private void GetDataApp(object Rec, object DataObject, DataObjects.User? CurrentUser = null)
     {
-        //appointment.Property = rec.Property;
-        return appointment;
+        try {
+            // {{ModuleItemStart:Appointments}}
+            if (Rec is EFModels.EFModels.Appointment && DataObject is DataObjects.Appointment) {
+                var rec = Rec as EFModels.EFModels.Appointment;
+                var appointment = DataObject as DataObjects.Appointment;
+
+                if (rec != null && appointment != null) {
+                    //appointment.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentNote && DataObject is DataObjects.AppointmentNote) {
+                var rec = Rec as EFModels.EFModels.AppointmentNote;
+                var appointmentNote = DataObject as DataObjects.AppointmentNote;
+
+                if (rec != null && appointmentNote != null) {
+                    //appointmentNote.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentService && DataObject is DataObjects.AppointmentService) {
+                var rec = Rec as EFModels.EFModels.AppointmentService;
+                var appointmentService = DataObject as DataObjects.AppointmentService;
+
+                if (rec != null && appointmentService != null) {
+                    //appointmentService.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.AppointmentUser && DataObject is DataObjects.AppointmentUser) {
+                var rec = Rec as EFModels.EFModels.AppointmentUser;
+                var appointmentUser = DataObject as DataObjects.AppointmentUser;
+
+                if (rec != null && appointmentUser != null) {
+                    //appointmentUser.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Appointments}}
+
+            if (Rec is EFModels.EFModels.Department && DataObject is DataObjects.Department) {
+                var rec = Rec as EFModels.EFModels.Department;
+                var department = DataObject as DataObjects.Department;
+
+                if (rec != null && department != null) {
+                    //department.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.DepartmentGroup && DataObject is DataObjects.DepartmentGroup) {
+                var rec = Rec as EFModels.EFModels.DepartmentGroup;
+                var departmentGroup = DataObject as DataObjects.DepartmentGroup;
+
+                if (rec != null && departmentGroup != null) {
+                    //departmentGroup.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            // {{ModuleItemStart:EmailTemplates}}
+            if (Rec is EFModels.EFModels.EmailTemplate && DataObject is DataObjects.EmailTemplate) {
+                var rec = Rec as EFModels.EFModels.EmailTemplate;
+                var emailTemplate = DataObject as DataObjects.EmailTemplate;
+
+                if (rec != null && emailTemplate != null) {
+                    //emailTemplate.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            // {{ModuleItemStart:Invoices}}
+            if (Rec is EFModels.EFModels.Invoice && DataObject is DataObjects.Invoice) {
+                var rec = Rec as EFModels.EFModels.Invoice;
+                var invoice = DataObject as DataObjects.Invoice;
+
+                if (rec != null && invoice != null) {
+                    //invoice.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Invoices}}
+
+            // {{ModuleItemStart:Locations}}
+            if (Rec is EFModels.EFModels.Location && DataObject is DataObjects.Location) {
+                var rec = Rec as EFModels.EFModels.Location;
+                var location = DataObject as DataObjects.Location;
+
+                if (rec != null && location != null) {
+                    //location.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Locations}}
+
+            // {{ModuleItemStart:Payments}}
+            if (Rec is EFModels.EFModels.Payment && DataObject is DataObjects.Payment) {
+                var rec = Rec as EFModels.EFModels.Payment;
+                var payment = DataObject as DataObjects.Payment;
+
+                if (rec != null && payment != null) {
+                    //payment.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Payments}}
+
+            // {{ModuleItemStart:Services}}
+            if (Rec is EFModels.EFModels.Service && DataObject is DataObjects.Service) {
+                var rec = Rec as EFModels.EFModels.Service;
+                var service = DataObject as DataObjects.Service;
+
+                if (rec != null && service != null) {
+                    //service.Property = rec.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Services}}
+
+            if (Rec is EFModels.EFModels.User && DataObject is DataObjects.ActiveUser) {
+                var rec = Rec as EFModels.EFModels.User;
+                var activeUser = DataObject as DataObjects.ActiveUser;
+
+                if (rec != null && activeUser != null) {
+                    //activeUser.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.User && DataObject is DataObjects.User) {
+                var rec = Rec as EFModels.EFModels.User;
+                var user = DataObject as DataObjects.User;
+
+                if (rec != null && user != null) {
+                    //user.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.User && DataObject is DataObjects.UserAccount) {
+                var rec = Rec as EFModels.EFModels.User;
+                var userAccount = DataObject as DataObjects.UserAccount;
+
+                if (rec != null && userAccount != null) {
+                    //userAccount.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.User && DataObject is DataObjects.UserListing) {
+                var rec = Rec as EFModels.EFModels.User;
+                var userListing = DataObject as DataObjects.UserListing;
+
+                if (rec != null && userListing != null) {
+                    //userListing.Property = rec.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.UserGroup && DataObject is DataObjects.UserGroup) {
+                var rec = Rec as EFModels.EFModels.UserGroup;
+                var userGroup = DataObject as DataObjects.UserGroup;
+
+                if (rec != null && userGroup != null) {
+                    //userGroup.Property = rec.Property;
+                }
+
+                return;
+            }
+        } catch { }
     }
 
     /// <summary>
-    /// This method is called to map any app-specific fields from the EF Department model to the Department data object.
+    /// This is called by various Save methods to map any app-specific fields from the data object to the EF model object.
     /// </summary>
-    /// <param name="rec">The Department data record.</param>
-    /// <param name="department">The Department data object.</param>
+    /// <param name="Rec">The EF record object being updated.</param>
+    /// <param name="DataObject">The DataObjects object.</param>
     /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Department data object.</returns>
-    private DataObjects.Department GetDepartmentApp(EFModels.EFModels.Department rec, DataObjects.Department department, DataObjects.User? CurrentUser = null)
+    private void SaveDataApp(object Rec, object DataObject, DataObjects.User? CurrentUser = null)
     {
-        //department.Property = rec.Property;
-        return department;
-    }
+        try {
+            // {{ModuleItemStart:Appointments}}
+            if (Rec is EFModels.EFModels.Appointment && DataObject is DataObjects.Appointment) {
+                var rec = Rec as EFModels.EFModels.Appointment;
+                var appointment = DataObject as DataObjects.Appointment;
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF DepartmentGroup model to the DepartmentGroup data object.
-    /// </summary>
-    /// <param name="rec">The DepartmentGroup data record.</param>
-    /// <param name="departmentGroup">The DepartmentGroup data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated DepartmentGroup data object.</returns>
-    private DataObjects.DepartmentGroup GetDepartmentGroupApp(EFModels.EFModels.DepartmentGroup rec, DataObjects.DepartmentGroup departmentGroup, DataObjects.User? CurrentUser = null)
-    {
-        //departmentGroup.Property = rec.Property;
-        return departmentGroup;
-    }
+                if (rec != null && appointment != null) {
+                    //rec.Property = appointment.Property;
+                }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF EmailTemplate model to the EmailTemplate data object.
-    /// </summary>
-    /// <param name="rec">The EmailTemplate data record.</param>
-    /// <param name="emailTemplate">The EmailTemplate data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated EmailTemplate data object.</returns>
-    private DataObjects.EmailTemplate GetEmailTemplateApp(EFModels.EFModels.EmailTemplate rec, DataObjects.EmailTemplate emailTemplate, DataObjects.User? CurrentUser = null)
-    {
-        //emailTemplate.Property = rec.Property;
-        return emailTemplate;
-    }
+                return;
+            }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF Invoice model to the Invoice data object.
-    /// </summary>
-    /// <param name="rec">The Invoice data record.</param>
-    /// <param name="invoice">The Invoice data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Invoice data object.</returns>
-    private DataObjects.Invoice GetInvoiceApp(EFModels.EFModels.Invoice rec, DataObjects.Invoice invoice, DataObjects.User? CurrentUser = null)
-    {
-        //invoice.Property = rec.Property;
-        return invoice;
-    }
+            if (Rec is EFModels.EFModels.AppointmentNote && DataObject is DataObjects.AppointmentNote) {
+                var rec = Rec as EFModels.EFModels.AppointmentNote;
+                var appointmentNote = DataObject as DataObjects.AppointmentNote;
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF Payment model to the Payment data object.
-    /// </summary>
-    /// <param name="rec">The Payment data record.</param>
-    /// <param name="payment">The Payment data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Payment data object.</returns>
-    private DataObjects.Payment GetPaymentApp(EFModels.EFModels.Payment rec, DataObjects.Payment payment, DataObjects.User? CurrentUser = null)
-    {
-        //payment.Property = rec.Property;
-        return payment;
-    }
+                if (rec != null && appointmentNote != null) {
+                    //rec.Property = appointmentNote.Property;
+                }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF Service model to the Service data object.
-    /// </summary>
-    /// <param name="rec">The Service data record.</param>
-    /// <param name="service">The Service data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Service data object.</returns>
-    private DataObjects.Service GetServiceApp(EFModels.EFModels.Service rec, DataObjects.Service service, DataObjects.User? CurrentUser = null)
-    {
-        //service.Property = rec.Property;
-        return service;
-    }
+                return;
+            }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF User model to the User data object.
-    /// </summary>
-    /// <param name="rec">The User data record.</param>
-    /// <param name="user">The User data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated User data object.</returns>
-    private DataObjects.User GetUserApp(EFModels.EFModels.User rec, DataObjects.User user, DataObjects.User? CurrentUser = null)
-    {
-        //user.Property = rec.Property;
+            if (Rec is EFModels.EFModels.AppointmentService && DataObject is DataObjects.AppointmentService) {
+                var rec = Rec as EFModels.EFModels.AppointmentService;
+                var svc = DataObject as DataObjects.AppointmentService;
 
-        return user;
-    }
+                if (rec != null && svc != null) {
+                    //rec.Property = svc.Property;
+                }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EF UserGroup model to the UserGroup data object.
-    /// </summary>
-    /// <param name="rec">The UserGroup data record.</param>
-    /// <param name="userGroup">The UserGroup data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated UserGroup data object.</returns>
-    private DataObjects.UserGroup GetUserGroupApp(EFModels.EFModels.UserGroup rec, DataObjects.UserGroup userGroup, DataObjects.User? CurrentUser = null)
-    {
-        //userGroup.Property = rec.Property;
-        return userGroup;
-    }
+                return;
+            }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the Appointment data object to the EF Appointment model.
-    /// </summary>
-    /// <param name="rec">The Appointment data record.</param>
-    /// <param name="appointment">The Appointment data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Appointment data record.</returns>
-    private EFModels.EFModels.Appointment SaveAppointmentApp(EFModels.EFModels.Appointment rec, DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = appointment.Property;
-        return rec;
-    }
+            if (Rec is EFModels.EFModels.AppointmentUser && DataObject is DataObjects.User) {
+                var rec = Rec as EFModels.EFModels.AppointmentUser;
+                var user = DataObject as DataObjects.User;
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the Department data object to the EF Department model.
-    /// </summary>
-    /// <param name="rec">The Department data record.</param>
-    /// <param name="department">The Department data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Department data record.</returns>
-    private EFModels.EFModels.Department SaveDepartmentApp(EFModels.EFModels.Department rec, DataObjects.Department department, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = department.Property;
-        return rec;
-    }
+                if (rec != null && user != null) {
+                    //rec.Property = user.Property;
+                }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the DepartmentGroup data object to the EF DepartmentGroup model.
-    /// </summary>
-    /// <param name="rec">The DepartmentGroup data record.</param>
-    /// <param name="departmentGroup">The DepartmentGroup data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated DepartmentGroup data record.</returns>
-    private EFModels.EFModels.DepartmentGroup SaveDepartmentGroupApp(EFModels.EFModels.DepartmentGroup rec, DataObjects.DepartmentGroup departmentGroup, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = departmentGroup.Property;
-        return rec;
-    }
+                return;
+            }
+            // {{ModuleItemEnd:Appointments}}
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the EmailTemplate data object to the EF EmailTemplate model.
-    /// </summary>
-    /// <param name="rec">The EmailTemplate data record.</param>
-    /// <param name="emailTemplate">The EmailTemplate data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated EmailTemplate data record.</returns>
-    private EFModels.EFModels.EmailTemplate SaveEmailTemplateApp(EFModels.EFModels.EmailTemplate rec, DataObjects.EmailTemplate emailTemplate, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = emailTemplate.Property;
-        return rec;
-    }
+            if (Rec is EFModels.EFModels.Department && DataObject is DataObjects.Department) {
+                var rec = Rec as EFModels.EFModels.Department;
+                var department = DataObject as DataObjects.Department;
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the Invoice data object to the EF Invoice model.
-    /// </summary>
-    /// <param name="rec">The Invoice data record.</param>
-    /// <param name="invoice">The Invoice data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Invoice data record.</returns>
-    private EFModels.EFModels.Invoice SaveInvoiceApp(EFModels.EFModels.Invoice rec, DataObjects.Invoice invoice, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = invoice.Property;
-        return rec;
-    }
+                if (rec != null && department != null) {
+                    //rec.Property = department.Property;
+                }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the Payment data object to the EF Payment model.
-    /// </summary>
-    /// <param name="rec">The Payment data record.</param>
-    /// <param name="payment">The Payment data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Payment data record.</returns>
-    private EFModels.EFModels.Payment SavePaymentApp(EFModels.EFModels.Payment rec, DataObjects.Payment payment, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = payment.Property;
-        return rec;
-    }
+                return;
+            }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the Service data object to the EF Service model.
-    /// </summary>
-    /// <param name="rec">The Service data record.</param>
-    /// <param name="service">The Service data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated Service data record.</returns>
-    private EFModels.EFModels.Service SaveServiceApp(EFModels.EFModels.Service rec, DataObjects.Service service, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = service.Property;
-        return rec;
-    }
+            if (Rec is EFModels.EFModels.DepartmentGroup && DataObject is DataObjects.DepartmentGroup) {
+                var rec = Rec as EFModels.EFModels.DepartmentGroup;
+                var departmentGroup = DataObject as DataObjects.DepartmentGroup;
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the User data object to the EF User model.
-    /// </summary>
-    /// <param name="rec">The User data record.</param>
-    /// <param name="user">The User data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated User data record.</returns>
-    private EFModels.EFModels.User SaveUserApp(EFModels.EFModels.User rec, DataObjects.User user, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = user.Property;
+                if (rec != null && departmentGroup != null) {
+                    //rec.Property = departmentGroup.Property;
+                }
 
-        return rec;
-    }
+                return;
+            }
 
-    /// <summary>
-    /// This method is called to map any app-specific fields from the UserGroup data object to the EF UserGroup model.
-    /// </summary>
-    /// <param name="rec">The UserGroup data record.</param>
-    /// <param name="userGroup">The UserGroup data object.</param>
-    /// <param name="CurrentUser">The current user object, if one exists.</param>
-    /// <returns>An updated UserGroup data record.</returns>
-    private EFModels.EFModels.UserGroup SaveUserGroupApp(EFModels.EFModels.UserGroup rec, DataObjects.UserGroup userGroup, DataObjects.User? CurrentUser = null)
-    {
-        //rec.Property = userGroup.Property;
-        return rec;
+            // {{ModuleItemStart:EmailTemplates}}
+            if (Rec is EFModels.EFModels.EmailTemplate && DataObject is DataObjects.EmailTemplate) {
+                var rec = Rec as EFModels.EFModels.EmailTemplate;
+                var emailTemplate = DataObject as DataObjects.EmailTemplate;
+
+                if (rec != null && emailTemplate != null) {
+                    //rec.Property = emailTemplate.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            // {{ModuleItemStart:Invoices}}
+            if (Rec is EFModels.EFModels.Invoice && DataObject is DataObjects.Invoice) {
+                var rec = Rec as EFModels.EFModels.Invoice;
+                var invoice = DataObject as DataObjects.Invoice;
+
+                if (rec != null && invoice != null) {
+                    //rec.Property = invoice.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Invoices}}
+
+            // {{ModuleItemStart:Locations}}
+            if (Rec is EFModels.EFModels.Location && DataObject is DataObjects.Location) {
+                var rec = Rec as EFModels.EFModels.Location;
+                var location = DataObject as DataObjects.Location;
+                
+                if (rec != null && location != null) {
+                    //rec.Property = location.Property;
+                }
+                
+                return;
+            }
+            // {{ModuleItemEnd:Locations}}
+
+            // {{ModuleItemStart:Payments}}
+            if (Rec is EFModels.EFModels.Payment && DataObject is DataObjects.Payment) {
+                var rec = Rec as EFModels.EFModels.Payment;
+                var payment = DataObject as DataObjects.Payment;
+
+                if (rec != null && payment != null) {
+                    //rec.Property = payment.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Payments}}
+
+            // {{ModuleItemStart:Services}}
+            if (Rec is EFModels.EFModels.Service && DataObject is DataObjects.Service) {
+                var rec = Rec as EFModels.EFModels.Service;
+                var service = DataObject as DataObjects.Service;
+
+                if (rec != null && service != null) {
+                    //rec.Property = service.Property;
+                }
+
+                return;
+            }
+            // {{ModuleItemEnd:Services}}
+
+            if (Rec is EFModels.EFModels.User && DataObject is DataObjects.User) {
+                var rec = Rec as EFModels.EFModels.User;
+                var user = DataObject as DataObjects.User;
+
+                if (rec != null && user != null) {
+                    //rec.Property = user.Property;
+                }
+
+                return;
+            }
+
+            if (Rec is EFModels.EFModels.UserGroup && DataObject is DataObjects.UserGroup) {
+                var rec = Rec as EFModels.EFModels.UserGroup;
+                var userGroup = DataObject as DataObjects.UserGroup;
+
+                if (rec != null && userGroup != null) {
+                    //rec.Property = userGroup.Property;
+                }
+
+                return;
+            }
+        } catch { }
     }
 
     /// <summary>
