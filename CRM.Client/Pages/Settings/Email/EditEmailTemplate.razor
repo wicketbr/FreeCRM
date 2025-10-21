@@ -144,40 +144,6 @@
                 }
                 
                 <HtmlEditor @ref="_htmlEditor" OnModeChanged="HtmlEditorModeChanged" />
-
-                @* <RadzenHtmlEditor @ref=@htmlEditor @bind-Value=@_details.Body style="height:500px;" >
-                    <RadzenHtmlEditorUndo />
-                    <RadzenHtmlEditorRedo />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorBold />
-                    <RadzenHtmlEditorItalic />
-                    <RadzenHtmlEditorUnderline />
-                    <RadzenHtmlEditorStrikeThrough />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorAlignLeft />
-                    <RadzenHtmlEditorAlignCenter />
-                    <RadzenHtmlEditorAlignRight />
-                    <RadzenHtmlEditorJustify />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorIndent  />
-                    <RadzenHtmlEditorOutdent />
-                    <RadzenHtmlEditorUnorderedList />
-                    <RadzenHtmlEditorOrderedList />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorColor />
-                    <RadzenHtmlEditorBackground />
-                    <RadzenHtmlEditorRemoveFormat />
-                    <RadzenHtmlEditorSubscript />
-                    <RadzenHtmlEditorSuperscript />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorLink />
-                    <RadzenHtmlEditorUnlink />
-                    <RadzenHtmlEditorFontName />
-                    <RadzenHtmlEditorFontSize />
-                    <RadzenHtmlEditorFormatBlock />
-                    <RadzenHtmlEditorSeparator />
-                    <RadzenHtmlEditorSource />
-                </RadzenHtmlEditor> *@
             </div>
 
             <div class="mb-2 form-check form-switch">
@@ -377,6 +343,10 @@
         List<string> errors = new List<string>();
         string focus = "";
 
+        if (_htmlEditor != null) {
+            _details.Body = await _htmlEditor.GetHTML();
+        }
+
         if (String.IsNullOrWhiteSpace(_template.Name)) {
             errors.Add(Helpers.MissingRequiredField("EmailTemplateName"));
             if (focus == "") { focus = "edit-emailtemplate-name"; }
@@ -396,10 +366,6 @@
             Model.ErrorMessages(errors);
             await Helpers.DelayedFocus(focus);
             return;
-        }
-
-        if(_htmlEditor != null) {
-            _details.Body = await _htmlEditor.GetHTML();
         }
 
         _template.Template = Helpers.SerializeObject(_details);

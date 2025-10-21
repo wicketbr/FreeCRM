@@ -124,14 +124,43 @@ public class Encryption : IEncryption
 	/// <returns>a byte array or null</returns>
 	public byte[] ConvertByteArrayStringToByteArray(string ByteArrayString)
 	{
-		byte[] output = new byte[] { };
-		if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
-			try {
-				output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
-			} catch { }
-		}
-		return output;
-	}
+        //byte[] output = new byte[] { };
+        //if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
+        //	try {
+        //		output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
+        //	} catch { }
+        //}
+        //return output;
+
+        List<byte> output = new List<byte>();
+
+        if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
+            try {
+                //var byteString = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2));
+                var bytes = ByteArrayString.Split(',');
+
+                if (bytes != null) {
+                    foreach (var byteValue in bytes) {
+                        var byteString = byteValue.Trim();
+                        if (byteString.Length > 1) {
+                            var byteStringValue = byteString.Substring(2);
+
+                            byte b;
+
+                            if (Byte.TryParse(byteStringValue, System.Globalization.NumberStyles.HexNumber, System.Globalization.NumberFormatInfo.InvariantInfo, out b)) {
+                                output.Add(b);
+                            }
+                        }
+
+                    }
+                }
+            } catch (Exception ex) {
+                if (ex != null) { }
+            }
+        }
+
+        return output.ToArray();
+    }
 
 	/// <summary>
 	/// converts a byte array to a string
@@ -169,7 +198,7 @@ public class Encryption : IEncryption
 	public string Decrypt(byte[] EncryptedData)
 	{
 		string output = String.Empty;
-		if (this._key != null && EncryptedData != null) {
+		if (this._key != null && EncryptedData != null && EncryptedData.Length > 16) {
 			// Decrypt using AES encryption
 			using (Aes aes = Aes.Create()) {
 				try {
@@ -186,7 +215,9 @@ public class Encryption : IEncryption
 							}
 						}
 					}
-				} catch { }
+				} catch (Exception ex) {
+                    if (ex != null) { }
+                }
 			}
 		}
 		return output;

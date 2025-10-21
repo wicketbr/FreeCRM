@@ -58,13 +58,42 @@ public partial class DataAccess
 
     private byte[] ConvertByteArrayStringToByteArray(string ByteArrayString)
     {
-        byte[] output = new byte[] { };
+        //byte[] output = new byte[] { };
+        //if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
+        //    try {
+        //        output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
+        //    } catch { }
+        //}
+        //return output;
+
+        List<byte> output = new List<byte>();
+
         if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
             try {
-                output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
-            } catch { }
+                //var byteString = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2));
+                var bytes = ByteArrayString.Split(',');
+
+                if (bytes != null) {
+                    foreach (var byteValue in bytes) {
+                        var byteString = byteValue.Trim();
+                        if (byteString.Length > 1) {
+                            var byteStringValue = byteString.Substring(2);
+
+                            byte b;
+                            if (Byte.TryParse(byteStringValue, System.Globalization.NumberStyles.HexNumber, System.Globalization.NumberFormatInfo.InvariantInfo, out b)) {
+                                output.Add(b);
+                            }
+                        }
+
+                    }
+                }
+            } catch {
+                // If any error is encountered return an empty byte array.
+                return new byte[] { };
+            }
         }
-        return output;
+
+        return output.ToArray();
     }
 
     private string ConvertByteArrayToString(byte[] ByteArray)
