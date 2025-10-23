@@ -1,7 +1,3 @@
-# ============================================================================
-# Workflow: Rename, Build, Test, and Push to Base Branch + Combo Matrix
-# ============================================================================
-
 name: Rename • Build/Test • (Optional) Branch Push
 
 on:
@@ -13,16 +9,12 @@ on:
 permissions:
   contents: write
 
-# Global env (redeclared inside templates too for clarity/local execution)
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
   DOTNET_VERSION: 9.0.x
 
 jobs:
-  # ==========================================================================
-  # JOB 1: PRODUCTION RUNS — call the project template with a matrix
-  # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
     strategy:
@@ -36,19 +28,22 @@ jobs:
           - { name: PJProcessor, branch: PJProcessor_base, selections: 'remove:all' }
           - { name: Touchpoints, branch: Touchpoints_base, selections: 'remove:all' }
           - { name: FreeAI,      branch: FreeAI_base,      selections: 'remove:all' }
-    uses: ./.github/workflows/project-template.yml
-    with:
-      app_name:   ${{ matrix.project.name }}
-      selections: ${{ matrix.project.selections }}
-      base_branch: ${{ matrix.project.branch }}
 
-  # ==========================================================================
-  # JOB 2: BUILD/TEST — Singles (now via the same build-test template)
-  # ==========================================================================
+    # ✅ Use full repo path + ref when calling a reusable workflow
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    # (If this file lives in the same repo and you want to pin to a SHA, replace @main with @<sha>)
+
+    with:
+      # ✅ Quote all interpolations to force string semantics
+      app_name:    "${{ matrix.project.name }}"
+      selections:  "${{ matrix.project.selections }}"
+      base_branch: "${{ matrix.project.branch }}"
+    secrets: inherit  # optional, include if the called workflow needs repo/org secrets
+
   build-test-singles:
     name: 2. Singles — Build/Test
     needs: project
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2. "
       matrix_json: >
@@ -68,10 +63,8 @@ jobs:
           {"id":"T13","selections":"keep:Tags"},
           {"id":"T14","selections":"remove:Tags"}
         ]}
+    secrets: inherit
 
-  # ==========================================================================
-  # JOB 2a: GENERATE COMBINATIONS FOR k=2..7
-  # ==========================================================================
   generate-combos:
     name: 2a. Generate matrices for k=2..7
     runs-on: ubuntu-latest
@@ -127,54 +120,57 @@ jobs:
             core.setOutput('count6', String(m6.test.length));
             core.setOutput('count7', String(m7.test.length));
 
-  # ==========================================================================
-  # JOBS 2b..2g: Use the same Build-Test Template with generated matrices
-  # ==========================================================================
-
+  # The rest (2b..2g) stays the same, but use full ref + inherit secrets:
   build-test-2:
     name: 2b. Pairs
     needs: [project, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2b. Pairs (${{ needs.generate-combos.outputs.count2 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix2 }}
+    secrets: inherit
 
   build-test-3:
     name: 2c. Triples
     needs: [build-test-2, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2c. Triples (${{ needs.generate-combos.outputs.count3 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix3 }}
+    secrets: inherit
 
   build-test-4:
     name: 2d. Quads
     needs: [build-test-3, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2d. Quads (${{ needs.generate-combos.outputs.count4 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix4 }}
+    secrets: inherit
 
   build-test-5:
     name: 2e. Quintets
     needs: [build-test-4, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2e. Quintets (${{ needs.generate-combos.outputs.count5 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix5 }}
+    secrets: inherit
 
   build-test-6:
     name: 2f. Sextets
     needs: [build-test-5, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2f. Sextets (${{ needs.generate-combos.outputs.count6 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix6 }}
+    secrets: inherit
 
   build-test-7:
     name: 2g. Septets
     needs: [build-test-6, generate-combos]
-    uses: ./.github/workflows/build-test-template.yml
+    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2g. Septets (${{ needs.generate-combos.outputs.count7 }}) — "
       matrix_json: ${{ needs.generate-combos.outputs.matrix7 }}
+    secrets: inherit
