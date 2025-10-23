@@ -1,10 +1,5 @@
 # ============================================================================
 # Reusable template: Rename/Remove, Snapshot, (Optional) Push to Base Branch
-# - Triggered by workflow_call from other workflows.
-# - Applies Remove & Rename tools, creates a sanitized snapshot artifact,
-#   and optionally pushes that snapshot to a target base branch.
-# - Adds NuGet caching, safer app name normalization, concurrency guard,
-#   configurable artifact retention, and optional force push.
 # ============================================================================
 
 name: Project Template
@@ -38,14 +33,12 @@ on:
         type: boolean
 
 permissions:
-  contents: write  # needed for artifact uploads & git push
+  contents: write
 
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
   DOTNET_VERSION: 9.0.x
-
-  # .NET CLI hardening & less noise
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -56,11 +49,9 @@ defaults:
 
 jobs:
   project:
-    # Show base branch suffix when provided
     name: Project — ${{ inputs.app_name }}${{ inputs.base_branch != '' && format(' → {0}', inputs.base_branch) || '' }}
     runs-on: windows-latest
 
-    # Prevent overlapping writes to the same base branch/ref
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-base-${{ inputs.base_branch != '' && inputs.base_branch || 'none' }}
       cancel-in-progress: false
@@ -68,9 +59,6 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # ---------------------------------------------------------------------
-      # 1) Checkout source(s)
-      # ---------------------------------------------------------------------
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
@@ -86,29 +74,17 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      # ---------------------------------------------------------------------
-      # 2) Setup .NET SDK + NuGet cache
-      # ---------------------------------------------------------------------
-      - name: Setup .NET SDK
+      - name: Setup .NET SDK (cache disabled)
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnet_version != '' && inputs.dotnet_version || env.DOTNET_VERSION }}
-          cache: true
-          cache-dependency-path: |
-            _main/**/packages.lock.json
-            _main/**/*.csproj
-            _main/**/global.json
-            _main/**/Directory.Packages.props
-            _main/**/Directory.Packages.targets
+          cache: false
 
       - name: Environment info
         run: |
           "Runner OS: $env:RUNNER_OS"
           dotnet --info
 
-      # ---------------------------------------------------------------------
-      # 3) Normalize app name → APP_NAME (starts with letter; A-Z, a-z, 0-9, _)
-      # ---------------------------------------------------------------------
       - name: Normalize app name
         id: normalize
         run: |
@@ -120,9 +96,6 @@ jobs:
           "APP_NAME=$norm" | Out-File -FilePath $env:GITHUB_ENV -Append
           "Normalized app name: $norm"
 
-      # ---------------------------------------------------------------------
-      # 4) Remove modules per selections
-      # ---------------------------------------------------------------------
       - name: Run remove modules
         working-directory: _main
         run: |
@@ -131,9 +104,6 @@ jobs:
           }
           & "${{ env.REMOVE_EXE }}" "${{ inputs.selections }}"
 
-      # ---------------------------------------------------------------------
-      # 5) Rename project/solution with APP_NAME
-      # ---------------------------------------------------------------------
       - name: Run rename (allow numbers/underscores)
         working-directory: _main
         run: |
@@ -145,11 +115,6 @@ jobs:
             throw "Rename tool failed (exit $LASTEXITCODE)"
           }
 
-      # ---------------------------------------------------------------------
-      # 6) Build sanitized snapshot:
-      #    - Strip CI/meta folders (.github, .git, artifacts)
-      #    - Zip then expand to artifacts/ for push & inspection
-      # ---------------------------------------------------------------------
       - name: Snapshot source after rename/remove (sanitized for push)
         run: |
           $src = Join-Path $pwd "_main"
@@ -158,7 +123,8 @@ jobs:
 
           New-Item -ItemType Directory -Force -Path $dst | Out-Null
 
-          $toRemove = @(".github", "artifacts", ".git", ".gitignore", ".gitattributes")
+          # Keep .gitignore; drop CI/meta
+          $toRemove = @(".github", "artifacts", ".git", ".gitattributes")
           foreach ($rel in $toRemove) {
             $full = Join-Path $src $rel
             if (Test-Path $full) {
@@ -171,19 +137,13 @@ jobs:
 
           "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # ---------------------------------------------------------------------
-      # 7) Upload snapshot as artifact
-      # ---------------------------------------------------------------------
       - name: Upload source snapshot (post-rename)
         uses: actions/upload-artifact@v4
         with:
           name: source_after_changes_${{ env.APP_NAME }}
           path: artifacts/source_after_changes_${{ env.APP_NAME }}
-          retention-days: ${{ inputs.artifact_retention_days != '' && inputs.artifact_retention_days || 7 }}
+          retention-days: ${{ (inputs.artifact_retention_days != '' && inputs.artifact_retention_days > 0) && inputs.artifact_retention_days || 7 }}
 
-      # ---------------------------------------------------------------------
-      # 8) Optionally push sanitized snapshot to base branch
-      # ---------------------------------------------------------------------
       - name: Push to base branch
         if: ${{ inputs.base_branch != '' }}
         run: |
@@ -193,16 +153,13 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Clear everything except .git
           Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
 
-          # Copy sanitized snapshot in
           $snap = Join-Path $env:GITHUB_WORKSPACE ("artifacts\source_after_changes_{0}" -f $env:APP_NAME)
           Copy-Item -Path "$snap\*" -Destination . -Recurse -Force
 
           git add -A
 
-          # Borrow latest commit message from main (nice provenance), with fallback
           $mainMsg = git -C ..\_main log -1 --pretty=%B origin/main 2>$null
           if (-not $mainMsg) { $mainMsg = "Automated snapshot from main" }
 
