@@ -1,0 +1,127 @@
+# ============================================================================
+# Reusable template: build/test a matrix of keep/remove selections
+# Called via: jobs.<name>.uses: ./.github/workflows/build-test-template.yml
+# ============================================================================
+
+name: Build/Test Template
+
+on:
+  workflow_call:
+    inputs:
+      matrix_json:
+        description: JSON of the form {"test":[{ "id":"T01", "selections":"keep:..." }, ...]}
+        required: true
+        type: string
+      job_title_prefix:
+        description: Text to prefix the job name (e.g., "2. ", "2b. Pairs (XX) —")
+        required: false
+        type: string
+    secrets: {}
+
+permissions:
+  contents: write
+
+env:
+  REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
+  RENAME_EXE: '.\Rename FreeCRM.exe'
+  DOTNET_VERSION: 9.0.x
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build-test:
+    name: ${{ inputs.job_title_prefix }}${{ matrix.test.id }} / ${{ matrix.test.selections }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix: ${{ fromJSON(inputs.matrix_json) }}
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Remove modules
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
+          & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
+
+      - name: Rename project (derive test app name)
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
+          $sel = '${{ matrix.test.selections }}'
+          $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
+          $appName = "$appName" + "_${{ matrix.test.id }}"
+          # Allow numbers/underscores — no hard validation
+          & "${{ env.RENAME_EXE }}" "$appName"
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Snapshot source (pre-build) for ${{ matrix.test.id }}
+        run: |
+          $src = Join-Path $pwd "_main"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME)_${{ matrix.test.id }}.zip"
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload source snapshot (pre-build)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_after_changes_${{ matrix.test.id }}_${{ env.APP_NAME }}
+          path: ${{ env.SNAPSHOT_PATH }}
+
+      - name: Build & Publish (Debug/Release)
+        run: |
+          cd _main
+          $sln  = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.sln" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .sln after rename." }
+          $proj = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.csproj" | Select-Object -First 1
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+          dotnet restore "$($sln.FullName)"
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            $outDir = Join-Path $pwd "publish\$cfg"
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
+          }
+
+      - name: Run tests (Debug/Release)
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
+          if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
+          }
+
+      - name: Upload published artifact (Debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
+          path: _main/publish/Debug
+
+      - name: Upload published artifact (Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
+          path: _main/publish/Release
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tests-${{ matrix.test.id }}-${{ env.APP_NAME }}
+          path: _main/test-results
