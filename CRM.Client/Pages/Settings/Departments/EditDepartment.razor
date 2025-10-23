@@ -61,7 +61,7 @@
                     <select id="edit-department-departmentGroupId" class="form-select" @bind="_dept.DepartmentGroupId">
                         <option value=""></option>
                         @foreach (var deptGroup in Model.DepartmentGroups) {
-                            <option value="@deptGroup.DepartmentGroupId">@deptGroup.DepartmentGroupName</option>
+                            <option value="@deptGroup.DepartmentGroupId" selected="@(deptGroup.DepartmentGroupId == _dept.DepartmentGroupId)">@deptGroup.DepartmentGroupName</option>
                         }
                     </select>
                 </div>

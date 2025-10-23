@@ -36,6 +36,61 @@
                     <input type="text" id="quickadd-user-Email" class="form-control" @bind="Model.QuickAddUser.Email" />
                 </div>
 
+                <div class="mb-2">
+                    <label for="quickadd-user-Username">
+                        <Language Tag="Username" />
+                    </label>
+                    <input type="text" id="quickadd-user-Username" class="form-control" @bind="Model.QuickAddUser.Username" />
+                </div>
+
+                @if (Model.FeatureEnabledEmployeeId) {
+                    <div class="mb-2">
+                        <label for="quickadd-user-EmployeeId">
+                            <Language Tag="EmployeeId" />
+                        </label>
+                        <input type="text" id="quickadd-user-EmployeeId" class="form-control" @bind="Model.QuickAddUser.EmployeeId" />
+                    </div>
+                }
+
+                <div class="mb-2">
+                    <label for="quickadd-user-Title">
+                        <Language Tag="Title" />
+                    </label>
+                    <input type="text" id="quickadd-user-Title" class="form-control" @bind="Model.QuickAddUser.Title" />
+                </div>
+
+                <!-- {{ModuleItemStart:Locations}} -->
+                @if (Model.FeatureEnabledLocation) {
+                    <div class="mb-2">
+                        <label for="quickadd-user-Location">
+                            <Language Tag="Location" />
+                        </label>
+                        <input type="text" id="quickadd-user-Location" class="form-control" @bind="Model.QuickAddUser.Location" />
+                    </div>
+                }
+                <!-- {{ModuleItemEnd:Locations}} -->
+
+                <div class="mb-2">
+                    <label for="quickadd-user-Phone">
+                        <Language Tag="PhoneNumber" />
+                    </label>
+                    <input type="text" id="quickadd-user-Phone" class="form-control" @bind="Model.QuickAddUser.Phone" />
+                </div>
+
+                @if (Model.FeatureEnabledDepartments && Model.Departments.Any()) {
+                    <div class="mb-2">
+                        <label for="quickadd-user-DepartmentId">
+                            <Language Tag="Department" />
+                        </label>
+                        <select class="form-select" id="quickadd-user-DepartmentId" @bind="Model.QuickAddUser.DepartmentId">
+                            <option value=""></option>
+                            @foreach(var item in Model.Departments.OrderBy(x => x.DepartmentName)) {
+                                <option value="@item.DepartmentId">@item.DepartmentName</option>
+                            }
+                        </select>
+                    </div>
+                }
+
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-success btn-sm" @onclick="QuickAddUserSave">
                         <Language Tag="Save" IncludeIcon="true" />
