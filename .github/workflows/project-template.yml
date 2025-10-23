@@ -1,6 +1,5 @@
 # ============================================================================
-# Reusable template: Rename/Remove, Snapshot, Push to Base Branch
-# Called via: jobs.<name>.uses: ./.github/workflows/project-template.yml
+# Reusable template: Rename/Remove, Snapshot, (Optional) Push to Base Branch
 # ============================================================================
 
 name: Project Template
@@ -13,7 +12,7 @@ on:
         required: true
         type: string
       selections:
-        description: "Argument for the Remove Modules tool (e.g., keep:Tags or remove:all)"
+        description: "Argument for the Remove tool (e.g., keep:Tags or remove:all)"
         required: true
         type: string
       base_branch:
@@ -35,9 +34,7 @@ defaults:
 
 jobs:
   project:
-    name: Project — ${{ inputs.app_name }} (${{
-      (inputs.base_branch != '' && format('→ {0}', inputs.base_branch)) || 'no push'
-    }})
+    name: Project — ${{ inputs.app_name }}${{ inputs.base_branch != '' && format(' → {0}', inputs.base_branch) || '' }}
     runs-on: windows-latest
 
     steps:
