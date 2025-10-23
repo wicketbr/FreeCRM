@@ -1,66 +1,46 @@
 # ============================================================================
-# Reusable template: Build & Test a matrix of selections
-# - Triggered via workflow_call so other workflows can pass a test matrix JSON.
-# - Builds and tests twice (Debug/Release) on Windows.
-# - Renames the project based on matrix selections, snapshots source, publishes,
-#   and uploads artifacts & test results.
-# - Includes NuGet cache, concurrency guards, safer env defaults, and comments.
+# Reusable template: Rename/Remove, Snapshot, (Optional) Push to Base Branch
 # ============================================================================
 
-name: Build-Test Template
+name: Project Template
 
 on:
   workflow_call:
     inputs:
-      # Cosmetic prefix shown in the job name (e.g., "PR #123 · ").
-      job_title_prefix:
-        description: "Prefix for the job name"
+      app_name:
+        description: "New application name to pass to the Rename tool"
         required: true
         type: string
-
-      # Matrix JSON should look like:
-      # { "test": [ { "id": "A1", "selections": "keep:Core,remove:Plugins" }, ... ] }
-      matrix_json:
-        description: "JSON object with a 'test' array of { id, selections }"
+      selections:
+        description: "Argument for the Remove tool (e.g., keep:Tags or remove:all)"
         required: true
         type: string
-
-      # Optional: allow callers to override .NET SDK
+      base_branch:
+        description: "Target base branch to push sanitized snapshot to (empty to skip)"
+        required: true
+        type: string
       dotnet_version:
-        description: "Version string passed to setup-dotnet (defaults to env.DOTNET_VERSION)"
+        description: "Override .NET SDK version (defaults to env.DOTNET_VERSION)"
         required: false
         type: string
-
-      # Optional: control matrix behavior
-      max_parallel:
-        description: "Maximum parallel jobs (default 18)"
+      artifact_retention_days:
+        description: "Retention (days) for uploaded artifact (default 7)"
         required: false
         type: number
-      fail_fast:
-        description: "Stop the matrix early on first failure (default false)"
+      push_force:
+        description: "Force push to base_branch (default false)"
         required: false
         type: boolean
 
-      # Optional: artifact retention
-      artifact_retention_days:
-        description: "Days to retain uploaded artifacts (default 7)"
-        required: false
-        type: number
-
 permissions:
-  # Needed to upload build/test artifacts back to the run
   contents: write
 
-# Global environment hardens and standardizes behavior
 env:
-  # External tools used by the workflow (relative to repo root after checkout)
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
-
-  # Default .NET SDK version (overridable via input)
   DOTNET_VERSION: 9.0.x
 
-  # Make .NET CLI deterministic & faster in CI
+  # .NET CLI hardening
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -70,210 +50,142 @@ defaults:
     shell: pwsh
 
 jobs:
-  build-test:
-    # Friendly job title includes caller prefix + test ID + selection string
-    name: ${{ inputs.job_title_prefix }}${{ matrix.test.id }} / ${{ matrix.test.selections }}
+  project:
+    name: Project — ${{ inputs.app_name }}${{ inputs.base_branch != '' && format(' → {0}', inputs.base_branch) || '' }}
     runs-on: windows-latest
 
-    # Concurrency guard prevents overlapping runs for the same test.id on the same ref
+    # Prevent overlapping writes to the same base branch/ref
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-test-${{ matrix.test.id }}
+      group: ${{ github.workflow }}-${{ github.ref }}-base-${{ inputs.base_branch != '' && inputs.base_branch || 'none' }}
       cancel-in-progress: false
 
-    # Make the matrix fully driven by the caller-provided JSON
-    strategy:
-      fail-fast: ${{ inputs.fail_fast != '' && inputs.fail_fast || false }}
-      max-parallel: ${{ inputs.max_parallel != '' && inputs.max_parallel || 18 }}
-      matrix: ${{ fromJSON(inputs.matrix_json) }}
-
-    # Give each job a sensible timeout so hung builds don't stall the queue
-    timeout-minutes: 60
+    timeout-minutes: 30
 
     steps:
-      # -----------------------------------------------------------------------
-      # 1) Checkout the repository
-      # -----------------------------------------------------------------------
-      - name: Checkout main
+      # 1) Check out source(s)
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
-          ref: main                # always build from 'main' snapshot
-          path: _main              # isolate repo in a subfolder
-          fetch-depth: 0           # full history (some tools rely on this)
-          submodules: false
+          ref: main
+          path: _main
+          fetch-depth: 0
 
-      # -----------------------------------------------------------------------
-      # 2) Setup .NET SDK (+ NuGet cache)
-      #    - Uses either the input version or env default.
-      #    - Enables built-in dependency caching for faster runs.
-      # -----------------------------------------------------------------------
+      - name: Checkout base branch (if provided)
+        if: ${{ inputs.base_branch != '' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.base_branch }}
+          path: _base
+          fetch-depth: 0
+
+      # 2) Setup .NET SDK (cache disabled to avoid post-job error)
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.dotnet_version != '' && inputs.dotnet_version || env.DOTNET_VERSION }}
-          cache: true
-          # Use common lock files; adjust if your solution tracks centrally
-          cache-dependency-path: |
-            _main/**/packages.lock.json
-            _main/**/*.csproj
-            _main/**/global.json
-            _main/**/Directory.Packages.props
-            _main/**/Directory.Packages.targets
+          cache: false
 
-      # -----------------------------------------------------------------------
-      # 3) Quick environment echo (handy for diagnostics)
-      # -----------------------------------------------------------------------
       - name: Environment info
         run: |
           "Runner OS: $env:RUNNER_OS"
-          "Dotnet SDKs:"
-          dotnet --list-sdks
-          "Dotnet Runtimes:"
-          dotnet --list-runtimes
+          dotnet --info
 
-      # -----------------------------------------------------------------------
-      # 4) Remove modules according to matrix selections (pre-build transforms)
-      # -----------------------------------------------------------------------
-      - name: Remove modules
+      # 3) Normalize app name → APP_NAME (starts with letter; A-Z, a-z, 0-9, _)
+      - name: Normalize app name
+        id: normalize
+        run: |
+          $raw = '${{ inputs.app_name }}'
+          $norm = ($raw -replace '[^A-Za-z0-9_]', '_')
+          if ($norm -notmatch '^[A-Za-z]') { $norm = "App_$norm" }
+          $norm = ($norm -replace '_{2,}', '_').TrimEnd('_')
+          if ([string]::IsNullOrWhiteSpace($norm)) { $norm = "App_Default" }
+          "APP_NAME=$norm" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "Normalized app name: $norm"
+
+      # 4) Remove modules
+      - name: Run remove modules
         working-directory: _main
         run: |
           if (!(Test-Path "${{ env.REMOVE_EXE }}")) {
             throw "Remove tool not found: ${{ env.REMOVE_EXE }}"
           }
-          # Pass the raw selections string into the removal tool
-          & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
+          & "${{ env.REMOVE_EXE }}" "${{ inputs.selections }}"
 
-      # -----------------------------------------------------------------------
-      # 5) Rename project based on selections
-      #    - Derives a valid .NET project/solution base name.
-      #    - Produces APP_NAME in $GITHUB_ENV for later steps.
-      # -----------------------------------------------------------------------
-      - name: Rename project (derive test app name; allow numbers/underscores)
+      # 5) Rename project/solution with APP_NAME
+      - name: Run rename (allow numbers/underscores)
         working-directory: _main
         run: |
           if (!(Test-Path "${{ env.RENAME_EXE }}")) {
             throw "Rename tool not found: ${{ env.RENAME_EXE }}"
           }
-
-          # Build a stable, readable app name from the selection string
-          $sel = '${{ matrix.test.selections }}'
-          $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
-          $appName = "$appName" + "_${{ matrix.test.id }}"
-
-          # Ensure it begins with a letter and contains only valid chars
-          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') {
-            $appName = "TestApp_${{ matrix.test.id }}"
+          & "${{ env.RENAME_EXE }}" "$env:APP_NAME"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Rename tool failed (exit $LASTEXITCODE)"
           }
 
-          & "${{ env.RENAME_EXE }}" "$appName"
-          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
-
-          # Export to later steps
-          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-      # -----------------------------------------------------------------------
-      # 6) Snapshot source after transforms (debugging & reproducibility)
-      # -----------------------------------------------------------------------
-      - name: Snapshot source (pre-build)
+      # 6) Build sanitized snapshot (keep .gitignore; remove other CI/meta)
+      - name: Snapshot source after rename/remove (sanitized for push)
         run: |
           $src = Join-Path $pwd "_main"
-          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME)_${{ matrix.test.id }}.zip"
+          $dst = Join-Path $pwd ("artifacts\source_after_changes_{0}" -f $env:APP_NAME)
+          $zip = Join-Path $env:RUNNER_TEMP ("snapshot_{0}.zip" -f $env:APP_NAME)
+
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+
+          # Remove CI/meta folders but keep .gitignore
+          $toRemove = @(".github", "artifacts", ".git", ".gitattributes")
+          foreach ($rel in $toRemove) {
+            $full = Join-Path $src $rel
+            if (Test-Path $full) {
+              Remove-Item -Recurse -Force $full -ErrorAction SilentlyContinue
+            }
+          }
+
           Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Expand-Archive -Path $zip -DestinationPath $dst -Force
+
           "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Upload source snapshot (pre-build)
+      # 7) Upload snapshot as artifact
+      - name: Upload source snapshot (post-rename)
         uses: actions/upload-artifact@v4
         with:
-          name: source_after_changes_${{ matrix.test.id }}_${{ env.APP_NAME }}
-          path: ${{ env.SNAPSHOT_PATH }}
-          retention-days: ${{ inputs.artifact_retention_days != '' && inputs.artifact_retention_days || 7 }}
+          name: source_after_changes_${{ env.APP_NAME }}
+          path: artifacts/source_after_changes_${{ env.APP_NAME }}
+          retention-days: ${{ (inputs.artifact_retention_days != '' && inputs.artifact_retention_days > 0) && inputs.artifact_retention_days || 7 }}
 
-      # -----------------------------------------------------------------------
-      # 7) Restore, Build, and Publish (Debug/Release)
-      #    - Tries APP_NAME.sln/.csproj first; falls back to first discovered file.
-      #    - Publishes into _main/publish/<Configuration>.
-      # -----------------------------------------------------------------------
-      - name: Build & Publish (Debug/Release)
-        working-directory: _main
+      # 8) Optionally push sanitized snapshot to base branch
+      - name: Push to base branch
+        if: ${{ inputs.base_branch != '' }}
         run: |
-          # Prefer renamed solution/project, otherwise use first found
-          $sln  = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.sln" | Select-Object -First 1
-          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
-          if (-not $sln) { throw "Could not find a .sln after rename." }
+          $ErrorActionPreference = 'Stop'
+          cd _base
 
-          $proj = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.csproj" | Select-Object -First 1
-          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
-          if (-not $proj) { throw "Could not find a .csproj after rename." }
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          "Using solution: $($sln.FullName)"
-          "Using project : $($proj.FullName)"
+          # Clear everything except .git
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
 
-          dotnet restore "$($sln.FullName)"
+          # Copy sanitized snapshot in
+          $snap = Join-Path $env:GITHUB_WORKSPACE ("artifacts\source_after_changes_{0}" -f $env:APP_NAME)
+          Copy-Item -Path "$snap\*" -Destination . -Recurse -Force
 
-          foreach ($cfg in @('Debug','Release')) {
-            # Build (no restore as we just restored)
-            dotnet build "$($sln.FullName)" `
-              --configuration $cfg `
-              --no-restore `
-              -p:ContinuousIntegrationBuild=true
+          git add -A
 
-            # Publish to a deterministic folder
-            $outDir = Join-Path $pwd "publish\$cfg"
-            dotnet publish "$($proj.FullName)" `
-              --configuration $cfg `
-              --no-build `
-              --output $outDir `
-              -p:PublishSingleFile=false
+          # Borrow latest commit message from main (fallback if missing)
+          $mainMsg = git -C ..\_main log -1 --pretty=%B origin/main 2>$null
+          if (-not $mainMsg) { $mainMsg = "Automated snapshot from main" }
+
+          $header = "Regenerated ${{ inputs.base_branch }} for $env:APP_NAME"
+          $body   = "Selections: ${{ inputs.selections }}"
+          $msg    = "$header`n`n$body`n`n$mainMsg"
+
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m $msg
+
+          $force = "${{ inputs.push_force != '' && inputs.push_force || false }}"
+          if ($force -eq 'True' -or $force -eq 'true') {
+            git push origin HEAD:${{ inputs.base_branch }} --force
+          } else {
+            git push origin HEAD:${{ inputs.base_branch }}
           }
-
-      # -----------------------------------------------------------------------
-      # 8) Discover and run tests (if a solution exists)
-      #    - Writes TRX logs into _main/test-results/<Configuration>.
-      # -----------------------------------------------------------------------
-      - name: Run tests (Debug/Release)
-        working-directory: _main
-        run: |
-          $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1
-          if (-not $sln) {
-            Write-Host "No solution file found — skipping tests."
-            exit 0
-          }
-
-          foreach ($cfg in @('Debug','Release')) {
-            $results = Join-Path $pwd "test-results\$cfg"
-            dotnet test "$($sln.FullName)" `
-              --configuration $cfg `
-              --no-build `
-              --logger "trx" `
-              -r $results `
-              --verbosity normal
-          }
-
-      # -----------------------------------------------------------------------
-      # 9) Upload build outputs for Debug/Release
-      # -----------------------------------------------------------------------
-      - name: Upload published artifact (Debug)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
-          path: _main/publish/Debug
-          if-no-files-found: error
-          retention-days: ${{ inputs.artifact_retention_days != '' && inputs.artifact_retention_days || 7 }}
-
-      - name: Upload published artifact (Release)
-        uses: actions/upload-artifact@v4
-        with:
-          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
-          path: _main/publish/Release
-          if-no-files-found: error
-          retention-days: ${{ inputs.artifact_retention_days != '' && inputs.artifact_retention_days || 7 }}
-
-      # -----------------------------------------------------------------------
-      # 10) Upload test results (always, even if tests failed)
-      # -----------------------------------------------------------------------
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Tests-${{ matrix.test.id }}-${{ env.APP_NAME }}
-          path: _main/test-results
-          retention-days: ${{ inputs.artifact_retention_days != '' && inputs.artifact_retention_days || 7 }}
