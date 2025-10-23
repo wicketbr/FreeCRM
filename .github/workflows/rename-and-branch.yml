@@ -1,20 +1,5 @@
 # ============================================================================
-# Workflow: Rename, Build, Test, and Push to Base Branch
-#
-# Purpose:
-#   1) Job 1 ("project"): run the remove/rename CLIs, snapshot the result, and
-#      push the sanitized source back to the *_base branch.
-#   2) Job 2 ("build-test"): for an explicit matrix of keep/remove variants,
-#      snapshot sources (pre-build), then build, test, and publish Debug/Release.
-#   3) Jobs 2b..2g: run all combinations for k=2..7 (keep/remove) sequentially.
-#
-# Notes:
-#   - Git identity is configured *inside* the _base repo just before committing,
-#     which avoids "fatal: not in a git directory".
-#   - Pushing uses a sanitized snapshot staged under artifacts/source_after_changes_*
-#     so we never copy workflow files or transient artifacts back to the base branch.
-#   - Any regex we use is explained inline near the command that uses it.
-#   - Removal selections use COMMA lists per README (e.g., keep:A,B or remove:X,Y).
+# Workflow: Rename, Build, Test, and Push to Base Branch + Combo Matrix
 # ============================================================================
 
 name: Rename • Build/Test • (Optional) Branch Push
@@ -49,9 +34,6 @@ jobs:
     strategy:
       fail-fast: false
       max-parallel: 18
-    strategy:
-      fail-fast: false
-      max-parallel: 18
       matrix:
         project:
           - name: FreeCICD
@@ -79,7 +61,6 @@ jobs:
       BASE_BRANCH: ${{ matrix.project.branch }}
 
     steps:
-      # --------------------------- Checkout ----------------------------------
       - name: Checkout main branch
         uses: actions/checkout@v4
         with:
@@ -94,13 +75,11 @@ jobs:
           path: _base
           fetch-depth: 0
 
-      # --------------------------- .NET Setup --------------------------------
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # ---------------------- Run rename/remove tools ------------------------
       - name: Run remove modules
         run: |
           cd _main
@@ -111,28 +90,18 @@ jobs:
         run: |
           cd _main
           if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
-          # Regex explanation:
-          #   ^[A-Za-z][A-Za-z0-9]*$
-          #     - ^ / $ : start and end of the string
-          #     - [A-Za-z] : first character must be a letter
-          #     - [A-Za-z0-9]* : remaining characters are letters or numbers
           if ("${{ env.APP_NAME }}" -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
             throw "APP_NAME '${{ env.APP_NAME }}' is invalid. Use letters/numbers only and start with a letter."
           }
           & "${{ env.RENAME_EXE }}" "${{ env.APP_NAME }}"
 
-      # ----------------------- Snapshot source state -------------------------
       - name: Snapshot source after rename/remove (sanitized for push)
         run: |
           $src = Join-Path $pwd "_main"
           $dst = Join-Path $pwd "artifacts\source_after_changes_$($env:APP_NAME)"
           $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME).zip"
           New-Item -ItemType Directory -Force -Path $dst | Out-Null
-
-          # Remove CI folders from source prior to snapshotting to avoid copying
-          # workflows/artifacts into the base branch.
           Remove-Item -Recurse -Force "$src\.github","$src\artifacts" -ErrorAction SilentlyContinue
-
           Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
           Expand-Archive -Path $zip -DestinationPath $dst -Force
 
@@ -142,22 +111,15 @@ jobs:
           name: source_after_changes_${{ env.APP_NAME }}
           path: artifacts/source_after_changes_${{ env.APP_NAME }}
 
-      # -------------------- Push changes back to base branch -----------------
       - name: Push to base branch
         if: ${{ env.BASE_BRANCH != '' }}
         run: |
           cd _base
-
-          # Configure identity INSIDE the git repo to avoid "not in a git directory"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Wipe existing contents (except .git) and replace with sanitized snapshot
           Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
           Copy-Item -Path "$env:GITHUB_WORKSPACE\artifacts\source_after_changes_$($env:APP_NAME)\*" -Destination . -Recurse -Force
-
           git add -A
-          # Use latest commit message from origin/main to aid traceability
           $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
           git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
           git push origin HEAD:${env:BASE_BRANCH} --force
@@ -174,7 +136,6 @@ jobs:
       max-parallel: 18
       matrix:
         test:
-          # ---- explicit single-module keep/remove cases ----
           - { id: 'T01', selections: 'keep:Appointments' }
           - { id: 'T02', selections: 'remove:Appointments' }
           - { id: 'T03', selections: 'keep:EmailTemplates' }
@@ -213,31 +174,14 @@ jobs:
         run: |
           cd _main
           if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
-
           $sel = '${{ matrix.test.selections }}'
-          # The three regex replacements below produce a readable app name:
-          #   - 'keep:'    -> 'Keep'      (label the selection type)
-          #   - 'remove:'  -> 'Remove'    (label the selection type)
-          #   - '[^A-Za-z0-9]' -> ''      (strip any non-alphanumeric chars — commas removed)
-          $appName = 'Test' + (
-            $sel -replace 'keep:','Keep' `
-                 -replace 'remove:','Remove' `
-                 -replace '[^A-Za-z0-9]',''
-          )
+          $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
           $appName = "$appName" + "_${{ matrix.test.id }}"
-
-          # Regex explanation:
-          #   ^[A-Za-z][A-Za-z0-9_]*$
-          #     - start with a letter
-          #     - followed by letters/numbers/underscore (allow _ from our suffix)
           if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestApp_${{ matrix.test.id }}" }
-
           & "${{ env.RENAME_EXE }}" "$appName"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
-
           "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      # ----------------------- Snapshot (pre-build) --------------------------
       - name: Snapshot source (pre-build) for ${{ matrix.test.id }}
         run: |
           $src = Join-Path $pwd "_main"
@@ -251,17 +195,14 @@ jobs:
           name: source_after_changes_${{ matrix.test.id }}_${{ env.APP_NAME }}
           path: ${{ env.SNAPSHOT_PATH }}
 
-      # ------------------------- Build & Publish -----------------------------
       - name: Build & Publish (Debug/Release)
         run: |
           cd _main
           $sln  = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.sln" | Select-Object -First 1
           if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.sln | Select-Object -First 1 }
           if (-not $sln) { throw "Could not find a .sln after rename." }
-
           $proj = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.csproj" | Select-Object -First 1
           if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
-
           dotnet restore "$($sln.FullName)"
           foreach ($cfg in @('Debug','Release')) {
             dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
@@ -269,7 +210,6 @@ jobs:
             dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
           }
 
-      # ------------------------------ Tests ----------------------------------
       - name: Run tests (Debug/Release)
         run: |
           cd _main
@@ -277,9 +217,7 @@ jobs:
           if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
           foreach ($cfg in @('Debug','Release')) {
             dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
-          }
 
-      # -------------------------- Upload Artifacts ---------------------------
       - name: Upload published artifact (Debug)
         uses: actions/upload-artifact@v4
         with:
@@ -305,6 +243,7 @@ jobs:
   generate-combos:
     name: 2a. Generate matrices for k=2..7
     runs-on: ubuntu-latest
+    needs: build-test
     outputs:
       matrix2: ${{ steps.make.outputs.matrix2 }}
       matrix3: ${{ steps.make.outputs.matrix3 }}
@@ -369,7 +308,7 @@ jobs:
             core.setOutput('count7', String(m7.test.length));
 
   # ==========================================================================
-  # JOB 2b: k=2 pairs (21 combos × keep/remove = 42)
+  # JOB 2b: k=2 pairs
   # ==========================================================================
   build-test-2:
     name: 2b. Pairs (${{ needs.generate-combos.outputs.count2 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
@@ -456,12 +395,12 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 2c: k=3 triples (35 combos × keep/remove = 70)
+  # JOB 2c: k=3 triples
   # ==========================================================================
   build-test-3:
     name: 2c. Triples (${{ needs.generate-combos.outputs.count3 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
-    needs: build-test-2
+    needs: [build-test-2, generate-combos]
     strategy:
       fail-fast: false
       max-parallel: 18
@@ -543,12 +482,12 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 2d: k=4 (35 combos × keep/remove = 70)
+  # JOB 2d: k=4 quads
   # ==========================================================================
   build-test-4:
     name: 2d. Quads (${{ needs.generate-combos.outputs.count4 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
-    needs: build-test-3
+    needs: [build-test-3, generate-combos]
     strategy:
       fail-fast: false
       max-parallel: 18
@@ -630,12 +569,12 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 2e: k=5 (21 combos × keep/remove = 42)
+  # JOB 2e: k=5 quintets
   # ==========================================================================
   build-test-5:
     name: 2e. Quintets (${{ needs.generate-combos.outputs.count5 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
-    needs: build-test-4
+    needs: [build-test-4, generate-combos]
     strategy:
       fail-fast: false
       max-parallel: 18
@@ -650,7 +589,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DO TNET_VERSION }}
+          dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Remove modules
         run: |
           cd _main
@@ -717,12 +656,12 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 2f: k=6 (7 combos × keep/remove = 14)
+  # JOB 2f: k=6 sextets
   # ==========================================================================
   build-test-6:
     name: 2f. Sextets (${{ needs.generate-combos.outputs.count6 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
-    needs: build-test-5
+    needs: [build-test-5, generate-combos]
     strategy:
       fail-fast: false
       max-parallel: 18
@@ -804,12 +743,12 @@ jobs:
           path: _main/test-results
 
   # ==========================================================================
-  # JOB 2g: k=7 (1 combo × keep/remove = 2)
+  # JOB 2g: k=7 septets
   # ==========================================================================
   build-test-7:
     name: 2g. Septets (${{ needs.generate-combos.outputs.count7 }}) — ${{ matrix.test.id }} / ${{ matrix.test.selections }}
     runs-on: windows-latest
-    needs: build-test-6
+    needs: [build-test-6, generate-combos]
     strategy:
       fail-fast: false
       max-parallel: 18
