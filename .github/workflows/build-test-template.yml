@@ -1,22 +1,20 @@
 # ============================================================================
-# Reusable template: build/test a matrix of keep/remove selections
-# Called via: jobs.<name>.uses: ./.github/workflows/build-test-template.yml
+# Reusable template: Build & Test a matrix of selections
 # ============================================================================
 
-name: Build/Test Template
+name: Build-Test Template
 
 on:
   workflow_call:
     inputs:
-      matrix_json:
-        description: JSON of the form {"test":[{ "id":"T01", "selections":"keep:..." }, ...]}
+      job_title_prefix:
+        description: "Prefix for the job name"
         required: true
         type: string
-      job_title_prefix:
-        description: Text to prefix the job name (e.g., "2. ", "2b. Pairs (XX) —")
-        required: false
+      matrix_json:
+        description: "JSON object with a 'test' array of { id, selections }"
+        required: true
         type: string
-    secrets: {}
 
 permissions:
   contents: write
@@ -58,19 +56,19 @@ jobs:
           if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
           & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
 
-      - name: Rename project (derive test app name)
+      - name: Rename project (derive test app name; allow numbers/underscores)
         run: |
           cd _main
           if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
           $sel = '${{ matrix.test.selections }}'
           $appName = 'Test' + ($sel -replace 'keep:','Keep' -replace 'remove:','Remove' -replace '[^A-Za-z0-9]','')
           $appName = "$appName" + "_${{ matrix.test.id }}"
-          # Allow numbers/underscores — no hard validation
+          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestApp_${{ matrix.test.id }}" }
           & "${{ env.RENAME_EXE }}" "$appName"
           if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
           "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Snapshot source (pre-build) for ${{ matrix.test.id }}
+      - name: Snapshot source (pre-build)
         run: |
           $src = Join-Path $pwd "_main"
           $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME)_${{ matrix.test.id }}.zip"
@@ -105,7 +103,6 @@ jobs:
           if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
           foreach ($cfg in @('Debug','Release')) {
             dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
-          }
 
       - name: Upload published artifact (Debug)
         uses: actions/upload-artifact@v4
