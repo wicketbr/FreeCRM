@@ -3741,7 +3741,7 @@ public static partial class Helpers
     /// </summary>
     /// <param name="guids">The list of strings containing Guids.</param>
     /// <returns>A list of Guids.</returns>
-    public static List<Guid> LisOfGuidStringsToListOfGuid(List<string>? guids)
+    public static List<Guid> ListOfGuidStringsToListOfGuid(List<string>? guids)
     {
         List<Guid> output = new List<Guid>();
 
