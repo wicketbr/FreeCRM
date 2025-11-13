@@ -15,47 +15,69 @@ env:
   DOTNET_VERSION: 9.0.x
 
 jobs:
-  project-matrix:
-    name: 1. Generate Project Matrix
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - name: Set matrix
-        id: set-matrix
-        run: |
-          cat <<'EOF' | tee -a $GITHUB_OUTPUT
-          matrix<<JSONEOF
-          {
-            "project": [
-              {"name": "FreeCICD",    "branch": "FreeCICD_base",    "selections": "keep:Tags"},
-              {"name": "FreeLLM",     "branch": "FreeLLM_base",     "selections": "remove:all"},
-              {"name": "FreeManager", "branch": "FreeManager_base", "selections": "remove:all"},
-              {"name": "PJProcessor", "branch": "PJProcessor_base", "selections": "remove:all"},
-              {"name": "Touchpoints", "branch": "Touchpoints_base", "selections": "remove:all"},
-              {"name": "FreeAI",      "branch": "FreeAI_base",      "selections": "remove:all"}
-            ]
-          }
-          JSONEOF
-          EOF
-
-  project:
-    name: 1. ${{ matrix.project.name }}
-    needs: project-matrix
-    strategy:
-      fail-fast: false
-      max-parallel: 18
-      matrix: ${{ fromJSON(needs.project-matrix.outputs.matrix) }}
+  project-freecicd:
+    name: 1. FreeCICD
     uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
     with:
-      app_name: "${{ matrix.project.name }}"
-      selections: "${{ matrix.project.selections }}"
-      base_branch: "${{ matrix.project.branch }}"
+      app_name: "FreeCICD"
+      selections: "keep:Tags"
+      base_branch: "FreeCICD_base"
+    secrets: inherit
+
+  project-freellm:
+    name: 1. FreeLLM
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    with:
+      app_name: "FreeLLM"
+      selections: "remove:all"
+      base_branch: "FreeLLM_base"
+    secrets: inherit
+
+  project-freemanager:
+    name: 1. FreeManager
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    with:
+      app_name: "FreeManager"
+      selections: "remove:all"
+      base_branch: "FreeManager_base"
+    secrets: inherit
+
+  project-pjprocessor:
+    name: 1. PJProcessor
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    with:
+      app_name: "PJProcessor"
+      selections: "remove:all"
+      base_branch: "PJProcessor_base"
+    secrets: inherit
+
+  project-touchpoints:
+    name: 1. Touchpoints
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    with:
+      app_name: "Touchpoints"
+      selections: "remove:all"
+      base_branch: "Touchpoints_base"
+    secrets: inherit
+
+  project-freeai:
+    name: 1. FreeAI
+    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
+    with:
+      app_name: "FreeAI"
+      selections: "remove:all"
+      base_branch: "FreeAI_base"
     secrets: inherit
 
   build-test-singles:
     name: 2. Singles — Build/Test
-    needs: project
+    needs: 
+      - project-freecicd
+      - project-freellm
+      - project-freemanager
+      - project-pjprocessor
+      - project-touchpoints
+      - project-freeai
     uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2. "
@@ -135,7 +157,14 @@ jobs:
 
   build-test-2:
     name: 2b. Pairs
-    needs: [project, generate-combos]
+    needs: 
+      - project-freecicd
+      - project-freellm
+      - project-freemanager
+      - project-pjprocessor
+      - project-touchpoints
+      - project-freeai
+      - generate-combos
     uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
     with:
       job_title_prefix: "2b. Pairs (${{ needs.generate-combos.outputs.count2 }}) — "
