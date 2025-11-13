@@ -15,30 +15,43 @@ env:
   DOTNET_VERSION: 9.0.x
 
 jobs:
+  project-matrix:
+    name: 1. Generate Project Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set matrix
+        id: set-matrix
+        run: |
+          cat <<'EOF' | tee -a $GITHUB_OUTPUT
+          matrix<<JSONEOF
+          {
+            "project": [
+              {"name": "FreeCICD",    "branch": "FreeCICD_base",    "selections": "keep:Tags"},
+              {"name": "FreeLLM",     "branch": "FreeLLM_base",     "selections": "remove:all"},
+              {"name": "FreeManager", "branch": "FreeManager_base", "selections": "remove:all"},
+              {"name": "PJProcessor", "branch": "PJProcessor_base", "selections": "remove:all"},
+              {"name": "Touchpoints", "branch": "Touchpoints_base", "selections": "remove:all"},
+              {"name": "FreeAI",      "branch": "FreeAI_base",      "selections": "remove:all"}
+            ]
+          }
+          JSONEOF
+          EOF
+
   project:
     name: 1. ${{ matrix.project.name }}
+    needs: project-matrix
     strategy:
       fail-fast: false
       max-parallel: 18
-      matrix:
-        project:
-          - { name: FreeCICD,    branch: FreeCICD_base,    selections: 'keep:Tags' }
-          - { name: FreeLLM,     branch: FreeLLM_base,     selections: 'remove:all' }
-          - { name: FreeManager, branch: FreeManager_base, selections: 'remove:all' }
-          - { name: PJProcessor, branch: PJProcessor_base, selections: 'remove:all' }
-          - { name: Touchpoints, branch: Touchpoints_base, selections: 'remove:all' }
-          - { name: FreeAI,      branch: FreeAI_base,      selections: 'remove:all' }
-
-    # ✅ Use full repo path + ref when calling a reusable workflow
+      matrix: ${{ fromJSON(needs.project-matrix.outputs.matrix) }}
     uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
-    # (If this file lives in the same repo and you want to pin to a SHA, replace @main with @<sha>)
-
     with:
-      # ✅ Quote all interpolations to force string semantics
-      app_name:    "${{ matrix.project.name }}"
-      selections:  "${{ matrix.project.selections }}"
+      app_name: "${{ matrix.project.name }}"
+      selections: "${{ matrix.project.selections }}"
       base_branch: "${{ matrix.project.branch }}"
-    secrets: inherit  # optional, include if the called workflow needs repo/org secrets
+    secrets: inherit
 
   build-test-singles:
     name: 2. Singles — Build/Test
@@ -120,7 +133,6 @@ jobs:
             core.setOutput('count6', String(m6.test.length));
             core.setOutput('count7', String(m7.test.length));
 
-  # The rest (2b..2g) stays the same, but use full ref + inherit secrets:
   build-test-2:
     name: 2b. Pairs
     needs: [project, generate-combos]
