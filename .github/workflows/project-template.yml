@@ -7,16 +7,8 @@ name: Project Template
 on:
   workflow_call:
     inputs:
-      app_name:
-        description: "New application name to pass to the Rename tool"
-        required: true
-        type: string
-      selections:
-        description: "Argument for the Remove tool (e.g., keep:Tags or remove:all)"
-        required: true
-        type: string
-      base_branch:
-        description: "Target base branch to push sanitized snapshot to (empty to skip)"
+      matrix_json:
+        description: "JSON matrix of projects to process"
         required: true
         type: string
       dotnet_version:
@@ -49,11 +41,16 @@ defaults:
 
 jobs:
   project:
-    name: Project — ${{ inputs.app_name }}${{ inputs.base_branch != '' && format(' → {0}', inputs.base_branch) || '' }}
+    name: Project — ${{ matrix.project.name }}${{ matrix.project.branch != '' && format(' → {0}', matrix.project.branch) || '' }}
     runs-on: windows-latest
 
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix: ${{ fromJSON(inputs.matrix_json) }}
+
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-base-${{ inputs.base_branch != '' && inputs.base_branch || 'none' }}
+      group: ${{ github.workflow }}-${{ github.ref }}-base-${{ matrix.project.branch != '' && matrix.project.branch || 'none' }}
       cancel-in-progress: false
 
     timeout-minutes: 30
@@ -67,10 +64,10 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout base branch (if provided)
-        if: ${{ inputs.base_branch != '' }}
+        if: ${{ matrix.project.branch != '' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.base_branch }}
+          ref: ${{ matrix.project.branch }}
           path: _base
           fetch-depth: 0
 
@@ -88,7 +85,7 @@ jobs:
       - name: Normalize app name
         id: normalize
         run: |
-          $raw = '${{ inputs.app_name }}'
+          $raw = '${{ matrix.project.name }}'
           $norm = ($raw -replace '[^A-Za-z0-9_]', '_')
           if ($norm -notmatch '^[A-Za-z]') { $norm = "App_$norm" }
           $norm = ($norm -replace '_{2,}', '_').TrimEnd('_')
@@ -102,7 +99,7 @@ jobs:
           if (!(Test-Path "${{ env.REMOVE_EXE }}")) {
             throw "Remove tool not found: ${{ env.REMOVE_EXE }}"
           }
-          & "${{ env.REMOVE_EXE }}" "${{ inputs.selections }}"
+          & "${{ env.REMOVE_EXE }}" "${{ matrix.project.selections }}"
 
       - name: Run rename (allow numbers/underscores)
         working-directory: _main
@@ -145,7 +142,7 @@ jobs:
           retention-days: ${{ (inputs.artifact_retention_days != '' && inputs.artifact_retention_days > 0) && inputs.artifact_retention_days || 7 }}
 
       - name: Push to base branch
-        if: ${{ inputs.base_branch != '' }}
+        if: ${{ matrix.project.branch != '' }}
         run: |
           $ErrorActionPreference = 'Stop'
           cd _base
@@ -163,15 +160,15 @@ jobs:
           $mainMsg = git -C ..\_main log -1 --pretty=%B origin/main 2>$null
           if (-not $mainMsg) { $mainMsg = "Automated snapshot from main" }
 
-          $header = "Regenerated ${{ inputs.base_branch }} for $env:APP_NAME"
-          $body   = "Selections: ${{ inputs.selections }}"
+          $header = "Regenerated ${{ matrix.project.branch }} for $env:APP_NAME"
+          $body   = "Selections: ${{ matrix.project.selections }}"
           $msg    = "$header`n`n$body`n`n$mainMsg"
 
           git diff --cached --quiet && echo "No changes to commit" || git commit -m $msg
 
           $force = "${{ inputs.push_force != '' && inputs.push_force || false }}"
           if ($force -eq 'True' -or $force -eq 'true') {
-            git push origin HEAD:${{ inputs.base_branch }} --force
+            git push origin HEAD:${{ matrix.project.branch }} --force
           } else {
-            git push origin HEAD:${{ inputs.base_branch }}
+            git push origin HEAD:${{ matrix.project.branch }}
           }
