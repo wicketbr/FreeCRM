@@ -1,0 +1,94 @@
+﻿@page "/Authorization/PluginAuthenticationLogout"
+@inject CRM.IDataAccess data
+@inject Microsoft.AspNetCore.Hosting.Server.IServer server
+@using Plugins
+@inject IPlugins plugins
+@inject IHttpContextAccessor _httpContext;
+@{
+    data.SetHttpRequest(Request);
+    data.SetHttpResponse(Response);
+
+    if (_httpContext != null && _httpContext.HttpContext != null) {
+        data.SetHttpContext(_httpContext.HttpContext);
+    } else {
+        <h1>Error</h1>
+        <p>Unable to access the HttpContext.</p>
+        return;
+    }
+
+    string strTenantId = "";
+
+    try {
+        strTenantId += data.Request("TenantId");
+    } catch { }
+
+    Guid tenantId = Guid.Empty;
+    try {
+        tenantId = new Guid(strTenantId);
+    } catch { }
+
+    if (tenantId == Guid.Empty) {
+        <h1>Error</h1>
+        <p>Unable to find a valid Tenant Id.</p>
+        return;
+    }
+
+    string strPluginName = "";
+    string strPluginNameRaw = "";
+    try {
+        strPluginNameRaw += data.Request("Name");
+        strPluginName += strPluginNameRaw.Replace("_", " ");
+    } catch { }
+
+    if (String.IsNullOrWhiteSpace(strPluginName)) {
+        <h1>Error</h1>
+        <p>Missing Plugin Name</p>
+        return;
+    }
+
+    var plugin = plugins.AllPlugins.FirstOrDefault(x => x.Name.ToLower() == strPluginName.ToLower() && x.Type.ToLower() == "auth");
+    if (plugin == null) {
+        <h1>Error</h1>
+        <p>Plugin &ldquo;@strPluginName&rdquo; Not Found</p>
+        return;
+    }
+
+    string serverUrl = data.ApplicationURL;
+    if (String.IsNullOrWhiteSpace(serverUrl)) {
+        <h1>Error</h1>
+        <p>Unable to read server URL.</p>
+        return;
+    }
+
+    if (!serverUrl.EndsWith("/")) {
+        serverUrl += "/";
+    }
+
+    // Now, make sure we can access this tenant.
+    var tenant = data.GetTenant(tenantId);
+    if (tenant == null || tenant.ActionResponse.Result == false || tenant.Enabled == false) {
+        <h1>Error</h1>
+        <p>The Tenant Id passed does not match a current active tenant.</p>
+        return;
+    }
+
+
+
+    if (String.IsNullOrWhiteSpace(plugin.Code)) {
+        <h1>Error</h1>
+        <p>The plugin &ldquo;@strPluginName&rdquo; does not have any code.</p>
+        return;
+    }
+
+    plugin.Invoker = "Logout";
+    var req = new PluginExecuteRequest {
+        Plugin = plugin,
+        Objects = new object[] { serverUrl, tenantId, _httpContext.HttpContext },
+    };
+
+    var result = data.ExecutePlugin(req);
+
+    if (result != null) {
+
+    }
+}
