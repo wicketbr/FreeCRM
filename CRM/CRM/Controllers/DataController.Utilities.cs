@@ -197,10 +197,11 @@ public partial class DataController
             var processedInApp = await SignalRUpdateApp(update);
             if (!processedInApp) {
                 if (update.TenantId.HasValue) {
-                    await _signalR.Clients.Group(((Guid)update.TenantId).ToString()).SendAsync("SignalRUpdate", update);
+                    // This is a tenant-specific update. Send only to those people in that tenant group.
+                    await _signalR.Clients.Group(update.TenantId.Value.ToString()).SignalRUpdate(update);
                 } else {
                     // This is a non-tenant-specific update.
-                    await _signalR.Clients.All.SendAsync("SignalRUpdate", update);
+                    await _signalR.Clients.All.SignalRUpdate(update);
                 }
             }
         }

@@ -279,7 +279,7 @@
         Loading = false;
 
         if (Model.Loaded) {
-            if (!hubConfigured) {
+            if (Model.LoggedIn && !hubConfigured) {
                 hubConfigured = true;
 
                 hubConnection = new HubConnectionBuilder()
