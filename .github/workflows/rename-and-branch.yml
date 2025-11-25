@@ -82,6 +82,30 @@ jobs:
           path: _main
           fetch-depth: 0
 
+      # NEW: Make sure the *_base branch exists; if not, create it from main.
+      - name: Ensure base branch exists (create if missing)
+        run: |
+          cd _main
+
+          $branch = "${{ env.BASE_BRANCH }}"
+          if ([string]::IsNullOrWhiteSpace($branch)) {
+            Write-Host "BASE_BRANCH is empty; skipping creation."
+            exit 0
+          }
+
+          git fetch origin
+
+          $remoteBranch = git ls-remote --heads origin $branch
+          if (-not $remoteBranch) {
+            Write-Host "Remote branch '$branch' does not exist. Creating it from 'main'."
+            git switch main
+            git switch -c $branch
+            git push origin $branch
+          }
+          else {
+            Write-Host "Remote branch '$branch' already exists."
+          }
+
       - name: Checkout base branch
         uses: actions/checkout@v4
         with:
