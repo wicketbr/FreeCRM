@@ -21,7 +21,7 @@ name: Build and Test
 # ---- Centralized workflow-wide variables (your "inputs") --------------------
 env:
   # Solution / project paths
-  SOLUTION_FILE: CRM.sln
+  SOLUTION_FILE: CRM.slnx
   PROJECT_FILE: CRM/CRM.csproj
 
   # Project/app identity for artifacts & naming
@@ -29,7 +29,7 @@ env:
   ARTIFACT_DIR: publish
 
   # Toolchain
-  DOTNET_VERSION: 9.0.x
+  DOTNET_VERSION: 10.0.x
 
 # Use PowerShell consistently on Windows steps without repeating `shell: pwsh`
 defaults:

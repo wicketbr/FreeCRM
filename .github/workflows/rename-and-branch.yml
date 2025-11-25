@@ -1,3 +1,20 @@
+# ============================================================================
+# Workflow: Rename, Build, Test, and Push to Base Branch
+#
+# Purpose:
+#   1) Job 1 ("project"): run the remove/rename CLIs, snapshot the result, and
+#      push the sanitized source back to the *_base branch.
+#   2) Job 2 ("build-test"): for an explicit matrix of keep/remove variants,
+#      snapshot sources (pre-build), then build, test, and publish Debug/Release.
+#
+# Notes:
+#   - Git identity is configured *inside* the _base repo just before committing,
+#     which avoids "fatal: not in a git directory".
+#   - Pushing uses a sanitized snapshot staged under artifacts/source_after_changes_*
+#     so we never copy workflow files or transient artifacts back to the base branch.
+#   - Any regex we use is explained inline near the command that uses it.
+# ============================================================================
+
 name: Rename • Build/Test • (Optional) Branch Push
 
 on:
@@ -9,168 +26,271 @@ on:
 permissions:
   contents: write
 
+# ---- Global environment shared across all jobs -----------------------------
 env:
   REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
   RENAME_EXE: '.\Rename FreeCRM.exe'
-  DOTNET_VERSION: 9.0.x
+  DOTNET_VERSION: 10.0.x
+
+# Use PowerShell consistently on Windows steps without repeating shell each time
+defaults:
+  run:
+    shell: pwsh
 
 jobs:
+  # ==========================================================================
+  # JOB 1: PRODUCTION RUNS — Rename/Remove, Snapshot, Push to *_base branch
+  # ==========================================================================
   project:
     name: 1. ${{ matrix.project.name }}
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       max-parallel: 18
       matrix:
         project:
-          - { name: FreeCICD,    branch: FreeCICD_base,    selections: 'keep:Tags' }
-          - { name: FreeLLM,     branch: FreeLLM_base,     selections: 'remove:all' }
-          - { name: FreeManager, branch: FreeManager_base, selections: 'remove:all' }
-          - { name: PJProcessor, branch: PJProcessor_base, selections: 'remove:all' }
-          - { name: Touchpoints, branch: Touchpoints_base, selections: 'remove:all' }
-          - { name: FreeAI,      branch: FreeAI_base,      selections: 'remove:all' }
+          - name: FreeCICD
+            branch: FreeCICD_base
+            selections: 'keep:Tags'
+          - name: FreeLLM
+            branch: FreeLLM_base
+            selections: 'remove:all'
+          - name: FreeManager
+            branch: FreeManager_base
+            selections: 'remove:all'
+          - name: PJProcessor
+            branch: PJProcessor_base
+            selections: 'remove:all'
+          - name: Touchpoints
+            branch: Touchpoints_base
+            selections: 'remove:all'
+          - name: FreeAI
+            branch: FreeAI_base
+            selections: 'remove:all'
 
-    # ✅ Use full repo path + ref when calling a reusable workflow
-    uses: WSU-EIT/FreeCRM/.github/workflows/project-template.yml@main
-    # (If this file lives in the same repo and you want to pin to a SHA, replace @main with @<sha>)
+    env:
+      SELECTIONS:  ${{ matrix.project.selections }}
+      APP_NAME:    ${{ matrix.project.name }}
+      BASE_BRANCH: ${{ matrix.project.branch }}
 
-    with:
-      # ✅ Quote all interpolations to force string semantics
-      app_name:    "${{ matrix.project.name }}"
-      selections:  "${{ matrix.project.selections }}"
-      base_branch: "${{ matrix.project.branch }}"
-    secrets: inherit  # optional, include if the called workflow needs repo/org secrets
-
-  build-test-singles:
-    name: 2. Singles — Build/Test
-    needs: project
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2. "
-      matrix_json: >
-        {"test":[
-          {"id":"T01","selections":"keep:Appointments"},
-          {"id":"T02","selections":"remove:Appointments"},
-          {"id":"T03","selections":"keep:EmailTemplates"},
-          {"id":"T04","selections":"remove:EmailTemplates"},
-          {"id":"T05","selections":"keep:Invoices"},
-          {"id":"T06","selections":"remove:Invoices"},
-          {"id":"T07","selections":"keep:Locations"},
-          {"id":"T08","selections":"remove:Locations"},
-          {"id":"T09","selections":"keep:Payments"},
-          {"id":"T10","selections":"remove:Payments"},
-          {"id":"T11","selections":"keep:Services"},
-          {"id":"T12","selections":"remove:Services"},
-          {"id":"T13","selections":"keep:Tags"},
-          {"id":"T14","selections":"remove:Tags"}
-        ]}
-    secrets: inherit
-
-  generate-combos:
-    name: 2a. Generate matrices for k=2..7
-    runs-on: ubuntu-latest
-    needs: build-test-singles
-    outputs:
-      matrix2: ${{ steps.make.outputs.matrix2 }}
-      matrix3: ${{ steps.make.outputs.matrix3 }}
-      matrix4: ${{ steps.make.outputs.matrix4 }}
-      matrix5: ${{ steps.make.outputs.matrix5 }}
-      matrix6: ${{ steps.make.outputs.matrix6 }}
-      matrix7: ${{ steps.make.outputs.matrix7 }}
-      count2:  ${{ steps.make.outputs.count2 }}
-      count3:  ${{ steps.make.outputs.count3 }}
-      count4:  ${{ steps.make.outputs.count4 }}
-      count5:  ${{ steps.make.outputs.count5 }}
-      count6:  ${{ steps.make.outputs.count6 }}
-      count7:  ${{ steps.make.outputs.count7 }}
     steps:
-      - name: Build matrices JSON
-        id: make
-        uses: actions/github-script@v7
+      # --------------------------- Checkout ----------------------------------
+      - name: Checkout main branch
+        uses: actions/checkout@v4
         with:
-          script: |
-            const modules = ["Appointments","EmailTemplates","Invoices","Locations","Payments","Services","Tags"];
-            function combos(arr, k, start=0, path=[], out=[]) {
-              if (path.length === k) { out.push([...path]); return out; }
-              for (let i = start; i <= arr.length - (k - path.length); i++) {
-                path.push(arr[i]); combos(arr, k, i+1, path, out); path.pop();
-              }
-              return out;
-            }
-            function matrixForK(k) {
-              const test=[]; const cks=combos(modules,k);
-              cks.forEach((c, i) => {
-                const list=c.join(",");
-                const id=`K${k}-${String(i+1).padStart(2,"0")}`;
-                test.push({id:`${id}-K`,selections:`keep:${list}`});
-                test.push({id:`${id}-R`,selections:`remove:${list}`});
-              });
-              return { test };
-            }
-            const m2=matrixForK(2), m3=matrixForK(3), m4=matrixForK(4), m5=matrixForK(5), m6=matrixForK(6), m7=matrixForK(7);
-            core.setOutput('matrix2', JSON.stringify(m2));
-            core.setOutput('matrix3', JSON.stringify(m3));
-            core.setOutput('matrix4', JSON.stringify(m4));
-            core.setOutput('matrix5', JSON.stringify(m5));
-            core.setOutput('matrix6', JSON.stringify(m6));
-            core.setOutput('matrix7', JSON.stringify(m7));
-            core.setOutput('count2', String(m2.test.length));
-            core.setOutput('count3', String(m3.test.length));
-            core.setOutput('count4', String(m4.test.length));
-            core.setOutput('count5', String(m5.test.length));
-            core.setOutput('count6', String(m6.test.length));
-            core.setOutput('count7', String(m7.test.length));
+          ref: main
+          path: _main
+          fetch-depth: 0
 
-  # The rest (2b..2g) stays the same, but use full ref + inherit secrets:
-  build-test-2:
-    name: 2b. Pairs
-    needs: [project, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2b. Pairs (${{ needs.generate-combos.outputs.count2 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix2 }}
-    secrets: inherit
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          path: _base
+          fetch-depth: 0
 
-  build-test-3:
-    name: 2c. Triples
-    needs: [build-test-2, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2c. Triples (${{ needs.generate-combos.outputs.count3 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix3 }}
-    secrets: inherit
+      # --------------------------- .NET Setup --------------------------------
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-  build-test-4:
-    name: 2d. Quads
-    needs: [build-test-3, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2d. Quads (${{ needs.generate-combos.outputs.count4 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix4 }}
-    secrets: inherit
+      # ---------------------- Run rename/remove tools ------------------------
+      - name: Run remove modules
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
+          & "${{ env.REMOVE_EXE }}" "${{ env.SELECTIONS }}"
 
-  build-test-5:
-    name: 2e. Quintets
-    needs: [build-test-4, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2e. Quintets (${{ needs.generate-combos.outputs.count5 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix5 }}
-    secrets: inherit
+      - name: Run rename
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
+          # Regex explanation:
+          #   ^[A-Za-z][A-Za-z0-9]*$
+          #     - ^ / $ : start and end of the string
+          #     - [A-Za-z] : first character must be a letter
+          #     - [A-Za-z0-9]* : remaining characters are letters or numbers
+          if ("${{ env.APP_NAME }}" -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
+            throw "APP_NAME '${{ env.APP_NAME }}' is invalid. Use letters/numbers only and start with a letter."
+          }
+          & "${{ env.RENAME_EXE }}" "${{ env.APP_NAME }}"
 
-  build-test-6:
-    name: 2f. Sextets
-    needs: [build-test-5, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2f. Sextets (${{ needs.generate-combos.outputs.count6 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix6 }}
-    secrets: inherit
+      # ----------------------- Snapshot source state -------------------------
+      - name: Snapshot source after rename/remove (sanitized for push)
+        run: |
+          $src = Join-Path $pwd "_main"
+          $dst = Join-Path $pwd "artifacts\source_after_changes_$($env:APP_NAME)"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME).zip"
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
 
-  build-test-7:
-    name: 2g. Septets
-    needs: [build-test-6, generate-combos]
-    uses: WSU-EIT/FreeCRM/.github/workflows/build-test-template.yml@main
-    with:
-      job_title_prefix: "2g. Septets (${{ needs.generate-combos.outputs.count7 }}) — "
-      matrix_json: ${{ needs.generate-combos.outputs.matrix7 }}
-    secrets: inherit
+          # Remove CI folders from source prior to snapshotting to avoid copying
+          # workflows/artifacts into the base branch.
+          Remove-Item -Recurse -Force "$src\.github","$src\artifacts" -ErrorAction SilentlyContinue
+
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Expand-Archive -Path $zip -DestinationPath $dst -Force
+
+      - name: Upload source snapshot (post-rename)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_after_changes_${{ env.APP_NAME }}
+          path: artifacts/source_after_changes_${{ env.APP_NAME }}
+
+      # -------------------- Push changes back to base branch -----------------
+      - name: Push to base branch
+        if: ${{ env.BASE_BRANCH != '' }}
+        run: |
+          cd _base
+
+          # Configure identity INSIDE the git repo to avoid "not in a git directory"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Wipe existing contents (except .git) and replace with sanitized snapshot
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
+          Copy-Item -Path "$env:GITHUB_WORKSPACE\artifacts\source_after_changes_$($env:APP_NAME)\*" -Destination . -Recurse -Force
+
+          git add -A
+          # Use latest commit message from origin/main to aid traceability
+          $commitMsg = git -C ..\_main log -1 --pretty=%B origin/main
+          git commit -m "Regenerated $env:BASE_BRANCH: $commitMsg" || echo "No changes to commit"
+          git push origin HEAD:${env:BASE_BRANCH} --force
+
+  # ==========================================================================
+  # JOB 2: BUILD/TEST — Explicit keep/remove variants (extend matrix manually)
+  # ==========================================================================
+  build-test:
+    name: 2. ${{ matrix.test.id }} / ${{ matrix.test.selections }}
+    runs-on: windows-latest
+    needs: project
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix:
+        test:
+          # ---- Add explicit keep/remove cases here ----
+          - { id: 'T01', selections: 'keep:Appointments' }
+          - { id: 'T02', selections: 'remove:Appointments' }
+          - { id: 'T03', selections: 'keep:EmailTemplates' }
+          - { id: 'T04', selections: 'remove:EmailTemplates' }
+          - { id: 'T05', selections: 'keep:Invoices' }
+          - { id: 'T06', selections: 'remove:Invoices' }
+          - { id: 'T07', selections: 'keep:Locations' }
+          - { id: 'T08', selections: 'remove:Locations' }
+          - { id: 'T09', selections: 'keep:Payments' }
+          - { id: 'T10', selections: 'remove:Payments' }
+          - { id: 'T11', selections: 'keep:Services' }
+          - { id: 'T12', selections: 'remove:Services' }
+          - { id: 'T13', selections: 'keep:Tags' }
+          - { id: 'T14', selections: 'remove:Tags' }
+          # Later: keep adding flat entries here for pairwise, triples, etc.
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Remove modules
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) { throw "Remove tool not found: ${{ env.REMOVE_EXE }}" }
+          & "${{ env.REMOVE_EXE }}" "${{ matrix.test.selections }}"
+
+      - name: Rename project (derive test app name)
+        run: |
+          cd _main
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) { throw "Rename tool not found: ${{ env.RENAME_EXE }}" }
+
+          $sel = '${{ matrix.test.selections }}'
+          # The three regex replacements below produce a readable app name:
+          #   - 'keep:'    -> 'Keep'      (label the selection type)
+          #   - 'remove:'  -> 'Remove'    (label the selection type)
+          #   - '[^A-Za-z0-9]' -> ''      (strip any non-alphanumeric chars)
+          $appName = 'Test' + (
+            $sel -replace 'keep:','Keep' `
+                 -replace 'remove:','Remove' `
+                 -replace '[^A-Za-z0-9]',''
+          )
+          $appName = "$appName" + "_${{ matrix.test.id }}"
+
+          # Regex explanation:
+          #   ^[A-Za-z][A-Za-z0-9_]*$
+          #     - start with a letter
+          #     - followed by letters/numbers/underscore (allow _ from our suffix)
+          if ($appName -notmatch '^[A-Za-z][A-Za-z0-9_]*$') { $appName = "TestApp_${{ matrix.test.id }}" }
+
+          & "${{ env.RENAME_EXE }}" "$appName"
+          if ($LASTEXITCODE -ne 0) { throw "Rename run failed (exit $LASTEXITCODE)" }
+
+          "APP_NAME=$appName" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # ----------------------- Snapshot (pre-build) --------------------------
+      - name: Snapshot source (pre-build) for ${{ matrix.test.id }}
+        run: |
+          $src = Join-Path $pwd "_main"
+          $zip = Join-Path $env:RUNNER_TEMP "snapshot_$($env:APP_NAME)_${{ matrix.test.id }}.zip"
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload source snapshot (pre-build)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_after_changes_${{ matrix.test.id }}_${{ env.APP_NAME }}
+          path: ${{ env.SNAPSHOT_PATH }}
+
+      # ------------------------- Build & Publish -----------------------------
+      - name: Build & Publish (Debug/Release)
+        run: |
+          cd _main
+          $sln  = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.slnx" | Select-Object -First 1
+          if (-not $sln) { $sln = Get-ChildItem -Recurse -File -Filter *.slnx | Select-Object -First 1 }
+          if (-not $sln) { throw "Could not find a .slnx after rename." }
+
+          $proj = Get-ChildItem -Recurse -File -Filter "$env:APP_NAME.csproj" | Select-Object -First 1
+          if (-not $proj) { $proj = Get-ChildItem -Recurse -File -Filter *.csproj | Select-Object -First 1 }
+
+          dotnet restore "$($sln.FullName)"
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet build "$($sln.FullName)" --configuration $cfg --no-restore
+            $outDir = Join-Path $pwd "publish\$cfg"
+            dotnet publish "$($proj.FullName)" --configuration $cfg --no-build --output $outDir
+          }
+
+      # ------------------------------ Tests ----------------------------------
+      - name: Run tests (Debug/Release)
+        run: |
+          cd _main
+          $sln = Get-ChildItem -Recurse -File -Filter *.slnx | Select-Object -First 1
+          if (-not $sln) { Write-Host "No solution file found — skipping tests."; exit 0 }
+          foreach ($cfg in @('Debug','Release')) {
+            dotnet test "$($sln.FullName)" --configuration $cfg --no-build --logger "trx" -r "test-results\$cfg"
+          }
+
+      # -------------------------- Upload Artifacts ---------------------------
+      - name: Upload published artifact (Debug)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Debug
+          path: _main/publish/Debug
+
+      - name: Upload published artifact (Release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build-${{ matrix.test.id }}-${{ env.APP_NAME }}-Release
+          path: _main/publish/Release
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tests-${{ matrix.test.id }}-${{ env.APP_NAME }}
+          path: _main/test-results
