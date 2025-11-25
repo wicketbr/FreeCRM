@@ -22,7 +22,7 @@ name: Build and Test
 env:
   # Solution / project paths
   SOLUTION_FILE: CRM.slnx
-  PROJECT_FILE: CRM/CRM.csproj
+  PROJECT_FILE: CRM/CRM/CRM.csproj
 
   # Project/app identity for artifacts & naming
   PROJECT_NAME: CRM
