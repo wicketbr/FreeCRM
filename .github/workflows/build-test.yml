@@ -1,0 +1,108 @@
+# ============================================================================
+# Workflow: .NET Build & Publish (CI)
+# Purpose : Restore, build, and publish a .NET web app, then upload artifacts.
+# Triggers: On push/pull request to main. Runs matrix for Debug & Release.
+# Runner  : windows-latest (PowerShell shell by default here via `defaults`).
+#
+# Key Conventions:
+# - All "inputs" live in top-level `env` so they're easy to find/change.
+# - Artifact names are based on PROJECT_NAME + configuration (e.g., CRM-Release).
+# - Repo snapshot is zipped and uploaded once per run (Debug leg) for traceability.
+#
+# Notes:
+# - GitHub Actions doesn't have Azure DevOps-style "parameters" for pipelines.
+#   We emulate that with top-level `env` variables and the build matrix.
+# - To make this reusable with typed inputs, consider a separate reusable
+#   workflow (`on: workflow_call:`) or add `workflow_dispatch` inputs.
+# ============================================================================
+
+name: Build and Test
+
+# ---- Centralized workflow-wide variables (your "inputs") --------------------
+env:
+  # Solution / project paths
+  SOLUTION_FILE: CRM.sln
+  PROJECT_FILE: CRM/CRM.csproj
+
+  # Project/app identity for artifacts & naming
+  PROJECT_NAME: CRM
+  ARTIFACT_DIR: publish
+
+  # Toolchain
+  DOTNET_VERSION: 9.0.x
+
+# Use PowerShell consistently on Windows steps without repeating `shell: pwsh`
+defaults:
+  run:
+    shell: pwsh
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # Uncomment to allow manual runs
+  # workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      # --------------------------- Checkout ----------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history can help versioning or source link
+
+      # ----- Snapshot repo before restore/build/publish (for traceability) ---
+      - name: Create repository snapshot (pre-build)
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP "repo_snapshot_${{ github.run_id }}.zip"
+          Compress-Archive -Path "$env:GITHUB_WORKSPACE\*" -DestinationPath $zip -Force
+          "REPO_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      # Upload snapshot only once per run (on Debug leg) to avoid duplicates
+      - name: Upload repository snapshot (once)
+        if: ${{ matrix.configuration == 'Debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: RepoSnapshot
+          path: ${{ env.REPO_ZIP }}
+          if-no-files-found: error
+
+      # --------------------------- .NET Setup --------------------------------
+      - name: Setup .NET (${{ env.DOTNET_VERSION }})
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # ---------------------------- Restore ----------------------------------
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.SOLUTION_FILE }}"
+
+      # ----------------------------- Build -----------------------------------
+      - name: Build solution (${{ matrix.configuration }})
+        run: dotnet build "${{ env.SOLUTION_FILE }}" --configuration "${{ matrix.configuration }}" --no-restore
+
+      # ---------------------------- Publish ----------------------------------
+      - name: Publish project (${{ matrix.configuration }})
+        run: |
+          $out = "./${{ env.ARTIFACT_DIR }}/${{ matrix.configuration }}"
+          dotnet publish "${{ env.PROJECT_FILE }}" `
+            --configuration "${{ matrix.configuration }}" `
+            --no-build `
+            --output $out
+
+      # ------------------------- Upload Artifacts ----------------------------
+      # Artifact name is based on project + configuration (e.g., CRM-Debug)
+      - name: Upload published artifact (${{ matrix.configuration }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.configuration }}
+          path: ./${{ env.ARTIFACT_DIR }}/${{ matrix.configuration }}
+          if-no-files-found: error
