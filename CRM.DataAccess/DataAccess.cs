@@ -16,21 +16,17 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _firstInit = true;
     private Guid _guid1 = new Guid("00000000-0000-0000-0000-000000000001");
     private Guid _guid2 = new Guid("00000000-0000-0000-0000-000000000002");
-    private Microsoft.AspNetCore.Http.HttpContext? _httpContext;
+    private HttpContext? _httpContext;
     private HttpRequest? _httpRequest;
     private HttpResponse? _httpResponse;
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("11/12/2025"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("11/25/2025"));
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
-
-    /// <summary>
-    /// The migrations engine is one of the last components I will work on after getting the primary data structure defined.
-    /// </summary>
-    private bool _useMigrations = true;
-    private string _version = "1.0.0";
+    private bool _useMigrations = false;
+    private string _version = "2.0.0";
 
     public DataAccess(string ConnectionString = "", string DatabaseType = "", string LocalModeUrl = "", IServiceProvider? serviceProvider = null)
     {

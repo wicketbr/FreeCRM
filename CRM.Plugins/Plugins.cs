@@ -114,7 +114,7 @@ namespace Plugins
             get {
                 var output = new List<Plugin>();
 
-                foreach(var plugin in _plugins) {
+                foreach (var plugin in _plugins) {
                     var copy = DuplicateObject<Plugin>(plugin);
 
                     if (copy != null) {
@@ -129,7 +129,7 @@ namespace Plugins
                         output.Add(copy);
                     }
 
-                    
+
                 }
 
                 return output;
@@ -151,7 +151,8 @@ namespace Plugins
             return output;
         }
 
-        private T? DuplicateObject<T>(object? o) {
+        private T? DuplicateObject<T>(object? o)
+        {
             T? output = default(T);
 
             if (o != null) {
@@ -208,7 +209,7 @@ namespace Plugins
             try {
                 // Load all references required by the HelpDesk data project to use the DataAccess library.
                 // First, get the base .NET6 references from the Basic.Reference.Assemblies package by jaredpar (https://github.com/jaredpar/basic-reference-assemblies)
-                var references = Basic.Reference.Assemblies.Net90.References.All.ToList();
+                var references = Basic.Reference.Assemblies.Net100.References.All.ToList();
 
                 if (_serverReferences.Count > 0) {
                     foreach (var reference in _serverReferences) {

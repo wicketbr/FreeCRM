@@ -2,46 +2,87 @@
 
 public partial class DataObjects
 {
-    public enum SignalRUpdateType
+    public partial class SignalRUpdateType
     {
         // {{ModuleItemStart:Appointments}}
-        Appointment,
-        AppointmentNote,
-        AppointmentService,
+        public const string Appointment = "Appointment";
+        public const string AppointmentNote = "AppointmentNote";
+        public const string AppointmentService = "AppointmentService";
         // {{ModuleItemEnd:Appointments}}
-        Department,
-        DepartmentGroup,
+        public const string Department = "Department";
+        public const string DepartmentGroup = "DepartmentGroup";
         // {{ModuleItemStart:EmailTemplates}}
-        EmailTemplate,
+        public const string EmailTemplate = "EmailTemplate";
         // {{ModuleItemEnd:EmailTemplates}}
-        File,
+        public const string File = "File";
         // {{ModuleItemStart:Invoices}}
-        Invoice,
+        public const string Invoice = "Invoice";
         // {{ModuleItemEnd:Invoices}}
-        Language,
-        LastAccessTime,
+        public const string Language = "Language";
+        public const string LastAccessTime = "LastAccessTime";
         // {{ModuleItemStart:Locations}}
-        Location,
+        public const string Location = "Location";
         // {{ModuleItemEnd:Locations}}
         // {{ModuleItemStart:Payments}}
-        Payment,
+        public const string Payment = "Payment";
         // {{ModuleItemEnd:Payments}}
         // {{ModuleItemStart:Services}}
-        Service,
+        public const string Service = "Service";
         // {{ModuleItemEnd:Services}}
-        Setting,
+        public const string Setting = "Setting";
         // {{ModuleItemStart:Tags}}
-        Tag,
+        public const string Tag = "Tag";
         // {{ModuleItemEnd:Tags}}
-        Tenant,
-        UDF,
-        Undelete,
-        Unknown,
-        User,
-        UserAttendance,
-        UserGroup,
-        UserPreferences,
+        public const string Tenant = "Tenant";
+        public const string UDF = "UDF";
+        public const string Undelete = "Undelete";
+        public const string Unknown = "Unknown";
+        public const string User = "User";
+        public const string UserAttendance = "UserAttendance";
+        public const string UserGroup = "UserGroup";
+        public const string UserPreferences = "UserPreferences";
     }
+
+    //public enum SignalRUpdateType
+    //{
+    //    // {{ModuleItemStart:Appointments}}
+    //    Appointment,
+    //    AppointmentNote,
+    //    AppointmentService,
+    //    // {{ModuleItemEnd:Appointments}}
+    //    Department,
+    //    DepartmentGroup,
+    //    // {{ModuleItemStart:EmailTemplates}}
+    //    EmailTemplate,
+    //    // {{ModuleItemEnd:EmailTemplates}}
+    //    File,
+    //    // {{ModuleItemStart:Invoices}}
+    //    Invoice,
+    //    // {{ModuleItemEnd:Invoices}}
+    //    Language,
+    //    LastAccessTime,
+    //    // {{ModuleItemStart:Locations}}
+    //    Location,
+    //    // {{ModuleItemEnd:Locations}}
+    //    // {{ModuleItemStart:Payments}}
+    //    Payment,
+    //    // {{ModuleItemEnd:Payments}}
+    //    // {{ModuleItemStart:Services}}
+    //    Service,
+    //    // {{ModuleItemEnd:Services}}
+    //    Setting,
+    //    // {{ModuleItemStart:Tags}}
+    //    Tag,
+    //    // {{ModuleItemEnd:Tags}}
+    //    Tenant,
+    //    UDF,
+    //    Undelete,
+    //    Unknown,
+    //    User,
+    //    UserAttendance,
+    //    UserGroup,
+    //    UserPreferences,
+    //}
 
     public partial class SignalRUpdate
     {
@@ -49,7 +90,8 @@ public partial class DataObjects
         public Guid? ItemId { get; set; }
         public Guid? UserId { get; set; }
         public string? UserDisplayName { get; set; }
-        public SignalRUpdateType UpdateType { get; set; }
+        //public SignalRUpdateType UpdateType { get; set; }
+        public string UpdateType { get; set; } = "Unknown";
         public string Message { get; set; } = "";
         public object? Object { get; set; }
         public string? ObjectAsString { get; set; }

@@ -1,0 +1,948 @@
+﻿@using Blazored.LocalStorage
+@using System.Globalization
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
+@inherits LayoutComponentBase
+@inject IJSRuntime jsRuntime
+@inject ILocalStorageService LocalStorage
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+@inject Radzen.TooltipService TooltipService
+<PageTitle>@Helpers.Text("AppTitle")</PageTitle>
+
+@if (IncludeCustomCss) { // For clients that are using custom theme CSS and font settings that gets rendered here.
+                        <style>
+        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFontCssImport)) {
+                @((MarkupString)Model.Tenant.TenantSettings.ThemeFontCssImport)
+        }
+        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeCss)) {
+                @((MarkupString)Model.Tenant.TenantSettings.ThemeCss)
+        }
+        @((MarkupString)IncludeCustomCssFont)
+    </style>
+}
+
+<div id="page-area" class="@PageAreaClass">
+    <OffcanvasPopoutMenu />
+
+    @if (!Loading) {
+        if (Model.AppSettings.MaintenanceMode && !BypassMaintenanceMode) {
+            <div class="maintenance-mode container-fluid">
+                <h1 class="page-title">
+                    <Language Tag="MaintenanceMode" IncludeIcon="true" />
+                </h1>
+                <div class="mb-2">
+                    <Language Tag="MaintenanceModeMessage" />
+                </div>
+            </div>
+        } else {
+            <NavigationMenu />
+
+            @if (!Model.AppOnline) {
+                <div class="container-fluid">
+                    <div role="alert" class="alert alert-danger">
+                        <Language Tag="ServerOffline" />
+                    </div>
+                </div>
+            }
+
+            @if (Model.Messages.Any()) {
+                <div aria-live="polite" aria-atomic="true" class="position-relative">
+                    <div class="toast-container end-0" id="toast-message-area">
+                        @foreach (var message in Model.Messages.OrderByDescending(x => x.Shown)) {
+                            string text = message.Text;
+
+                            string toastClass = "toast show ";
+                            string toastCloseButtonClass = "btn-close me-2 mt-2 m-auto";
+
+                            switch (message.MessageType) {
+                                case MessageType.Primary:
+                                    toastClass += "text-bg-primary";
+                                    toastCloseButtonClass += " btn-close-white";
+                                    break;
+
+                                case MessageType.Secondary:
+                                    toastClass += "text-bg-secondary";
+                                    toastCloseButtonClass += " btn-close-white";
+                                    break;
+
+                                case MessageType.Success:
+                                    toastClass += "text-bg-success";
+                                    toastCloseButtonClass += " btn-close-white";
+                                    break;
+
+                                case MessageType.Danger:
+                                    toastClass += "text-bg-danger";
+                                    toastCloseButtonClass += " btn-close-white";
+                                    break;
+
+                                case MessageType.Warning:
+                                    toastClass += "text-bg-warning";
+                                    toastCloseButtonClass += " btn-close-black";
+                                    break;
+
+                                case MessageType.Info:
+                                    toastClass += "text-bg-info";
+                                    toastCloseButtonClass += " btn-close-black";
+                                    break;
+
+                                case MessageType.Light:
+                                    toastClass += "text-bg-light";
+                                    toastCloseButtonClass += " btn-close-black";
+                                    break;
+
+                                case MessageType.Dark:
+                                    toastClass += "text-bg-dark";
+                                    toastCloseButtonClass += " btn-close-white";
+                                    break;
+                            }
+
+                            if (message.ReplaceLineBreaks) {
+                                text = text.Replace(Environment.NewLine, "<br />");
+                            }
+
+                            <div class="@toastClass" role="alert" aria-live="assertive" aria-atomic="true" id="@message.Id" data-bs-animation="false">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        @if (!message.AutoHide) {
+                                            <div id="toast-time-@message.Id" class="toast-time">@message.TimeLabel</div>
+                                        }
+                                        <div>@((MarkupString)text)</div>
+                                    </div>
+                                    <button type="button" class="@toastCloseButtonClass" @onclick="@(() => CloseMessage(message.Id))"
+                                            aria-label="@Helpers.Text("Close")"></button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    } else {
+        <svg class="loading-progress">
+            <circle r="40%" cx="50%" cy="50%" />
+            <circle r="40%" cx="50%" cy="50%" />
+        </svg>
+        <div class="loading-progress-text"></div>
+    }
+
+    <div class="container-fluid page-view">
+        @if (Model.AppSettings.MaintenanceMode && (Model.User.AppAdmin || BypassMaintenanceMode)) {
+            <div class="alert alert-danger">
+                <h1 class="page-title">
+                    <Language Tag="MaintenanceMode" IncludeIcon="true" />
+                </h1>
+                <div class="mb-2">
+                    <Language Tag="MaintenanceModeAppAdminMessage" />
+                </div>
+            </div>
+        }
+
+        @if (!Loading && (!Model.AppSettings.MaintenanceMode || Model.User.AppAdmin || BypassMaintenanceMode)) {
+            if (Model.ViewIsEditPage && Model.UsersOnSamePage.Any()) {
+                <div id="users-on-same-page" class="alert alert-danger">
+                    <h2 class="subtitle">
+                        <Language Tag="UsersOnSamePage" />
+                    </h2>
+
+                    <div class="mb-2">
+                        <Language Tag="UsersOnSamePageMessage" />
+                    </div>
+
+                    <table class="padded">
+                        <tbody>
+                            @foreach (var user in Model.UsersOnSamePage.OrderBy(x => x.FirstName).ThenBy(x => x.LastName)) {
+                                string icon = Helpers.UserIcon(user.Photo);
+                                <tr>
+                                    <td>@((MarkupString)icon)</td>
+                                    <td>@user.FirstName @user.LastName</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="pb-3">@Body</div>
+        }
+    </div>
+
+    <div id="password-generator" style="display:none;"> </div>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">X</a>
+</div>
+
+<RadzenDialog />
+<RadzenTooltip />
+
+@code {
+    private bool hubConfigured = false;
+    private HubConnection? hubConnection;
+
+    protected bool DeletedRecordCountsLoaded = false;
+    protected bool FirstRun = true;
+    protected string LastUserPreferencesJson = String.Empty;
+    protected bool Loading = true;
+    protected bool StartupValidated = false;
+    protected System.Threading.Timer? timer;
+    protected System.Threading.Timer? updateTimer;
+    protected bool Validating = false;
+    protected DataObjects.VersionInfo versionInfo = new DataObjects.VersionInfo();
+    protected bool versionInfoLoaded = false;
+
+    protected DotNetObjectReference<MainLayout>? dotNetHelper;
+
+    public void Dispose() {
+        dotNetHelper?.Dispose();
+
+        Model.Subscribers_OnChange.Remove("MainLayout");
+        Model.OnChange -= StateHasChanged;
+
+        NavManager.LocationChanged -= LocationChanged;
+    }
+
+    protected override async Task OnInitializedAsync() {
+        if (!Model.Subscribers_OnChange.Contains("MainLayout")) {
+            Model.Subscribers_OnChange.Add("MainLayout");
+            Model.OnChange += StateHasChanged;
+        }
+
+        NavManager.LocationChanged += LocationChanged;
+
+        if (!Helpers.Initialized) {
+            Helpers.Init(jsRuntime, Model, Http, LocalStorage, DialogService, TooltipService, NavManager);
+
+            List<string>? globallyDisabledModules = await Helpers.GetOrPost<List<string>>("api/Data/GetGloballyDisabledModules");
+            Model.GloballyDisabledModules = globallyDisabledModules;
+
+            List<string>? globallyEnabledModules = await Helpers.GetOrPost<List<string>>("api/Data/GetGloballyEnabledModules");
+            Model.GloballyEnabledModules = globallyEnabledModules;
+        }
+
+        if (String.IsNullOrWhiteSpace(Model.Fingerprint)) {
+            await Helpers.GetFingerprint();
+        }
+
+        if (!Model.LoggedIn && StartupValidated) {
+            await ValidateLogin();
+        }
+
+        timer = new System.Threading.Timer(async (object? stateInfo) => {
+            await ThemeWatcher();
+            MessageWatcher();
+            await SavePendingUserPreferences();
+        }, new System.Threading.AutoResetEvent(false), 0, 500);
+
+        updateTimer = new System.Threading.Timer(async (object? stateInfo) => {
+            await CheckForUpdates();
+        }, new System.Threading.AutoResetEvent(false), 0, 10000);
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            dotNetHelper = DotNetObjectReference.Create(this);
+            await jsRuntime.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
+
+            // See if a Theme is stored.
+            var theme = await LocalStorage.GetItemAsync<string>("Theme");
+            if (String.IsNullOrWhiteSpace(theme)) {
+                theme = "light";
+            }
+            Helpers.SetTheme(theme);
+
+            await ValidateStartupState();
+            StartupValidated = true;
+
+            await Helpers.LoadDefaultLanguage();
+
+            await jsRuntime.InvokeVoidAsync("Loaded");
+
+            StateHasChanged();
+        } else {
+            if (!Validating && !Model.LoggedIn && Model.Loaded && StartupValidated) {
+                await ValidateLogin();
+            }
+
+            if (!Validating && Model.LoggedIn && StartupValidated && Model.User.Admin && !DeletedRecordCountsLoaded) {
+                DeletedRecordCountsLoaded = true;
+                await Helpers.GetDeletedRecordCount();
+                StateHasChanged();
+            }
+        }
+
+        Loading = false;
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn && !hubConfigured) {
+                hubConfigured = true;
+
+                hubConnection = new HubConnectionBuilder()
+                    .WithUrl(Model.ApplicationUrl + "crmHub")
+                    .WithStatefulReconnect()
+                    .WithAutomaticReconnect()
+                    .Build();
+
+                hubConnection.On<DataObjects.SignalRUpdate>("SignalRUpdate", async (update) => {
+                    await ProcessSignalRUpdate(update);
+                });
+
+                await hubConnection.StartAsync();
+
+                await hubConnection.InvokeAsync("JoinTenantId", Model.TenantId);
+            }
+
+            if (!versionInfoLoaded) {
+                var info = await Helpers.GetOrPost<DataObjects.VersionInfo>("api/Data/GetVersionInfo");
+                if (info != null) {
+                    versionInfo = info;
+                    versionInfoLoaded = true;
+                }
+            }
+        }
+    }
+
+    [JSInvokable]
+    public void DotNetHelperHandler(params string[] arguments) {
+        if (arguments != null) {
+            Model.DotNetHelperHandler(arguments.ToList());
+        }
+    }
+
+    protected bool BypassMaintenanceMode {
+        get {
+            if (Model.User.AppAdmin) {
+                return true;
+            } else if (Model.View == "login" && !String.IsNullOrWhiteSpace(Model.TenantCodeFromUrl) && Model.TenantCodeFromUrl.ToLower() == "admin") {
+                // Allow logging in to the Admin tenant
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    protected async Task CheckForUpdates() {
+        if (versionInfoLoaded) {
+            bool reload = false;
+            bool wasOnline = Model.AppOnline;
+
+            var info = await Helpers.GetOrPost<DataObjects.VersionInfo>("api/Data/GetVersionInfo");
+
+            if (info != null) {
+                if (!String.IsNullOrWhiteSpace(info.Version)) {
+                    Model.AppOnline = true;
+                }
+
+                if (versionInfo.Released != info.Released || versionInfo.RunningSince != info.RunningSince || versionInfo.Version != info.Version) {
+                    reload = true;
+                }
+
+                if (reload) {
+                    var uri = Helpers.ToAbsoluteUri(Helpers.Uri);
+                    string redirect = uri.ToString();
+
+                    if (!String.IsNullOrWhiteSpace(redirect)) {
+                        if (redirect.ToLower().Contains("serverupdated")) {
+                            // Already in the process of redirecting
+                        } else {
+                            Helpers.NavigateTo("ServerUpdated?Redirect=" + Helpers.UrlEncode(redirect));
+                        }
+                    } else {
+                        Helpers.NavigateToRoot();
+                    }
+                }
+            } else {
+                // Server is offline
+                Model.AppOnline = false;
+                await Helpers.HideMenus();
+                StateHasChanged();
+            }
+
+            if (wasOnline != Model.AppOnline) {
+                if (Model.AppOnline) {
+                    updateTimer?.Change(0, 10000);
+                } else {
+                    updateTimer?.Change(0, 2000);
+                }
+            }
+        }
+    }
+
+    protected void CloseMessage(string messageId) {
+        Model.Messages = Model.Messages.Where(x => x.Id != messageId).ToList();
+    }
+
+    public async ValueTask DisposeAsync() {
+        if (hubConnection is not null) {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    protected bool IncludeCustomCss {
+        get {
+            if (Model.Tenant.TenantSettings.Theme == "custom") {
+                return true;
+            } else if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFontCssImport)) {
+                return true;
+            } else if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFont)) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    protected string IncludeCustomCssFont {
+        get {
+            string output = String.Empty;
+
+            if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFont)) {
+                output = "html, body {" + Environment.NewLine +
+                    "  font-family: " + Model.Tenant.TenantSettings.ThemeFont + ";" + Environment.NewLine +
+                    "}";
+            }
+
+            return output;
+        }
+    }
+
+    public bool IsSignalRConnected =>
+        hubConnection?.State == HubConnectionState.Connected;
+
+    void LocationChanged(object? sender, LocationChangedEventArgs e) {
+        // Remove any messages
+        Model.Messages = new List<Message>();
+        Model.NavigationId = String.Empty;
+        Model.ViewIsEditPage = false;
+
+        bool reloadDeleteCounts = Model.User.Admin && Model.Tenant.TenantSettings.DeletePreference == DataObjects.DeletePreference.MarkAsDeleted;
+
+        base.InvokeAsync(async () => {
+            await Helpers.HideMenus();
+            if (reloadDeleteCounts) {
+                await Helpers.GetDeletedRecordCount();
+            }
+        });
+    }
+
+    protected void MessageWatcher() {
+        if (Model.Messages.Any()) {
+            int maxMessages = Model.Tenant.TenantSettings.MaxToastMessages;
+            int totalPersistentMessages = 0;
+
+            List<string> remove = new List<string>();
+
+            // Iterate over all messages.
+            // If any messages are auto-hide then hide them after 5 seconds.
+            // Otherwise, after the 5 seconds show the time the message has been displayed.
+            DateTime now = DateTime.UtcNow;
+            foreach (var message in Model.Messages.OrderByDescending(x => x.Shown)) {
+                var secondsAgo = (now - message.Shown).TotalSeconds;
+
+                if (secondsAgo >= 5) {
+                    if (message.AutoHide) {
+                        remove.Add(message.Id);
+                    } else {
+                        message.TimeLabel = Helpers.SecondsToTimePassed(secondsAgo);
+                    }
+                }
+
+                if (maxMessages > 0 && !message.AutoHide) {
+                    totalPersistentMessages++;
+                    if (totalPersistentMessages > maxMessages) {
+                        remove.Add(message.Id);
+                    }
+                }
+            }
+
+            Model.Messages = Model.Messages.Where(x => !remove.Contains(x.Id)).ToList();
+        }
+    }
+
+    protected string PageAreaClass {
+        get {
+            if (Model.AppSettings.MaintenanceMode && !BypassMaintenanceMode) {
+                return "maintenance-mode";
+            }
+
+            return String.Empty;
+        }
+    }
+
+    protected async Task ProcessSignalRUpdate(DataObjects.SignalRUpdate update) {
+        if (update != null && (update.TenantId == null || update.TenantId == Model.TenantId)) {
+            var itemId = update.ItemId;
+            string message = update.Message.ToLower();
+            var userId = update.UserId;
+
+            switch (update.UpdateType) {
+                // {{ModuleItemStart:Appointments}}
+                case DataObjects.SignalRUpdateType.Appointment:
+                    var appt = Helpers.DeserializeObject<DataObjects.Appointment>(update.ObjectAsString);
+                    break;
+                // {{ModuleItemEnd:Appointments}}
+
+                case DataObjects.SignalRUpdateType.Department:
+                    await Helpers.LoadDepartments();
+                    break;
+
+                case DataObjects.SignalRUpdateType.DepartmentGroup:
+                    break;
+
+                // {{ModuleItemStart:EmailTemplates}}
+                case DataObjects.SignalRUpdateType.EmailTemplate:
+                    var emailTemplate = Helpers.DeserializeObject<DataObjects.EmailTemplate>(update.ObjectAsString);
+                    break;
+                // {{ModuleItemEnd:EmailTemplates}}
+
+                case DataObjects.SignalRUpdateType.File:
+                    var file = Helpers.DeserializeObject<DataObjects.FileStorage>(update.ObjectAsString);
+                    break;
+
+                case DataObjects.SignalRUpdateType.Language:
+                    if (userId != Model.User.UserId) {
+                        await Helpers.ReloadModel();
+                    }
+                    break;
+
+                case DataObjects.SignalRUpdateType.LastAccessTime:
+                    // Update the users last access time in the ActiveUsers list.
+                    var activeUserItem = Model.ActiveUsers.FirstOrDefault(x => x.UserId == userId);
+                    if (activeUserItem != null) {
+                        activeUserItem.LastAccess = DateTime.UtcNow;
+                        StateHasChanged();
+                    }
+                    break;
+
+                // {{ModuleItemStart:Locations}}
+                case DataObjects.SignalRUpdateType.Location:
+                    await Helpers.LoadLocations();
+                    break;
+                // {{ModuleItemEnd:Locations}}
+
+                // {{ModuleItemStart:Services}}
+                case DataObjects.SignalRUpdateType.Service:
+                    await Helpers.LoadServices();
+                    break;
+                // {{ModuleItemEnd:Services}}
+
+                case DataObjects.SignalRUpdateType.Setting:
+                    switch (message) {
+                        case "applicationsettingsupdate":
+                            var appSettings = Helpers.DeserializeObject<DataObjects.ApplicationSettingsUpdate>(update.ObjectAsString);
+                            if (appSettings != null) {
+                                Model.AppSettings = appSettings;
+
+                                if (Model.ApplicationUrl != appSettings.ApplicationURL && !String.IsNullOrWhiteSpace(appSettings.ApplicationURL)) {
+                                    Model.ApplicationUrl = appSettings.ApplicationURL;
+                                }
+
+                                if (Model.ShowTenantListingWhenMissingTenantCode != appSettings.ShowTenantListingWhenMissingTenantCode) {
+                                    Model.ShowTenantListingWhenMissingTenantCode = appSettings.ShowTenantListingWhenMissingTenantCode;
+                                }
+
+                                if (Model.UseTenantCodeInUrl != appSettings.UseTenantCodeInUrl) {
+                                    Model.UseTenantCodeInUrl = appSettings.UseTenantCodeInUrl;
+
+                                    Helpers.NavigateToRoot(true);
+                                }
+                            }
+                            break;
+
+                        default:
+                            if (userId != Model.User.UserId) {
+                                await Helpers.ReloadModel();
+                            }
+                            break;
+                    }
+                    break;
+
+                // {{ModuleItemStart:Tags}}
+                case DataObjects.SignalRUpdateType.Tag:
+                    await Helpers.LoadTags();
+                    break;
+                // {{ModuleItemEnd:Tags}}
+
+                case DataObjects.SignalRUpdateType.Tenant:
+                    switch (message) {
+                        case "deleted":
+                            if (itemId == Model.TenantId) {
+                                // The current tenant was deleted, so log any users out that are logged in to this tenant.
+                                Helpers.NavigateTo("Logout");
+                            } else {
+                                // Not the current tenant, but if this user has this tenant in their list then reload the model.
+                                if (Model.Tenants.Any(x => x.TenantId == update.TenantId)) {
+                                    await Helpers.ReloadModel();
+                                    StateHasChanged();
+                                }
+                            }
+                            break;
+
+                        case "saved":
+                            if (Model.Tenants.Any(x => x.TenantId == update.TenantId)) {
+                                await Helpers.ReloadModel();
+                                StateHasChanged();
+                            }
+                            break;
+                    }
+                    break;
+
+                case DataObjects.SignalRUpdateType.UDF:
+                    break;
+
+                case DataObjects.SignalRUpdateType.Undelete:
+                    // Not all undelete types require reloading data, but those that do are handled here.
+                    switch (message) {
+                        // {{ModuleItemStart:Appointments}}
+                        case "appointment":
+                            break;
+
+                        case "appointmentnote":
+                            break;
+
+                        case "appointmentservice":
+                            break;
+                        // {{ModuleItemEnd:Appointments}}
+
+                        case "departmentgroup":
+                            var undeletedDepartmentGroup = Helpers.DeserializeObject<DataObjects.DepartmentGroup>(update.ObjectAsString);
+                            if (undeletedDepartmentGroup != null) {
+                                var modelDepartmentGroups = Model.DepartmentGroups.ToList();
+                                modelDepartmentGroups = modelDepartmentGroups.Where(x => x.DepartmentGroupId != undeletedDepartmentGroup.DepartmentGroupId).ToList();
+                                modelDepartmentGroups.Add(undeletedDepartmentGroup);
+                                Model.DepartmentGroups = modelDepartmentGroups;
+                            }
+                            break;
+
+                        case "department":
+                            var undeletedDepartment = Helpers.DeserializeObject<DataObjects.Department>(update.ObjectAsString);
+                            if (undeletedDepartment != null) {
+                                var modelDepartments = Model.Departments.ToList();
+                                modelDepartments = modelDepartments.Where(x => x.DepartmentId != undeletedDepartment.DepartmentId).ToList();
+                                modelDepartments.Add(undeletedDepartment);
+                                Model.Departments = modelDepartments;
+                            }
+                            break;
+
+                        // {{ModuleItemStart:EmailTemplates}}
+                        case "emailtemplate":
+                            var undeletedEmailTemplate = Helpers.DeserializeObject<DataObjects.EmailTemplate>(update.ObjectAsString);
+                            if (undeletedEmailTemplate != null) {
+                                var modelEmailTemplates = Model.EmailTemplates.ToList();
+                                modelEmailTemplates = modelEmailTemplates.Where(x => x.EmailTemplateId != undeletedEmailTemplate.EmailTemplateId).ToList();
+                                modelEmailTemplates.Add(undeletedEmailTemplate);
+                                Model.EmailTemplates = modelEmailTemplates;
+                            }
+                            break;
+                        // {{ModuleItemEnd:EmailTemplates}}
+
+                        case "filestorage":
+                            break;
+
+                        // {{ModuleItemStart:Locations}}
+                        case "location":
+                            var undeletedLocation = Helpers.DeserializeObject<DataObjects.Location>(update.ObjectAsString);
+                            if (undeletedLocation != null) {
+                                var modelLocations = Model.Locations.ToList();
+                                modelLocations = modelLocations.Where(x => x.LocationId != undeletedLocation.LocationId).ToList();
+                                modelLocations.Add(undeletedLocation);
+                                Model.Locations = modelLocations;
+                            }
+                            break;
+                        // {{ModuleItemEnd:Locations}}
+
+                        // {{ModuleItemStart:Services}}
+                        case "service":
+                            var undeletedService = Helpers.DeserializeObject<DataObjects.Service>(update.ObjectAsString);
+                            if (undeletedService != null) {
+                                var modelServices = Model.Services.ToList();
+                                modelServices = modelServices.Where(x => x.ServiceId != undeletedService.ServiceId).ToList();
+                                modelServices.Add(undeletedService);
+                                Model.Services = modelServices;
+                            }
+                            break;
+                        // {{ModuleItemEnd:Services}}
+
+                        // {{ModuleItemStart:Tags}}
+                        case "tag":
+                            await Helpers.LoadTags();
+                            break;
+                        // {{ModuleItemEnd:Tags}}
+
+                        case "user":
+                            await Helpers.ReloadTenantUsers();
+                            break;
+
+                        case "usergroup":
+                            var undeletedUserGroup = Helpers.DeserializeObject<DataObjects.UserGroup>(update.ObjectAsString);
+                            if (undeletedUserGroup != null) {
+                                var modelUserGroups = Model.UserGroups.ToList();
+                                modelUserGroups = modelUserGroups.Where(x => x.GroupId != undeletedUserGroup.GroupId).ToList();
+                                modelUserGroups.Add(undeletedUserGroup);
+                                Model.UserGroups = modelUserGroups;
+                            }
+                            break;
+
+                        default:
+                            await Helpers.ProcessSignalRUpdateAppUndelete(update);
+                            break;
+                    }
+                    break;
+
+                case DataObjects.SignalRUpdateType.Unknown:
+                    await Helpers.ConsoleLog("Unknown SignalR Update Type Received");
+                    break;
+
+                case DataObjects.SignalRUpdateType.User:
+                    var user = Helpers.DeserializeObject<DataObjects.User>(update.ObjectAsString);
+                    if (user != null) {
+                        var existingUser = Model.Users.FirstOrDefault(x => x.UserId == user.UserId);
+                        if (existingUser != null) {
+                            existingUser = user;
+                        } else {
+                            Model.Users.Add(user);
+                        }
+
+                        if (Model.User.UserId == user.UserId) {
+                            Model.User = user;
+
+                            if (!user.Enabled) {
+                                // This user has been disabled, so log them out.
+                                Helpers.NavigateTo("Logout");
+                            }
+                        }
+                    }
+
+                    if (itemId == Model.User.UserId) {
+                        switch (message) {
+                            case "deleteduserphoto":
+                                Model.User.Photo = null;
+                                StateHasChanged();
+                                break;
+
+                            case "saveduserphoto":
+                                await Helpers.ReloadUser();
+                                StateHasChanged();
+                                break;
+                        }
+                    }
+                    break;
+
+                case DataObjects.SignalRUpdateType.UserGroup:
+                    await Helpers.LoadUserGroups();
+                    break;
+
+                case DataObjects.SignalRUpdateType.UserPreferences:
+                    var userPreferences = Helpers.DeserializeObject<DataObjects.UserPreferences>(update.ObjectAsString);
+                    if (userPreferences != null) {
+                        // Update the item in the ActiveUsers list.
+                        var activeUserItem2 = Model.ActiveUsers.FirstOrDefault(x => x.UserId == userId);
+                        if (activeUserItem2 != null) {
+                            activeUserItem2.UserPreferences = userPreferences;
+                            activeUserItem2.LastAccess = DateTime.UtcNow;
+                        } else {
+                            // This user is not in the ActiveUsers list, so load the record.
+                            await Helpers.LoadActiveUser(userId);
+                        }
+                        StateHasChanged();
+                    }
+                    break;
+
+                default:
+                    await Helpers.ProcessSignalRUpdateApp(update);
+                    break;
+            }
+
+            if (message.Contains("delete") || message.Contains("undelete") || update.UpdateType == DataObjects.SignalRUpdateType.Undelete) {
+                await Helpers.GetDeletedRecordCount();
+                StateHasChanged();
+            }
+
+            // Also trigger the update in the model.
+            Model.SignalRUpdate(update);
+        }
+    }
+
+    protected async Task SavePendingUserPreferences() {
+        if (Model.LoggedIn) {
+            string json = Helpers.SerializeObject(Model.User.UserPreferences);
+
+            if (LastUserPreferencesJson != json) {
+                // Initially, the LastUserPreferencesJson will be empty. Don't save on that initial load of the object.
+                if (!String.IsNullOrEmpty(LastUserPreferencesJson)) {
+                    await Helpers.SaveUserPreferences();
+                }
+
+                LastUserPreferencesJson = json;
+            }
+        }
+    }
+
+    [JSInvokable]
+    public void SetFingerprint(string fingerprint) {
+        Model.Fingerprint = fingerprint;
+    }
+
+    protected async Task ThemeWatcher() {
+        string theme = Model.Theme;
+
+        if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
+            theme = Model.Tenant.TenantSettings.Theme;
+        }
+
+        await jsRuntime.InvokeVoidAsync("SetPreferredColorScheme", theme);
+    }
+
+    protected async Task ValidateLogin() {
+        if (!Validating) {
+            Validating = true;
+
+            if (Model.User.ActionResponse.Result) {
+                if (!Model.LoggedIn) {
+                    await Helpers.ReloadModel();
+                }
+
+                Validating = false;
+                return;
+            }
+
+            var currentUser = await Helpers.GetCurrentUser();
+            if (currentUser.ActionResponse.Result) {
+                Model.User = currentUser;
+            }
+
+            if (Model.User.ActionResponse.Result) {
+                Model.TenantId = Model.User.TenantId;
+
+                string token = String.Empty;
+                // Check the cookie first
+                var cookieToken = await Helpers.CookieRead<string>("user-token");
+                if (!String.IsNullOrWhiteSpace(cookieToken)) {
+                    token = cookieToken;
+                }
+
+                if (String.IsNullOrWhiteSpace(token) && !String.IsNullOrWhiteSpace(Model.User.AuthToken)) {
+                    token = Model.User.AuthToken;
+                }
+
+                Model.User.AuthToken = token;
+
+                // Get or update the Session Data
+                if (!Model.LoggedIn || !Model.Tenants.Any()) {
+                    await Helpers.ReloadModel();
+                    hubConfigured = false;
+                }
+            } else {
+                // Load the models but with just basic info
+                if (!Model.Loaded) {
+                    await Helpers.ReloadModel();
+
+                    var url = Helpers.Uri;
+                    if (!String.IsNullOrWhiteSpace(url)) {
+                        bool allowAnonymousAccess = false;
+
+                        string pagename = String.Empty;
+                        if (url.Contains("/")) {
+                            pagename = url.Substring(url.LastIndexOf("/") + 1);
+                        }
+
+                        if (pagename.Contains("?")) {
+                            pagename = pagename.Substring(0, pagename.IndexOf("?"));
+                        }
+
+                        if (url.ToLower().Contains("/authorization/")) {
+                            allowAnonymousAccess = true;
+                        }
+
+                        if (!String.IsNullOrWhiteSpace(Model.View)) {
+                            // If we have a pagename set by the model view, then use that instead of the parsed URL.
+                            pagename = Model.View;
+                        }
+
+                        if (!allowAnonymousAccess) {
+                            if (!String.IsNullOrWhiteSpace(pagename)) {
+                                if (!allowAnonymousAccess) {
+                                    switch (pagename.ToUpper()) {
+                                        case "ABOUT":
+                                        case "DATABASEOFFLINE":
+                                        case "LOGIN":
+                                        case "LOGOUT":
+                                        case "PROCESSLOGIN":
+                                        case "SETUP":
+                                            allowAnonymousAccess = true;
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!allowAnonymousAccess) {
+                            var requestedUrl = Helpers.Uri;
+                            var baseUrl = Helpers.BaseUri;
+
+                            if (requestedUrl != baseUrl) {
+                                await Helpers.CookieWrite("requested-url", requestedUrl);
+                            }
+
+                            Helpers.NavigateToLogin();
+                        }
+                    }
+                }
+            }
+
+            Validating = false;
+        }
+    }
+
+    protected async Task ValidateStartupState() {
+        bool redirected = false;
+
+        DataObjects.SimplePost post = new DataObjects.SimplePost {
+            SingleItem = Helpers.BaseUri,
+        };
+
+        var response = await Http.PostAsJsonAsync("api/Data/GetStartupState", post);
+        if (response != null && response.IsSuccessStatusCode) {
+            var startupState = await response.Content.ReadFromJsonAsync<DataObjects.BooleanResponse>();
+            if (startupState != null) {
+                if (startupState.Messages.Any()) {
+                    bool firstMessage = true;
+                    string message = String.Empty;
+                    Model.StartupErrors = new List<string>();
+
+                    foreach (var msg in startupState.Messages) {
+                        if (firstMessage) {
+                            message = startupState.Messages[0];
+                            firstMessage = false;
+                        } else {
+                            Model.StartupErrors.Add(msg);
+                        }
+                    }
+
+                    switch (message.ToUpper()) {
+                        case "DATABASEOFFLINE":
+                            Helpers.NavigateTo("DatabaseOffline");
+                            redirected = true;
+                            break;
+
+                        case "MISSINGCONNECTIONSTRING":
+                            Helpers.NavigateTo("Setup");
+                            redirected = true;
+                            break;
+                    }
+                }
+            }
+        }
+
+        if (!redirected) {
+            Model.StartupValidated = true;
+            await ValidateLogin();
+        }
+    }
+}

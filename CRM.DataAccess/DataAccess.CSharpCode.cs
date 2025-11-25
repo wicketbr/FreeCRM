@@ -32,7 +32,7 @@ public partial class DataAccess
         try {
             // Load all references required by the HelpDesk data project to use the DataAccess library.
             // First, get the base .NET6 references from the Basic.Reference.Assemblies package by jaredpar (https://github.com/jaredpar/basic-reference-assemblies)
-            var references = Basic.Reference.Assemblies.Net90.References.All.ToList();
+            var references = Basic.Reference.Assemblies.Net100.References.All.ToList();
 
             // Then, add our specific references not covered by the base package.
             try { references.Add(Microsoft.CodeAnalysis.MetadataReference.CreateFromFile(typeof(DataAccess).Assembly.Location)); } catch { }

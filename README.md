@@ -1,8 +1,7 @@
 # FreeCRM Base Application
 
-FreeCRM is a fully functioning CRM starter kit built with **ASP.NET Core 9** and **Blazor WebAssembly**.  
-It’s designed to be the **“base app”** that you can merge into your own products with minimal conflict resolution.  
-The project makes heavy use of **partial classes**, **partial Razor components**, and companion `*.App.*` files so that the core platform can receive updates while your team keeps custom business logic in a clearly separated layer.
+An open-source CRM solution built in C# Blazor WebAssembly using .NET 10. You can use this project as-is,
+or customize it to fit your needs. Or, just grab code that you need to use in your project.
 
 ---
 
