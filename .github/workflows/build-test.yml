@@ -30,11 +30,6 @@ env:
 
   # Toolchain
   DOTNET_VERSION: 10.0.x
-  
-# Use PowerShell consistently on Windows steps without repeating `shell: pwsh`
-defaults:
-  run:
-    shell: pwsh
 
 on:
   push:
