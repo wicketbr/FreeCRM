@@ -11,6 +11,6 @@
   <Project Path="CRM.DataObjects/CRM.DataObjects.csproj" Id="6a6d9fb3-622f-40c9-965f-b6f91038dd08" />
   <Project Path="CRM.EFModels/CRM.EFModels.csproj" Id="fdef1d0b-1f49-4134-ad53-9650c5aba30a" />
   <Project Path="CRM.Plugins/CRM.Plugins.csproj" Id="541b8602-5d22-4f20-a035-5ff11a50c62c" />
-  <Project Path="CRM/CRM.Client/CRM.Client.csproj" />
-  <Project Path="CRM/CRM/CRM.csproj" />
+  <Project Path="CRM.Client/CRM.Client.csproj" />
+  <Project Path="CRM/CRM.csproj" />
 </Solution>
