@@ -7,6 +7,7 @@ public partial class DataAccess: IDisposable, IDataAccess
 {
     private int _accountLockoutMaxAttempts = 5;
     private int _accountLockoutMinutes = 10;
+    private string _applicationName = "";
     private string _appName = "freeCRM";
     private DataObjects.AuthenticationProviders? _authenticationProviders;
     private string _connectionString;
@@ -28,8 +29,15 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _useMigrations = false;
     private string _version = "2.0.0";
 
-    public DataAccess(string ConnectionString = "", string DatabaseType = "", string LocalModeUrl = "", IServiceProvider? serviceProvider = null)
+    public DataAccess(
+        string ConnectionString = "",
+        string DatabaseType = "",
+        string LocalModeUrl = "",
+        IServiceProvider? serviceProvider = null,
+        string ApplicationName = ""
+    )
     {
+        _applicationName = ApplicationName;
         _connectionString = ConnectionString;
         _databaseType = DatabaseType;
         _localModeUrl = LocalModeUrl;

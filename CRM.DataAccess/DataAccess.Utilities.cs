@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph.Models;
+using Plugins;
 using System.Net.Http;
 using System.Reflection;
 using Utilities;
@@ -13,6 +15,7 @@ public partial interface IDataAccess
 {
     bool AdminUser(DataObjects.User? user);
     string AppendWithComma(string Original, string New);
+    string ApplicationName { get; }
     string ApplicationURL { get; }
     string ApplicationUrl(Guid? TenantId);
     string ApplicationUrl(Microsoft.AspNetCore.Http.HttpContext? context);
@@ -108,6 +111,12 @@ public partial class DataAccess
         }
         output += New;
         return output;
+    }
+
+    public string ApplicationName {
+        get {
+            return _applicationName;
+        }
     }
 
     public string ApplicationURL { 
@@ -370,7 +379,7 @@ public partial class DataAccess
             if (_httpContext != null) {
                 try {
                     if(_httpContext.Request != null) {
-                        var ck = _httpContext.Request.Cookies[cookieName];
+                        var ck = _httpContext.Request.Cookies[_applicationName + cookieName];
                         if (!String.IsNullOrWhiteSpace(ck)) {
                             output = ck;
                         }
@@ -380,7 +389,7 @@ public partial class DataAccess
                 }
                 if (output.ToLower() == "cleared") { output = String.Empty; }
             } else if (_httpRequest != null) {
-                var cookieValue = _httpRequest.Cookies[cookieName];
+                var cookieValue = _httpRequest.Cookies[_applicationName + cookieName];
                 if(!String.IsNullOrWhiteSpace(cookieValue)) {
                     output = cookieValue;
                 }
@@ -402,9 +411,9 @@ public partial class DataAccess
             }
 
             if (_httpContext != null) {
-                _httpContext.Response.Cookies.Append(cookieName, value, option);
+                _httpContext.Response.Cookies.Append(_applicationName + cookieName, value, option);
             } else if (_httpResponse != null) {
-                _httpResponse.Cookies.Append(cookieName, value, option);
+                _httpResponse.Cookies.Append(_applicationName + cookieName, value, option);
             }
         }
     }
