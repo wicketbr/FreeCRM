@@ -30,7 +30,7 @@ env:
 
   # Toolchain
   DOTNET_VERSION: 10.0.x
-
+  
 # Use PowerShell consistently on Windows steps without repeating `shell: pwsh`
 defaults:
   run:
@@ -41,12 +41,66 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  # Uncomment to allow manual runs
   # workflow_dispatch: {}
 
 jobs:
+  # ---------------------------------------------------------
+  # Pre-flight: verify git, remote commit, and clean workspace
+  # ---------------------------------------------------------
+  preflight:
+    runs-on: build
+
+    steps:
+      - name: Show environment info
+        run: |
+          Write-Host "Runner OS: $env:RUNNER_OS"
+          Write-Host "Runner workspace: $env:RUNNER_WORKSPACE"
+          Write-Host "GitHub workspace: $env:GITHUB_WORKSPACE"
+          Write-Host "Repository: $env:GITHUB_REPOSITORY"
+          Write-Host "SHA: $env:GITHUB_SHA"
+
+      - name: Check that git is installed and on PATH
+        run: |
+          Write-Host "Checking git..."
+          git --version
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "git is not available on PATH."
+          }
+
+      - name: Verify commit exists on remote
+        env:
+          REPO: ${{ github.repository }}
+          SHA:  ${{ github.sha }}
+        run: |
+          Write-Host "Verifying commit $env:SHA exists on https://github.com/$env:REPO"
+          git ls-remote "https://github.com/$env:REPO" $env:SHA
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Commit $env:SHA not found on remote. Aborting."
+          }
+
+      - name: Clean workspace (rm -rf equivalent)
+        run: |
+          if (-not $env:GITHUB_WORKSPACE) {
+            Write-Host "GITHUB_WORKSPACE is not set, nothing to clean."
+            return
+          }
+
+          if (Test-Path $env:GITHUB_WORKSPACE) {
+            Write-Host "Cleaning contents of $env:GITHUB_WORKSPACE"
+            # This is the PowerShell equivalent of: rm -rf $GITHUB_WORKSPACE/*
+            Remove-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE '*') `
+              -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          else {
+            Write-Host "Workspace path $env:GITHUB_WORKSPACE does not exist yet."
+          }
+
+  # ---------------------------------------------------------
+  # Existing build job, now dependent on preflight
+  # ---------------------------------------------------------
   build:
     runs-on: build
+    needs: preflight
 
     strategy:
       matrix:
@@ -64,7 +118,7 @@ jobs:
         run: |
           $zip = Join-Path $env:RUNNER_TEMP "repo_snapshot_${{ github.run_id }}.zip"
           Compress-Archive -Path "$env:GITHUB_WORKSPACE\*" -DestinationPath $zip -Force
-          "REPO_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "REPO_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append	
 
       # Upload snapshot only once per run (on Debug leg) to avoid duplicates
       - name: Upload repository snapshot (once)
