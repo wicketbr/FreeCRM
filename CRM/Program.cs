@@ -21,17 +21,17 @@ namespace CRM
             }
 
             // Try to get the application name.
-            string applicationName = String.Empty;
+            string cookiePrefix = String.Empty;
             Assembly assembly = Assembly.GetExecutingAssembly();
             try {
-                applicationName += assembly.FullName;
+                cookiePrefix += assembly.FullName;
 
-                if (applicationName.Contains(",")) { 
-                    applicationName = applicationName.Substring(0, applicationName.IndexOf(",")).Trim();
+                if (cookiePrefix.Contains(",")) { 
+                    cookiePrefix = cookiePrefix.Substring(0, cookiePrefix.IndexOf(",")).Trim();
                 }
 
-                if (!String.IsNullOrWhiteSpace(applicationName)) {
-                    applicationName = new string(applicationName.Where(Char.IsLetter).ToArray()).ToLower() + "_";
+                if (!String.IsNullOrWhiteSpace(cookiePrefix)) {
+                    cookiePrefix = new string(cookiePrefix.Where(Char.IsLetter).ToArray()).ToLower() + "_";
                 }
             } catch { }
 
@@ -100,7 +100,7 @@ namespace CRM
             string _localModeUrl = String.Empty + builder.Configuration.GetValue<string>("LocalModeUrl");
             string _connectionString = String.Empty + builder.Configuration.GetConnectionString("AppData");
             string _databaseType = String.Empty + builder.Configuration.GetValue<string>("DatabaseType");
-            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, _localModeUrl, x.GetRequiredService<IServiceProvider>(), applicationName));
+            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, _localModeUrl, x.GetRequiredService<IServiceProvider>(), cookiePrefix));
 
             var useAuthorization = CustomAuthenticationProviders.UseAuthorization(builder);
             builder.Services.AddTransient<ICustomAuthentication>(x => ActivatorUtilities.CreateInstance<CustomAuthentication>(x, useAuthorization));
@@ -140,7 +140,7 @@ namespace CRM
 
             var configurationHelperLoader = ConfigurationHelpersLoadApp(new ConfigurationHelperLoader {
                 AnalyticsCode = analyticsCode,
-                ApplicationName = applicationName,
+                CookiePrefix = cookiePrefix,
                 BasePath = basePath,
                 ConnectionStrings = new ConfigurationHelperConnectionStrings {
                     AppData = builder.Configuration.GetConnectionString("AppData"),
