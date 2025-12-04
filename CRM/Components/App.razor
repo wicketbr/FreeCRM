@@ -2,6 +2,7 @@
 @inject IConfigurationHelper ConfigurationHelper
 @inject IHttpContextAccessor HttpContextAccessor
 @{
+    string cookiePrefix = String.Empty + ConfigurationHelper.CookiePrefix;
     string applicationUrl = data.ApplicationUrl(HttpContextAccessor.HttpContext);
     string appVersion = data.Version;
     string basePath = !String.IsNullOrWhiteSpace(ConfigurationHelper.BasePath) ? ConfigurationHelper.BasePath : "/";
@@ -75,6 +76,7 @@
     <Modules_App Module="body" />
 
     <script type="text/javascript">
+        let cookiePrefix = "@cookiePrefix";
         let dotNetHelper;
         let fingerprint;
 
@@ -107,7 +109,7 @@
         }
 
         function CookieRead(cname) {
-            let name = cname + "=";
+            let name = cookiePrefix + cname + "=";
             let decodedCookie = decodeURIComponent(document.cookie);
             let ca = decodedCookie.split(';');
 
@@ -141,7 +143,7 @@
                 expires = "";
             }
 
-            document.cookie = name + "=" + value + expires + "; path=/";
+            document.cookie = cookiePrefix + name + "=" + value + expires + "; path=/";
         }
 
         function CopyToClipboard(value) {

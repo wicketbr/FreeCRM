@@ -65,7 +65,7 @@ public class AuthorizationController : ControllerBase
             Microsoft.AspNetCore.Http.CookieOptions option = new Microsoft.AspNetCore.Http.CookieOptions();
             option.Expires = now.AddYears(1);
 
-            context.Response.Cookies.Append(cookieName, value, option);
+            context.Response.Cookies.Append(da.CookiePrefix + cookieName, value, option);
         }
     }
 

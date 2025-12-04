@@ -27,6 +27,12 @@ public partial class ConfigurationHelper : IConfigurationHelper
         }
     }
 
+    public string? CookiePrefix {
+        get {
+            return _loader.CookiePrefix;
+        }
+    }
+
     public List<string>? GloballyDisabledModules {
         get {
             return _loader.GloballyDisabledModules;
@@ -45,6 +51,7 @@ public partial interface IConfigurationHelper
     public string? AnalyticsCode { get; }
     public string? BasePath { get; }
     ConfigurationHelperConnectionStrings ConnectionStrings { get; }
+    public string? CookiePrefix { get; }
     List<string>? GloballyDisabledModules { get; }
     List<string>? GloballyEnabledModules { get; }
 }
@@ -54,6 +61,7 @@ public partial class ConfigurationHelperLoader
     public string? AnalyticsCode { get; set; }
     public string? BasePath { get; set; }
     public ConfigurationHelperConnectionStrings ConnectionStrings { get; set; } = new ConfigurationHelperConnectionStrings();
+    public string? CookiePrefix { get; set; }
     public List<string>? GloballyDisabledModules { get; set; }
     public List<string>? GloballyEnabledModules { get; set; }
 }
