@@ -43,7 +43,7 @@ jobs:
   # Pre-flight: verify git, remote commit, and clean workspace
   # ---------------------------------------------------------
   preflight:
-    runs-on: build
+    runs-on: windows-latest
 
     steps:
       - name: Show environment info
@@ -94,7 +94,7 @@ jobs:
   # Existing build job, now dependent on preflight
   # ---------------------------------------------------------
   build:
-    runs-on: build
+    runs-on: windows-latest
     needs: preflight
 
     strategy:
