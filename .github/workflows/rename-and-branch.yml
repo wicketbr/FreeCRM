@@ -67,6 +67,9 @@ jobs:
           - name: FreeAI
             branch: FreeAI_base
             selections: 'remove:all'
+          - name: AcademicCalendarPetitions
+            branch: AcademicCalendarPetitions_base
+            selections: 'remove:all'
 
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
