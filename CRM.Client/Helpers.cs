@@ -15,7 +15,6 @@ using CRM.Client.Pages.Settings.Tags;
 using CRM.Client.Pages.Settings.Users;
 using CRM.Client.Shared;
 using Humanizer;
-using Humanizer.Localisation;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.CodeAnalysis.CSharp.Syntax;

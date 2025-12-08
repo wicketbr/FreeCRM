@@ -79,58 +79,6 @@ public static partial class Utilities
         return output;
     }
 
-    //// <summary>
-    ///// Reads a cookie value.
-    ///// </summary>
-    ///// <param name="cookieName">The name of the cookie.</param>
-    ///// <returns>The cookie value as a string.</returns>
-    //public static string CookieRead(string cookieName, Microsoft.AspNetCore.Http.HttpContext httpContext)
-    //{
-    //    string output = String.Empty;
-
-    //    if (httpContext != null) {
-    //        if (!String.IsNullOrWhiteSpace(cookieName)) {
-    //            try {
-    //                string ck = httpContext.Request.Cookies[cookieName];
-    //                if (!String.IsNullOrWhiteSpace(ck)) {
-    //                    output = ck;
-    //                }
-    //            } catch (Exception ex) {
-    //                if (ex != null) { }
-    //            }
-    //        }
-    //        if (output.ToLower() == "cleared") { output = String.Empty; }
-    //    }
-
-    //    return System.Web.HttpUtility.HtmlDecode(output);
-    //}
-
-    ///// <summary>
-    ///// Writes a cookie.
-    ///// </summary>
-    ///// <param name="cookieName">The name of the cookie.</param>
-    ///// <param name="value">The value for the cookie.</param>
-    ///// <param name="httpContext">The current HTTP Context</param>
-    ///// <param name="cookieDomain">An optional domain to set for the cookie. Never used when running on localhost.</param>
-    //public static void CookieWrite(string cookieName, string value, Microsoft.AspNetCore.Http.HttpContext httpContext, string cookieDomain = "")
-    //{
-    //    if (httpContext != null) {
-    //        DateTime now = DateTime.Now;
-    //        if (String.IsNullOrEmpty(cookieName)) { return; }
-
-    //        Microsoft.AspNetCore.Http.CookieOptions option = new Microsoft.AspNetCore.Http.CookieOptions();
-    //        option.Expires = now.AddYears(1);
-
-    //        string fullUrl = GetFullUrl(httpContext);
-
-    //        if (!String.IsNullOrWhiteSpace(cookieDomain) && !String.IsNullOrWhiteSpace(fullUrl) && !fullUrl.ToLower().Contains("localhost")) {
-    //            option.Domain = cookieDomain;
-    //        }
-
-    //        httpContext.Response.Cookies.Append(cookieName, value, option);
-    //    }
-    //}
-
     public static HttpClient GetHttpClient(string url)
     {
         if (!String.IsNullOrWhiteSpace(url) && url.ToLower().Contains("//localhost")) {
