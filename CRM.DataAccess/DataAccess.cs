@@ -23,10 +23,11 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("12/3/2025"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("12/10/2025"));
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
     private bool _useMigrations = false;
+    private bool _useBackgroundService = false;
     private string _version = "2.0.0";
 
     public DataAccess(
@@ -34,7 +35,8 @@ public partial class DataAccess: IDisposable, IDataAccess
         string DatabaseType = "",
         string LocalModeUrl = "",
         IServiceProvider? serviceProvider = null,
-        string CookiePrefix = ""
+        string CookiePrefix = "",
+        bool UseBackgroundService = false
     )
     {
         _cookiePrefix = CookiePrefix;
@@ -42,6 +44,7 @@ public partial class DataAccess: IDisposable, IDataAccess
         _databaseType = DatabaseType;
         _localModeUrl = LocalModeUrl;
         _serviceProvider = serviceProvider;
+        _useBackgroundService = UseBackgroundService;
 
         if (!String.IsNullOrWhiteSpace(_connectionString)) {
             _connectionString = ConnectionString;

@@ -31,6 +31,7 @@ public partial interface IDataAccess
     string CultureCodeDisplay(string cc);
     Guid? CurrentUserId(DataObjects.User? user);
     string? CurrentUserIdString(DataObjects.User? user);
+    EFDataModel Data { get; }
     string DatabaseType { get; }
     DateTime? DateOnlyToDateTime(DateOnly? dateOnly);
     public DateOnly? DateTimeToDateOnly(DateTime? dateTime);
@@ -91,6 +92,7 @@ public partial interface IDataAccess
     void UpdateApplicationURL(string? url);
     string UrlDecode(string? input);
     string UrlEncode(string? input);
+    bool UseBackgroundService { get; }
     bool UseTenantCodeInUrl { get; }
     string Version { get; }
     DataObjects.VersionInfo VersionInfo { get; }
@@ -448,6 +450,12 @@ public partial class DataAccess
         return user != null ? user.UserId.ToString() : null;
     }
 
+    public EFDataModel Data {
+        get {
+            return data;
+        }
+    }
+
     public string DatabaseType {
         get {
             return _databaseType;
@@ -542,7 +550,7 @@ public partial class DataAccess
 
         try {
             // {{ModuleItemStart:Appointments}}
-            var appointments = await data.Appointments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var appointments = await data.Appointments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(appointments != null && appointments.Any()) {
                 foreach(var rec in appointments) {
                     var result = await DeleteAppointment(rec.AppointmentId, null, true);
@@ -553,7 +561,7 @@ public partial class DataAccess
                 }
             }
 
-            var appointmentNotes = await data.AppointmentNotes.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var appointmentNotes = await data.AppointmentNotes.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (appointmentNotes != null && appointmentNotes.Any()) {
                 foreach(var rec in appointmentNotes) {
                     var result = await DeleteAppointmentNote(rec.AppointmentNoteId, null, true);
@@ -564,7 +572,7 @@ public partial class DataAccess
                 }
             }
 
-            var appointmentServices = await data.AppointmentServices.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var appointmentServices = await data.AppointmentServices.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (appointmentServices != null && appointmentServices.Any()) {
                 foreach(var rec in appointmentServices) {
                     var result = await DeleteAppointmentService(rec.AppointmentServiceId, null, true);
@@ -577,7 +585,7 @@ public partial class DataAccess
             // {{ModuleItemEnd:Appointments}}
 
             // Other items need to call their delete method to get all related data.
-            var departmentGroups = await data.DepartmentGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var departmentGroups = await data.DepartmentGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(departmentGroups != null && departmentGroups.Any()) {
                 foreach(var rec in departmentGroups) {
                     var result = await DeleteDepartmentGroup(rec.DepartmentGroupId, null, true);
@@ -588,7 +596,7 @@ public partial class DataAccess
                 }
             }
 
-            var departments = await data.Departments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var departments = await data.Departments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(departments != null && departments.Any()) {
                 foreach(var rec in departments) {
                     var result = await DeleteDepartment(rec.DepartmentId, null, true);
@@ -600,7 +608,7 @@ public partial class DataAccess
             }
 
             // {{ModuleItemStart:EmailTemplates}}
-            var emailTemplates = await data.EmailTemplates.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var emailTemplates = await data.EmailTemplates.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (emailTemplates != null && emailTemplates.Any()) {
                 foreach(var rec in emailTemplates) {
                     var result = await DeleteEmailTemplate(rec.EmailTemplateId, null, true);
@@ -612,7 +620,7 @@ public partial class DataAccess
             }
             // {{ModuleItemEnd:EmailTemplates}}
 
-            var fileStorage = await data.FileStorages.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var fileStorage = await data.FileStorages.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (fileStorage != null && fileStorage.Any()) {
                 foreach (var rec in fileStorage) {
                     var result = await DeleteFileStorage(rec.FileId, null, true);
@@ -624,7 +632,7 @@ public partial class DataAccess
             }
 
             // {{ModuleItemStart:Locations}}
-            var locations = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var locations = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(locations != null && locations.Any()) {
                 foreach (var rec in locations) {
                     // Clear out this location in any appointments
@@ -641,7 +649,7 @@ public partial class DataAccess
             // {{ModuleItemEnd:Locations}}
 
             // {{ModuleItemStart:Services}}
-            var services = await data.Services.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var services = await data.Services.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(services != null && services.Any()) {
                 foreach(var rec in services) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE ServiceId={0}", rec.ServiceId);
@@ -658,7 +666,7 @@ public partial class DataAccess
 
             // {{ModuleItemStart:Tags}}
             // For tags, remove any related items first, then delete the tags.
-            var tags = await data.Tags.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var tags = await data.Tags.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(tags != null && tags.Any()) {
                 foreach(var rec in tags) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM TagItems WHERE TagId={0}", rec.TagId);
@@ -673,7 +681,7 @@ public partial class DataAccess
             }
             // {{ModuleItemEnd:Tags}}
 
-            var userGroups = await data.UserGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var userGroups = await data.UserGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(userGroups != null &&  userGroups.Any()) {
                 foreach (var rec in userGroups) {
                     var result = await DeleteUserGroup(rec.GroupId, null, true);
@@ -684,7 +692,7 @@ public partial class DataAccess
                 }
             }
 
-            var users = await data.Users.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt > OlderThan)).ToListAsync();
+            var users = await data.Users.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if(users != null && users.Any()) {
                 foreach(var rec in users) { 
                     var result = await DeleteUser(rec.UserId, null, true);
@@ -989,6 +997,7 @@ public partial class DataAccess
         output.TenantId = Guid.Empty;
         output.Tenants = new List<DataObjects.Tenant>();
         output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;
+        output.UseBackgroundService = _useBackgroundService;
         output.User = new DataObjects.User();
         output.Users = new List<DataObjects.User>();
         output.UseTenantCodeInUrl = UseTenantCodeInUrl;
@@ -1059,6 +1068,7 @@ public partial class DataAccess
             output.TenantId = CurrentUser.TenantId;
             output.Tenants = tenants;
             output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;
+            output.UseBackgroundService = _useBackgroundService;
             output.User = CurrentUser;
             output.Users = users;
             output.UseTenantCodeInUrl = UseTenantCodeInUrl;
@@ -1101,6 +1111,7 @@ public partial class DataAccess
             output.TenantId = tenant.TenantId;
             output.Tenants = new List<DataObjects.Tenant>{ tenant };
             output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;
+            output.UseBackgroundService = _useBackgroundService;
             output.User = new DataObjects.User();
             output.Users = new List<DataObjects.User>();
             output.UseTenantCodeInUrl = UseTenantCodeInUrl;
@@ -2523,6 +2534,12 @@ public partial class DataAccess
         }
 
         return output;
+    }
+
+    public bool UseBackgroundService {
+        get {
+            return _useBackgroundService;
+        }
     }
 
     public bool UseTenantCodeInUrl

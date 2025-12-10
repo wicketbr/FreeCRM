@@ -109,6 +109,7 @@ public partial class BlazorDataModel
     private List<DataObjects.Tenant> _Tenants = new List<DataObjects.Tenant>();
     private string _Theme = "";
     private List<DataObjects.udfLabel> _udfLabels = new List<DataObjects.udfLabel>();
+    private bool _UseBackgroundService = false;
     private bool _UseCustomAuthenticationProviderFromAdminAccount = false;
     private DataObjects.User _User = new DataObjects.User();
     private List<DataObjects.UserGroup> _UserGroups = new List<DataObjects.UserGroup>();
@@ -1955,6 +1956,20 @@ public partial class BlazorDataModel
             if (_UseCustomAuthenticationProviderFromAdminAccount != value) {
                 _UseCustomAuthenticationProviderFromAdminAccount = value;
                 _ModelUpdated = DateTime.Now;
+                NotifyDataChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates if the app is using the background processing queue.
+    /// </summary>
+    public bool UseBackgroundService {
+        get { return _UseBackgroundService; }
+        set {
+            if (_UseBackgroundService != value) {
+                _UseBackgroundService = value;
+                _ModelUpdated = DateTime.UtcNow;
                 NotifyDataChanged();
             }
         }

@@ -4,6 +4,7 @@
 
 public partial interface IDataAccess
 {
+    Task<DataObjects.BooleanResponse> ProcessBackgroundTasksApp(Guid TenantId, long Iteration);
     DataObjects.BooleanResponse YourMethod();
 }
 
@@ -462,6 +463,36 @@ public partial class DataAccess
                 return;
             }
         } catch { }
+    }
+
+    /// <summary>
+    /// Called by the background processor to process any app-specific background tasks.
+    /// </summary>
+    /// <param name="TenantId">The tenant id being processed.</param>
+    /// <returns>A BooleanResponse object.</returns>
+    public async Task<DataObjects.BooleanResponse> ProcessBackgroundTasksApp(Guid TenantId, long Iteration)
+    {
+        var output = new DataObjects.BooleanResponse();
+
+        // Process any background tasks specific to your app here.
+        // Return output.Result = true if all tasks were processed successfully.
+        // Otherwise, add any error messages to output.Messages and set output.Result = false.
+        output.Result = true;
+
+        // You can use the iterations to control various intervals. For example, if you have the ProcessingIntervalSeconds set to 10 seconds
+        // in the appsettings.json file, you could make a task run every minute like this:
+        //   if (Iteration % 6 == 0) {
+        //      your task code here.
+        //   }
+
+        // You could also use the settings to store info in the database about the last time a process ran.
+        //   var lastRun = GetSetting<DateTime>("MyCustomProcessLastRunDate", DataObjects.SettingType.DateTime);
+        //   if (lastRun == default(DateTime) || lastRun < DateTime.UtcNow.AddMinutes(-10)) {
+        //       // Run your code
+        //       SaveSetting("MyCustomProcessLastRunDate", DataObjects.SettingType.DateTime, DateTime.UtcNow);
+        //   }
+
+        return output;
     }
 
     /// <summary>

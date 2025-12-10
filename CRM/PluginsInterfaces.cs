@@ -35,6 +35,18 @@ public interface IPluginAuth : IPluginBase
 }
 
 /// <summary>
+/// Interface for Background Process plugins.
+/// </summary>
+public interface IPluginBackgroundProcess : IPluginBase
+{
+    Task<(bool Result, List<string>? Messages, IEnumerable<object>? Objects)> Execute(
+        DataAccess da,
+        Plugins.Plugin plugin,
+        long iteration
+    );
+}
+
+/// <summary>
 /// Interface used for plugins that update user information.
 /// </summary>
 public interface IPluginUserUpdate : IPluginBase

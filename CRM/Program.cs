@@ -97,10 +97,30 @@ namespace CRM
 
             builder.Services.AddSingleton<IServiceProvider>(provider => provider);
 
+            bool backgroundServiceEnabled = builder.Configuration.GetValue<bool>("BackgroundService:Enabled");
+
             string _localModeUrl = String.Empty + builder.Configuration.GetValue<string>("LocalModeUrl");
             string _connectionString = String.Empty + builder.Configuration.GetConnectionString("AppData");
             string _databaseType = String.Empty + builder.Configuration.GetValue<string>("DatabaseType");
-            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, _localModeUrl, x.GetRequiredService<IServiceProvider>(), cookiePrefix));
+            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, _localModeUrl, x.GetRequiredService<IServiceProvider>(), cookiePrefix, backgroundServiceEnabled));
+
+            if (backgroundServiceEnabled) {
+                // Create a logger for the background process and add the hosted service for the background processor.
+                var logFilePath = builder.Configuration.GetValue<string>("BackgroundService:LogFilePath");
+                string logFile = !String.IsNullOrWhiteSpace(logFilePath) ? System.IO.Path.Combine(logFilePath, "BackgroundService.log") : String.Empty;
+                var loggerFactory = LoggerFactory.Create(builder => {
+                    builder.AddConsole();
+                    if (!String.IsNullOrWhiteSpace(logFile)) {
+                        builder.AddFile(logFile);
+                    }
+                });
+                var logger = loggerFactory.CreateLogger<BackgroundProcessor>();
+
+                int processingIntervalSeconds = builder.Configuration.GetValue<int>("BackgroundService:ProcessingIntervalSeconds");
+                bool startOnLoad = builder.Configuration.GetValue<bool>("BackgroundService:StartOnLoad");
+
+                builder.Services.AddHostedService<BackgroundProcessor>(x => ActivatorUtilities.CreateInstance<BackgroundProcessor>(x, logger, x.GetRequiredService<IServiceProvider>(), processingIntervalSeconds, startOnLoad));
+            }
 
             var useAuthorization = CustomAuthenticationProviders.UseAuthorization(builder);
             builder.Services.AddTransient<ICustomAuthentication>(x => ActivatorUtilities.CreateInstance<CustomAuthentication>(x, useAuthorization));
