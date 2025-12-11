@@ -104,6 +104,11 @@ Plugins folder for an example of how to build a background process plugin.
 The example plugin will simple log a message to the console each time it runs,
 and to the logging file if you have one configured.
 
+If you are running in a load balanced environment with multiple instances of the application
+and you only want the background service to run on a specific instance, you can set the
+LoadBalancingFilter value in the BackgroundService section of appsettings.json to a value
+that must be matched in the name of the current System.Environment.MachineName.
+
 ### IIS Configuration for the Background Service
 
 If you are hosting on IIS and want to ensure that the background service is always running,

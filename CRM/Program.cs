@@ -98,6 +98,13 @@ namespace CRM
             builder.Services.AddSingleton<IServiceProvider>(provider => provider);
 
             bool backgroundServiceEnabled = builder.Configuration.GetValue<bool>("BackgroundService:Enabled");
+            if (backgroundServiceEnabled) {
+                var loadBalancingFilter = String.Empty + builder.Configuration.GetValue<string>("BackgroundService:LoadBalancingFilter");
+                if (!String.IsNullOrWhiteSpace(loadBalancingFilter)) {
+                    var hostname = (String.Empty + System.Environment.MachineName).ToLower();
+                    backgroundServiceEnabled = hostname.Contains(loadBalancingFilter.ToLower());
+                }
+            }
 
             string _localModeUrl = String.Empty + builder.Configuration.GetValue<string>("LocalModeUrl");
             string _connectionString = String.Empty + builder.Configuration.GetConnectionString("AppData");
@@ -118,7 +125,6 @@ namespace CRM
 
                 int processingIntervalSeconds = builder.Configuration.GetValue<int>("BackgroundService:ProcessingIntervalSeconds");
                 bool startOnLoad = builder.Configuration.GetValue<bool>("BackgroundService:StartOnLoad");
-
                 builder.Services.AddHostedService<BackgroundProcessor>(x => ActivatorUtilities.CreateInstance<BackgroundProcessor>(x, logger, x.GetRequiredService<IServiceProvider>(), processingIntervalSeconds, startOnLoad));
             }
 

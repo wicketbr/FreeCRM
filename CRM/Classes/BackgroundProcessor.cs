@@ -42,7 +42,7 @@ public class BackgroundProcessor : BackgroundService
         }
 
         // Configure the work timer.
-        processorTimer = new System.Timers.Timer(TimeSpan.FromSeconds(1));
+        processorTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(1));
         processorTimer.Elapsed += ProcessTasks;
         processorTimer.AutoReset = false;
 
@@ -77,9 +77,13 @@ public class BackgroundProcessor : BackgroundService
             }
 
             // Process any app-specific tasks.
-            var appTasks = await da.ProcessBackgroundTasksApp(tenant.TenantId, _iterations);
-            ProcessTasksMessages(appTasks);
+            var appTasksForTenant = await da.ProcessBackgroundTasksApp(tenant.TenantId, _iterations);
+            ProcessTasksMessages(appTasksForTenant);
         }
+
+        // Process any app-specific tasks for specific tenants.
+        var appTasks = await da.ProcessBackgroundTasksApp(Guid.Empty, _iterations);
+        ProcessTasksMessages(appTasks);
 
         // If there are any plugins that need to be processed, add them to the queue.
         bool startTimer = false;
