@@ -2631,7 +2631,11 @@ public static partial class Helpers
                     }
 
                     if (!String.IsNullOrWhiteSpace(Model.User.AuthToken)) {
-                        Http.DefaultRequestHeaders.Add("Token", Model.User.AuthToken);
+                        if (Model.User.AuthToken != "na") {
+                            Http.DefaultRequestHeaders.Add("Token", Model.User.AuthToken);
+                        }
+                    } else {
+                        Model.User.AuthToken = "na";
                     }
 
                     if (!String.IsNullOrWhiteSpace(Model.Fingerprint)) {
@@ -4920,7 +4924,7 @@ public static partial class Helpers
 
         if (blazorDataModelLoader != null) {
             string cultureCode = blazorDataModelLoader.CultureCode;
-            DataObjects.Language modelLanguage = Model.DefaultLanguage;
+            DataObjects.Language modelLanguage = blazorDataModelLoader.DefaultLanguage;
 
             // Preferred or saved culture code.
             bool cultureCodeSet = false;
@@ -4979,6 +4983,7 @@ public static partial class Helpers
             Model.Language = modelLanguage;
             Model.Languages = blazorDataModelLoader.Languages;
 
+            await ConsoleLog("Model.Lang", Model.Language);
 
             if (Model.LoggedIn != blazorDataModelLoader.LoggedIn) {
                 Model.LoggedIn = blazorDataModelLoader.LoggedIn;

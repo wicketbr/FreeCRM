@@ -3,8 +3,8 @@
 @inject BlazorDataModel Model
 @implements IDisposable
 
-@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
-    <Index_App />
+@if (Model.Loaded && Model.View == _pageName && (Model.LoggedIn || !AppModule.RequireLogin)) {
+    <Index_App  />
 }
 
 @code {
@@ -12,6 +12,8 @@
 
     protected bool _loadedData = false;
     protected string _pageName = "home";
+
+    protected Index_App AppModule = new Index_App();
 
     public void Dispose()
     {
@@ -25,7 +27,7 @@
         }
 
         if (Model.Loaded) {
-            if (Model.LoggedIn) {
+            if (Model.LoggedIn || !AppModule.RequireLogin) {
                 if (!_loadedData) {
                     _loadedData = true;
                     await Helpers.ValidateUrl(TenantCode, true);

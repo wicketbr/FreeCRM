@@ -877,6 +877,13 @@
                                         case "SETUP":
                                             allowAnonymousAccess = true;
                                             break;
+
+                                        case "HOME":
+                                            var appIndexPage = new Index_App();
+                                            if (!appIndexPage.RequireLogin) {
+                                                allowAnonymousAccess = true;
+                                            }
+                                            break;
                                     }
                                 }
                             }

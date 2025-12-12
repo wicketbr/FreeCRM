@@ -24,10 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Plugins\ExampleBackgroundProcess.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
