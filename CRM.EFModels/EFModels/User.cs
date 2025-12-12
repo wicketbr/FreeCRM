@@ -35,11 +35,13 @@ public partial class User
 
     public bool Admin { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public bool CanBeScheduled { get; set; }
+    public bool ManageAppointments { get; set; }
+    // {{ModuleItemStart:Appointments}}
 
     public bool ManageFiles { get; set; }
 
-    public bool ManageAppointments { get; set; }
 
     public string? Password { get; set; }
 

@@ -180,8 +180,10 @@ namespace CRM
             var policies = new List<string> {
                 "AppAdmin",
                 "Admin",
+                // {{ModuleItemStart:Appointments}}
                 "CanBeScheduled",
                 "ManageAppointments",
+                // {{ModuleItemEnd:Appointments}}
                 "ManageFiles",
                 "PreventPasswordChange",
             };

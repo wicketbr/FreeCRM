@@ -542,9 +542,11 @@ public partial class DataObjects
         public string? LastLoginSource { get; set; }
         public bool Admin { get; set; }
         public bool AppAdmin { get; set; }
+        // {{ModuleItemStart:Appointments}}
         public bool CanBeScheduled { get; set; }
-        public bool ManageFiles { get; set; }
         public bool ManageAppointments { get; set; }
+        // {{ModuleItemEnd:Appointments}}
+        public bool ManageFiles { get; set; }
         public string? Password { get; set; }
         public bool PreventPasswordChange { get; set; }
         public int FailedLoginAttempts { get; set; }

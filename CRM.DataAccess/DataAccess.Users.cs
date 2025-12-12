@@ -101,8 +101,10 @@ public partial class DataAccess
         rec.LastName = EmailAddress;
         rec.LastModified = now;
         rec.PreventPasswordChange = false;
+        // {{ModuleItemStart:Appointments}}
         rec.CanBeScheduled = output.CanBeScheduled;
         rec.ManageAppointments = output.ManageAppointments;
+        // {{ModuleItemEnd:Appointments}}
         rec.ManageFiles = output.ManageFiles;
         rec.TenantId = TenantId;
         rec.UserId = UserId;
@@ -692,7 +694,10 @@ public partial class DataAccess
                 TenantId = GuidValue(rec.TenantId),
                 Admin = rec.Admin,
                 AppAdmin = output.AppAdmin,
+                // {{ModuleItemStart:Appointments}}
                 CanBeScheduled = rec.CanBeScheduled,
+                ManageAppointments = rec.ManageAppointments,
+                // {{ModuleItemEnd:Appointments}}
                 DepartmentId = GuidValue(rec.DepartmentId),
                 DepartmentName = rec.DepartmentId.HasValue && rec.Department != null
                     ? rec.Department.DepartmentName
@@ -710,7 +715,6 @@ public partial class DataAccess
                 LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 LastName = rec.LastName,
                 Location = rec.Location,
-                ManageAppointments = rec.ManageAppointments,
                 ManageFiles = rec.ManageFiles,
                 Title = rec.Title,
                 UserId = rec.UserId,
@@ -742,7 +746,9 @@ public partial class DataAccess
             }
 
             if (output.Admin) {
+                // {{ModuleItemStart:Appointments}}
                 output.ManageAppointments = true;
+                // {{ModuleItemEnd:Appointments}}
                 output.ManageFiles = true;
             }
 
@@ -1284,7 +1290,10 @@ public partial class DataAccess
                     Added = rec.Added,
                     //AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     Admin = rec.Admin,
+                    // {{ModuleItemStart:Appointments}}
                     CanBeScheduled = rec.CanBeScheduled,
+                    ManageAppointments = rec.ManageAppointments,
+                    // {{ModuleItemEnd:Appointments}}
                     DepartmentId = rec.DepartmentId,
                     DepartmentName = rec.DepartmentId.HasValue && rec.Department != null ? rec.Department.DepartmentName : String.Empty,
                     Email = rec.Email,
@@ -1296,7 +1305,6 @@ public partial class DataAccess
                     LastLogin = rec.LastLogin,
                     LastLoginSource = rec.LastLoginSource,
                     LastName = rec.LastName,
-                    ManageAppointments = rec.ManageAppointments,
                     ManageFiles = rec.ManageFiles,
                     Phone = rec.Phone,
                     UserId = rec.UserId,
@@ -1540,7 +1548,10 @@ public partial class DataAccess
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     TenantId = TenantId,
                     Admin = rec.Admin,
+                    // {{ModuleItemStart:Appointments}}
                     CanBeScheduled = rec.CanBeScheduled,
+                    ManageAppointments = rec.ManageAppointments,
+                    // {{ModuleItemEnd:Appointments}}
                     DepartmentId = rec.DepartmentId.HasValue ? (Guid)rec.DepartmentId : (Guid?)null,
                     DepartmentName = rec.DepartmentId.HasValue && rec.Department != null ? rec.Department.DepartmentName : String.Empty,
                     Email = rec.Email,
@@ -1552,7 +1563,6 @@ public partial class DataAccess
                     LastLogin = rec.LastLogin,
                     LastLoginSource = rec.LastLoginSource,
                     LastName = rec.LastName,
-                    ManageAppointments = rec.ManageAppointments,
                     ManageFiles = rec.ManageFiles,
                     Photo = await GetUserPhoto(rec.UserId),
                     UserId = rec.UserId,
@@ -1975,8 +1985,10 @@ public partial class DataAccess
 
         rec.Enabled = output.Enabled;
         rec.Admin = output.Admin;
+        // {{ModuleItemStart:Appointments}}
         rec.CanBeScheduled = output.CanBeScheduled;
         rec.ManageAppointments = output.ManageAppointments;
+        // {{ModuleItemEnd:Appointments}}
         rec.ManageFiles = output.ManageFiles;
         rec.PreventPasswordChange = output.PreventPasswordChange;
 
@@ -2118,8 +2130,10 @@ public partial class DataAccess
 
         rec.Enabled = user.Enabled;
         rec.Admin = user.Admin;
+        // {{ModuleItemStart:Appointments}}
         rec.CanBeScheduled = user.CanBeScheduled;
         rec.ManageAppointments = user.ManageAppointments;
+        // {{ModuleItemEnd:Appointments}}
         rec.ManageFiles = user.ManageFiles;
         rec.PreventPasswordChange = user.PreventPasswordChange;
 
@@ -2491,14 +2505,16 @@ public partial class DataAccess
                     var u = new User {
                         Added = now,
                         Admin = false,
+                        // {{ModuleItemStart:Appointments}}
                         CanBeScheduled = false,
+                        ManageAppointments = false,
+                        // {{ModuleItemEnd:Appointments}}
                         Deleted = false,
                         Email = StringValue(user.Email),
                         Enabled = true,
                         FirstName = user.FirstName,
                         LastModified = now,
                         LastName = user.LastName,
-                        ManageAppointments = false,
                         ManageFiles = false,
                         Password = HashPassword(user.Password),
                         PreventPasswordChange = false,
@@ -2546,7 +2562,10 @@ public partial class DataAccess
                             Added = now,
                             UserId = Guid.NewGuid(),
                             TenantId = tenant.TenantId,
+                            // {{ModuleItemStart:Appointments}}
                             CanBeScheduled = user.CanBeScheduled,
+                            ManageAppointments = user.ManageAppointments,
+                            // {{ModuleItemEnd:Appointments}}
                             FirstName = user.FirstName,
                             LastName = user.LastName,
                             Email = user.Email,
@@ -2555,7 +2574,6 @@ public partial class DataAccess
                             EmployeeId = user.EmployeeId,
                             Enabled = true,
                             Admin = false,
-                            ManageAppointments = user.ManageAppointments,
                             ManageFiles = user.ManageFiles,
                             Password = user.Password,
                             PreventPasswordChange = false,

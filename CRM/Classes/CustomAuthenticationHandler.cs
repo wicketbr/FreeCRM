@@ -46,6 +46,7 @@ public static class CustomAuthorization
                 identity.AddClaim(new Claim(ClaimTypes.Role, Policies.AppAdmin));
             }
 
+            // {{ModuleItemStart:Appointments}}
             if (user.CanBeScheduled) {
                 identity.AddClaim(new Claim(ClaimTypes.Role, Policies.CanBeScheduled));
             }
@@ -53,6 +54,7 @@ public static class CustomAuthorization
             if (user.ManageAppointments) {
                 identity.AddClaim(new Claim(ClaimTypes.Role, Policies.ManageAppointments));
             }
+            // {{ModuleItemEnd:Appointments}}
 
             if (user.ManageFiles) {
                 identity.AddClaim(new Claim(ClaimTypes.Role, Policies.ManageFiles));
@@ -80,8 +82,10 @@ public static class Policies
 {
     public const string Admin = "Admin";
     public const string AppAdmin = "AppAdmin";
+    // {{ModuleItemStart:Appointments}}
     public const string CanBeScheduled = "CanBeScheduled";
-    public const string ManageFiles = "ManageFiles";
     public const string ManageAppointments = "ManageAppointments";
+    // {{ModuleItemEnd:Appointments}}
+    public const string ManageFiles = "ManageFiles";
     public const string PreventPasswordChange = "PreventPasswordChange";
 }
