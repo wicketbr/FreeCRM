@@ -511,12 +511,14 @@ public partial class DataMigrations
             
             """;
 
+        // {{ModuleItemStart:Appointments}}
         usersTable +=
             """
                     [CanBeScheduled] [bit] NOT NULL,
                     [ManageAppointments] [bit] NOT NULL,
             
             """;
+        // {{ModuleItemEnd:Appointments}}
 
         usersTable +=
             """
