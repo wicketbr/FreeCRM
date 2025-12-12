@@ -1948,20 +1948,6 @@ public partial class BlazorDataModel
     }
 
     /// <summary>
-    /// Indicates if a Custom Authentication Provider has been configured for the Admin account.
-    /// </summary>
-    public bool UseCustomAuthenticationProviderFromAdminAccount {
-        get { return _UseCustomAuthenticationProviderFromAdminAccount; }
-        set {
-            if (_UseCustomAuthenticationProviderFromAdminAccount != value) {
-                _UseCustomAuthenticationProviderFromAdminAccount = value;
-                _ModelUpdated = DateTime.Now;
-                NotifyDataChanged();
-            }
-        }
-    }
-
-    /// <summary>
     /// Indicates if the app is using the background processing queue.
     /// </summary>
     public bool UseBackgroundService {
@@ -1970,6 +1956,20 @@ public partial class BlazorDataModel
             if (_UseBackgroundService != value) {
                 _UseBackgroundService = value;
                 _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Indicates if a Custom Authentication Provider has been configured for the Admin account.
+    /// </summary>
+    public bool UseCustomAuthenticationProviderFromAdminAccount {
+        get { return _UseCustomAuthenticationProviderFromAdminAccount; }
+        set {
+            if (_UseCustomAuthenticationProviderFromAdminAccount != value) {
+                _UseCustomAuthenticationProviderFromAdminAccount = value;
+                _ModelUpdated = DateTime.Now;
                 NotifyDataChanged();
             }
         }

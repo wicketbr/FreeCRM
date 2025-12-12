@@ -5035,6 +5035,8 @@ public static partial class Helpers
                 Model.TenantId = Guid.Empty;
             }
 
+            Model.UseBackgroundService = blazorDataModelLoader.UseBackgroundService;
+
             await ReloadModelApp(blazorDataModelLoader);
 
             if (!Model.Loaded) {
