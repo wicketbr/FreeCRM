@@ -38,7 +38,7 @@ public partial class User
     // {{ModuleItemStart:Appointments}}
     public bool CanBeScheduled { get; set; }
     public bool ManageAppointments { get; set; }
-    // {{ModuleItemStart:Appointments}}
+    // {{ModuleItemEnd:Appointments}}
 
     public bool ManageFiles { get; set; }
 
