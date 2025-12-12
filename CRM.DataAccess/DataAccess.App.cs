@@ -678,6 +678,9 @@ public partial class DataAccess
                 //        ? recs.OrderBy(x => x.PROPERTY).ThenBy(x => x.FirstName).ThenBy(x => x.LastName)
                 //        : recs.OrderBy(x => x.PROPERTY).ThenBy(x => x.FirstName).ThenBy(x => x.LastName);
                 //    break;
+
+                default:
+                    break;
             }
         }
 

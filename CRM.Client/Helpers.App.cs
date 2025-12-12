@@ -31,6 +31,9 @@ public static partial class Helpers
                 //        .OrderBy(x => x.Name)
                 //        .ToList();
                 //    break;
+
+                default:
+                    break;
             }
         }
 
@@ -61,6 +64,9 @@ public static partial class Helpers
             //case "this":
             //    output = deletedRecords.That;
             //    break;
+
+            default:
+                break;
         }
 
         return output;
@@ -79,6 +85,9 @@ public static partial class Helpers
             //case "this":
             //    output = "That";
             //    break;
+
+            default:
+                break;
         }
 
         return output;

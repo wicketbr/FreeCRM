@@ -416,7 +416,7 @@
                                                                 <span>Show Service Name</span>
                                                             }
                                                         </td>
-                                                        <td width="1%;">
+                                                        <td style="width:1%;">
                                                             <input type="number" class="form-control fixed-100" @bind="service.Fee" />
                                                         </td>
                                                     </tr>
@@ -434,9 +434,11 @@
                         <!-- {{ModuleItemEnd:Services}} -->
                         <!-- {{ModuleItemStart:Tags}} -->
                         @if (Model.FeatureEnabledTags && Model.Tags != null && Model.Tags.Any(x => x.UseInAppointments == true)) {
+                            var tagsDisabled = !AvailableTags.Any();
+
                             <div id="tabApptTags" class="tab-pane" role="tabpanel" aria-labelledby="tabApptTagsButton">
                                 <div class="mb-2">
-                                    <select class="form-select" @onchange="AddTag" id="edit-appt-addTag" disabled="@(AvailableTags.Any() == false)">
+                                    <select class="form-select" @onchange="AddTag" id="edit-appt-addTag" disabled="@tagsDisabled">
                                         <option value=""><Language Tag="AddTag" /></option>
                                         @foreach (var tag in AvailableTags) {
                                             <option value="@tag.TagId">@tag.Name</option>
