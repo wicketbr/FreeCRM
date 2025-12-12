@@ -278,7 +278,7 @@ public partial class DataMigrations
             """);
         // {{ModuleItemEnd:Tags}}
 
-        m1.Add(
+        var usersTable =
             """
             CREATE TABLE IF NOT EXISTS `Users` (
                 `UserId` char(36) NOT NULL,
@@ -296,9 +296,19 @@ public partial class DataMigrations
                 `LastLogin` datetime NULL,
                 `LastLoginSource` varchar(50) NULL,
                 `Admin` tinyint(1) NOT NULL,
+            """;
+
+        // {{ModuleItemStart:Appointments}}
+        usersTable +=
+            """
                 `CanBeScheduled` tinyint(1) NOT NULL,
-                `ManageFiles` tinyint(1) NOT NULL,
                 `ManageAppointments` tinyint(1) NOT NULL,
+            """;
+        // {{ModuleItemEnd:Appointments}}
+
+        usersTable +=
+            """
+                `ManageFiles` tinyint(1) NOT NULL,
                 `Password` longtext NULL,
                 `PreventPasswordChange` tinyint(1) NOT NULL,
                 `FailedLoginAttempts` int NULL,
@@ -325,7 +335,9 @@ public partial class DataMigrations
                 CONSTRAINT `IX_Users_DepartmentId` FOREIGN KEY (`DepartmentId`) REFERENCES `Departments` (`DepartmentId`),
                 CONSTRAINT `IX_Users_TenantId` FOREIGN KEY (`TenantId`) REFERENCES `Tenants` (`TenantId`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-            """);
+            """;
+
+        m1.Add(usersTable);
 
         // {{ModuleItemStart:Appointments}}
         m1.Add(
