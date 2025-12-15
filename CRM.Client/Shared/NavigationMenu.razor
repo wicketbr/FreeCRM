@@ -97,6 +97,12 @@
                                 </ul>
                             </li>
                         }
+                    } else if (Model.Loaded) {
+                        <li class="nav-item">
+                            <a class="nav-link @(Model.View == "login" ? "active" : "")" href="@Helpers.BuildUrl("Login")">
+                                <Language Tag="Login" IncludeIcon="true" />
+                            </a>
+                        </li>
                     }
                 </ul>
                 <form class="d-flex">

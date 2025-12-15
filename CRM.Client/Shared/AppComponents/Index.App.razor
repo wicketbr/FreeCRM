@@ -18,12 +18,10 @@
             }
 
             @if (Model.LoggedIn) {
-                <Language Tag="Welcome" ReplaceSpaces="true" /> 
-                @Model.User.FirstName
+                <Language Tag="Welcome" ReplaceSpaces="true" /><span>&nbsp;</span>@Model.User.FirstName
             } else {
                 <Language Tag="Welcome" ReplaceSpaces="true" />
             }
-            
         </h1>
     }
 }

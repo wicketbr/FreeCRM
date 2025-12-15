@@ -446,7 +446,7 @@
         _loading = false;
         this.StateHasChanged();
 
-        await Helpers.DelayedFocus("edit-user-firstName");
+        await Helpers.DelayedFocus("edit-user-firstName-" + _user.UserId.ToString());
     }
 
     protected async Task ResetUserPassword(bool allAccounts = false)

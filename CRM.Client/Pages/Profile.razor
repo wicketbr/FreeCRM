@@ -175,7 +175,7 @@
             StateHasChanged();
         }
     }
-    
+
     protected async Task DeleteAvatarPhoto()
     {
         Model.ClearMessages();
@@ -216,6 +216,10 @@
         this.StateHasChanged();
 
         _loadingUser = false;
+
+        if (Model.AllowUsersToManageName) {
+            await Helpers.DelayedFocus("edit-profile-firstName");
+        }
     }
 
     protected async Task Save()
