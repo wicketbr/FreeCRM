@@ -22,6 +22,7 @@ public partial interface IDataAccess
     bool BooleanValue(bool? value);
     string BytesToFileSizeLabel(long? bytes, List<string>? labels = null);
     string CleanHtml(string? html);
+    IConfigurationHelper? ConfigurationHelper { get; }
     string ConnectionString(bool full = false);
     string ConnectionStringReport(string input);
     string CookiePrefix { get; }
@@ -279,6 +280,18 @@ public partial class DataAccess
             }
         }
         return output;
+    }
+
+    public IConfigurationHelper? ConfigurationHelper {
+        get {
+            IConfigurationHelper? output = null;
+
+            if (_serviceProvider != null) {
+                output = _serviceProvider.GetRequiredService<IConfigurationHelper>();
+            }
+
+            return output;
+        }
     }
 
     private List<string> ConcatenateErrorMessages(DataObjects.User ReportedBy,
