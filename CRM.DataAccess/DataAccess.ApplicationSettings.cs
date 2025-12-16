@@ -22,7 +22,7 @@ public partial class DataAccess
             ShowTenantListingWhenMissingTenantCode = ShowTenantListingWhenMissingTenantCode,
         };
 
-        return output;
+        return GetApplicationSettingsApp(output);
     }
 
     public async Task<DataObjects.ApplicationSettings> SaveApplicationSettings(DataObjects.ApplicationSettings settings, DataObjects.User CurrentUser)
@@ -30,6 +30,7 @@ public partial class DataAccess
         DataObjects.ApplicationSettings output = settings;
         output.ActionResponse = GetNewActionResponse();
 
+        var originalJson = SerializeObject(AppSettings);
         DataObjects.ApplicationSettingsUpdate originalValues = new DataObjects.ApplicationSettingsUpdate {
             ApplicationURL = ApplicationURL,
             DefaultTenantCode = DefaultTenantCode,
@@ -86,25 +87,29 @@ public partial class DataAccess
             }
         }
 
+        output = await SaveApplicationSettingsApp(output, CurrentUser);
+        var updatedJson = SerializeObject(AppSettings);
+
         if (output.ActionResponse.Result) {
             // Get a fresh copy of the settings to return
             output = GetApplicationSettings();
         }
 
-        DataObjects.ApplicationSettingsUpdate updatedValues = new DataObjects.ApplicationSettingsUpdate {
+        DataObjects.ApplicationSettingsUpdate updatedValues = GetApplicationSettingsUpdateApp(new DataObjects.ApplicationSettingsUpdate {
             ApplicationURL = ApplicationURL,
             DefaultTenantCode = DefaultTenantCode,
             MaintenanceMode = MaintenanceMode,
             ShowTenantListingWhenMissingTenantCode = ShowTenantListingWhenMissingTenantCode,
             UseTenantCodeInUrl = UseTenantCodeInUrl,
-        };
+        });
 
         if (
             originalValues.ApplicationURL != updatedValues.ApplicationURL ||
             originalValues.DefaultTenantCode != updatedValues.DefaultTenantCode ||
             originalValues.MaintenanceMode != updatedValues.MaintenanceMode ||
             originalValues.ShowTenantListingWhenMissingTenantCode != updatedValues.ShowTenantListingWhenMissingTenantCode ||
-            originalValues.UseTenantCodeInUrl != updatedValues.UseTenantCodeInUrl
+            originalValues.UseTenantCodeInUrl != updatedValues.UseTenantCodeInUrl ||
+            originalJson != updatedJson
             ) {
 
             // A value has changed that clients need to be aware of. Send out a signalr message to every tenant.

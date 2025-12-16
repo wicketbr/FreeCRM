@@ -205,6 +205,29 @@ public partial class DataAccess
     }
 
     /// <summary>
+    /// Called by the GetApplicationSettings method to load any app-specific settings into the ApplicationSettings object.
+    /// </summary>
+    /// <param name="settings">The ApplicationSettings object.</param>
+    /// <returns>The object with any updates for your app.</returns>
+    private DataObjects.ApplicationSettings GetApplicationSettingsApp(DataObjects.ApplicationSettings settings)
+    {
+        // Add any app-specific settings here.
+
+        return settings;
+    }
+
+    /// <summary>
+    /// Called by the AppSettings property get load any app-specific settings into the ApplicationSettingsUpdate object.
+    /// </summary>
+    /// <param name="settings">The current ApplicationSettingsUpdate object.</param>
+    /// <returns>The object with any updates from your app.</returns>
+    private DataObjects.ApplicationSettingsUpdate GetApplicationSettingsUpdateApp(DataObjects.ApplicationSettingsUpdate settings)
+    {
+        // Any any app-specific settings for the ApplicationSettingsUpdate object here.
+        return settings;
+    }
+
+    /// <summary>
     /// Called by the main GetBlazorDataModel method to load any app-specific data into the Blazor data model.
     /// </summary>
     /// <param name="CurrentUser">The User object for the current user, if loaded.</param>
@@ -493,6 +516,20 @@ public partial class DataAccess
         //   }
 
         return output;
+    }
+
+    /// <summary>
+    /// Called by the main SaveApplicationSettings method to save any app-specific settings from the ApplicationSettings object.
+    /// </summary>
+    /// <param name="settings">The ApplicationSettings object.</param>
+    /// <param name="CurrentUser">The User object for the current user.</param>
+    /// <returns>The updated ApplicationSettings object.</returns>
+    private async Task<DataObjects.ApplicationSettings> SaveApplicationSettingsApp(DataObjects.ApplicationSettings settings, DataObjects.User CurrentUser)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        // Add any app-specific settings here.
+        return settings;
     }
 
     /// <summary>

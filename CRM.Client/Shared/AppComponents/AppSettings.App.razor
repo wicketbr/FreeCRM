@@ -1,0 +1,86 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+
+
+
+    // This component is used to display application-specific settings on the AppSettings page.
+    // Enabled must be set to true for any of these to render.
+
+    switch(Helpers.StringLower(Area)) {
+        case "top":
+            break;
+
+        case "tenantcodes":
+            break;
+
+        case "mailserver":
+            break;
+
+        case "bottom":
+        default:
+            break;
+    }
+}
+
+@code {
+    /// <summary>
+    /// If left as False, this component will not be rendered.
+    /// </summary>
+    [Parameter] public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// Used to show app settings in the various tabs of the Settings page.
+    /// </summary>
+    [Parameter] public string? Area { get; set; }
+
+    /// <summary>
+    /// The Tenant object bound with the @bind-Value directive.
+    /// </summary>
+    [Parameter] public DataObjects.ApplicationSettings Value { get; set; } = new DataObjects.ApplicationSettings();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.ApplicationSettings> ValueChanged { get; set; }
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    // protected override void OnAfterRender(bool firstRender)
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected override void OnParametersSet()
+    // {
+    //     RenderComponent();
+    // }
+
+    // protected void RenderComponent()
+    // {
+    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
+    // }
+
+    public DataObjects.ModuleAction Save(DataObjects.ApplicationSettings appSettings) {
+        var output = new DataObjects.ModuleAction { Result = true };
+
+        // Perform and pre-save checks here. Return false if there is an error and include any error messages.
+        // Optionally set the focus to a specific field by setting output.FocusField to the field element id.
+
+        return output;
+    }
+
+    protected void ValueHasChanged() {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}

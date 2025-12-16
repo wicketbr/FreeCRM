@@ -207,13 +207,15 @@ public partial class DataAccess
     private DataObjects.ApplicationSettingsUpdate AppSettings
     {
         get {
-            return new DataObjects.ApplicationSettingsUpdate {
+            var output = new DataObjects.ApplicationSettingsUpdate {
                 ApplicationURL = ApplicationURL,
                 DefaultTenantCode = DefaultTenantCode,
                 MaintenanceMode = MaintenanceMode,
                 ShowTenantListingWhenMissingTenantCode = ShowTenantListingWhenMissingTenantCode,
                 UseTenantCodeInUrl = UseTenantCodeInUrl,
             };
+
+            return GetApplicationSettingsUpdateApp(output);
         }
     }
 
