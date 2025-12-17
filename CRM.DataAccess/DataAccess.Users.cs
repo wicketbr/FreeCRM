@@ -164,8 +164,10 @@ public partial class DataAccess
                     await data.Database.ExecuteSqlRawAsync("UPDATE Departments SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE Departments SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
 
+                    // {{ModuleItemStart:EmailTemplates}}
                     await data.Database.ExecuteSqlRawAsync("UPDATE EmailTemplates SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE EmailTemplates SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
+                    // {{ModuleItemEnd:EmailTemplates}}
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE FileStorage SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE FileStorage SET UploadedBy={0} WHERE UploadedBy={1}", displayName, UserId.ToString());

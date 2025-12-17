@@ -1,6 +1,7 @@
 using CRM.Client.Pages;
 using CRM.Components;
 using CRM.Server.Hubs;
+using Radzen;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
@@ -14,6 +15,11 @@ namespace CRM
             var builder = AppModifyBuilderStart(WebApplication.CreateBuilder(args));
 
             builder.Services.AddControllersWithViews();
+
+            builder.Services.AddRadzenComponents();
+            builder.Services.AddScoped<Radzen.DialogService>();
+            builder.Services.AddScoped<Radzen.NotificationService>();
+            builder.Services.AddScoped<Radzen.ThemeService>();
 
             var isDevelopment = builder.Environment.IsDevelopment();
             if (!isDevelopment) {

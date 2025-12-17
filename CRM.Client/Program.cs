@@ -17,6 +17,9 @@ namespace CRM.Client
             builder.Services.AddBlazorBootstrap();
             builder.Services.AddMudServices();
             builder.Services.AddRadzenComponents();
+            builder.Services.AddScoped<Radzen.DialogService>();
+            builder.Services.AddScoped<Radzen.NotificationService>();
+            builder.Services.AddScoped<Radzen.ThemeService>();
 
             await builder.Build().RunAsync();
         }
