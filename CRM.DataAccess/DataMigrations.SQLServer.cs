@@ -488,7 +488,7 @@ public partial class DataMigrations
             END
             """);
 
-        m1.Add(
+        var usersTable =
             """
             IF OBJECT_ID(N'[Users]') IS NULL
             BEGIN
@@ -508,9 +508,21 @@ public partial class DataMigrations
                     [LastLogin] [datetime] NULL,
                     [LastLoginSource] [nvarchar](50) NULL,
                     [Admin] [bit] NOT NULL,
+            
+            """;
+
+        // {{ModuleItemStart:Appointments}}
+        usersTable +=
+            """
                     [CanBeScheduled] [bit] NOT NULL,
-                    [ManageFiles] [bit] NOT NULL,
                     [ManageAppointments] [bit] NOT NULL,
+            
+            """;
+        // {{ModuleItemEnd:Appointments}}
+
+        usersTable +=
+            """
+                    [ManageFiles] [bit] NOT NULL,
                     [Password] [nvarchar](max) NULL,
                     [PreventPasswordChange] [bit] NOT NULL,
                     [FailedLoginAttempts] [int] NULL,
@@ -537,7 +549,9 @@ public partial class DataMigrations
                     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
                 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
             END
-            """);
+            """;
+
+        m1.Add(usersTable);
 
         // {{ModuleItemStart:Appointments}}
         m1.Add(

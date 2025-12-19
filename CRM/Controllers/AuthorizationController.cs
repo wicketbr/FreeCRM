@@ -306,7 +306,10 @@ public class AuthorizationController : ControllerBase
                                             Added = now,
                                             AddedBy = Source,
                                             Admin = false,
+                                            // {{ModuleItemStart:Appointments}}
                                             CanBeScheduled = false,
+                                            ManageAppointments = false,
+                                            // {{ModuleItemEnd:Appointments}}
                                             Deleted = false,
                                             Email = preferredUsername,
                                             FirstName = givenName,
@@ -314,7 +317,6 @@ public class AuthorizationController : ControllerBase
                                             LastModified = now,
                                             LastModifiedBy = Source,
                                             LastName = familyName,
-                                            ManageAppointments = false,
                                             ManageFiles = false,
                                             PreventPasswordChange = false,
                                             Source = Source,

@@ -109,6 +109,7 @@ public partial class DataObjects
         public DateOnly Released { get; set; } = DateOnly.FromDateTime(DateTime.Now);
         public Guid TenantId { get; set; } = Guid.Empty;
         public List<Tenant> Tenants { get; set; } = new List<Tenant>();
+        public bool UseBackgroundService { get; set; }
         public bool UseCustomAuthenticationProviderFromAdminAccount { get; set; }
         public User User { get; set; } = new User();
         public List<User> Users { get; set; } = new List<User>();
@@ -541,9 +542,11 @@ public partial class DataObjects
         public string? LastLoginSource { get; set; }
         public bool Admin { get; set; }
         public bool AppAdmin { get; set; }
+        // {{ModuleItemStart:Appointments}}
         public bool CanBeScheduled { get; set; }
-        public bool ManageFiles { get; set; }
         public bool ManageAppointments { get; set; }
+        // {{ModuleItemEnd:Appointments}}
+        public bool ManageFiles { get; set; }
         public string? Password { get; set; }
         public bool PreventPasswordChange { get; set; }
         public int FailedLoginAttempts { get; set; }

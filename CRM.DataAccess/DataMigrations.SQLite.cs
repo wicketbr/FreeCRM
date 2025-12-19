@@ -264,7 +264,7 @@ public partial class DataMigrations
             """);
         // {{ModuleItemEnd:Tags}}
 
-        m1.Add(
+        var usersTable =
             """
             CREATE TABLE IF NOT EXISTS "Users" (
                 "UserId" TEXT NOT NULL CONSTRAINT "PK_Users" PRIMARY KEY,
@@ -282,9 +282,21 @@ public partial class DataMigrations
                 "LastLogin" datetime NULL,
                 "LastLoginSource" TEXT NULL,
                 "Admin" INTEGER NOT NULL,
+            
+            """;
+
+        // {{ModuleItemStart:Appointments}}
+        usersTable +=
+            """
                 "CanBeScheduled" INTEGER NOT NULL,
-                "ManageFiles" INTEGER NOT NULL,
                 "ManageAppointments" INTEGER NOT NULL,
+            
+            """;
+        // {{ModuleItemEnd:Appointments}}
+
+        usersTable +=
+            """
+                "ManageFiles" INTEGER NOT NULL,
                 "Password" TEXT NULL,
                 "PreventPasswordChange" INTEGER NOT NULL,
                 "FailedLoginAttempts" INTEGER NULL,
@@ -310,7 +322,9 @@ public partial class DataMigrations
                 CONSTRAINT "IX_Users_DepartmentId" FOREIGN KEY ("DepartmentId") REFERENCES "Departments" ("DepartmentId"),
                 CONSTRAINT "IX_Users_TenantId" FOREIGN KEY ("TenantId") REFERENCES "Tenants" ("TenantId")
             )
-            """);
+            """;
+
+        m1.Add(usersTable);
 
         // {{ModuleItemStart:Appointments}}
         m1.Add(

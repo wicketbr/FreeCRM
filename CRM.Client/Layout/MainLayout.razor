@@ -178,8 +178,11 @@
     <a class="dismiss">X</a>
 </div>
 
+<RadzenComponents />
+@*
 <RadzenDialog />
 <RadzenTooltip />
+*@
 
 @code {
     private bool hubConfigured = false;
@@ -876,6 +879,13 @@
                                         case "PROCESSLOGIN":
                                         case "SETUP":
                                             allowAnonymousAccess = true;
+                                            break;
+
+                                        case "HOME":
+                                            var appIndexPage = new Index_App();
+                                            if (!appIndexPage.RequireLogin) {
+                                                allowAnonymousAccess = true;
+                                            }
                                             break;
                                     }
                                 }

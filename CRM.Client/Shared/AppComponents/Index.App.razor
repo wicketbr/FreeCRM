@@ -2,7 +2,7 @@
 @using Humanizer
 @inject BlazorDataModel Model
 
-@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+@if (Model.Loaded && Model.View == _pageName && (Model.LoggedIn || !RequireLogin)) {
     if (Model.Tenant.TenantSettings.LogoIncludedOnHomePage && !String.IsNullOrWhiteSpace(LogoUrl)) {
         <div class="home-page-logo-container">
             <img src="@LogoUrl" class="logo-homepage" />
@@ -16,12 +16,23 @@
             @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
                 <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
             }
-            <Language Tag="Welcome" ReplaceSpaces="true" /> @Model.User.FirstName
+
+            @if (Model.LoggedIn) {
+                <Language Tag="Welcome" ReplaceSpaces="true" /><span>&nbsp;</span>@Model.User.FirstName
+            } else {
+                <Language Tag="Welcome" ReplaceSpaces="true" />
+            }
         </h1>
     }
 }
 
 @code {
+    /// <summary>
+    /// By default the home page of the app will require login.
+    /// You can change this by setting RequireLogin to false.
+    /// </summary>
+    public bool RequireLogin { get; set; } = false;
+
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected string _pageName = "home";
@@ -37,7 +48,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Model.Loaded && Model.LoggedIn) {
+        if (Model.Loaded && (Model.LoggedIn || !RequireLogin)) {
             if (!_loadedData) {
                 _loadedData = true;
                 await LoadData();

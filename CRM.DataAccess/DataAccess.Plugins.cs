@@ -33,14 +33,29 @@ public partial class DataAccess
         }
 
         if (!String.IsNullOrWhiteSpace(code)) {
+            bool appendArgumentObjects = true;
             object[] objectArguments = new object[] { this, request.Plugin, CurrentUser != null ? CurrentUser : new DataObjects.User() };
 
-            // Auth types don't include the CurrentUser object.
-            if (request.Plugin.Type.ToLower() == "auth") {
-                objectArguments = new object[] { this, request.Plugin };
+            // Certain types don't include the CurrentUser object.
+            switch (request.Plugin.Type.ToLower()) {
+                case "auth":
+                    objectArguments = new object[] { this, request.Plugin };
+                    break;
+
+                case "backgroundprocess":
+                    long iteration = 0;
+                    try {
+                        if (request.Objects != null && request.Objects.Count() > 0) {
+                            iteration = (long)request.Objects[0];
+                        }
+                    } catch { }
+
+                    objectArguments = new object[] { this, request.Plugin, iteration };
+                    appendArgumentObjects = false;
+                    break;
             }
 
-            if (request.Objects != null) {
+            if (request.Objects != null && appendArgumentObjects) {
                 objectArguments = objectArguments.Concat(request.Objects).ToArray();
             }
 

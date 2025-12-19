@@ -4,6 +4,7 @@
 
 public partial interface IDataAccess
 {
+    Task<DataObjects.BooleanResponse> ProcessBackgroundTasksApp(Guid TenantId, long Iteration);
     DataObjects.BooleanResponse YourMethod();
 }
 
@@ -201,6 +202,29 @@ public partial class DataAccess
         output.Result = output.Messages.Count == 0;
 
         return output;
+    }
+
+    /// <summary>
+    /// Called by the GetApplicationSettings method to load any app-specific settings into the ApplicationSettings object.
+    /// </summary>
+    /// <param name="settings">The ApplicationSettings object.</param>
+    /// <returns>The object with any updates for your app.</returns>
+    private DataObjects.ApplicationSettings GetApplicationSettingsApp(DataObjects.ApplicationSettings settings)
+    {
+        // Add any app-specific settings here.
+
+        return settings;
+    }
+
+    /// <summary>
+    /// Called by the AppSettings property get load any app-specific settings into the ApplicationSettingsUpdate object.
+    /// </summary>
+    /// <param name="settings">The current ApplicationSettingsUpdate object.</param>
+    /// <returns>The object with any updates from your app.</returns>
+    private DataObjects.ApplicationSettingsUpdate GetApplicationSettingsUpdateApp(DataObjects.ApplicationSettingsUpdate settings)
+    {
+        // Any any app-specific settings for the ApplicationSettingsUpdate object here.
+        return settings;
     }
 
     /// <summary>
@@ -465,6 +489,50 @@ public partial class DataAccess
     }
 
     /// <summary>
+    /// Called by the background processor to process any app-specific background tasks.
+    /// </summary>
+    /// <param name="TenantId">The tenant id being processed.</param>
+    /// <returns>A BooleanResponse object.</returns>
+    public async Task<DataObjects.BooleanResponse> ProcessBackgroundTasksApp(Guid TenantId, long Iteration)
+    {
+        var output = new DataObjects.BooleanResponse();
+
+        // Process any background tasks specific to your app here.
+        // Return output.Result = true if all tasks were processed successfully.
+        // Otherwise, add any error messages to output.Messages and set output.Result = false.
+        output.Result = true;
+
+        // You can use the iterations to control various intervals. For example, if you have the ProcessingIntervalSeconds set to 10 seconds
+        // in the appsettings.json file, you could make a task run every minute like this:
+        //   if (Iteration % 6 == 0) {
+        //      your task code here.
+        //   }
+
+        // You could also use the settings to store info in the database about the last time a process ran.
+        //   var lastRun = GetSetting<DateTime>("MyCustomProcessLastRunDate", DataObjects.SettingType.DateTime);
+        //   if (lastRun == default(DateTime) || lastRun < DateTime.UtcNow.AddMinutes(-10)) {
+        //       // Run your code
+        //       SaveSetting("MyCustomProcessLastRunDate", DataObjects.SettingType.DateTime, DateTime.UtcNow);
+        //   }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Called by the main SaveApplicationSettings method to save any app-specific settings from the ApplicationSettings object.
+    /// </summary>
+    /// <param name="settings">The ApplicationSettings object.</param>
+    /// <param name="CurrentUser">The User object for the current user.</param>
+    /// <returns>The updated ApplicationSettings object.</returns>
+    private async Task<DataObjects.ApplicationSettings> SaveApplicationSettingsApp(DataObjects.ApplicationSettings settings, DataObjects.User CurrentUser)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        // Add any app-specific settings here.
+        return settings;
+    }
+
+    /// <summary>
     /// This is called by various Save methods to map any app-specific fields from the data object to the EF model object.
     /// </summary>
     /// <param name="Rec">The EF record object being updated.</param>
@@ -647,6 +715,9 @@ public partial class DataAccess
                 //        ? recs.OrderBy(x => x.PROPERTY).ThenBy(x => x.FirstName).ThenBy(x => x.LastName)
                 //        : recs.OrderBy(x => x.PROPERTY).ThenBy(x => x.FirstName).ThenBy(x => x.LastName);
                 //    break;
+
+                default:
+                    break;
             }
         }
 
