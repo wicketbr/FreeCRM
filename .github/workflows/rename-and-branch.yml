@@ -73,6 +73,9 @@ jobs:
           - name: FreeGLBA
             branch: FreeGLBA_base
             selections: 'keep:Tags'
+          - name: FreeTools
+            branch: FreeTools_base
+            selections: 'keep:all'
 
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
