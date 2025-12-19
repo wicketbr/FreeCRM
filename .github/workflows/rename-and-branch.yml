@@ -69,7 +69,7 @@ jobs:
             selections: 'remove:all'
           - name: AcademicCalendarPetitions
             branch: AcademicCalendarPetitions_base
-            selections: 'remove:all':
+            selections: 'remove:all'
           - name: FreeGLBA
             branch: FreeGLBA_base
             selections: 'keep:Tags'
