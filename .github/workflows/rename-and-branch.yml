@@ -75,7 +75,7 @@ jobs:
             selections: 'keep:Tags'
           - name: FreeTools
             branch: FreeTools_base
-            selections: 'keep:all'
+            selections: 'keep:Tags'
 
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
