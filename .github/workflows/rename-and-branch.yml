@@ -57,7 +57,7 @@ jobs:
             selections: 'remove:all'
           - name: FreeManager
             branch: FreeManager_base
-            selections: 'remove:all'
+            selections: 'keep:Tags'
           - name: PJProcessor
             branch: PJProcessor_base
             selections: 'remove:all'
