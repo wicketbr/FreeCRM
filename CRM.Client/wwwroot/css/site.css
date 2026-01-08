@@ -1008,7 +1008,7 @@ h1.block {
 }
 
 .appointment-calendar {
-    height:calc(100vh - 125px);
+    height:calc(100vh - 125px) !important;
 }
 
 .appointment-calendar.full-height {
