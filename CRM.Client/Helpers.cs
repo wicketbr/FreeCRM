@@ -3160,12 +3160,49 @@ public static partial class Helpers
     /// <returns>The number or zero.</returns>
     public static int GuidToInt(Guid? guid)
     {
-        int output = 0;
+        return GuidToNumber<int>(guid);
+    }
+
+    /// <summary>
+    /// Converts a Guid that is in the number format back to a number.
+    /// </summary>
+    /// <typeparam name="T">The type of object to return.</typeparam>
+    /// <param name="guid">A Guid that might be in the number format.</param>
+    /// <returns>The number or zero as type T.</returns>
+    public static T GuidToNumber<T>(Guid? guid)
+    {
+        T output = default(T);
 
         if (guid.HasValue) {
-            try {
-                output = Convert.ToInt32(((Guid)guid).ToString().Replace("-", ""));
-            } catch { }
+            var g = guid.Value.ToString().Replace("-", "");
+            if (!String.IsNullOrWhiteSpace(g)) {
+                try {
+                    if (typeof(T) == typeof(int)) {
+                        output = (T)(object)(Convert.ToInt32(g));
+                    } else if (typeof(T) == typeof(long)) {
+                        long l = 0;
+                        long.TryParse(g, out l);
+                        output = (T)(object)(l);
+                    } else if (typeof(T) == typeof(uint)) {
+                        uint u = 0;
+                        uint.TryParse(g, out u);
+                        output = (T)(object)(u);
+                    } else if (typeof(T) == typeof(ulong)) {
+                        ulong ul = 0;
+                        ulong.TryParse(g, out ul);
+                        output = (T)(object)(ul);
+                    } else if (typeof(T) == typeof(System.Numerics.BigInteger)) {
+                        System.Numerics.BigInteger bi = 0;
+                        System.Numerics.BigInteger.TryParse(g, out bi);
+                        output = (T)(object)(bi);
+                    }
+
+                } catch { }
+            }
+        }
+
+        if (output == null) {
+            output = (T)(object)(0);
         }
 
         return output;

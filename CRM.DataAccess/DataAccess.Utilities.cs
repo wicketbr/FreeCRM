@@ -59,6 +59,8 @@ public partial interface IDataAccess
     Guid GuidFromNumber(int number);
     Guid GuidFromNumber(long number);
     Guid GuidFromNumber(double number);
+    int GuidToInt(Guid? guid);
+    T GuidToNumber<T>(Guid? guid);
     Guid GuidValue(Guid? guid);
     string HashPassword(string? password);
     public bool HashPasswordValidate(string? password, string? hashedPassword);
@@ -1520,6 +1522,50 @@ public partial class DataAccess
         try {
             output = new Guid(FormatStringAsGuid(guid));
         } catch { }
+
+        return output;
+    }
+
+    public int GuidToInt(Guid? guid)
+    {
+        return GuidToNumber<int>(guid);
+    }
+
+    public T GuidToNumber<T>(Guid? guid)
+    {
+        T output = default(T);
+
+        if (guid.HasValue) {
+            var g = guid.Value.ToString().Replace("-", "");
+            if (!String.IsNullOrWhiteSpace(g)) {
+                try {
+                    if (typeof(T) == typeof(int)) {
+                        output = (T)(object)(Convert.ToInt32(g));
+                    } else if (typeof(T) == typeof(long)) {
+                        long l = 0;
+                        long.TryParse(g, out l);
+                        output = (T)(object)(l);
+                    } else if (typeof(T) == typeof(uint)) {
+                        uint u = 0;
+                        uint.TryParse(g, out u);
+                        output = (T)(object)(u);
+                    } else if (typeof(T) == typeof(ulong)) {
+                        ulong ul = 0;
+                        ulong.TryParse(g, out ul);
+                        output = (T)(object)(ul);
+                    } else if (typeof(T) == typeof(System.Numerics.BigInteger)) {
+                        System.Numerics.BigInteger bi = 0;
+                        System.Numerics.BigInteger.TryParse(g, out bi);
+                        output = (T)(object)(bi);
+                    }
+
+                } catch { }
+            }
+        }
+
+        if (output == null) {
+            output = (T)(object)(0);
+        }
 
         return output;
     }
