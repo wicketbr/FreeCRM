@@ -76,7 +76,9 @@ jobs:
           - name: FreeTools
             branch: FreeTools_base
             selections: 'keep:Tags'
-
+          - name: FreePlugins
+            branch: FreePlugins_base
+            selections: 'keep:Tags'
     env:
       SELECTIONS:  ${{ matrix.project.selections }}
       APP_NAME:    ${{ matrix.project.name }}
