@@ -1,0 +1,549 @@
+﻿@* 
+===============================================================================
+TimerTest.razor  (Updated for .NET 9 / Blazor)
+
+Purpose
+- Demo a timer-driven dashboard that streams random category values into charts.
+
+What’s New (per your request)
+- Adjustable timer interval slider (1s–15s). Default = 5s. Live-updates the timer.
+- Pause / Resume button to stop/start the timer cleanly.
+- “Selective trimming”: existing charts still show only the most recent 30 points,
+  while a NEW chart (“Full History”) displays the entire timeline without trimming.
+
+Notes for Maintainers
+- Thread-safety: all mutation of rolling buffers happens inside a lock (_sync).
+- Trim policy: only “windowed” collections trim to MaxPoints (30). “*_All” keep full history.
+- Highcharts: uses FreeHighcharts wrappers. Each binding has a concise comment.
+- All non-obvious code has a one-line comment max.
+===============================================================================
+*@
+
+@page "/HighchartsTest"
+@page "/{TenantCode}/HighchartsTest"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+@if(Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    <h1>Timer Test Page</h1>
+
+    <!-- Controls: Interval slider + Pause/Resume -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-header"><strong>Timer Controls</strong></div>
+        <div class="card-body">
+            <div class="row align-items-center g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Interval: @_timerIntervalSeconds s (range 1–15)
+                    </label>
+                    <!-- HTML range for live adjustment; oninput keeps timer responsive -->
+                    <input type="range"
+                           class="form-range"
+                           min="1"
+                           max="15"
+                           step="1"
+                           @bind="_timerIntervalSeconds"
+                           @bind:event="oninput"
+                           @bind:after="ApplyIntervalFromSlider" />
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-sm @( _isPaused ? "btn-success" : "btn-warning")"
+                            @onclick="TogglePause">
+                        @(_isPaused ? "Resume" : "Pause")
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">
+                        Status: <span class="fw-semibold">@(_isPaused ? "Paused" : "Running")</span><br />
+                        Effective Interval: <span class="fw-semibold">@(_timer.Interval / 1000d) s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-2">
+        This page uses a timer.
+    </div>
+
+    <div class="mb-2">@_timerOutput</div>
+
+    <!-- Preload Highcharts resources once -->
+    <FreeHighcharts PreloadResources="true" @ref="_highcharts" />
+
+    <!-- Row 1: Categorical Column (per-category) + Pie (per-category share) -->
+    <div class="row">
+        <!-- Windowed (trimmed) Categorical Column -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Column (Categorical) — Categories × Last @MaxPoints</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-chart"></div>
+                    <!-- Binds to trimmed categorical series -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.Column"
+                                    ElementId="timer-chart"
+                                    ChartTitle="@("Per-Category Values (last " + MaxPoints + ")")"
+                                    ChartSubtitle="Timestamp vs per-category value 1–20"
+                                    yAxisText="Value"
+                                    SeriesCategories="_seriesCategories"
+                                    SeriesDataArrayItems="_seriesDataPerCategory" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Windowed (trimmed) Pie — category share over current window -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Pie — Category Share</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-pie"></div>
+                    <!-- Binds to trimmed pie items (window total %) -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.Pie"
+                                    ElementId="timer-pie"
+                                    ChartTitle="Category Contribution"
+                                    ChartSubtitle="@("Window: last " + @MaxPoints + " ticks")"
+                                    SeriesDataItems="_pieItems" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Line (datetime, multi-series) + Column (datetime, multi-series) — both windowed -->
+    <div class="row">
+        <!-- Windowed (trimmed) Line (datetime) — per category -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Zoomable Line (DateTime) — Per Category (Last @MaxPoints)</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-line"></div>
+                    <!-- Binds to trimmed XY per category -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.LineTimeSeries"
+                                    ElementId="timer-line"
+                                    ChartTitle="Random Value Over Time"
+                                    ChartSubtitle="Drag to zoom, click legend to toggle"
+                                    yAxisText="Value"
+                                    ShowZoomHint="true"
+                                    SeriesDataXYArrayItems="_seriesLineXYPerCategory" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Windowed (trimmed) Column (datetime) — per category -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Zoomable Column (DateTime) — Per Category (Last @MaxPoints)</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-col-timeseries"></div>
+                    <!-- Binds to trimmed XY per category -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.ColumnTimeSeries"
+                                    ElementId="timer-col-timeseries"
+                                    ChartTitle="Random Value Over Time"
+                                    ChartSubtitle="Drag to zoom"
+                                    yAxisText="Value"
+                                    ShowZoomHint="true"
+                                    SeriesDataXYArrayItems="_seriesColumnTsXYPerCategory" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Area Totals (windowed) + Pie with Drilldown (windowed) -->
+    <div class="row">
+        <!-- Windowed (trimmed) Area Totals -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Zoomable Area Totals (Gradient, Last @MaxPoints)</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-area-totals"></div>
+                    <!-- Binds to trimmed totals XY -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.AreaTotals"
+                                    ElementId="timer-area-totals"
+                                    ChartTitle="@("Cumulative Total (last " + MaxPoints + ")")"
+                                    ChartSubtitle="Drag to zoom"
+                                    yAxisText="Total"
+                                    ShowZoomHint="true"
+                                    SeriesDataXYArrayItems="_seriesAreaTotalsXY" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Windowed (trimmed) Pie with Drilldown -->
+        <div class="col-sm-6 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Pie with Drilldown — Category → Value Frequency (Last @MaxPoints)</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-pie-drilldown"></div>
+                    <!-- Binds to trimmed root/drilldown -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.PieWithDrilldown"
+                                    ElementId="timer-pie-drilldown"
+                                    ChartTitle="Breakdown by Category"
+                                    ChartSubtitle="Click a category slice to see value frequencies (1–20)"
+                                    PieRootItems="_pieRoot"
+                                    PieDrilldownItems="_pieDrilldown" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: NEW Full-History chart (no trimming) -->
+    <div class="row">
+        <div class="col-sm-12 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Zoomable Line (DateTime) — Full History (No Trim)</strong>
+                </div>
+                <div class="card-body">
+                    <div id="timer-line-full"></div>
+                    <!-- Binds to unbounded XY per category (tracks all values) -->
+                    <FreeHighcharts ChartType="FreeHighcharts.ChartTypes.LineTimeSeries"
+                                    ElementId="timer-line-full"
+                                    ChartTitle="Full Timeline — Random Value Over Time"
+                                    ChartSubtitle="All points since page load (drag to zoom)"
+                                    yAxisText="Value"
+                                    ShowZoomHint="true"
+                                    SeriesDataXYArrayItems="_seriesLineXYPerCategory_All" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    // Page state
+    protected string _pageName = "highchartstest";
+    protected bool _loadedData = false;
+
+    // Timer + controls
+    protected System.Timers.Timer _timer = new(5000); // default 5s
+    private readonly object _sync = new();            // lock for all shared lists
+    private Random _rng = new();                      // simple RNG for demo
+
+    private int _timerIntervalSeconds = 5;            // bound to slider (1..15)
+    private bool _isPaused = false;                   // pause/resume state
+    protected string _timerOutput = "";               // last tick summary line
+
+    // Categories simulated on each tick
+    private readonly string[] _catNames = new[] { "Alpha", "Beta", "Gamma" };
+
+    // FreeHighcharts
+    protected FreeHighcharts _highcharts = null!;
+    private const int MaxPoints = 30;                 // window size for trimmed charts
+    private const int MaxPointsXY = MaxPoints;        // same window size for XY
+
+    // --- Backing stores (rolling window, trimmed to MaxPoints) ---
+    private readonly List<string> _categories = new();                 // categorical x-axis labels (HH:MM:SS)
+    private readonly Dictionary<string, List<decimal>> _perCatValues = new();   // categorical values per category
+    private readonly Dictionary<string, List<long[]>> _perCatXY = new();        // time-series per category (trimmed)
+    private readonly List<long[]> _xyTotals = new();                              // total cumulative XY (trimmed)
+    private int _runningTotal = 0;                                               // running sum for totals
+
+    // --- Backing stores (full history, NO TRIM) ---
+    private readonly Dictionary<string, List<long[]>> _perCatXYAll = new();      // time-series per category (unbounded)
+    private readonly List<long[]> _xyTotalsAll = new();                           // total cumulative XY (unbounded)
+
+    // --- Bindings: Categorical Column (trimmed) ---
+    protected string[] _seriesCategories = Array.Empty<string>();
+    protected FreeHighcharts.SeriesDataArray[] _seriesDataPerCategory = Array.Empty<FreeHighcharts.SeriesDataArray>();
+
+    // --- Bindings: Line/Column (datetime) multi-series (trimmed) ---
+    protected FreeHighcharts.SeriesDataXYArray[] _seriesLineXYPerCategory = Array.Empty<FreeHighcharts.SeriesDataXYArray>();
+    protected FreeHighcharts.SeriesDataXYArray[] _seriesColumnTsXYPerCategory = Array.Empty<FreeHighcharts.SeriesDataXYArray>();
+
+    // --- Bindings: Area Totals (datetime, trimmed) ---
+    protected FreeHighcharts.SeriesDataXYArray[] _seriesAreaTotalsXY = Array.Empty<FreeHighcharts.SeriesDataXYArray>();
+
+    // --- Bindings: Pie (category share, trimmed) ---
+    protected FreeHighcharts.SeriesData[] _pieItems = Array.Empty<FreeHighcharts.SeriesData>();
+
+    // --- Bindings: Pie with Drilldown (trimmed) ---
+    protected FreeHighcharts.SeriesData[] _pieRoot = Array.Empty<FreeHighcharts.SeriesData>();
+    protected FreeHighcharts.DrilldownSeries[] _pieDrilldown = Array.Empty<FreeHighcharts.DrilldownSeries>();
+
+    // --- Bindings: NEW Full-History (unbounded) ---
+    protected FreeHighcharts.SeriesDataXYArray[] _seriesLineXYPerCategory_All = Array.Empty<FreeHighcharts.SeriesDataXYArray>();
+
+    // Dispose handlers and timer safely
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+        _timer.Elapsed -= TimerExecuted;
+        _timer.Dispose();
+        if(Model.Subscribers_OnChange.Contains(_pageName))
+            Model.Subscribers_OnChange.Remove(_pageName);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if(Model.Loaded) {
+            if(Model.LoggedIn) {
+                if(!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true); // validate tenant on first load
+                }
+            } else {
+                Helpers.NavigateToLogin(); // redirect unauthenticated users
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if(!Model.Subscribers_OnChange.Contains(_pageName)) {
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        // init per-category buffers for trimmed + full-history
+        foreach(var c in _catNames) {
+            _perCatValues[c] = new List<decimal>();
+            _perCatXY[c] = new List<long[]>();
+            _perCatXYAll[c] = new List<long[]>();
+        }
+
+        // Seed initial point so charts render with non-empty series
+        AddPoint(DateTime.Now, GenerateCategoryValues());
+
+        // Timer setup
+        _timer.AutoReset = true;
+        _timer.Elapsed += TimerExecuted;
+        _timer.Interval = _timerIntervalSeconds * 1000; // sync with slider default
+        _timer.Start();
+
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if(Model.View == _pageName) {
+            StateHasChanged(); // refresh UI when this page is active
+        }
+    }
+
+    // Called by timer thread — keep minimal work here, push UI refresh via InvokeAsync
+    private void TimerExecuted(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        if(_isPaused)
+            return; // guard when in paused state (timer may be running)
+
+        var now = DateTime.Now;
+        var catVals = GenerateCategoryValues();
+
+        AddPoint(now, catVals); // append values to buffers
+
+        var total = catVals.Values.Sum();
+        _timerOutput = $"{now.ToLongTimeString()}  ->  {total}  ( " + string.Join(", ", catVals.Select(kv => kv.Key + ":" + kv.Value)) + " )";
+
+        _ = InvokeAsync(StateHasChanged); // marshal UI update to Blazor thread
+    }
+
+    // Applies the clamped value to the timer; invoked after each bind update
+    private void ApplyIntervalFromSlider()
+    {
+        // Clamp for safety (input already enforces 1..15)
+        var clamped = Math.Clamp(_timerIntervalSeconds, 1, 15);
+        _timerIntervalSeconds = clamped;
+        _timer.Interval = clamped * 1000;
+        // Do not auto-start if paused; leave timer stopped until resume.
+        if(_isPaused) {
+            _timer.Stop(); // keep stopped but ensure interval is updated
+        }
+    }
+
+    // Toggle pause / resume; preserves current interval setting
+    private void TogglePause()
+    {
+        _isPaused = !_isPaused;
+        if(_isPaused) {
+            _timer.Stop(); // halt ticks
+        } else {
+            _timer.Interval = Math.Clamp(_timerIntervalSeconds, 1, 15) * 1000;
+            _timer.Start(); // resume ticks
+        }
+    }
+
+    // Returns random 1..20 value per category (demo data)
+    private Dictionary<string, int> GenerateCategoryValues()
+    {
+        var dict = new Dictionary<string, int>(_catNames.Length);
+        foreach(var c in _catNames) {
+            dict[c] = _rng.Next(1, 21);
+        }
+        return dict;
+    }
+
+    // Convert DateTime to Unix epoch milliseconds for Highcharts
+    private static long ToEpochMs(DateTime dt)
+        => new DateTimeOffset(dt).ToUnixTimeMilliseconds();
+
+    // Append one sampled point to all buffers and (re)bind series
+    private void AddPoint(DateTime timestamp, Dictionary<string, int> catValues)
+    {
+        lock(_sync) {
+            var label = timestamp.ToLongTimeString(); // friendly HH:MM:SS label
+            var epoch = ToEpochMs(timestamp);         // x-axis in ms for HC time series
+
+            _categories.Add(label);
+
+            int tickTotal = 0;
+            foreach(var c in _catNames) {
+                var v = catValues[c];
+                tickTotal += v;
+
+                // Categorical (trimmed)
+                _perCatValues[c].Add(v);
+
+                // Time-series (trimmed)
+                _perCatXY[c].Add(new long[] { epoch, v });
+
+                // Time-series (full history)
+                _perCatXYAll[c].Add(new long[] { epoch, v });
+            }
+
+            // Totals (cumulative)
+            _runningTotal += tickTotal;
+
+            // Totals (trimmed)
+            _xyTotals.Add(new long[] { epoch, _runningTotal });
+
+            // Totals (full history)
+            _xyTotalsAll.Add(new long[] { epoch, _runningTotal });
+
+            // --- Trim: only windowed stores are trimmed to MaxPoints ---
+            TrimToLastN(MaxPoints, _categories);
+            foreach(var c in _catNames) {
+                TrimToLastN(MaxPoints, _perCatValues[c]);
+                TrimToLastN(MaxPointsXY, _perCatXY[c]);
+            }
+            TrimToLastN(MaxPointsXY, _xyTotals);
+
+            // --- Bind: categorical column (grouped; trimmed) ---
+            _seriesCategories = _categories.ToArray();
+            _seriesDataPerCategory = _catNames.Select(c => new FreeHighcharts.SeriesDataArray {
+                name = c,
+                data = _perCatValues[c].ToArray()
+            }).ToArray();
+
+            // --- Bind: line/column time-series (per category; trimmed) ---
+            _seriesLineXYPerCategory = _catNames.Select(c => new FreeHighcharts.SeriesDataXYArray {
+                name = c,
+                data = _perCatXY[c].ToArray()
+            }).ToArray();
+            _seriesColumnTsXYPerCategory = _seriesLineXYPerCategory; // same data, different viz
+
+            // --- Bind: area totals (trimmed) ---
+            _seriesAreaTotalsXY = new[]
+            {
+                new FreeHighcharts.SeriesDataXYArray
+                {
+                    name = "Totals",
+                    data = _xyTotals.ToArray()
+                }
+            };
+
+            // --- Bind: NEW Full-History line (no trim) ---
+            _seriesLineXYPerCategory_All = _catNames.Select(c => new FreeHighcharts.SeriesDataXYArray {
+                name = c,
+                data = _perCatXYAll[c].ToArray()
+            }).ToArray();
+
+            // --- Bind: pie (category share across current window; trimmed) ---
+            _pieItems = BuildPieByCategoryShare(_perCatValues);
+
+            // --- Bind: pie with drilldown (trimmed) ---
+            (_pieRoot, _pieDrilldown) = BuildPieCategoryDrilldown(_perCatValues);
+        }
+    }
+
+    // --- Trim helpers (mutate in place; drop oldest until count <= n) ---
+    private static void TrimToLastN(int n, List<string> list)
+    {
+        while(list.Count > n)
+            list.RemoveAt(0);
+    }
+    private static void TrimToLastN(int n, List<decimal> list)
+    {
+        while(list.Count > n)
+            list.RemoveAt(0);
+    }
+    private static void TrimToLastN(int n, List<long[]> list)
+    {
+        while(list.Count > n)
+            list.RemoveAt(0);
+    }
+
+    // --- Pie builders (trimmed window only) ---
+
+    // Build simple category-share pie (% of sum in current window)
+    private static FreeHighcharts.SeriesData[] BuildPieByCategoryShare(Dictionary<string, List<decimal>> perCatValues)
+    {
+        var totals = perCatValues.ToDictionary(kv => kv.Key, kv => kv.Value.Sum()); // sum per cat
+        var grand = Math.Max(1m, totals.Values.Sum());                              // avoid div-by-zero
+
+        return totals
+            .OrderByDescending(kv => kv.Value)
+            .Select(kv => new FreeHighcharts.SeriesData {
+                name = kv.Key,
+                data = Math.Round((kv.Value * 100m) / grand, 2)
+            })
+            .ToArray();
+    }
+
+    // Build root (category %) and drilldown (value-frequency 1..20) for pie
+    private static (FreeHighcharts.SeriesData[] root, FreeHighcharts.DrilldownSeries[] dd)
+        BuildPieCategoryDrilldown(Dictionary<string, List<decimal>> perCatValues)
+    {
+        var totals = perCatValues.ToDictionary(kv => kv.Key, kv => kv.Value.Sum());
+        var grand = Math.Max(1m, totals.Values.Sum());
+
+        var root = totals
+            .OrderByDescending(kv => kv.Value)
+            .Select(kv => new FreeHighcharts.SeriesData {
+                name = kv.Key,
+                data = Math.Round((kv.Value * 100m) / grand, 2)
+            })
+            .ToArray();
+
+        var dd = new List<FreeHighcharts.DrilldownSeries>();
+        foreach(var kv in perCatValues) {
+            var cat = kv.Key;
+            var vals = kv.Value.Select(v => (int)Math.Round(v)).ToList();
+            var freq = new Dictionary<int, int>();
+            for(int i = 1; i <= 20; i++)
+                freq[i] = 0; // init bins 1..20
+            foreach(var iv in vals)
+            if(freq.ContainsKey(iv))
+                freq[iv]++;
+
+            var series = new FreeHighcharts.DrilldownSeries {
+                id = cat,
+                data = freq
+                    .OrderByDescending(p => p.Value)
+                    .Select(p => new FreeHighcharts.DrilldownPoint { name = p.Key.ToString(), y = p.Value })
+                    .ToArray()
+            };
+            dd.Add(series);
+        }
+
+        return (root, dd.ToArray());
+    }
+}
