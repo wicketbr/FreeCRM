@@ -1,0 +1,174 @@
+# ============================================================================
+# Reusable template: Rename/Remove, Snapshot, (Optional) Push to Base Branch
+# ============================================================================
+
+name: Project Template
+
+on:
+  workflow_call:
+    inputs:
+      matrix_json:
+        description: "JSON matrix of projects to process"
+        required: true
+        type: string
+      dotnet_version:
+        description: "Override .NET SDK version (defaults to env.DOTNET_VERSION)"
+        required: false
+        type: string
+      artifact_retention_days:
+        description: "Retention (days) for uploaded artifact (default 7)"
+        required: false
+        type: number
+      push_force:
+        description: "Force push to base_branch (default false)"
+        required: false
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  REMOVE_EXE: '.\Remove Modules from FreeCRM.exe'
+  RENAME_EXE: '.\Rename FreeCRM.exe'
+  DOTNET_VERSION: 10.0.x
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  project:
+    name: Project — ${{ matrix.project.name }}${{ matrix.project.branch != '' && format(' → {0}', matrix.project.branch) || '' }}
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 18
+      matrix: ${{ fromJSON(inputs.matrix_json) }}
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-base-${{ matrix.project.branch != '' && matrix.project.branch || 'none' }}
+      cancel-in-progress: false
+
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: _main
+          fetch-depth: 0
+
+      - name: Checkout base branch (if provided)
+        if: ${{ matrix.project.branch != '' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.project.branch }}
+          path: _base
+          fetch-depth: 0
+
+      - name: Setup .NET SDK (cache disabled)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ inputs.dotnet_version != '' && inputs.dotnet_version || env.DOTNET_VERSION }}
+          cache: false
+
+      - name: Environment info
+        run: |
+          "Runner OS: $env:RUNNER_OS"
+          dotnet --info
+
+      - name: Normalize app name
+        id: normalize
+        run: |
+          $raw = '${{ matrix.project.name }}'
+          $norm = ($raw -replace '[^A-Za-z0-9_]', '_')
+          if ($norm -notmatch '^[A-Za-z]') { $norm = "App_$norm" }
+          $norm = ($norm -replace '_{2,}', '_').TrimEnd('_')
+          if ([string]::IsNullOrWhiteSpace($norm)) { $norm = "App_Default" }
+          "APP_NAME=$norm" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "Normalized app name: $norm"
+
+      - name: Run remove modules
+        working-directory: _main
+        run: |
+          if (!(Test-Path "${{ env.REMOVE_EXE }}")) {
+            throw "Remove tool not found: ${{ env.REMOVE_EXE }}"
+          }
+          & "${{ env.REMOVE_EXE }}" "${{ matrix.project.selections }}"
+
+      - name: Run rename (allow numbers/underscores)
+        working-directory: _main
+        run: |
+          if (!(Test-Path "${{ env.RENAME_EXE }}")) {
+            throw "Rename tool not found: ${{ env.RENAME_EXE }}"
+          }
+          & "${{ env.RENAME_EXE }}" "$env:APP_NAME"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Rename tool failed (exit $LASTEXITCODE)"
+          }
+
+      - name: Snapshot source after rename/remove (sanitized for push)
+        run: |
+          $src = Join-Path $pwd "_main"
+          $dst = Join-Path $pwd ("artifacts\source_after_changes_{0}" -f $env:APP_NAME)
+          $zip = Join-Path $env:RUNNER_TEMP ("snapshot_{0}.zip" -f $env:APP_NAME)
+
+          New-Item -ItemType Directory -Force -Path $dst | Out-Null
+
+          # Keep .gitignore; drop CI/meta
+          $toRemove = @(".github", "artifacts", ".git", ".gitattributes")
+          foreach ($rel in $toRemove) {
+            $full = Join-Path $src $rel
+            if (Test-Path $full) {
+              Remove-Item -Recurse -Force $full -ErrorAction SilentlyContinue
+            }
+          }
+
+          Compress-Archive -Path "$src\*" -DestinationPath $zip -Force
+          Expand-Archive -Path $zip -DestinationPath $dst -Force
+
+          "SNAPSHOT_PATH=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload source snapshot (post-rename)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_after_changes_${{ env.APP_NAME }}
+          path: artifacts/source_after_changes_${{ env.APP_NAME }}
+          retention-days: ${{ (inputs.artifact_retention_days != '' && inputs.artifact_retention_days > 0) && inputs.artifact_retention_days || 7 }}
+
+      - name: Push to base branch
+        if: ${{ matrix.project.branch != '' }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cd _base
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          Get-ChildItem -Force | Where-Object { $_.Name -ne ".git" } | Remove-Item -Recurse -Force
+
+          $snap = Join-Path $env:GITHUB_WORKSPACE ("artifacts\source_after_changes_{0}" -f $env:APP_NAME)
+          Copy-Item -Path "$snap\*" -Destination . -Recurse -Force
+
+          git add -A
+
+          $mainMsg = git -C ..\_main log -1 --pretty=%B origin/main 2>$null
+          if (-not $mainMsg) { $mainMsg = "Automated snapshot from main" }
+
+          $header = "Regenerated ${{ matrix.project.branch }} for $env:APP_NAME"
+          $body   = "Selections: ${{ matrix.project.selections }}"
+          $msg    = "$header`n`n$body`n`n$mainMsg"
+
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m $msg
+
+          $force = "${{ inputs.push_force != '' && inputs.push_force || false }}"
+          if ($force -eq 'True' -or $force -eq 'true') {
+            git push origin HEAD:${{ matrix.project.branch }} --force
+          } else {
+            git push origin HEAD:${{ matrix.project.branch }}
+          }
