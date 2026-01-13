@@ -1,0 +1,157 @@
+# ============================================================================
+# Workflow: .NET Build & Publish (CI)
+# Purpose : Restore, build, and publish a .NET web app, then upload artifacts.
+# Triggers: On push/pull request to main. Runs matrix for Debug & Release.
+# Runner  : windows-latest (PowerShell shell by default here via `defaults`).
+#
+# Key Conventions:
+# - All "inputs" live in top-level `env` so they're easy to find/change.
+# - Artifact names are based on PROJECT_NAME + configuration (e.g., CRM-Release).
+# - Repo snapshot is zipped and uploaded once per run (Debug leg) for traceability.
+#
+# Notes:
+# - GitHub Actions doesn't have Azure DevOps-style "parameters" for pipelines.
+#   We emulate that with top-level `env` variables and the build matrix.
+# - To make this reusable with typed inputs, consider a separate reusable
+#   workflow (`on: workflow_call:`) or add `workflow_dispatch` inputs.
+# ============================================================================
+
+name: Build and Test
+
+# ---- Centralized workflow-wide variables (your "inputs") --------------------
+env:
+  # Solution / project paths
+  SOLUTION_FILE: CRM.slnx
+  PROJECT_FILE: CRM/CRM.csproj
+
+  # Project/app identity for artifacts & naming
+  PROJECT_NAME: CRM
+  ARTIFACT_DIR: publish
+
+  # Toolchain
+  DOTNET_VERSION: 10.0.x
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  # workflow_dispatch: {}
+
+jobs:
+  # ---------------------------------------------------------
+  # Pre-flight: verify git, remote commit, and clean workspace
+  # ---------------------------------------------------------
+  preflight:
+    runs-on: windows-latest
+
+    steps:
+      - name: Show environment info
+        run: |
+          Write-Host "Runner OS: $env:RUNNER_OS"
+          Write-Host "Runner workspace: $env:RUNNER_WORKSPACE"
+          Write-Host "GitHub workspace: $env:GITHUB_WORKSPACE"
+          Write-Host "Repository: $env:GITHUB_REPOSITORY"
+          Write-Host "SHA: $env:GITHUB_SHA"
+
+      - name: Check that git is installed and on PATH
+        run: |
+          Write-Host "Checking git..."
+          git --version
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "git is not available on PATH."
+          }
+
+      - name: Verify commit exists on remote
+        env:
+          REPO: ${{ github.repository }}
+          SHA:  ${{ github.sha }}
+        run: |
+          Write-Host "Verifying commit $env:SHA exists on https://github.com/$env:REPO"
+          git ls-remote "https://github.com/$env:REPO" $env:SHA
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Commit $env:SHA not found on remote. Aborting."
+          }
+
+      - name: Clean workspace (rm -rf equivalent)
+        run: |
+          if (-not $env:GITHUB_WORKSPACE) {
+            Write-Host "GITHUB_WORKSPACE is not set, nothing to clean."
+            return
+          }
+
+          if (Test-Path $env:GITHUB_WORKSPACE) {
+            Write-Host "Cleaning contents of $env:GITHUB_WORKSPACE"
+            # This is the PowerShell equivalent of: rm -rf $GITHUB_WORKSPACE/*
+            Remove-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE '*') `
+              -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          else {
+            Write-Host "Workspace path $env:GITHUB_WORKSPACE does not exist yet."
+          }
+
+  # ---------------------------------------------------------
+  # Existing build job, now dependent on preflight
+  # ---------------------------------------------------------
+  build:
+    runs-on: windows-latest
+    needs: preflight
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+
+    steps:
+      # --------------------------- Checkout ----------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history can help versioning or source link
+
+      # ----- Snapshot repo before restore/build/publish (for traceability) ---
+      - name: Create repository snapshot (pre-build)
+        run: |
+          $zip = Join-Path $env:RUNNER_TEMP "repo_snapshot_${{ github.run_id }}.zip"
+          Compress-Archive -Path "$env:GITHUB_WORKSPACE\*" -DestinationPath $zip -Force
+          "REPO_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append	
+
+      # Upload snapshot only once per run (on Debug leg) to avoid duplicates
+      - name: Upload repository snapshot (once)
+        if: ${{ matrix.configuration == 'Debug' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: RepoSnapshot
+          path: ${{ env.REPO_ZIP }}
+          if-no-files-found: error
+
+      # --------------------------- .NET Setup --------------------------------
+      - name: Setup .NET (${{ env.DOTNET_VERSION }})
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # ---------------------------- Restore ----------------------------------
+      - name: Restore dependencies
+        run: dotnet restore "${{ env.SOLUTION_FILE }}"
+
+      # ----------------------------- Build -----------------------------------
+      - name: Build solution (${{ matrix.configuration }})
+        run: dotnet build "${{ env.SOLUTION_FILE }}" --configuration "${{ matrix.configuration }}" --no-restore
+
+      # ---------------------------- Publish ----------------------------------
+      - name: Publish project (${{ matrix.configuration }})
+        run: |
+          $out = "./${{ env.ARTIFACT_DIR }}/${{ matrix.configuration }}"
+          dotnet publish "${{ env.PROJECT_FILE }}" `
+            --configuration "${{ matrix.configuration }}" `
+            --no-build `
+            --output $out
+
+      # ------------------------- Upload Artifacts ----------------------------
+      # Artifact name is based on project + configuration (e.g., CRM-Debug)
+      - name: Upload published artifact (${{ matrix.configuration }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PROJECT_NAME }}-${{ matrix.configuration }}
+          path: ./${{ env.ARTIFACT_DIR }}/${{ matrix.configuration }}
+          if-no-files-found: error
