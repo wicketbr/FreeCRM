@@ -4,6 +4,11 @@
 
 public partial class DataObjects
 {
+    public partial class SignalRUpdateType
+    {
+        //public const string YourSignalRUpdateType = "YourSignalRUpdateType";
+    }
+
     public partial class User
     {
         //public string? MyCustomUserProperty { get; set; }
