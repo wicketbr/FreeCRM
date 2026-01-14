@@ -550,7 +550,7 @@ public partial class DataAccess
 
     public async Task<DataObjects.BooleanResponse> DeleteAllPendingDeletedRecords(Guid TenantId)
     {
-        var output = await DeleteAllPendingDeletedRecords(TenantId, Convert.ToDateTime("1/1/2000"));
+        var output = await DeleteAllPendingDeletedRecords(TenantId, DateTime.UtcNow);
         return output;
     }
 

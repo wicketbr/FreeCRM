@@ -8,7 +8,7 @@ namespace CRM;
 public class BackgroundProcessor : BackgroundService
 {
     private List<Plugins.Plugin> _availablePlugins = new List<Plugins.Plugin>();
-    private IDataAccess da;
+    //private IDataAccess da;
     private long _iterations = 0;
     private readonly ILogger<BackgroundProcessor> _logger;
     private List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
@@ -29,13 +29,12 @@ public class BackgroundProcessor : BackgroundService
         _processingIntervalSeconds = ProcessingIntervalSeconds > 0 ? ProcessingIntervalSeconds : 15;
         _serviceProvider = ServiceProvider;
         _startOnLoad = StartOnLoad;
-
-        da = ServiceProvider.GetRequiredService<IDataAccess>();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
         _logger.LogInformation("Background Processor is starting.");
 
+        var da = _serviceProvider.GetRequiredService<IDataAccess>();
         var allPlugins = da.GetPlugins();
         if (allPlugins.Any(x => x.Type.ToLower() == "backgroundprocess")) {
             _availablePlugins = allPlugins.Where(x => x.Type.ToLower() == "backgroundprocess").ToList();
@@ -60,6 +59,7 @@ public class BackgroundProcessor : BackgroundService
     private async Task GetTasksToProcess()
     {
         var now = DateTime.UtcNow;
+        var da = _serviceProvider.GetRequiredService<IDataAccess>();
         var tenants = await da.GetTenants();
         _iterations++;
 
@@ -117,6 +117,7 @@ public class BackgroundProcessor : BackgroundService
                     Objects = new object[] { _iterations },
                 };
 
+                var da = _serviceProvider.GetRequiredService<IDataAccess>();
                 var executed = da.ExecutePlugin(pluginExecuteRequest);
 
                 ProcessTasksMessages(new DataObjects.BooleanResponse {
