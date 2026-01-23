@@ -1,0 +1,8 @@
+{
+  "Id": "61ff1795-b54e-4786-a2ee-84fa4ab4862f",
+  "Author": "Brad Wickett",
+  "Description": "Sample Blazor Button for Testing",
+  "LimitToTenants": [],
+  "SortOrder": 0,
+  "Version": "1.0.0"
+}

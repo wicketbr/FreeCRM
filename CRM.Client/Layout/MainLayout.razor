@@ -1,6 +1,7 @@
 ﻿@using Blazored.LocalStorage
 @using System.Globalization
 @using Microsoft.AspNetCore.SignalR.Client
+@using FluentValidation
 @implements IAsyncDisposable
 @inherits LayoutComponentBase
 @inject IJSRuntime jsRuntime
@@ -10,6 +11,7 @@
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
 @inject Radzen.TooltipService TooltipService
+@inject Try.Core.CompilationService _compilationService
 <PageTitle>@Helpers.Text("AppTitle")</PageTitle>
 
 @if (IncludeCustomCss) { // For clients that are using custom theme CSS and font settings that gets rendered here.
@@ -199,6 +201,9 @@
     protected DataObjects.VersionInfo versionInfo = new DataObjects.VersionInfo();
     protected bool versionInfoLoaded = false;
 
+    protected bool _precompileBlazorPlugins = false; // Set to true if you wish to pre-compile plugins when the app loads for a logged-in user.
+    protected bool _precompiledBlazorPlugins = false;
+
     protected DotNetObjectReference<MainLayout>? dotNetHelper;
 
     public void Dispose() {
@@ -240,6 +245,25 @@
             await ThemeWatcher();
             MessageWatcher();
             await SavePendingUserPreferences();
+
+            if (_precompileBlazorPlugins && Model.LoggedIn && !_precompiledBlazorPlugins) {
+                _precompiledBlazorPlugins = true;
+
+                Helpers.SetTimeout(async() => {
+                    var plugins = Model.Plugins
+                        .Where(x => x.Type.ToLower() == "blazor")
+                        .ToList();
+
+                    if (plugins != null && plugins.Count > 0) {
+                        foreach(var plugin in plugins) {
+                            await _compilationService.CompileRazorCodeToBlazorComponentType(plugin.Code, async msg => {
+                                Console.WriteLine("Plugin '" + plugin.Name + "' Compilation Message: " + msg);
+                            });
+                        }
+                    }
+                });
+            }
+
         }, new System.Threading.AutoResetEvent(false), 0, 500);
 
         updateTimer = new System.Threading.Timer(async (object? stateInfo) => {
@@ -251,6 +275,10 @@
         if (firstRender) {
             dotNetHelper = DotNetObjectReference.Create(this);
             await jsRuntime.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
+
+            // Console.WriteLine("Initializing Compilation Service...");
+            // await _compilationService.InitAsync(GetReferenceAssembliesStreamsAsync);
+            // Console.WriteLine("Initialized Compilation Service...");
 
             // See if a Theme is stored.
             var theme = await LocalStorage.GetItemAsync<string>("Theme");
@@ -309,6 +337,12 @@
             }
         }
     }
+
+    // private ValueTask<IReadOnlyList<byte[]>> GetReferenceAssembliesStreamsAsync(IReadOnlyCollection<string> referenceAssemblyNames) {
+    //     Console.WriteLine("GetReferenceAssembliesStreamsAsync Start");
+    //     return jsRuntime.InvokeAsync<IReadOnlyList<byte[]>>(Try.Core.Try.CodeExecution.GetCompilationDlls, new List<string>(referenceAssemblyNames) { "netstandard" });
+    //     Console.WriteLine("GetReferenceAssembliesStreamsAsync End");
+    // }
 
     [JSInvokable]
     public void DotNetHelperHandler(params string[] arguments) {

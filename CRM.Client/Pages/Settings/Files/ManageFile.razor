@@ -10,6 +10,12 @@
         if (file.Deleted) {
             <UndeleteMessage DeletedAt="file.DeletedAt" LastModifiedBy="@file.LastModifiedBy" OnUndelete="Undelete" />
         } else {
+            if (Helpers.HaveBlazorPlugins("ManageFile", "Top")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="ManageFile" Position="Top" TValue="DataObjects.FileStorage" Value="file" ValueChanged="@(v => file = v)" />
+                </div>
+            }
+
             <div class="mb-2">
                 <label for="manage-file-FileName">
                     <Language Tag="FileName" />
@@ -20,6 +26,12 @@
                     <span class="input-group-text">@file.Extension</span>
                 </div>
             </div>
+
+            if (Helpers.HaveBlazorPlugins("ManageFile", "Bottom")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="ManageFile" Position="Top" TValue="DataObjects.FileStorage" Value="file" ValueChanged="@(v => file = v)" />
+                </div>
+            }
 
             <div class="btn-group mt-2" role="group">
                 <button type="button" class="btn btn-dark" @onclick="Cancel">
@@ -32,6 +44,10 @@
 
                 @if (OnDelete != null) {
                     <DeleteConfirmation OnConfirmed="Delete" CancelText="@Helpers.ConfirmButtonTextCancel" DeleteText="@Helpers.ConfirmButtonTextDelete" ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                }
+
+                @if (Helpers.HaveBlazorToolbarButtons("ManageFile")) {
+                    <BlazorPlugins Module="ManageFile" Button="true" TValue="DataObjects.FileStorage" Value="file" ValueChanged="@(v => file = v)" />
                 }
             </div>
 

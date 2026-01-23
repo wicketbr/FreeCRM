@@ -1,0 +1,90 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@typeparam TValue
+
+@if (_plugins.Any()) {
+    foreach(var plugin in _plugins) {
+        <BlazorPlugin Plugin="plugin" Button="Button" Parameters="Parameters" />
+    }
+}
+
+@code {
+    [Parameter] public bool Button { get; set; }
+
+    [Parameter] public string? Position { get; set; }
+
+    [Parameter] public string Module { get; set; } = String.Empty;
+
+    [Parameter] public EventCallback<string> OnInitializedCallback { get; set; }
+
+    [Parameter] public TValue? Value { get; set; }
+
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+
+    List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
+    protected string _id = String.Empty;
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        StateHasChanged();
+    }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    // }
+
+    protected override void OnInitialized() {
+        Model.OnChange += StateHasChanged;
+
+        var plugins = Model.Plugins
+            .Where(x => x.Type.ToLower() == "blazor")
+            .ToList();
+
+        if (plugins != null && plugins.Any()) {
+            var modulePlugins = new List<Plugins.Plugin>();
+
+            string match = String.Empty;
+            if (Button) {
+                match = "button_";
+            } else if (!String.IsNullOrWhiteSpace(Position)) {
+                match = Position.ToLower() + "_";
+            }
+
+            if (!String.IsNullOrWhiteSpace(Module)) {
+                match += Module.ToLower() + "_";
+            }
+
+            foreach(var plugin in plugins.OrderBy(x => x.SortOrder).ThenBy(x => x.Name)) {
+                if (plugin.Name.ToLower().StartsWith(match)) {
+                    modulePlugins.Add(plugin);
+                }
+            }
+
+            _plugins = modulePlugins;
+        }
+    }
+
+    protected Dictionary<string, object> Parameters {
+        get {
+            var parameters = new Dictionary<string, object>();
+
+            if (OnInitializedCallback.HasDelegate) {
+                parameters.Add("OnInitializedCallback", OnInitializedCallback);
+            }
+
+            if (Value != null) {
+                parameters.Add("Value", Value);
+
+                if (ValueChanged.HasDelegate) {
+                    parameters.Add("ValueChanged", ValueChanged);
+                }
+            }
+            return parameters;
+        }
+    }
+}

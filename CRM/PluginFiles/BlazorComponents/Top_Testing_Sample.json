@@ -1,0 +1,8 @@
+{
+  "Id": "55ad6968-4c17-4b69-81aa-f0e0a96a3e6d",
+  "Author": "Brad Wickett",
+  "Description": "Sample Blazor Component for Testing",
+  "LimitToTenants": [],
+  "SortOrder": 0,
+  "Version": "1.0.0"
+}

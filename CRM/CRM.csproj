@@ -9,37 +9,41 @@
     <UserSecretsId>c3a4acfd-bf26-4267-98c7-6746a2b80f10</UserSecretsId>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>True</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\CRM.DataAccess\CRM.DataAccess.csproj" />
     <ProjectReference Include="..\CRM.Plugins\CRM.Plugins.csproj" />
     <ProjectReference Include="..\CRM.Client\CRM.Client.csproj" />
     <PackageReference Include="AspNet.Security.OAuth.Apple" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="10.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" Version="10.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="1.32.0" />
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Plugins\ExampleBackgroundProcess.cs">
+    <Compile Update="PluginFiles\ExampleBackgroundProcess.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="Plugins\Example1.cs">
+    <Compile Update="PluginFiles\Example1.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="Plugins\Example2.cs">
+    <Compile Update="PluginFiles\Example2.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="Plugins\Example3.cs">
+    <Compile Update="PluginFiles\Example3.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="Plugins\LoginWithPrompts.cs">
+    <Compile Update="PluginFiles\LoginWithPrompts.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Update="Plugins\UserUpdate.cs">
+    <Compile Update="PluginFiles\UserUpdate.cs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
   </ItemGroup>
@@ -48,19 +52,25 @@
     <Content Update="appsettings.Development.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
+    <Content Update="PluginFiles\BlazorComponents\Button_Testing_TestButton.razor">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="PluginFiles\BlazorComponents\Top_Testing_Sample.razor">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Plugins\HelloWorld.assemblies">
+    <None Update="PluginFiles\HelloWorld.assemblies">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\HelloWorld.plugin">
+    <None Update="PluginFiles\HelloWorld.plugin">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\HelloWorld\HelloWorld.dll">
+    <None Update="PluginFiles\HelloWorld\HelloWorld.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Plugins\Plugins.md">
+    <None Update="PluginFiles\Plugins.md">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

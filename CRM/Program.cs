@@ -1,6 +1,7 @@
 using CRM.Client.Pages;
 using CRM.Components;
 using CRM.Server.Hubs;
+using Microsoft.AspNetCore.Components;
 using Radzen;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -80,6 +81,7 @@ namespace CRM
             try { serverReferences.Add(typeof(Microsoft.Extensions.Primitives.StringValues).Assembly.Location); } catch { }
             try { serverReferences.Add(typeof(Plugins.Plugin).Assembly.Location); } catch { }
             try { serverReferences.Add(typeof(IPlugin).Assembly.Location); } catch { }
+            try { serverReferences.Add(typeof(RenderFragment).Assembly.Location); } catch { }
             plugins.ServerReferences = serverReferences;
 
             // Get the using statements from the appsettings.json file.
@@ -95,7 +97,7 @@ namespace CRM
             }
             plugins.UsingStatements = usingStatements;
 
-            string pluginsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins");
+            string pluginsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PluginFiles");
             plugins.Load(pluginsPath);
             builder.Services.AddTransient<Plugins.IPlugins>(x => plugins);
 
@@ -179,6 +181,7 @@ namespace CRM
                 },
                 GloballyDisabledModules = disabled,
                 GloballyEnabledModules = enabled,
+                ServerReferences = serverReferences,
             }, builder);
 
             builder.Services.AddTransient<IConfigurationHelper>(x => ActivatorUtilities.CreateInstance<ConfigurationHelper>(x, configurationHelperLoader));
@@ -202,6 +205,15 @@ namespace CRM
 
             var app = AppModifyStart(AppModifyBuilderEnd(builder).Build());
 
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment()) {
+                app.UseWebAssemblyDebugging();
+            } else {
+                app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+                app.UseHsts();
+            }
+
             bool openIdForceHttps = false;
             try {
                 openIdForceHttps = builder.Configuration.GetValue<bool>("AuthenticationProviders:OpenId:ForceHttps");
@@ -212,15 +224,6 @@ namespace CRM
                     context.Response.Headers.Append("Content-Security-Policy", "frame-ancestors 'self' login.wsu.edu cms.em.wsu.edu futurecoug.wsu.edu");
                     return next(context);
                 });
-            }
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment()) {
-                app.UseWebAssemblyDebugging();
-            } else {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
             }
 
             app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);

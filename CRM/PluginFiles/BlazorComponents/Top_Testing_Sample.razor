@@ -1,0 +1,57 @@
+﻿@using CRM
+@using CRM.Client
+@inject BlazorDataModel Model
+@implements IDisposable
+
+<div class="card mb-4">
+    <div class="card-header text-bg-primary text-white">
+        Test Blazor Plugin
+    </div>
+    <div class="card-body">
+        <div class="mb-2">
+            @if (Model.LoggedIn) {
+                <span>Welcome @Model.User.FirstName @Model.User.LastName to the Test Plugin</span>
+            } else {
+                <span>Welcome to the Test Plugin</span>
+            }
+            
+        </div>
+
+        <label for="test-input">Test Input</label>
+
+        <input type="text"
+               id="test-input"
+               class="form-control"
+               @bind="Value"
+               @bind:event="oninput" 
+               @bind:after="ValueUpdated" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<string> OnInitializedCallback { get; set; }
+
+    [Parameter]
+    public string? PluginName { get; set; }
+
+    [Parameter]
+    public string Value { get; set; } = String.Empty;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    public void Dispose() { }
+
+    protected override void OnInitialized() {
+        if (OnInitializedCallback.HasDelegate) {
+            OnInitializedCallback.InvokeAsync(PluginName);
+        }
+    }
+
+    protected void ValueUpdated() {
+        if (ValueChanged.HasDelegate) {
+            ValueChanged.InvokeAsync(Value);
+        }
+    }
+}

@@ -1,7 +1,9 @@
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.JSInterop;
 using MudBlazor.Services;
 using Radzen;
+using Try.Core;
 
 namespace CRM.Client
 {
@@ -20,6 +22,8 @@ namespace CRM.Client
             builder.Services.AddScoped<Radzen.DialogService>();
             builder.Services.AddScoped<Radzen.NotificationService>();
             builder.Services.AddScoped<Radzen.ThemeService>();
+            builder.Services.AddSingleton(serviceProvider => (IJSInProcessRuntime)serviceProvider.GetRequiredService<IJSRuntime>());
+            builder.Services.AddCompilerService();
 
             await builder.Build().RunAsync();
         }

@@ -154,7 +154,15 @@ public partial class DataAccess
             var duplicate = DuplicateObject<List<Plugins.Plugin>>(allPlugins);
             if (duplicate != null) {
                 foreach (var item in duplicate) {
-                    item.Code = String.Empty;
+                    switch (item.Type.ToLower()) {
+                        case "blazor":
+                            // These types do not get their code removed.
+                            break;
+
+                        default:
+                            item.Code = String.Empty;
+                            break;
+                    }
                 }
                 output = duplicate;
             }
@@ -197,41 +205,50 @@ public partial class DataAccess
             // Now, add or update the records that still exists.
             if (PluginsInterface.AllPluginsForCache.Any()) {
                 foreach (var plugin in PluginsInterface.AllPluginsForCache) {
-                    bool newRecord = false;
+                    switch (plugin.Type.ToLower()) {
+                        case "blazor":
+                            // These types do not get cached to the database.
+                            break;
 
-                    var rec = data.PluginCaches.FirstOrDefault(x => x.Id == plugin.Id && x.Version == plugin.Version);
-                    if (rec == null) {
-                        rec = new PluginCache {
-                            RecordId = Guid.NewGuid(),
-                            Id = plugin.Id,
-                            Version = plugin.Version,
-                        };
-                        newRecord = true;
+                        default:
+                            bool newRecord = false;
+
+                            var rec = data.PluginCaches.FirstOrDefault(x => x.Id == plugin.Id && x.Version == plugin.Version);
+                            if (rec == null) {
+                                rec = new PluginCache {
+                                    RecordId = Guid.NewGuid(),
+                                    Id = plugin.Id,
+                                    Version = plugin.Version,
+                                };
+                                newRecord = true;
+                            }
+
+                            var code = plugin.Code;
+
+                            // Always store the plugin code in the encrypted format.
+                            if (!String.IsNullOrWhiteSpace(code)) {
+                                if (!code.Contains(",0x")) {
+
+                                }
+                            }
+
+                            rec.Author = plugin.Author;
+                            rec.Name = plugin.Name;
+                            rec.Type = plugin.Type;
+                            rec.Version = plugin.Version;
+                            rec.Properties = SerializeObject(plugin.Properties);
+                            rec.Namespace = plugin.Namespace;
+                            rec.ClassName = plugin.ClassName;
+                            rec.Code = plugin.Code;
+                            rec.AdditionalAssemblies = SerializeObject(plugin.AdditionalAssemblies);
+                            rec.StillExists = true;
+
+                            if (newRecord) {
+                                data.PluginCaches.Add(rec);
+                            }
+                            break;
                     }
 
-                    var code = plugin.Code;
-
-                    // Always store the plugin code in the encrypted format.
-                    if (!String.IsNullOrWhiteSpace(code)) {
-                        if (!code.Contains(",0x")) {
-                            
-                        }
-                    }
-
-                    rec.Author = plugin.Author;
-                    rec.Name = plugin.Name;
-                    rec.Type = plugin.Type;
-                    rec.Version = plugin.Version;
-                    rec.Properties = SerializeObject(plugin.Properties);
-                    rec.Namespace = plugin.Namespace;
-                    rec.ClassName = plugin.ClassName;
-                    rec.Code = plugin.Code;
-                    rec.AdditionalAssemblies = SerializeObject(plugin.AdditionalAssemblies);
-                    rec.StillExists = true;
-
-                    if (newRecord) {
-                        data.PluginCaches.Add(rec);
-                    }
                 }
 
                 data.SaveChanges();

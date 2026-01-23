@@ -58,6 +58,7 @@ public partial class BlazorDataModel
     private DataObjects.ApplicationSettingsUpdate _AppSettings = new DataObjects.ApplicationSettingsUpdate();
     private string _ApplicationUrl = "";
     private DataObjects.AuthenticationProviders _AuthenticationProviders = new DataObjects.AuthenticationProviders();
+    private DataObjects.BlazorDataModelLoader _BlazorDataModelLoader = new DataObjects.BlazorDataModelLoader();
     private string _CultureCode = "en-US";
     private List<DataObjects.OptionPair> _CultureCodes = new List<DataObjects.OptionPair>();
     private DataObjects.Language _DefaultLanguage = new DataObjects.Language();
@@ -392,6 +393,20 @@ public partial class BlazorDataModel
         set {
             if (!ObjectsAreEqual(_AuthenticationProviders, value)) {
                 _AuthenticationProviders = value;
+                _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the BlazorDataModelLoader.
+    /// </summary>
+    public DataObjects.BlazorDataModelLoader BlazorDataModelLoader {
+        get { return _BlazorDataModelLoader; }
+        set {
+            if (!ObjectsAreEqual(_BlazorDataModelLoader, value)) {
+                _BlazorDataModelLoader = value;
                 _ModelUpdated = DateTime.UtcNow;
                 NotifyDataChanged();
             }

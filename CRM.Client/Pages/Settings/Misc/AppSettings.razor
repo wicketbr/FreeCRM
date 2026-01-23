@@ -20,14 +20,24 @@
                 <StickyMenuIcon />
             </h1>
 
-            <div class="mb-2">
+            <div class="btn-group mb-2" role="group">
                 <button type="button" class="btn btn-success" @onclick="SaveSettings">
                     <Language Tag="Save" IncludeIcon="true" />
                 </button>
+
+                @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                    <BlazorPlugins Module="@_pageName" Button="true" TValue="DataObjects.ApplicationSettings" Value="_settings" ValueChanged="@(v => _settings = v)" />
+                }
             </div>
         </div>
 
         <RequiredIndicator />
+
+        @if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.ApplicationSettings" Value="_settings" ValueChanged="@(v => _settings = v)" />
+            </div>
+        }
 
         <div class="alert @(_settings.MaintenanceMode ? "alert-danger": "alert-dark")">
             <div class="mb-2 form-check form-switch">
@@ -217,6 +227,12 @@
 
         @if (AppModule.Enabled) {
             <AppSettings_App @bind-Value="_settings" Area="Bottom" />
+        }
+
+        @if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="DataObjects.ApplicationSettings" Value="_settings" ValueChanged="@(v => _settings = v)" />
+            </div>
         }
     }
 }

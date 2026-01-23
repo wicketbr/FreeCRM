@@ -107,6 +107,7 @@ public partial class DataObjects
         public bool LoggedIn { get; set; }
         public List<Plugins.Plugin> Plugins { get; set; } = new List<Plugins.Plugin>();
         public DateOnly Released { get; set; } = DateOnly.FromDateTime(DateTime.Now);
+        public List<string>? ServerReferences { get; set; }
         public Guid TenantId { get; set; } = Guid.Empty;
         public List<Tenant> Tenants { get; set; } = new List<Tenant>();
         public bool UseBackgroundService { get; set; }

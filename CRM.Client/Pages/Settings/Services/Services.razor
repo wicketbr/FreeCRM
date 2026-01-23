@@ -18,12 +18,22 @@
                 <Language Tag="Services" IncludeIcon="true" />
                 <StickyMenuIcon />
             </h1>
-            <div class="mb-2">
+            <div class="btn-group mb-2" role="group">
                 <a href="@(Helpers.BuildUrl("Settings/AddService"))" role="button" class="btn btn-success">
                     <Language Tag="AddNewService" IncludeIcon="true" />
                 </a>
+
+                @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                    <BlazorPlugins Module="@_pageName" Button="true" TValue="System.String" />
+                }
             </div>
         </div>
+
+        if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Top" TValue="System.String" />
+            </div>
+        }
 
         <div class="mb-2">
             <div class="form-check form-switch">
@@ -32,7 +42,7 @@
             </div>
         </div>
 
-        @if (Model.Services.Any()) {
+        if (Model.Services.Any()) {
             <table class="table table-sm">
                 <thead>
                     <tr class="table-dark">
@@ -71,6 +81,12 @@
             </table>
         } else {
             <Language Tag="NoItemsToShow" />
+        }
+
+        if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="System.String" />
+            </div>
         }
     }
 }

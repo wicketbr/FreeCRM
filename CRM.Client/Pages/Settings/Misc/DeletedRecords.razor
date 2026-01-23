@@ -13,6 +13,12 @@
         </h1>
         <LoadingMessage />
     } else {
+        if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.DeletedRecords" Value="_DeletedRecords" ValueChanged="@(v => _DeletedRecords = v)" />
+            </div>
+        }
+
         if (Model.HaveDeletedRecords) {
             var deletedRecordTypes = Helpers.GetDeletedRecordTypes();
 
@@ -21,6 +27,12 @@
                     <Language Tag="PendingDeletedRecords" IncludeIcon="true" />
                     <StickyMenuIcon />
                 </h1>
+
+                @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                    <div class="mb-2">
+                        <BlazorPlugins Module="@_pageName" Button="true" TValue="DataObjects.DeletedRecords" Value="_DeletedRecords" ValueChanged="@(v => _DeletedRecords = v)" />
+                    </div>
+                }
 
                 <div class="alert alert-danger">
                     <div class="mb-2">
@@ -133,6 +145,12 @@
             <h1 class="page-title">
                 <Language Tag="NoPendingDeletedRecords" IncludeIcon="true" />
             </h1>
+        }
+
+        @if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.DeletedRecords" Value="_DeletedRecords" ValueChanged="@(v => _DeletedRecords = v)" />
+            </div>
         }
     }
 }

@@ -1011,6 +1011,7 @@ public partial class DataAccess
         output.LoggedIn = false;
         output.Plugins = GetPluginsWithoutCode();
         output.Released = Released;
+        output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;
         output.TenantId = Guid.Empty;
         output.Tenants = new List<DataObjects.Tenant>();
         output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;
@@ -1082,6 +1083,7 @@ public partial class DataAccess
             output.LoggedIn = true;
             output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
+            output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;
             output.TenantId = CurrentUser.TenantId;
             output.Tenants = tenants;
             output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;
@@ -1125,6 +1127,7 @@ public partial class DataAccess
             output.LoggedIn = false;
             output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
+            output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;
             output.TenantId = tenant.TenantId;
             output.Tenants = new List<DataObjects.Tenant>{ tenant };
             output.UseCustomAuthenticationProviderFromAdminAccount = UseCustomAuthenticationProviderFromAdminAccount;

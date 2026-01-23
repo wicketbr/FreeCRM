@@ -7,6 +7,23 @@ namespace CRM.Server.Controllers;
 
 public partial class DataController
 {
+    private DataObjects.User Authenticate_App()
+    {
+        var output = new DataObjects.User();
+
+        // Perform any app-specific authentication logic here.
+        // This is called from the DataController instantiation method.
+        //var token = HeaderValue("my-custom-token");
+        //if (!String.IsNullOrWhiteSpace(token)) {
+        //    DataObjects.User user = da.ValidateMyCustomToken(token);
+        //    if (user.ActionResponse.Result) {
+        //        output = user;
+        //    }
+        //}
+
+        return output;
+    }
+
     [HttpGet]
     [Authorize]
     [Route("~/api/Data/YourEndpoint/")]

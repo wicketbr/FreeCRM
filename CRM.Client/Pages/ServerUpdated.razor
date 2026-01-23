@@ -5,9 +5,23 @@
 <h1 class="page-title">
     <Language Tag="ServerUpdated" IncludeIcon="true" />
 </h1>
+
+@if (Helpers.HaveBlazorPlugins("ServerUpdated", "Top")) {
+    <div class="mb-2">
+        <BlazorPlugins Module="ServerUpdated" Position="Top" TValue="System.String" />
+    </div>
+}
+
 <div>
     <Language Tag="ServerUpdatedMessage" />
 </div>
+
+@if (Helpers.HaveBlazorPlugins("ServerUpdated", "Bottom")) {
+    <div class="mb-2">
+        <BlazorPlugins Module="ServerUpdated" Position="Bottom" TValue="System.String" />
+    </div>
+}
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

@@ -1,0 +1,109 @@
+﻿@page "/DynamicComponent"
+@page "/{TenantCode}/DynamicComponent"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+@if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
+    <h1>Dynamic Component</h1>
+
+    if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+        <div class="btn-group mb-2" role="group">
+            <BlazorPlugins Module="@_pageName" Button="true" TValue="System.String" Value="_value" ValueChanged="@(v => _value = v)" />
+        </div>
+    }
+
+    if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+        <div class="mb-2">
+            <BlazorPlugins Module="@_pageName"
+                    Position="Top"
+                    TValue="string"
+                    OnInitializedCallback="OnComponentInitialized"
+                    Value="_value"
+                    ValueChanged="@(v => _value = v)" />
+
+            @if (_componentInitialized) {
+                <label for="dynamic-component-sample-data">Sample Data:</label>
+                <input type="text"
+                       id="dynamic-component-sample-data"
+                       class="form-control"
+                       @bind="_value"
+                       @bind:event="oninput" />
+            }
+        </div>
+    }
+
+    if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
+        <div class="mb-2">
+            <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="System.String" />
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _componentInitialized = false;
+    protected bool _loadedData = false;
+    protected bool _loading = false;
+    protected string _pageName = "Testing";
+    protected RenderFragment? _component;
+
+    protected string _value = "Initial Value";
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+
+                    StateHasChanged();
+
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateToLogin();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (!Model.Subscribers_OnChange.Contains(_pageName)){
+            Model.Subscribers_OnChange.Add(_pageName);
+            Model.OnChange += OnDataModelUpdated;
+        }
+
+        Model.View = _pageName;
+    }
+
+    protected async Task OnButtonInitialized(string componentName)
+    {
+        await Helpers.ConsoleLog("OnButtonInitialized: " + componentName);
+    }
+
+    protected async Task OnComponentInitialized(string componentName)
+    {
+        //Console.WriteLine("OnComponentInitialized: " + componentName);
+        _componentInitialized = true;
+        StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}

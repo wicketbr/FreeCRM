@@ -542,7 +542,51 @@ namespace Plugins
                         }
                     }
                 }
+            }
 
+            // Read the blazor files from the various folders.
+            var blazorPath = System.IO.Path.Combine(path, "BlazorComponents");
+            var blazorFiles = GetFilesWithExtensions(blazorPath, ["*.blazor", "*.razor"]);
+            if (blazorFiles != null && blazorFiles.Any()) {
+                foreach(var file in blazorFiles) {
+                    var filename = System.IO.Path.GetFileNameWithoutExtension(file);
+                    var code = System.IO.File.ReadAllText(file);
+
+                    if (!String.IsNullOrWhiteSpace(code) && !String.IsNullOrWhiteSpace(filename)) {
+                        Plugin? blazorPlugin = null;
+
+                        // See if we have a json configuration file for this plugin.
+                        var jsonFile = System.IO.Path.Combine(blazorPath, filename + ".json");
+                        if (System.IO.File.Exists(jsonFile)) {
+                            var json = System.IO.File.ReadAllText(jsonFile);
+                            if (!String.IsNullOrWhiteSpace(json)) {
+                                blazorPlugin = System.Text.Json.JsonSerializer.Deserialize<Plugin>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            }
+                        }
+
+                        if (blazorPlugin == null) {
+                            blazorPlugin = new Plugin();
+                        }
+
+                        if (blazorPlugin.Id == Guid.Empty) {
+                            blazorPlugin.Id = Guid.NewGuid();
+                        }
+
+                        blazorPlugin.Code = code;
+                        blazorPlugin.Type = "Blazor";
+                        blazorPlugin.Name = filename;
+
+                        if (blazorPlugin.LimitToTenants != null && blazorPlugin.LimitToTenants.Count == 0) {
+                            blazorPlugin.LimitToTenants = new List<Guid>();
+                        }
+
+                        output.Add(blazorPlugin);
+                        _plugins.Add(blazorPlugin);
+                    }
+                }
+            }
+
+            if (output.Any()) {
                 output = output.OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
             }
 

@@ -14,7 +14,19 @@
     @if (_loading) {
         <LoadingMessage />
     } else {
-        @if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars) {
+        if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Button="true" TValue="DataObjects.User" Value="_user" ValueChanged="@(v => _user = v)" />
+            </div>
+        }
+
+        if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.User" Value="_user" ValueChanged="@(v => _user = v)" />
+            </div>
+        }
+
+        if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars) {
             <div class="card mb-2">
                 <div class="card-header text-bg-primary text-white">
                     <Language Tag="ManageAvatar" IncludeIcon="true" />&nbsp;
@@ -40,7 +52,7 @@
              </div>
         }
 
-        @if (Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo && Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
+        if (Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo && Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
       Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any()) {
             <div class="card mb-2">
                 <div class="card-header text-bg-primary text-white">
@@ -112,6 +124,12 @@
                     }
                     <!-- {{ModuleItemEnd:Locations}} -->
                 </div>
+            </div>
+        }
+
+        if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
+            <div class="mb-2">
+                <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="DataObjects.User" Value="_user" ValueChanged="@(v => _user = v)" />
             </div>
         }
     }

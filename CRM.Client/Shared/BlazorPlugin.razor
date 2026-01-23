@@ -1,0 +1,73 @@
+﻿@using Microsoft.CodeAnalysis
+@using Microsoft.CodeAnalysis.CSharp
+@using Try.Core
+@implements IDisposable
+@inject BlazorDataModel Model
+@inject CompilationService _compilationService
+@inject IJSInProcessRuntime JsRuntime
+@* @inject SpawnDev.BlazorJS.CodeRunner.CompilationService _compilationService *@
+
+@if (_compiledType != null) {
+    <DynamicComponent Type="@_compiledType" Parameters="Parameters" />
+} else if (_showCompileMessage) {
+    if (Button) {
+        <button type="button" class="btn btn-outline-secondary">
+            @_compileMessage
+        </button>
+    } else {
+        <span class="badge text-bg-secondary me-2">@_compileMessage</span>
+    }
+}
+
+@code {
+    [Parameter] public bool Button { get; set; }
+    [Parameter] public Plugins.Plugin Plugin { get; set; } = null!;
+    [Parameter] public Dictionary<string, object>? Parameters { get; set; }
+
+    Type? _compiledType = null;
+    protected string _compileMessage = String.Empty;
+    protected bool _showCompileMessage = true;
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Parameters == null) {
+            Parameters = new Dictionary<string, object>();
+        }
+
+        if (!Parameters.ContainsKey("PluginName")) {
+            Parameters.Add("PluginName", Plugin.Name);
+        }
+
+        Model.OnChange += StateHasChanged;
+
+        if (Plugin != null) {
+            await ExecuteBlazorPlugin();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        StateHasChanged();
+    }
+
+    protected async Task ExecuteBlazorPlugin()
+    {
+        if (Plugin != null && !String.IsNullOrWhiteSpace(Plugin.Code)) {
+            if (_showCompileMessage) {
+                _compiledType = await _compilationService.CompileRazorCodeToBlazorComponentType(Plugin.Code, async msg => {
+                    _compileMessage = "Plugin '" + Plugin.Name + "' : " + msg;
+                    StateHasChanged();
+                });
+            } else {
+                _compiledType = await _compilationService.CompileRazorCodeToBlazorComponentType(Plugin.Code);
+            }
+
+            StateHasChanged();
+        }
+    }
+}

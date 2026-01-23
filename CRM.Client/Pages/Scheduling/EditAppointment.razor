@@ -18,11 +18,22 @@
                                 @onclick="@(() => _appointment.Meeting = true)">
                             <Language Tag="AppointmentTypeMeeting" IncludeIcon="true" />
                         </button>
+
                         <button type="button" class="@(!_appointment.Meeting ? "btn btn-sm btn-primary" : "btn btn-sm btn-outline-secondary")"
                                 @onclick="@(() => _appointment.Meeting = false)">
                             <Language Tag="AppointmentTypeEvent" IncludeIcon="true" />
                         </button>
+
+                        @if (Helpers.HaveBlazorToolbarButtons("EditAppointment")) {
+                            <BlazorPlugins Module="EditAppointment" Button="true" TValue="DataObjects.Appointment" Value="_appointment" ValueChanged="@(v => _appointment = v)" />
+                        }
                     </div>
+                </div>
+            }
+
+            if (Helpers.HaveBlazorPlugins("EditAppointment", "Top")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="EditAppointment" Position="Top" TValue="DataObjects.Appointment" Value="_appointment" ValueChanged="@(v => _appointment = v)" />
                 </div>
             }
 
@@ -559,6 +570,12 @@
                             // {{ModuleItemEnd:Invoices}}
                         }
                     }
+                </div>
+            }
+
+            if (Helpers.HaveBlazorPlugins("EditAppointment", "Bottom")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="EditAppointment" Position="Bottom" TValue="DataObjects.Appointment" Value="_appointment" ValueChanged="@(v => _appointment = v)" />
                 </div>
             }
         }

@@ -33,6 +33,11 @@
     /// </summary>
     public bool RequireLogin { get; set; } = false;
 
+    /// <summary>
+    /// An option to show the links to the test pages on the home page.
+    /// </summary>
+    public bool ShowTestPageLinks {get; set; } = true;
+
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected string _pageName = "home";

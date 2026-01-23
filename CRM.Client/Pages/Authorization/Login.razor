@@ -153,6 +153,12 @@
                             }
                         }
 
+                        @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                        <div class="mb-2">
+                            <BlazorPlugins Module="@_pageName" Button="true" TValue="System.String" />
+                        </div>
+                        }
+
                         @if (_tenantListing.Tenants.Count() > 1) {
                             <div class="mb-2 mt-4 center">
                                 <button type="button" class="btn btn-warning" @onclick="SelectTenants">

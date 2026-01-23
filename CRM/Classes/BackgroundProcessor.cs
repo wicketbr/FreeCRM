@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MySqlX.XDevAPI.Common;
 using Plugins;
 using System.Timers;
 
