@@ -201,7 +201,6 @@
     protected DataObjects.VersionInfo versionInfo = new DataObjects.VersionInfo();
     protected bool versionInfoLoaded = false;
 
-    protected bool _precompileBlazorPlugins = false; // Set to true if you wish to pre-compile plugins when the app loads for a logged-in user.
     protected bool _precompiledBlazorPlugins = false;
 
     protected DotNetObjectReference<MainLayout>? dotNetHelper;
@@ -241,29 +240,40 @@
             await ValidateLogin();
         }
 
+        // Pass the GetOrPost delegate to the Compilation Service so
+        // cached data can be retrieved or saved for Blazor plugins.
+        _compilationService.SetGetOrPostDelegate(Helpers.GetOrPostBlazorCachedPluginBinary);
+
         timer = new System.Threading.Timer(async (object? stateInfo) => {
             await ThemeWatcher();
             MessageWatcher();
             await SavePendingUserPreferences();
 
-            if (_precompileBlazorPlugins && Model.LoggedIn && !_precompiledBlazorPlugins) {
+            // If we have a logged in user or any loaded plugins, and we are going to make
+            // sure that all plugins are pre-compiled, then do so here.
+            if (Model.PrecompileBlazorPlugins && !_precompiledBlazorPlugins && (Model.LoggedIn || Model.Plugins.Any())) {
                 _precompiledBlazorPlugins = true;
 
-                Helpers.SetTimeout(async() => {
-                    var plugins = Model.Plugins
-                        .Where(x => x.Type.ToLower() == "blazor")
-                        .ToList();
+                var plugins = Model.Plugins
+                    .Where(x => x.Type.ToLower() == "blazor")
+                    .ToList();
 
-                    if (plugins != null && plugins.Count > 0) {
-                        foreach(var plugin in plugins) {
-                            await _compilationService.CompileRazorCodeToBlazorComponentType(plugin.Code, async msg => {
-                                Console.WriteLine("Plugin '" + plugin.Name + "' Compilation Message: " + msg);
-                            });
-                        }
+                if (plugins != null && plugins.Count > 0) {
+                    Model.AddMessage(Helpers.Text("PreCompilingBlazorPlugins"), MessageType.Warning, false, true);
+
+                    await Helpers.ConsoleLog("Pre-Compiling and Caching Blazor Plugins...");
+
+                    foreach (var plugin in plugins) {
+                        await _compilationService.CompileRazorCodeToBlazorComponentType(plugin.Code, async msg => {
+                            await Helpers.ConsoleLog("Pre-Compiling and Caching Blazor Plugin '" + plugin.Name + "' : " + msg);
+                        });
                     }
-                });
-            }
 
+                    await Helpers.ConsoleLog("Pre-Compiling and Caching of Blazor Plugins Completed");
+
+                    Model.ClearMessages();
+                }
+            }
         }, new System.Threading.AutoResetEvent(false), 0, 500);
 
         updateTimer = new System.Threading.Timer(async (object? stateInfo) => {
@@ -275,10 +285,6 @@
         if (firstRender) {
             dotNetHelper = DotNetObjectReference.Create(this);
             await jsRuntime.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
-
-            // Console.WriteLine("Initializing Compilation Service...");
-            // await _compilationService.InitAsync(GetReferenceAssembliesStreamsAsync);
-            // Console.WriteLine("Initialized Compilation Service...");
 
             // See if a Theme is stored.
             var theme = await LocalStorage.GetItemAsync<string>("Theme");
@@ -337,12 +343,6 @@
             }
         }
     }
-
-    // private ValueTask<IReadOnlyList<byte[]>> GetReferenceAssembliesStreamsAsync(IReadOnlyCollection<string> referenceAssemblyNames) {
-    //     Console.WriteLine("GetReferenceAssembliesStreamsAsync Start");
-    //     return jsRuntime.InvokeAsync<IReadOnlyList<byte[]>>(Try.Core.Try.CodeExecution.GetCompilationDlls, new List<string>(referenceAssemblyNames) { "netstandard" });
-    //     Console.WriteLine("GetReferenceAssembliesStreamsAsync End");
-    // }
 
     [JSInvokable]
     public void DotNetHelperHandler(params string[] arguments) {

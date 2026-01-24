@@ -1,5 +1,13 @@
 ﻿namespace Try.Core
 {
+    using Microsoft.AspNetCore.Components;
+    using Microsoft.AspNetCore.Components.Routing;
+    using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+    using Microsoft.AspNetCore.Razor.Language;
+    using Microsoft.CodeAnalysis;
+    using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.CodeAnalysis.Razor;
+    using Microsoft.JSInterop;
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
@@ -12,37 +20,13 @@
     using System.Runtime;
     using System.Text;
     using System.Threading.Tasks;
-    using Microsoft.AspNetCore.Components;
-    using Microsoft.AspNetCore.Components.Routing;
-    using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-    using Microsoft.AspNetCore.Razor.Language;
-    using Microsoft.CodeAnalysis;
-    using Microsoft.CodeAnalysis.CSharp;
-    using Microsoft.CodeAnalysis.Razor;
-    using Microsoft.JSInterop;
-
-    //class SimpleRazorConfiguration : RazorConfiguration
-    //{
-    //    string _ConfigurationName = "";
-    //    public override string ConfigurationName => _ConfigurationName;
-    //    IReadOnlyList<RazorExtension> _Extensions;
-    //    public override IReadOnlyList<RazorExtension> Extensions => _Extensions;
-    //    RazorLanguageVersion _LanguageVersion;
-    //    public override RazorLanguageVersion LanguageVersion => _LanguageVersion;
-    //    bool _UseConsolidatedMvcViews = false;
-    //    public override bool UseConsolidatedMvcViews => _UseConsolidatedMvcViews;
-    //    public SimpleRazorConfiguration(RazorLanguageVersion razorLanguageVersion, string configuration, IReadOnlyList<RazorExtension> extensions, bool useConsolidatedMvcViews = false)
-    //    {
-    //        _LanguageVersion = razorLanguageVersion;
-    //        _ConfigurationName = configuration;
-    //        _Extensions = extensions;
-    //        _UseConsolidatedMvcViews = useConsolidatedMvcViews;
-    //    }
-    //}
 
     public class CompilationService
     {
-        private Dictionary<string, Type> _cachedTypes = new Dictionary<string, Type>();
+        //private Dictionary<string, Type> _cachedTypes = new Dictionary<string, Type>();
+        private Dictionary<string, bool> _checkedForCachedBinary = new Dictionary<string, bool>();
+        private Dictionary<string, byte[]> _cachedBinaries = new Dictionary<string, byte[]>();
+        private Func<string, byte[]?, Task<byte[]>>? _getOrPost;
 
         //public const string DefaultRootNamespace = $"{nameof(Try)}.{nameof(UserComponents)}";
         public const string DefaultRootNamespace = "CRM";
@@ -86,12 +70,6 @@
             ConfigurationName: "Blazor",
             Extensions: ImmutableArray<RazorExtension>.Empty);
 
-        //private readonly RazorConfiguration configuration = new SimpleRazorConfiguration(
-        //    RazorLanguageVersion.Latest,
-        //    "Blazor",
-        //    ImmutableArray<RazorExtension>.Empty
-        //);
-
         MetadataReferenceService.BlazorWasm.BlazorWasmMetadataReferenceService BlazorWasmMetadataReferenceService;
 
         public CompilationService(MetadataReferenceService.BlazorWasm.BlazorWasmMetadataReferenceService blazorWasmMetadataReferenceService)
@@ -102,54 +80,10 @@
         Task? _Init = null;
         Task Init => _Init ??= InitAsync();
 
-        //public async Task InitAsync(Func<IReadOnlyCollection<string>, ValueTask<IReadOnlyList<byte[]>>> getReferencedDllsBytesFunc)
-        //{
-        //    var basicReferenceAssemblyRoots = new[]
-        //    {
-        //        typeof(Console).Assembly, // System.Console
-        //        typeof(Uri).Assembly, // System.Private.Uri
-        //        typeof(AssemblyTargetedPatchBandAttribute).Assembly, // System.Private.CoreLib
-        //        typeof(NavLink).Assembly, // Microsoft.AspNetCore.Components.Web
-        //        typeof(IQueryable).Assembly, // System.Linq.Expressions
-        //        typeof(HttpClientJsonExtensions).Assembly, // System.Net.Http.Json
-        //        typeof(HttpClient).Assembly, // System.Net.Http
-        //        typeof(IJSRuntime).Assembly, // Microsoft.JSInterop
-        //        typeof(RequiredAttribute).Assembly, // System.ComponentModel.Annotations
-        //        typeof(MudBlazor.MudButton).Assembly, // MudBlazor
-        //        typeof(WebAssemblyHostBuilder).Assembly, // Microsoft.AspNetCore.Components.WebAssembly
-        //        typeof(FluentValidation.AbstractValidator<>).Assembly,
-        //    };
-        //    var assemblyNames = await getReferencedDllsBytesFunc(basicReferenceAssemblyRoots
-        //        .SelectMany(assembly => assembly.GetReferencedAssemblies().Concat(
-        //        [
-        //            assembly.GetName()
-        //        ]))
-        //        .Select(assemblyName => assemblyName.Name)
-        //        .ToHashSet());
-
-        //    var basicReferenceAssemblies = assemblyNames
-        //        .Select(peImage => MetadataReference.CreateFromImage(peImage, MetadataReferenceProperties.Assembly))
-        //        .ToList();
-
-        //    _baseCompilation = CSharpCompilation.Create(
-        //        DefaultRootNamespace,
-        //        Array.Empty<SyntaxTree>(),
-        //        basicReferenceAssemblies,
-        //        new CSharpCompilationOptions(
-        //            OutputKind.DynamicallyLinkedLibrary,
-        //            optimizationLevel: OptimizationLevel.Release,
-        //            concurrentBuild: false,
-        //            //// Warnings CS1701 and CS1702 are disabled when compiling in VS too
-        //            specificDiagnosticOptions: new[]
-        //            {
-        //                new KeyValuePair<string, ReportDiagnostic>("CS1701", ReportDiagnostic.Suppress),
-        //                new KeyValuePair<string, ReportDiagnostic>("CS1702", ReportDiagnostic.Suppress),
-        //            }));
-
-        //    _cSharpParseOptions = new CSharpParseOptions(LanguageVersion.Preview);
-
-        //    _Init = Task.CompletedTask;
-        //}
+        public void SetGetOrPostDelegate(Func<string, byte[]?, Task<byte[]>> getOrPost)
+        {
+            _getOrPost = getOrPost;
+        }
 
         async Task InitAsync()
         {
@@ -171,19 +105,7 @@
 
             var referenceTasks = new List<Task<MetadataReference>>();
 
-            //var assemblyNames = await getReferencedDllsBytesFunc(basicReferenceAssemblyRoots
-            //    .SelectMany(assembly => assembly.GetReferencedAssemblies().Concat(
-            //    [
-            //        assembly.GetName()
-            //    ]))
-            //    .Select(assemblyName => assemblyName.Name)
-            //    .ToHashSet());
-
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-
-            //var basicReferenceAssemblies = assemblyNames
-            //    .Select(peImage => MetadataReference.CreateFromImage(peImage, MetadataReferenceProperties.Assembly))
-            //    .ToList();
 
             foreach (var assembly in assemblies) {
                 if (assembly.IsDynamic) {
@@ -193,6 +115,7 @@
 
                 referenceTasks.Add(BlazorWasmMetadataReferenceService.CreateAsync(MetadataReferenceService.Abstractions.Types.AssemblyDetails.FromAssembly(assembly)));
             }
+
             await Task.WhenAll(referenceTasks);
             var references = referenceTasks.Select(o => o.Result).ToList();
 
@@ -225,20 +148,62 @@
         public async Task<Type?> CompileRazorCodeToBlazorComponentType(string razorCode, Func<string, Task>? updateStatusFunc = null)
         {
             var hash = MD5.ComputeHashString(System.Text.Encoding.UTF8.GetBytes(razorCode));
-            if (_cachedTypes.ContainsKey(hash)) {
-                var cachedOutput = _cachedTypes[hash];
-                if (cachedOutput != null) {
-                    return cachedOutput;
+
+            // See if we have a cached binary for this item.
+            if (_cachedBinaries.ContainsKey(hash)) {
+                var cachedBinary = _cachedBinaries[hash];
+                if (cachedBinary != null && cachedBinary.Length > 0) {
+                    var cachedAssembly = Assembly.Load(cachedBinary);
+                    var cachedComponent = cachedAssembly?.ExportedTypes.FirstOrDefault(o => o.IsSubclassOf(typeof(ComponentBase)));
+                    if (cachedComponent != null) {
+                        return cachedComponent;
+                    }
+                }
+            }
+
+            // If we didn't have a locally cached binary, check the server cache once.
+            if (!_checkedForCachedBinary.ContainsKey(hash)) {
+                _checkedForCachedBinary[hash] = true;
+
+                // Call the API endpoint to see if this has been cached on the server.
+                if (_getOrPost != null) {
+                    var responseBytes = await _getOrPost("api/Data/GetBlazorCachedPluginBinary/" + hash, null);
+                    if (responseBytes != null && responseBytes.Length > 0) {
+                        if (!_cachedBinaries.ContainsKey(hash)) {
+                            _cachedBinaries.Add(hash, responseBytes);
+                        }
+
+                        var cachedAssembly = Assembly.Load(responseBytes);
+                        var cachedComponent = cachedAssembly?.ExportedTypes.FirstOrDefault(o => o.IsSubclassOf(typeof(ComponentBase)));
+                        if (cachedComponent != null) {
+                            return cachedComponent;
+                        }
+                    }
                 }
             }
 
             var compileResult = await CompileAsync(new CodeFile($"/App/MyApp{++_i}.razor", razorCode), updateStatusFunc);
+
+            if (compileResult.AssemblyBytes != null && compileResult.AssemblyBytes.Length > 0) {
+                // The result here contains the compiled assembly bytes.
+                // Perhaps this could be cached for later use?
+                // Maybe this gets cached to the database using the hash of the source code
+                // with some sort of expiration date, since source code may change over time
+                // and we wouldn't want to cache this forever.
+                // Maybe save this to an API endpoint, etc., and check for the cached version first before compiling again.
+                // We could even load this during page load so we could have pre-compiled components.
+                if (!_cachedBinaries.ContainsKey(hash)) {
+                    _cachedBinaries.Add(hash, compileResult.AssemblyBytes);
+                }
+
+                // Also save this to the server cache if we have a delegate.
+                if (_getOrPost != null) {
+                    await _getOrPost("api/Data/SaveBlazorCachedPluginBinary/" + hash, compileResult.AssemblyBytes);
+                }
+            }
+
             var assembly = compileResult.LoadAssembly();
             var component = assembly?.ExportedTypes.FirstOrDefault(o => o.IsSubclassOf(typeof(ComponentBase)));
-
-            if (!_cachedTypes.ContainsKey(hash) && component != null) {
-                _cachedTypes[hash] = component;
-            }
 
             return component;
         }
@@ -265,6 +230,7 @@
             await (updateStatusFunc?.Invoke("Compiling...") ?? Task.CompletedTask);
             var cSharpResults = await CompileToCSharpAsync(codeFiles, updateStatusFunc);
             var result = CompileToAssembly(cSharpResults);
+
             await (updateStatusFunc?.Invoke(result.Compiled ? "Compile Success" : "Compile Failed") ?? Task.CompletedTask);
             return result;
         }

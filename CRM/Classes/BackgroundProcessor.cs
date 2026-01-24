@@ -80,6 +80,11 @@ public class BackgroundProcessor : BackgroundService
             ProcessTasksMessages(appTasksForTenant);
         }
 
+        if (_iterations == 1 || _iterations % 100 == 0) {
+            // Delete any stale cached compiled Blazor plugins.
+            await da.DeleteOldBlazorCachedPluginBinaries();
+        }
+
         // Process any app-specific tasks for specific tenants.
         var appTasks = await da.ProcessBackgroundTasksApp(Guid.Empty, _iterations);
         ProcessTasksMessages(appTasks);

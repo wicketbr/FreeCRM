@@ -2687,6 +2687,24 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Used by the Blazor plugins to get or post the cached plugin binary data.
+    /// </summary>
+    /// <param name="url">The API endpoint URL.</param>
+    /// <param name="BinaryData">For the save endpoint this is the binary data to cached as a byte array.</param>
+    /// <returns>Always returns a byte array. For the save endpoint this will be empty. For the get method this will return the cached binary data.</returns>
+    public static async Task<byte[]> GetOrPostBlazorCachedPluginBinary(string url, byte[]? BinaryData = null)
+    {
+        byte[] output = Array.Empty<byte>();
+
+        var bytes = await GetOrPost<byte[]>(url, BinaryData);
+        if (bytes != null && bytes.Length > 0) {
+            output = bytes;
+        }
+
+        return output;
+    }
+
+    /// <summary>
     /// Gets a plugin by it's unique Guid Id.
     /// </summary>
     /// <param name="id">The Guid Id of the plugin.</param>

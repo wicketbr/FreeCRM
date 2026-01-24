@@ -8,13 +8,51 @@ namespace CRM;
 
 public partial interface IDataAccess
 {
+    Task DeleteOldBlazorCachedPluginBinaries();
     PluginExecuteResult ExecutePlugin(PluginExecuteRequest request, DataObjects.User? CurrentUser = null);
+    Task<byte[]> GetBlazorCachedPluginBinary(string Hash);
     List<Plugins.Plugin> GetPlugins();
     IPlugins? PluginsInterface { get; }
+    Task SaveBlazorCachedPluginBinary(string Hash, byte[] BinaryData);
 }
 
 public partial class DataAccess
 {
+    public async Task DeleteOldBlazorCachedPluginBinaries()
+    {
+        try {
+            var plugins = GetPlugins();
+            if (plugins.Any(x => x.Type.ToLower() == "blazor")) {
+                List<string> validHashes = new List<string>();
+
+                foreach(var plugin in plugins.Where(x => x.Type.ToLower() == "blazor")) {
+                    var hash = MD5.ComputeHashString(System.Text.Encoding.UTF8.GetBytes(plugin.Code));
+                    if (!String.IsNullOrWhiteSpace(hash)) {
+                        validHashes.Add("CachedBlazorBinary_" + hash);
+                    }
+                }
+
+                // Now, remove any cached binaries that are not in the validHashes list.
+                var recs = await data.Settings.Where(x => x.SettingName.StartsWith("CachedBlazorBinary_")).ToListAsync();
+                if (recs != null && recs.Any()) {
+                    bool removedRecords = false;
+
+                    foreach(var rec in recs) {
+                        if (!validHashes.Contains(rec.SettingName)) {
+                            data.Settings.Remove(rec);
+                            removedRecords = true;
+                        }
+                    }
+
+                    if (removedRecords) {
+                        await data.SaveChangesAsync();
+                    }
+                }
+            }
+
+        } catch { }
+    }
+
     public PluginExecuteResult ExecutePlugin(PluginExecuteRequest request, DataObjects.User? CurrentUser = null)
     {
         var output = new PluginExecuteResult { 
@@ -111,6 +149,21 @@ public partial class DataAccess
         return output;
     }
 
+    public async Task<byte[]> GetBlazorCachedPluginBinary(string Hash)
+    {
+        byte[] output = Array.Empty<byte>();
+
+        var rec = await data.Settings.FirstOrDefaultAsync(x => x.SettingName == "CachedBlazorBinary_" + Hash);
+        if (rec != null) {
+            var code = DeserializeObject<byte[]>(rec.SettingText);
+            if (code != null && code.Length > 0) {
+                output = code;
+            }
+        }
+
+        return output;
+    }
+
     public List<Plugins.Plugin> GetPlugins()
     {
         var output = new List<Plugins.Plugin>();
@@ -186,6 +239,29 @@ public partial class DataAccess
 
             return output;
         }
+    }
+
+    public async Task SaveBlazorCachedPluginBinary(string Hash, byte[] BinaryData)
+    {
+        try {
+            var now = DateTime.UtcNow;
+            var settingName = "CachedBlazorBinary_" + Hash;
+
+            var rec = await data.Settings.FirstOrDefaultAsync(x => x.SettingName == settingName);
+            if (rec == null) {
+                rec = new Setting {
+                    SettingName = settingName,
+                    SettingType = "Object",
+                };
+
+                data.Settings.Add(rec);
+            }
+
+            rec.SettingText = SerializeObject(BinaryData);
+            rec.LastModified = now;
+
+            await data.SaveChangesAsync();
+        } catch { }
     }
 
     private void SavePluginsToCache() {

@@ -60,7 +60,9 @@
         if (Plugin != null && !String.IsNullOrWhiteSpace(Plugin.Code)) {
             if (_showCompileMessage) {
                 _compiledType = await _compilationService.CompileRazorCodeToBlazorComponentType(Plugin.Code, async msg => {
-                    _compileMessage = "Plugin '" + Plugin.Name + "' : " + msg;
+                    await Helpers.ConsoleLog("Plugin '" + Plugin.Name + "' : " + msg);
+
+                    _compileMessage = "Plugin " + msg;
                     StateHasChanged();
                 });
             } else {

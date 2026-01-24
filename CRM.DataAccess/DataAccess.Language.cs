@@ -214,6 +214,7 @@ public partial class DataAccess
             { "InvalidPlugin", "Invalid Plugin" },
             { "Plugin", "Plugin" },
             { "PluginNotFound", "The plugin with an Id of {0} could not be found." },
+            { "PreCompilingBlazorPlugins", "Pre-Compiling Blazor Plugins..." },
             { "TestPlugin", "Test Plugin" },
 
             // {{ModuleItemStart:Services}}

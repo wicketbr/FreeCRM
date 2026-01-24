@@ -38,4 +38,15 @@ public partial class BlazorDataModel
             }
         }
     }
+
+    /// <summary>
+    /// Set this option to true if you wish to make sure all Blazor plugins are precompiled during page load.
+    /// If this is set to false then any components that have not yet been cached will take some time to load
+    /// in the interface while they are being compiled and cached.
+    /// </summary>
+    public bool PrecompileBlazorPlugins {
+        get {
+            return true;
+        }
+    }
 }

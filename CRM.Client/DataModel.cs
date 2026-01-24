@@ -59,6 +59,7 @@ public partial class BlazorDataModel
     private string _ApplicationUrl = "";
     private DataObjects.AuthenticationProviders _AuthenticationProviders = new DataObjects.AuthenticationProviders();
     private DataObjects.BlazorDataModelLoader _BlazorDataModelLoader = new DataObjects.BlazorDataModelLoader();
+    private Dictionary<string, object> _BlazorPluginObjects = new Dictionary<string, object>();
     private string _CultureCode = "en-US";
     private List<DataObjects.OptionPair> _CultureCodes = new List<DataObjects.OptionPair>();
     private DataObjects.Language _DefaultLanguage = new DataObjects.Language();
@@ -407,6 +408,24 @@ public partial class BlazorDataModel
         set {
             if (!ObjectsAreEqual(_BlazorDataModelLoader, value)) {
                 _BlazorDataModelLoader = value;
+                _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Holds objects that might be used by Blazor plugins.
+    /// Plugins can't communicate with each other. So, a button type
+    /// plugin might open a dialog and use the data passed to the plugin
+    /// to update some object in the model here. Then, a component plugin
+    /// might check to see if that object has updated and refresh its data.
+    /// </summary>
+    public Dictionary<string, object> BlazorPluginObjects {
+        get { return _BlazorPluginObjects; }
+        set {
+            if (!ObjectsAreEqual(_BlazorPluginObjects, value)) {
+                _BlazorPluginObjects = value;
                 _ModelUpdated = DateTime.UtcNow;
                 NotifyDataChanged();
             }

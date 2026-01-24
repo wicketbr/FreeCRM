@@ -1,5 +1,25 @@
 ﻿# Plugin Architecture
 
+## Why Use Plugins?
+
+The plugin architecture provides a way to extend the functionality of your
+application without having to modify the core source code of your application.
+If you are creating an in-house solution that will only be used by your organization,
+then writing plugins might not make sense. However, if you are creating a solution
+that will be given to customers or clients that will not have the ability to modify
+the source code of the application, then the plugin architecture provides a way
+for those customers to add custom functionality to their installation of your application.
+
+Even if you are creating an in-house solution, you may still want to create plugins
+to provide a way to provide custom solutions to only specific tenants. Since plugins can
+be limited to one or more tenant based on the LimitToTenants property, you can
+create custom functionality for specific tenants without having to create in-page
+logic to determine which custom code to show for which tenants.
+
+Also, if you are using some sort of custom authentication solution that is not supported
+by any of the built-in providers, you can create your own authentication plugin. More details
+on that can be found in the "Auth" section later in this document.
+
 ## Overview
 
 The plugin architecture in the CRM is designed to allow for developers that are using
