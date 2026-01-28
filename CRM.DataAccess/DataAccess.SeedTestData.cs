@@ -277,7 +277,7 @@ public partial class DataAccess
         tenantSettings.AllowUsersToManageAvatars = true;
         tenantSettings.AllowUsersToManageBasicProfileInfo = true;
         tenantSettings.AllowUsersToManageBasicProfileInfoElements = new List<string> { "name", "email", "phone", "employeeid", "title", "department", "location" };
-        tenantSettings.RequirePreExistingAccountToLogIn = TenantId == _guid1 ? true : false;
+        tenantSettings.RequirePreExistingAccountToLogIn = true;
 
         SaveTenantSettings(TenantId, tenantSettings);
 

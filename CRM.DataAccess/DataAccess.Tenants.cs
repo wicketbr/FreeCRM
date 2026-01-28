@@ -513,25 +513,29 @@ public partial class DataAccess
 
         bool saveSettings = false;
 
+        // Previously, if certain settings were missing, we would create default settings and save the changes.
+        // However, some processes were causing issues with this method.
+        // Now, the only thing that will trigger a save here is if the JWT RSA keys are missing.
+
         var settings = GetSetting<DataObjects.TenantSettings>("Settings", DataObjects.SettingType.Object, TenantId);
         if (settings != null) {
             output = settings;
-            if (settings.WorkSchedule == null) {
-                settings.WorkSchedule = defaultWorkSchedule;
-                saveSettings = true;
-            } else if (!settings.WorkSchedule.Sunday && !settings.WorkSchedule.Monday && !settings.WorkSchedule.Tuesday
-                 && !settings.WorkSchedule.Wednesday && !settings.WorkSchedule.Thursday && !settings.WorkSchedule.Friday && !settings.WorkSchedule.Saturday) {
-                settings.WorkSchedule = defaultWorkSchedule;
-                saveSettings = true;
-            }
-        } else {
-            // Create default settings for this tenant.
-            output = new DataObjects.TenantSettings {
-                LoginOptions = new List<string>() { "local", "eitsso" },
-                WorkSchedule = defaultWorkSchedule
-            };
+        //    if (settings.WorkSchedule == null) {
+        //        settings.WorkSchedule = defaultWorkSchedule;
+        //        saveSettings = true;
+        //    } else if (!settings.WorkSchedule.Sunday && !settings.WorkSchedule.Monday && !settings.WorkSchedule.Tuesday
+        //         && !settings.WorkSchedule.Wednesday && !settings.WorkSchedule.Thursday && !settings.WorkSchedule.Friday && !settings.WorkSchedule.Saturday) {
+        //        settings.WorkSchedule = defaultWorkSchedule;
+        //        saveSettings = true;
+        //    }
+        //} else {
+        //    // Create default settings for this tenant.
+        //    output = new DataObjects.TenantSettings {
+        //        LoginOptions = new List<string>() { "local", "eitsso" },
+        //        WorkSchedule = defaultWorkSchedule
+        //    };
 
-            saveSettings = true;
+        //    saveSettings = true;
         }
 
         if (output.MaxToastMessages < 0) {
