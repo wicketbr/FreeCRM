@@ -512,6 +512,7 @@ public partial class DataAccess
         DataObjects.TenantSettings output = new DataObjects.TenantSettings();
 
         bool saveSettings = false;
+        bool loadedSettings = false;
 
         // Previously, if certain settings were missing, we would create default settings and save the changes.
         // However, some processes were causing issues with this method.
@@ -520,6 +521,12 @@ public partial class DataAccess
         var settings = GetSetting<DataObjects.TenantSettings>("Settings", DataObjects.SettingType.Object, TenantId);
         if (settings != null) {
             output = settings;
+            loadedSettings = true;
+
+            if (settings.WorkSchedule == null) {
+                settings.WorkSchedule = defaultWorkSchedule;
+            }
+
         //    if (settings.WorkSchedule == null) {
         //        settings.WorkSchedule = defaultWorkSchedule;
         //        saveSettings = true;
@@ -535,7 +542,7 @@ public partial class DataAccess
         //        WorkSchedule = defaultWorkSchedule
         //    };
 
-        //    saveSettings = true;
+            //    saveSettings = true;
         }
 
         if (output.MaxToastMessages < 0) {
@@ -558,7 +565,8 @@ public partial class DataAccess
             output.Logo = file.FileId;
         }
 
-        if (saveSettings) {
+        if (loadedSettings && saveSettings) {
+            // Only save the settings if they were actually loaded and something was missing that we added.
             SaveTenantSettings(TenantId, output);
         }
 
