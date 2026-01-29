@@ -46,7 +46,7 @@ public partial class BlazorDataModel
     /// </summary>
     public bool PrecompileBlazorPlugins {
         get {
-            return true;
+            return false;
         }
     }
 }
