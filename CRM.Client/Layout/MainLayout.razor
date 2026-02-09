@@ -15,7 +15,7 @@
 <PageTitle>@Helpers.Text("AppTitle")</PageTitle>
 
 @if (IncludeCustomCss) { // For clients that are using custom theme CSS and font settings that gets rendered here.
-                        <style>
+    <style>
         @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.ThemeFontCssImport)) {
                 @((MarkupString)Model.Tenant.TenantSettings.ThemeFontCssImport)
         }
@@ -26,153 +26,92 @@
     </style>
 }
 
-<div id="page-area" class="@PageAreaClass">
-    <OffcanvasPopoutMenu />
+@if (AppLayout.Enabled && AppLayout.OverrideCompleteLayout) {
+    <MainLayout_App BodyContent="@Body" Loading="Loading" />
+} else {
+    bool useAppLayoutMinimal = AppLayout.Enabled && !AppLayout.OverrideCompleteLayout;
+    <div id="page-area" class="@PageAreaClass">
+        <OffcanvasPopoutMenu />
 
-    @if (!Loading) {
-        if (Model.AppSettings.MaintenanceMode && !BypassMaintenanceMode) {
-            <div class="maintenance-mode container-fluid">
-                <h1 class="page-title">
-                    <Language Tag="MaintenanceMode" IncludeIcon="true" />
-                </h1>
-                <div class="mb-2">
-                    <Language Tag="MaintenanceModeMessage" />
-                </div>
-            </div>
-        } else {
-            <NavigationMenu />
-
-            @if (!Model.AppOnline) {
-                <div class="container-fluid">
-                    <div role="alert" class="alert alert-danger">
-                        <Language Tag="ServerOffline" />
-                    </div>
-                </div>
-            }
-
-            @if (Model.Messages.Any()) {
-                <div aria-live="polite" aria-atomic="true" class="position-relative">
-                    <div class="toast-container end-0" id="toast-message-area">
-                        @foreach (var message in Model.Messages.OrderByDescending(x => x.Shown)) {
-                            string text = message.Text;
-
-                            string toastClass = "toast show ";
-                            string toastCloseButtonClass = "btn-close me-2 mt-2 m-auto";
-
-                            switch (message.MessageType) {
-                                case MessageType.Primary:
-                                    toastClass += "text-bg-primary";
-                                    toastCloseButtonClass += " btn-close-white";
-                                    break;
-
-                                case MessageType.Secondary:
-                                    toastClass += "text-bg-secondary";
-                                    toastCloseButtonClass += " btn-close-white";
-                                    break;
-
-                                case MessageType.Success:
-                                    toastClass += "text-bg-success";
-                                    toastCloseButtonClass += " btn-close-white";
-                                    break;
-
-                                case MessageType.Danger:
-                                    toastClass += "text-bg-danger";
-                                    toastCloseButtonClass += " btn-close-white";
-                                    break;
-
-                                case MessageType.Warning:
-                                    toastClass += "text-bg-warning";
-                                    toastCloseButtonClass += " btn-close-black";
-                                    break;
-
-                                case MessageType.Info:
-                                    toastClass += "text-bg-info";
-                                    toastCloseButtonClass += " btn-close-black";
-                                    break;
-
-                                case MessageType.Light:
-                                    toastClass += "text-bg-light";
-                                    toastCloseButtonClass += " btn-close-black";
-                                    break;
-
-                                case MessageType.Dark:
-                                    toastClass += "text-bg-dark";
-                                    toastCloseButtonClass += " btn-close-white";
-                                    break;
-                            }
-
-                            if (message.ReplaceLineBreaks) {
-                                text = text.Replace(Environment.NewLine, "<br />");
-                            }
-
-                            <div class="@toastClass" role="alert" aria-live="assertive" aria-atomic="true" id="@message.Id" data-bs-animation="false">
-                                <div class="d-flex">
-                                    <div class="toast-body">
-                                        @if (!message.AutoHide) {
-                                            <div id="toast-time-@message.Id" class="toast-time">@message.TimeLabel</div>
-                                        }
-                                        <div>@((MarkupString)text)</div>
-                                    </div>
-                                    <button type="button" class="@toastCloseButtonClass" @onclick="@(() => CloseMessage(message.Id))"
-                                            aria-label="@Helpers.Text("Close")"></button>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        }
-    } else {
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
-    }
-
-    <div class="container-fluid page-view">
-        @if (Model.AppSettings.MaintenanceMode && (Model.User.AppAdmin || BypassMaintenanceMode)) {
-            <div class="alert alert-danger">
-                <h1 class="page-title">
-                    <Language Tag="MaintenanceMode" IncludeIcon="true" />
-                </h1>
-                <div class="mb-2">
-                    <Language Tag="MaintenanceModeAppAdminMessage" />
-                </div>
-            </div>
-        }
-
-        @if (!Loading && (!Model.AppSettings.MaintenanceMode || Model.User.AppAdmin || BypassMaintenanceMode)) {
-            if (Model.ViewIsEditPage && Model.UsersOnSamePage.Any()) {
-                <div id="users-on-same-page" class="alert alert-danger">
-                    <h2 class="subtitle">
-                        <Language Tag="UsersOnSamePage" />
-                    </h2>
-
+        @if (!Loading) {
+            if (Model.AppSettings.MaintenanceMode && !BypassMaintenanceMode) {
+                <div class="maintenance-mode container-fluid">
+                    <h1 class="page-title">
+                        <Language Tag="MaintenanceMode" IncludeIcon="true" />
+                    </h1>
                     <div class="mb-2">
-                        <Language Tag="UsersOnSamePageMessage" />
+                        <Language Tag="MaintenanceModeMessage" />
                     </div>
+                </div>
+            } else {
+                <NavigationMenu Loading="Loading" />
 
-                    <table class="padded">
-                        <tbody>
-                            @foreach (var user in Model.UsersOnSamePage.OrderBy(x => x.FirstName).ThenBy(x => x.LastName)) {
-                                string icon = Helpers.UserIcon(user.Photo);
-                                <tr>
-                                    <td>@((MarkupString)icon)</td>
-                                    <td>@user.FirstName @user.LastName</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                @if (!Model.AppOnline) {
+                    <div class="container-fluid">
+                        <div role="alert" class="alert alert-danger">
+                            <Language Tag="ServerOffline" />
+                        </div>
+                    </div>
+                }
+
+                <ToastMessages />
+            }
+        } else {
+            <svg class="loading-progress">
+                <circle r="40%" cx="50%" cy="50%" />
+                <circle r="40%" cx="50%" cy="50%" />
+            </svg>
+            <div class="loading-progress-text"></div>
+        }
+
+        <div class="@(useAppLayoutMinimal ? "" : "container-fluid page-view")">
+            @if (Model.AppSettings.MaintenanceMode && (Model.User.AppAdmin || BypassMaintenanceMode)) {
+                <div class="alert alert-danger">
+                    <h1 class="page-title">
+                        <Language Tag="MaintenanceMode" IncludeIcon="true" />
+                    </h1>
+                    <div class="mb-2">
+                        <Language Tag="MaintenanceModeAppAdminMessage" />
+                    </div>
                 </div>
             }
 
-            <div class="pb-3">@Body</div>
-        }
-    </div>
+            @if (!Loading && (!Model.AppSettings.MaintenanceMode || Model.User.AppAdmin || BypassMaintenanceMode)) {
+                if (Model.ViewIsEditPage && Model.UsersOnSamePage.Any()) {
+                    <div id="users-on-same-page" class="alert alert-danger">
+                        <h2 class="subtitle">
+                            <Language Tag="UsersOnSamePage" />
+                        </h2>
 
-    <div id="password-generator" style="display:none;"> </div>
-</div>
+                        <div class="mb-2">
+                            <Language Tag="UsersOnSamePageMessage" />
+                        </div>
+
+                        <table class="padded">
+                            <tbody>
+                                @foreach (var user in Model.UsersOnSamePage.OrderBy(x => x.FirstName).ThenBy(x => x.LastName)) {
+                                    string icon = Helpers.UserIcon(user.Photo);
+                                    <tr>
+                                        <td>@((MarkupString)icon)</td>
+                                        <td>@user.FirstName @user.LastName</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                @if (useAppLayoutMinimal) {
+                    <MainLayout_App BodyContent="@Body" Loading="Loading" />
+                } else {
+                    <div class="pb-3">@Body</div>
+                }
+            }
+        </div>
+    </div>
+}
+
+<div id="password-generator" style="display:none;"> </div>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
@@ -181,10 +120,6 @@
 </div>
 
 <RadzenComponents />
-@*
-<RadzenDialog />
-<RadzenTooltip />
-*@
 
 @code {
     private bool hubConfigured = false;
@@ -204,6 +139,8 @@
     protected bool _precompiledBlazorPlugins = false;
 
     protected DotNetObjectReference<MainLayout>? dotNetHelper;
+
+    protected MainLayout_App AppLayout = new MainLayout_App();
 
     public void Dispose() {
         dotNetHelper?.Dispose();
@@ -409,10 +346,6 @@
                 }
             }
         }
-    }
-
-    protected void CloseMessage(string messageId) {
-        Model.Messages = Model.Messages.Where(x => x.Id != messageId).ToList();
     }
 
     public async ValueTask DisposeAsync() {

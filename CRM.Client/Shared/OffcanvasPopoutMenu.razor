@@ -174,37 +174,7 @@
                 </div>
             </div>
 
-            @if (Model.Tenants != null && Model.Tenants.Count() > 1) {
-                <hr />
-                <div class="mt-2">
-                    <Language Tag="SwitchAccountMessage" />
-                </div>
-                @foreach (var tenant in Model.Tenants.Where(x => x.Enabled == true).OrderBy(x => x.Name)) {
-                    string tenantDisplayName = Helpers.TenantNameFromId(tenant.TenantId);
-
-                    if (tenant.TenantId == Model.TenantId) {
-                        <div class="current-tenant">
-                            <Icon Name="TenantCurrent" />
-                            @if (tenantDisplayName.Length > 40) {
-                                string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
-                                <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
-                            } else {
-                                <span class="icon-text">@tenantDisplayName</span>
-                            }
-                        </div>
-                    } else {
-                        <div class="pointer hover-highlight" @onclick="@(() => Helpers.SwitchTenant(tenant.TenantId))">
-                            <Icon Name="TenantChange" />
-                            @if (tenantDisplayName.Length > 40) {
-                                string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
-                                <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
-                            } else {
-                                <span class="icon-text">@tenantDisplayName</span>
-                            }
-                        </div>
-                    }
-                }
-            }
+            <SwitchTenants AddClass="hover-highlight" SeparateWithHr="above" />
 
             @if (Model.Languages.Any()) {
                 var languages = Model.Languages.Where(x => x.TenantId == Model.User.TenantId);
@@ -400,6 +370,4 @@
             Helpers.ForceModelUpdates();
         }
     }
-
-
 }

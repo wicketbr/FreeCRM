@@ -1,0 +1,73 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+
+@if (Model.Tenants != null && Model.Tenants.Count() > 1) {
+    switch(Helpers.StringLower(SeparateWithHr)) {
+        case "above":
+        case "both":
+            <hr />
+            break;
+    }
+
+    <div class="mb-2">
+        <Language Tag="SwitchAccountMessage" />
+    </div>
+
+    @foreach (var tenant in Model.Tenants.Where(x => x.Enabled == true).OrderBy(x => x.Name)) {
+        string tenantDisplayName = Helpers.TenantNameFromId(tenant.TenantId);
+
+        if (tenant.TenantId == Model.TenantId) {
+            <div class="current-tenant">
+                <Icon Name="TenantCurrent" />
+                @if (tenantDisplayName.Length > 40) {
+                    string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
+                    <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
+                } else {
+                    <span class="icon-text">@tenantDisplayName</span>
+                }
+            </div>
+        } else {
+            string itemClass = "pointer";
+            if (!String.IsNullOrWhiteSpace(AddClass)) {
+                itemClass += " " + AddClass;
+            }
+
+            <div>
+                <span class="@itemClass" @onclick="@(() => Helpers.SwitchTenant(tenant.TenantId))">
+                    <Icon Name="TenantChange" />
+                    @if (tenantDisplayName.Length > 40) {
+                        string truncatedName = tenantDisplayName.Substring(0, 18).Trim() + "..." + tenantDisplayName.Substring(tenantDisplayName.Length - 18).Trim();
+                        <span class="icon-text" title="@tenantDisplayName">@truncatedName</span>
+                    } else {
+                        <span class="icon-text">@tenantDisplayName</span>
+                    }
+                </span>
+            </div>
+        }
+    }
+
+    switch (Helpers.StringLower(SeparateWithHr)) {
+        case "below":
+        case "both":
+            <hr />
+            break;
+    }
+}
+
+@code {
+    // An optional class to add to available tenants (not the active tenant.)
+    [Parameter]
+    public string AddClass { get; set; } = "";
+
+    // Options are "above", "below", "both", or "" (none)
+    [Parameter]
+    public string SeparateWithHr { get; set; } = "";
+
+    public void Dispose() {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized() {
+        Model.OnChange += StateHasChanged;
+    }
+}

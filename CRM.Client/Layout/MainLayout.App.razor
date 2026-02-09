@@ -1,0 +1,37 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used as an alternate to the MainLayout.App.razor page if enabled.
+    <div class="container-fluid page-view">
+        <h1 class="page-title">
+            Layout from MainLayout.App
+        </h1>
+
+        <div class="pb-3">@BodyContent</div>
+    </div>
+}
+
+@code {
+    // Set this to true to use this layout instead of the default MainLayout.App.razor layout.
+    [Parameter] public bool Enabled { get; set; } = false;
+
+    [Parameter] public RenderFragment? BodyContent { get; set; }
+
+    [Parameter] public bool Loading { get; set; }
+
+    // By default the layout will still render certain interface components, like the
+    // OffcanvasPopoutMenu and the Maintenance Messages, etc.
+    // Set this to true to hide all of those and handle all rendering yourself in this component.
+    [Parameter] public bool OverrideCompleteLayout { get; set; } = false;
+
+    public void Dispose() { 
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+}

@@ -89,6 +89,20 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Indicates if the current view is an admin view.
+    /// </summary>
+    public static bool AdminView {
+        get {
+            var adminMenuItems = MenuItemsAdmin.Select(x => x.PageNames).SelectMany(x => x).ToList();
+            if (adminMenuItems.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Checks if the file type of the given filename is allowed.
     /// </summary>
     /// <param name="filename">The name of the file to check.</param>
@@ -4067,6 +4081,21 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// The URL to the tenant's logo image, if set. Otherwise, returns an empty string.
+    /// </summary>
+    public static string LogoUrl {
+        get {
+            string output = "";
+
+            if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.Tenant.TenantSettings.Logo).ToString();
+            }
+
+            return output;
+        }
+    }
+
+    /// <summary>
     /// Trims a string to a maximum length.
     /// </summary>
     /// <param name="input">The string to trim.</param>
@@ -4089,6 +4118,224 @@ public static partial class Helpers
         }
 
         return output;
+    }
+
+    /// <summary>
+    /// The collection of menu items used for the navigation menu.
+    /// </summary>
+    public static List<DataObjects.MenuItem> MenuItems {
+        get {
+            var output = new List<DataObjects.MenuItem> { };
+
+            // {{ModuleItemStart:Appointments}}
+            if (Model.FeatureEnabledScheduling) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Schedule"),
+                    Icon = "Schedule",
+                    PageNames = new List<string> { "schedule" },
+                    url = Helpers.BuildUrl("Schedule"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Appointments}}
+
+            // {{ModuleItemStart:Invoices}}
+            if(Model.FeatureEnabledInvoices) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Invoices"),
+                    Icon = "Invoices",
+                    PageNames = new List<string> { "invoices", "editinvoice", "createinvoice" },
+                    url = Helpers.BuildUrl("Invoices"),
+                    SortOrder = 2000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Invoices}}
+
+            output.AddRange(Helpers.MenuItemsApp);
+
+            output = output.OrderBy(x => x.SortOrder).ThenBy(x => x.Title).ToList();
+
+            return output;
+        }
+    }
+
+    /// <summary>
+    /// The collection of Admin menu items used for the navigation menu Admin dropdown menu.
+    /// </summary>
+    public static List<DataObjects.MenuItem> MenuItemsAdmin {
+        get {
+            var output = new List<DataObjects.MenuItem> { };
+
+            if (Model.User.AppAdmin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("AppSettings"),
+                    Icon = "AppSettings",
+                    PageNames = new List<string> { "appsettings" },
+                    url = Helpers.BuildUrl("Settings/AppSettings"),
+                    SortOrder = 1000,
+                    AppAdminOnly = true,
+                });
+            }
+
+            // {{ModuleItemStart:Departments}}
+            if (Model.User.Admin && Model.FeatureEnabledDepartments) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("DepartmentGroups"),
+                    Icon = "DepartmentGroups",
+                    PageNames = new List<string> { "departmentgroups", "editdepartmentgroup" },
+                    url = Helpers.BuildUrl("Settings/DepartmentGroups"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Departments"),
+                    Icon = "Departments",
+                    PageNames = new List<string> { "departments", "editdepartment" },
+                    url = Helpers.BuildUrl("Settings/Departments"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Departments}}
+
+            // {{ModuleItemStart:EmailTemplates}}
+            if (Model.User.Admin && Model.FeatureEnabledEmailTemplates) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("EmailTemplates"),
+                    Icon = "EmailTemplates",
+                    PageNames = new List<string> { "emailtemplates", "editemailtemplate" },
+                    url = Helpers.BuildUrl("Settings/EmailTemplates"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:EmailTemplates}}
+
+            if (Model.User.Admin && Model.FeatureEnabledFiles) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Files"),
+                    Icon = "Files",
+                    PageNames = new List<string> { "files" },
+                    url = Helpers.BuildUrl("Settings/Files"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Language"),
+                    Icon = "Language",
+                    PageNames = new List<string> { "language" },
+                    url = Helpers.BuildUrl("Settings/Language"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            // {{ModuleItemStart:Locations}}
+            if (Model.User.Admin && Model.FeatureEnabledLocation) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Locations"),
+                    Icon = "Locations",
+                    PageNames = new List<string> { "editlocation", "locations" },
+                    url = Helpers.BuildUrl("Settings/Locations"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Locations}}
+
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Settings"),
+                    Icon = "Settings",
+                    PageNames = new List<string> { "settings" },
+                    url = Helpers.BuildUrl("Settings"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            // {{ModuleItemStart:Services}}
+            if (Model.User.Admin && Model.FeatureEnabledServices) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Services"),
+                    Icon = "Services",
+                    PageNames = new List<string> { "editservice", "services" },
+                    url = Helpers.BuildUrl("Settings/Services"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Services}}
+
+            // {{ModuleItemStart:Tags}}
+            if (Model.User.Admin && Model.FeatureEnabledTags) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Tags"),
+                    Icon = "Tags",
+                    PageNames = new List<string> { "edittag", "tags" },
+                    url = Helpers.BuildUrl("Settings/Tags"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+            // {{ModuleItemEnd:Tags}}
+
+            if (Model.User.AppAdmin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Tenants"),
+                    Icon = "Tenants",
+                    PageNames = new List<string> { "edittenant", "tenants" },
+                    url = Helpers.BuildUrl("Settings/Tenants"),
+                    SortOrder = 1000,
+                    AppAdminOnly = true,
+                });
+            }
+
+            if (Model.User.Admin && Model.FeatureEnabledUDF) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("UserDefinedFields"),
+                    Icon = "UserDefinedFields",
+                    PageNames = new List<string> { "udf" },
+                    url = Helpers.BuildUrl("Settings/UDF"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            if (Model.User.Admin) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("Users"),
+                    Icon = "Users",
+                    PageNames = new List<string> { "edituser", "users" },
+                    url = Helpers.BuildUrl("Settings/Users"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            if (Model.User.Admin && Model.FeatureEnabledUserGroups) {
+                output.Add(new DataObjects.MenuItem {
+                    Title = Helpers.Text("UserGroups"),
+                    Icon = "UserGroups",
+                    PageNames = new List<string> { "editusergroup", "usergroups" },
+                    url = Helpers.BuildUrl("Settings/UserGroups"),
+                    SortOrder = 1000,
+                    AppAdminOnly = false,
+                });
+            }
+
+            output.AddRange(Helpers.MenuItemsAdminApp);
+
+            output = output.OrderBy(x => x.SortOrder).ThenBy(x => x.Title).ToList();
+
+            return output;
+        }
     }
 
     /// <summary>
@@ -6040,6 +6287,21 @@ public static partial class Helpers
     public static string Uri {
         get {
             return NavManager.Uri;
+        }
+    }
+
+    /// <summary>
+    /// The URL for the user's avatar photo or an empty string if they don't have one.
+    /// </summary>
+    public static string UserAvatarUrl {
+        get {
+            string output = "";
+
+            if (Model.User.Photo.HasValue && Model.User.Photo != Guid.Empty) {
+                output = Helpers.BaseUri + "File/View/" + ((Guid)Model.User.Photo).ToString();
+            }
+
+            return output;
         }
     }
 

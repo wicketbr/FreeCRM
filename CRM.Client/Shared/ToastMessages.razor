@@ -1,0 +1,88 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+
+@if (Model.Messages.Any()) {
+    <div aria-live="polite" aria-atomic="true" class="position-relative">
+        <div class="toast-container end-0" id="toast-message-area">
+            @foreach (var message in Model.Messages.OrderByDescending(x => x.Shown)) {
+                string text = message.Text;
+
+                string toastClass = "toast show ";
+                string toastCloseButtonClass = "btn-close me-2 mt-2 m-auto";
+
+                switch (message.MessageType) {
+                    case MessageType.Primary:
+                        toastClass += "text-bg-primary";
+                        toastCloseButtonClass += " btn-close-white";
+                        break;
+
+                    case MessageType.Secondary:
+                        toastClass += "text-bg-secondary";
+                        toastCloseButtonClass += " btn-close-white";
+                        break;
+
+                    case MessageType.Success:
+                        toastClass += "text-bg-success";
+                        toastCloseButtonClass += " btn-close-white";
+                        break;
+
+                    case MessageType.Danger:
+                        toastClass += "text-bg-danger";
+                        toastCloseButtonClass += " btn-close-white";
+                        break;
+
+                    case MessageType.Warning:
+                        toastClass += "text-bg-warning";
+                        toastCloseButtonClass += " btn-close-black";
+                        break;
+
+                    case MessageType.Info:
+                        toastClass += "text-bg-info";
+                        toastCloseButtonClass += " btn-close-black";
+                        break;
+
+                    case MessageType.Light:
+                        toastClass += "text-bg-light";
+                        toastCloseButtonClass += " btn-close-black";
+                        break;
+
+                    case MessageType.Dark:
+                        toastClass += "text-bg-dark";
+                        toastCloseButtonClass += " btn-close-white";
+                        break;
+                }
+
+                if (message.ReplaceLineBreaks) {
+                    text = text.Replace(Environment.NewLine, "<br />");
+                }
+
+                <div class="@toastClass" role="alert" aria-live="assertive" aria-atomic="true" id="@message.Id" data-bs-animation="false">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            @if (!message.AutoHide) {
+                                <div id="toast-time-@message.Id" class="toast-time">@message.TimeLabel</div>
+                            }
+                            <div>@((MarkupString)text)</div>
+                        </div>
+                        <button type="button" class="@toastCloseButtonClass" @onclick="@(() => CloseMessage(message.Id))"
+                                aria-label="@Helpers.Text("Close")"></button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    public void Dispose() {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized() {
+        Model.OnChange += StateHasChanged;
+    }
+
+    protected void CloseMessage(string messageId) {
+        Model.Messages = Model.Messages.Where(x => x.Id != messageId).ToList();
+    }
+}
