@@ -501,6 +501,10 @@ button.btn {
     /*margin-bottom:.2em;*/
 }
 
+.input-group button.btn {
+    margin-right:0;
+}
+
 h1 button.btn,
 h2 button.btn {
     margin-bottom: 0;
