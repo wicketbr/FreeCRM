@@ -631,34 +631,38 @@
 
         if(files != null && files.Any()) {
             foreach(var file in files) {
-                bool allowedExtension = true;
-                string extension =!String.IsNullOrWhiteSpace(file.Extension) ? file.Extension : String.Empty;
+                if (file.ActionResponse.Result) {
+                    bool allowedExtension = true;
+                    string extension = !String.IsNullOrWhiteSpace(file.Extension) ? file.Extension : String.Empty;
 
-                switch (extension.ToUpper()) {
-                    case ".EXE":
-                        allowedExtension = false;
-                        break;
-                }
+                    switch (extension.ToUpper()) {
+                        case ".EXE":
+                            allowedExtension = false;
+                            break;
+                    }
 
-                if (allowedExtension) {
-                    file.FileId = Guid.Empty;
+                    if (allowedExtension) {
+                        file.FileId = Guid.Empty;
 
-                    Model.Message_Saving(Helpers.Text("Saving") + " &ldquo;" + file.FileName + "&rdquo;");
-                    var saved = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/SaveFile", file);
+                        Model.Message_Saving(Helpers.Text("Saving") + " &ldquo;" + file.FileName + "&rdquo;");
+                        var saved = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/SaveFile", file);
 
-                    if (saved != null) {
-                        if (saved.ActionResponse.Result) {
-                            // string fileName = Helpers.StringValue(saved.FileName);
-                            // _files = _files.Where(x => x.FileName != null && x.FileName.ToLower() != fileName.ToLower()).ToList();
-                            // _files.Add(saved);
-                        } else {
-                            foreach(var msg in saved.ActionResponse.Messages) {
-                                errors.Add(msg);
+                        if (saved != null) {
+                            if (saved.ActionResponse.Result) {
+                                // string fileName = Helpers.StringValue(saved.FileName);
+                                // _files = _files.Where(x => x.FileName != null && x.FileName.ToLower() != fileName.ToLower()).ToList();
+                                // _files.Add(saved);
+                            } else {
+                                foreach (var msg in saved.ActionResponse.Messages) {
+                                    errors.Add(msg);
+                                }
                             }
                         }
+                    } else {
+                        errors.Add(Helpers.Text("InvalidImageFileType") + " - " + file.FileName);
                     }
                 } else {
-                    errors.Add(Helpers.Text("InvalidImageFileType") + " - " + file.FileName);
+                    errors.AddRange(file.ActionResponse.Messages);
                 }
             }
         }

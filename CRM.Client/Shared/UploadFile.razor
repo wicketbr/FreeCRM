@@ -90,26 +90,48 @@
 
         List<DataObjects.FileStorage> output = new List<DataObjects.FileStorage>();
 
+        string lastFileName = String.Empty;
         try {
             foreach (var file in e.GetMultipleFiles()) {
+                lastFileName = file.Name;
                 string extension = System.IO.Path.GetExtension(file.Name);
 
                 var byteData = new byte[file.Size];
-                await file.OpenReadStream(52428800).ReadAsync(byteData);
+                if (byteData.Length > 52428800) {
+                    await Helpers.ConsoleLog("File '" + file.Name + "' exceeds the allowed file size.");
 
-                DataObjects.FileStorage fileStorage = new DataObjects.FileStorage {
-                    Bytes = file.Size,
-                    FileName = file.Name,
-                    Extension = extension,
-                    TenantId = Model.TenantId,
-                    Value = byteData,
-                };
+                    output.Add(new DataObjects.FileStorage {
+                        ActionResponse = new DataObjects.BooleanResponse {
+                            Result = false,
+                            Messages = new List<string> { "File exceeds the allowed file size." }
+                        },
+                        Bytes = file.Size,
+                        FileName = file.Name,
+                        Extension = extension,
+                        TenantId = Model.TenantId,
+                        Value = null,
+                    });
+                } else {
+                    await file.OpenReadStream(52428800).ReadAsync(byteData);
 
-                output.Add(fileStorage);
+                    DataObjects.FileStorage fileStorage = new DataObjects.FileStorage {
+                        ActionResponse = new DataObjects.BooleanResponse {
+                            Result = true,
+                            Messages = new List<string>()
+                        },
+                        Bytes = file.Size,
+                        FileName = file.Name,
+                        Extension = extension,
+                        TenantId = Model.TenantId,
+                        Value = byteData,
+                    };
+
+                    output.Add(fileStorage);
+                }
             }
         }catch (Exception ex) {
             if(ex != null) {
-
+                await Helpers.ConsoleLog("Error in File Upload: File '" + lastFileName + "' - " + ex.Message);
             }
         }
 

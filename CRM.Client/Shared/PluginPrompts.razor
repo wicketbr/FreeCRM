@@ -757,7 +757,7 @@
     protected async Task UploadFile(PluginPrompt prompt)
     {
         Delegate onUploadComplete = async(DataObjects.FileStorage fileStorage) => {
-            if (!String.IsNullOrWhiteSpace(fileStorage.FileName) && fileStorage.Value != null && fileStorage.Value.Length > 0) {
+            if (!String.IsNullOrWhiteSpace(fileStorage.FileName) && fileStorage.Value != null && fileStorage.ActionResponse.Result && fileStorage.Value.Length > 0) {
                 string bytesAsString = Convert.ToBase64String(fileStorage.Value);
 
                 var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());
@@ -775,7 +775,7 @@
 
         Delegate onUploadsComplete = async(List<DataObjects.FileStorage> files) => {
             foreach(var file in files) {
-                if (!String.IsNullOrWhiteSpace(file.FileName) && file.Value != null && file.Value.Length > 0) {
+                if (!String.IsNullOrWhiteSpace(file.FileName) && file.Value != null && file.ActionResponse.Result && file.Value.Length > 0) {
                     string bytesAsString = Convert.ToBase64String(file.Value);
 
                     var promptValue = _promptValues.FirstOrDefault(x => x.Name.ToLower() == prompt.Name.ToLower());

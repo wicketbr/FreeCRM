@@ -1034,7 +1034,7 @@
 
     protected async Task UploadedLogo(DataObjects.FileStorage fileStorage)
     {
-        if (fileStorage != null && !String.IsNullOrWhiteSpace(fileStorage.Extension)) {
+        if (fileStorage != null && fileStorage.ActionResponse.Result && !String.IsNullOrWhiteSpace(fileStorage.Extension)) {
             bool allowedExtension = false;
             string extension = fileStorage.Extension;
 
