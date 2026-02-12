@@ -622,6 +622,15 @@ public partial class DataAccess
             }
             // {{ModuleItemEnd:EmailTemplates}}
 
+            if (Rec is EFModels.EFModels.FileStorage && DataObject is DataObjects.FileStorage) {
+                var rec = Rec as EFModels.EFModels.FileStorage;
+                var fileStorage = DataObject as DataObjects.FileStorage;
+
+                if (rec != null && fileStorage != null) {
+                    //rec.Property = fileStorage.Property;
+                }
+            }
+
             // {{ModuleItemStart:Invoices}}
             if (Rec is EFModels.EFModels.Invoice && DataObject is DataObjects.Invoice) {
                 var rec = Rec as EFModels.EFModels.Invoice;

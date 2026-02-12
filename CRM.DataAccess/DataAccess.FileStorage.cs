@@ -576,6 +576,8 @@ public partial class DataAccess
             }
         }
 
+        SaveDataApp(rec, output, CurrentUser);
+
         try {
             if (newRecord) {
                 data.FileStorages.Add(rec);
