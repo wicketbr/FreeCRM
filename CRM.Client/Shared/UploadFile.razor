@@ -130,9 +130,22 @@
                 }
             }
         }catch (Exception ex) {
-            if(ex != null) {
-                await Helpers.ConsoleLog("Error in File Upload: File '" + lastFileName + "' - " + ex.Message);
-            }
+            await Helpers.ConsoleLog("Error in File Upload: File '" + lastFileName + "' - " + ex.Message);
+
+            var errorMessages = new List<string> { "An error occurred while uploading the file '" + lastFileName + "'." };
+            errorMessages.AddRange(Helpers.RecurseException(ex));
+
+            output.Add(new DataObjects.FileStorage {
+                ActionResponse = new DataObjects.BooleanResponse {
+                    Result = false,
+                    Messages = errorMessages,
+                },
+                Bytes = 0,
+                FileName = lastFileName,
+                Extension = String.Empty,
+                TenantId = Model.TenantId,
+                Value = null,
+            });
         }
 
         if (InDialog) {
