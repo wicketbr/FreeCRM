@@ -9,7 +9,7 @@
             Class="flex-1" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20" InputStyle="opacity:0"
             @ondragenter="@UploaderSetDragClass" @ondragleave="@UploaderClearDragClass" @ondragend="@UploaderClearDragClass">
             <ActivatorContent>
-                <MudBlazor.MudPaper Height="200px" Outlined="true" Class="@UploaderDragClass">
+                <MudBlazor.MudPaper Height="@HeightCss" Outlined="true" Class="@UploaderDragClass">
                     @if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
                         <div class="drag-and-drop-instructions">@((MarkupString)UploadInstructions)</div>
                     }
@@ -34,6 +34,9 @@
     public bool? AllowMultipleUploads { get; set; } = false;
 
     [Parameter]
+    public int Height { get; set; } = 200;
+
+    [Parameter]
     public bool InDialog { get; set; }
 
     [Parameter]
@@ -51,6 +54,20 @@
     protected bool _uploading = false;
 
     public void Dispose() { }
+
+    protected string HeightCss {
+        get {
+            string output = String.Empty;
+
+            if (Height > 0) {
+                output = $"{Height}px";
+            } else {
+                output = "200px;";
+            }
+
+            return output;
+        }
+    }
 
     protected string SupportedFileTypesList
     {

@@ -6196,8 +6196,15 @@ public static partial class Helpers
     /// <param name="UploadInstructions">Any upload instructions to show before the upload control.</param>
     /// <param name="SupportedFileTypes">A list of extensions if you wish to limit the upload types allowed.</param>
     /// <param name="AllowMultipleUploads">Option to indicate if the user can upload only a single file or multiple files.</param>
-    public static async Task UploadFile(Delegate OnUploadComplete, string Title = "",
-        string UploadInstructions = "", List<string>? SupportedFileTypes = null, bool AllowMultipleUploads = false)
+    /// <param name="Height">The height of the upload area in pixels (defaults to 200px.)</param>
+    public static async Task UploadFile(
+        Delegate OnUploadComplete,
+        string Title = "",
+        string UploadInstructions = "",
+        List<string>? SupportedFileTypes = null,
+        bool AllowMultipleUploads = false,
+        int Height = 200
+    )
     {
         if (String.IsNullOrWhiteSpace(Title)) {
             Title = Text("UploadFile");
@@ -6206,6 +6213,7 @@ public static partial class Helpers
         Dictionary<string, object> parameters = new Dictionary<string, object>();
         parameters.Add("OnUploadComplete", OnUploadComplete);
         parameters.Add("InDialog", true);
+        parameters.Add("Height", Height);
 
         if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
             parameters.Add("UploadInstructions", UploadInstructions);
