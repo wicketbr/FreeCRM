@@ -13,187 +13,191 @@
         </h1>
         <LoadingMessage />
     } else {
-        <div class="@Model.StickyMenuClass">
-            <h1 class="page-title">
-                <Language Tag="Users" IncludeIcon="true" />
-                <StickyMenuIcon />
-            </h1>
-            <div class="mb-2">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-success" @onclick="AddUser">
-                        <Language Tag="AddNewUser" IncludeIcon="true" />
-                    </button>
-
-                    <button type="button" class="btn btn-warning" @onclick="ClearFilter" disabled="@Filter.Loading">
-                        <Language Tag="Clear" IncludeIcon="true" />
-                    </button>
-
-                    @if (Filter.ShowFilters) {
-                        <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
-                            <Language Tag="HideFilter" IncludeIcon="true" />
+        if (AppModule.OverridePage) {
+            <Users_App />
+        } else {
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="Users" IncludeIcon="true" />
+                    <StickyMenuIcon />
+                </h1>
+                <div class="mb-2">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-success" @onclick="AddUser">
+                            <Language Tag="AddNewUser" IncludeIcon="true" />
                         </button>
-                    } else {
-                        <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
-                            <Language Tag="ShowFilter" IncludeIcon="true" />
+
+                        <button type="button" class="btn btn-warning" @onclick="ClearFilter" disabled="@Filter.Loading">
+                            <Language Tag="Clear" IncludeIcon="true" />
                         </button>
-                    }
 
-                    <button type="button" class="btn btn-dark" @onclick="Refresh" disabled="@Filter.Loading">
-                        <Language Tag="Refresh" IncludeIcon="true" />
-                    </button>
+                        @if (Filter.ShowFilters) {
+                            <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                                <Language Tag="HideFilter" IncludeIcon="true" />
+                            </button>
+                        } else {
+                            <button type="button" class="btn btn-dark" @onclick="ToggleShowFilter" disabled="@Filter.Loading">
+                                <Language Tag="ShowFilter" IncludeIcon="true" />
+                            </button>
+                        }
 
-                    @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
-                        <BlazorPlugins Module="@_pageName" Button="true" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
-                    }
-                </div>
-                @if (Filter.ShowFilters && !Filter.Loading) {
-                    <div class="keyword-search mb-2">
-                        <label for="users-filter-keyword"><Language Tag="Search" /></label>
-                        <div class="fixed-200">
-                            <input type="text"
-                                   id="users-filter-keyword"
-                                   class="form-control"
-                                   @bind="Filter.Keyword"
-                                   @bind:after="LoadFilter"
-                                   placeholder="@FilterSearchPlaceholder" />
+                        <button type="button" class="btn btn-dark" @onclick="Refresh" disabled="@Filter.Loading">
+                            <Language Tag="Refresh" IncludeIcon="true" />
+                        </button>
+
+                        @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                            <BlazorPlugins Module="@_pageName" Button="true" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
+                        }
+                    </div>
+                    @if (Filter.ShowFilters && !Filter.Loading) {
+                        <div class="keyword-search mb-2">
+                            <label for="users-filter-keyword"><Language Tag="Search" /></label>
+                            <div class="fixed-200">
+                                <input type="text"
+                                       id="users-filter-keyword"
+                                       class="form-control"
+                                       @bind="Filter.Keyword"
+                                       @bind:after="LoadFilter"
+                                       placeholder="@FilterSearchPlaceholder" />
+                            </div>
                         </div>
-                    </div>
 
-                }
-            </div>
-        </div>
-
-        if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
-            <div class="mb-2">
-                <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
-            </div>
-        }
-
-        if (Filter.ShowFilters) {
-            <div class="row mb-2">
-                @if (Model.FeatureEnabledDepartments && Model.Departments.Any()) {
-                    <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
-                        <label for="filter-users-departments">
-                            <Language Tag="Departments" />
-                        </label>
-                        <select class="form-select" id="filter-users-departments" multiple size="4" @bind="Filter.FilterDepartments" @bind:after="LoadFilter">
-                            @foreach (var item in Model.Departments.OrderBy(x => x.DepartmentName)) {
-                                if (Filter.FilterDepartments != null && Filter.FilterDepartments.Contains(item.DepartmentId)) {
-                                    <option value="@item.DepartmentId" selected>@item.DepartmentName</option>
-                                } else {
-                                    <option value="@item.DepartmentId">@item.DepartmentName</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                }
-
-                <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
-                    <label for="users-filter-enabled"><Language Tag="Enabled" /></label>
-                    <select class="form-control" size="4" id="users-filter-enabled" @bind="Filter.Enabled" @bind:after="LoadFilter">
-                        @if (String.IsNullOrWhiteSpace(Filter.Enabled)) {
-                            <option value="" selected>All</option>
-                        } else {
-                            <option value="">All</option>
-                        }
-
-                        @if (Helpers.StringLower(Filter.Enabled) == "enabled") {
-                            <option value="enabled" selected><Language Tag="EnabledUsersOnly" /></option>
-                        } else {
-                            <option value="enabled"><Language Tag="EnabledUsersOnly" /></option>
-                        }
-
-                        @if (Helpers.StringLower(Filter.Enabled) == "disabled"){
-                            <option value="disabled" selected><Language Tag="DisabledUsersOnly" /></option>
-                        } else {
-                            <option value="disabled"><Language Tag="DisabledUsersOnly" /></option>
-                        }
-                    </select>
+                    }
                 </div>
+            </div>
 
-                <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
-                    <label for="users-filter-admin"><Language Tag="Admin" /></label>
-                    <select class="form-control" size="4" id="users-filter-admin" @bind="Filter.Admin" @bind:after="LoadFilter">
-                        @if (String.IsNullOrWhiteSpace(Filter.Admin)) {
-                            <option value="" selected><Language Tag="All" /></option>
-                        } else {
-                            <option value=""><Language Tag="All" /></option>
-                        }
-
-                        @if (Helpers.StringLower(Filter.Admin) == "admin") {
-                            <option value="admin" selected><Language Tag="AdminUsersOnly" /></option>
-                        } else {
-                            <option value="admin"><Language Tag="AdminUsersOnly" /></option>
-                        }
-
-                        @if (Helpers.StringLower(Filter.Admin) == "standard") {
-                            <option value="standard" selected><Language Tag="NonAdminUsersOnly" /></option>
-                        } else {
-                            <option value="standard"><Language Tag="NonAdminUsersOnly" /></option>
-                        }
-                    </select>
+            if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="@_pageName" Position="Top" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
                 </div>
+            }
 
-                @for (int x = 1; x < 11; x++) {
-                    int udfItem = x;
-                    var udfOptions = Model.UdfFilterOptions("Users", udfItem);
-                    string udfLabel = Model.UdfLabel("Users", udfItem);
-
-                    if (!String.IsNullOrEmpty(udfLabel) && udfOptions.Any() && Model.UdfShowInFilter("Users", udfItem)) {
-                        <div class="col-3 mb-2">
-                            <label for="users-filter-UDF@(udfItem)">@((MarkupString)udfLabel)</label>
-                            <select class="form-select" size="4"
-                                    id="users-filter-UDF@(udfItem)"
-                                    value="@(Helpers.GetObjectPropertyValue<string>(Filter, "UDF" + (udfItem < 10 ? "0" : "") + udfItem.ToString()))"
-                                    @onchange="@((ChangeEventArgs e) => FilterChangedUDF(e, udfItem))">
-                                <option value=""></option>
-                                @foreach (var item in udfOptions) {
-                                    <option value="@item">@item</option>
+            if (Filter.ShowFilters) {
+                <div class="row mb-2">
+                    @if (Model.FeatureEnabledDepartments && Model.Departments.Any()) {
+                        <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
+                            <label for="filter-users-departments">
+                                <Language Tag="Departments" />
+                            </label>
+                            <select class="form-select" id="filter-users-departments" multiple size="4" @bind="Filter.FilterDepartments" @bind:after="LoadFilter">
+                                @foreach (var item in Model.Departments.OrderBy(x => x.DepartmentName)) {
+                                    if (Filter.FilterDepartments != null && Filter.FilterDepartments.Contains(item.DepartmentId)) {
+                                        <option value="@item.DepartmentId" selected>@item.DepartmentName</option>
+                                    } else {
+                                        <option value="@item.DepartmentId">@item.DepartmentName</option>
+                                    }
                                 }
                             </select>
                         </div>
                     }
-                }
 
-            </div>
+                    <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
+                        <label for="users-filter-enabled"><Language Tag="Enabled" /></label>
+                        <select class="form-control" size="4" id="users-filter-enabled" @bind="Filter.Enabled" @bind:after="LoadFilter">
+                            @if (String.IsNullOrWhiteSpace(Filter.Enabled)) {
+                                <option value="" selected>All</option>
+                            } else {
+                                <option value="">All</option>
+                            }
 
-            <div class="mb-2">
-                <div class="form-check form-switch">
-                    <input type="checkbox"
-                        id="users-filter-IncludeDeletedRecords"
-                        class="form-check-input"
-                        @bind="Model.User.UserPreferences.IncludeDeletedItems"
-                        @bind:after="LoadFilter"
-                    />
-                    <label for="users-filter-IncludeDeletedRecords" class="form-check-label">
-                        <Language Tag="IncludeDeletedRecords" />
-                    </label>
+                            @if (Helpers.StringLower(Filter.Enabled) == "enabled") {
+                                <option value="enabled" selected><Language Tag="EnabledUsersOnly" /></option>
+                            } else {
+                                <option value="enabled"><Language Tag="EnabledUsersOnly" /></option>
+                            }
+
+                            @if (Helpers.StringLower(Filter.Enabled) == "disabled"){
+                                <option value="disabled" selected><Language Tag="DisabledUsersOnly" /></option>
+                            } else {
+                                <option value="disabled"><Language Tag="DisabledUsersOnly" /></option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
+                        <label for="users-filter-admin"><Language Tag="Admin" /></label>
+                        <select class="form-control" size="4" id="users-filter-admin" @bind="Filter.Admin" @bind:after="LoadFilter">
+                            @if (String.IsNullOrWhiteSpace(Filter.Admin)) {
+                                <option value="" selected><Language Tag="All" /></option>
+                            } else {
+                                <option value=""><Language Tag="All" /></option>
+                            }
+
+                            @if (Helpers.StringLower(Filter.Admin) == "admin") {
+                                <option value="admin" selected><Language Tag="AdminUsersOnly" /></option>
+                            } else {
+                                <option value="admin"><Language Tag="AdminUsersOnly" /></option>
+                            }
+
+                            @if (Helpers.StringLower(Filter.Admin) == "standard") {
+                                <option value="standard" selected><Language Tag="NonAdminUsersOnly" /></option>
+                            } else {
+                                <option value="standard"><Language Tag="NonAdminUsersOnly" /></option>
+                            }
+                        </select>
+                    </div>
+
+                    @for (int x = 1; x < 11; x++) {
+                        int udfItem = x;
+                        var udfOptions = Model.UdfFilterOptions("Users", udfItem);
+                        string udfLabel = Model.UdfLabel("Users", udfItem);
+
+                        if (!String.IsNullOrEmpty(udfLabel) && udfOptions.Any() && Model.UdfShowInFilter("Users", udfItem)) {
+                            <div class="col-3 mb-2">
+                                <label for="users-filter-UDF@(udfItem)">@((MarkupString)udfLabel)</label>
+                                <select class="form-select" size="4"
+                                        id="users-filter-UDF@(udfItem)"
+                                        value="@(Helpers.GetObjectPropertyValue<string>(Filter, "UDF" + (udfItem < 10 ? "0" : "") + udfItem.ToString()))"
+                                        @onchange="@((ChangeEventArgs e) => FilterChangedUDF(e, udfItem))">
+                                    <option value=""></option>
+                                    @foreach (var item in udfOptions) {
+                                        <option value="@item">@item</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                    }
+
                 </div>
-            </div>
-        }
 
-        @if (Filter.Loading) {
-            <LoadingMessage />
-        } else {
-            if (Filter.RecordCount == 0) {
-                <Language Tag="NoItemsToShow" />
-            } else {
-                <PagedRecordset ActionHandlers="ActionHandlers"
-                    CenterItems="CenterItems"
-                    Configuration="Config"
-                    Formatters="Formatters"
-                    NavigationCallbackHander="NavigationCallbackHander"
-                    NavigationLocation="PagedRecordset.NavLocation.Both"
-                    RecordData="Data"
-                    RowClasses="_rowClasses"
-                    UseBootstrap="true" />
+                <div class="mb-2">
+                    <div class="form-check form-switch">
+                        <input type="checkbox"
+                            id="users-filter-IncludeDeletedRecords"
+                            class="form-check-input"
+                            @bind="Model.User.UserPreferences.IncludeDeletedItems"
+                            @bind:after="LoadFilter"
+                        />
+                        <label for="users-filter-IncludeDeletedRecords" class="form-check-label">
+                            <Language Tag="IncludeDeletedRecords" />
+                        </label>
+                    </div>
+                </div>
             }
-        }
 
-        if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
-            <div class="mb-2">
-                <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
-            </div>
+            @if (Filter.Loading) {
+                <LoadingMessage />
+            } else {
+                if (Filter.RecordCount == 0) {
+                    <Language Tag="NoItemsToShow" />
+                } else {
+                    <PagedRecordset ActionHandlers="ActionHandlers"
+                        CenterItems="CenterItems"
+                        Configuration="Config"
+                        Formatters="Formatters"
+                        NavigationCallbackHander="NavigationCallbackHander"
+                        NavigationLocation="PagedRecordset.NavLocation.Both"
+                        RecordData="Data"
+                        RowClasses="_rowClasses"
+                        UseBootstrap="true" />
+                }
+            }
+
+            if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
+                <div class="mb-2">
+                    <BlazorPlugins Module="@_pageName" Position="Bottom" TValue="DataObjects.FilterUsers" Value="Filter" ValueChanged="@(v => Filter = v)" />
+                </div>
+            }
         }
     }
 }
@@ -213,6 +217,8 @@
     protected List<string> _rowClasses = new List<string>();
 
     protected string _pageName = "users";
+
+    protected Users_App AppModule = new Users_App();
 
     public void Dispose()
     {
@@ -252,7 +258,13 @@
 
             if (!_loadedData) {
                 _loadedData = true;
-                await LoadData();
+
+                if (AppModule.OverridePage) {
+                    _loading = false;
+                    StateHasChanged();
+                } else {
+                    await LoadData();
+                }
             }
         }
     }
@@ -482,7 +494,7 @@
 
                 _loading = false;
 
-                this.StateHasChanged();
+                StateHasChanged();
 
                 if (Filter.ShowFilters) {
                     await Helpers.DelayedFocus("users-filter-keyword");

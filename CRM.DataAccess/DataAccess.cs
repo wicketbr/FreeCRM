@@ -23,7 +23,7 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("2/19/2026"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("2/23/2026"));
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
     private bool _useMigrations = false;
