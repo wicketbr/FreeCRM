@@ -48,6 +48,8 @@ kept or removed are:
 - Invoices
 - Locations
 - Payments
+- SamplePages
+- SamplePlugins
 - Services
 - Tags
 

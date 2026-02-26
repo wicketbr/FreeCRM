@@ -3,25 +3,14 @@
 @inject BlazorDataModel Model
 
 @{
-    // This component is used to display application-specific settings on the Edit User page.
     if (OverridePage) {
         <div>Create Custom User Groups Page Here</div>
     } else {
-        // The edit user interface uses a table for layout, so we need to follow that structure in this file as well.
-        @*<tr>
-            <td>
-                <div class="form-check form-switch right">
-                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" @bind:after="ValueHasChanged" />
-                </div>
-            </td>
-            <td><label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label></td>
-        </tr>*@
+        // Add your custom property editors here.
     }
 }
 
 @code {
-    [Parameter] public string Area { get; set; } = String.Empty;
-
     /// <summary>
     /// Set this to true to use this page to override the entire built-in page.
     /// </summary>

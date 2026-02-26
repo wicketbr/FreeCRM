@@ -18,6 +18,7 @@
 
     <Index_App  />
 
+    // {{ModuleItemStart:SamplePages}}
     @if (AppModule.ShowTestPageLinks) {
         <h2>Test Pages</h2>
 
@@ -32,6 +33,7 @@
             </ul>
         </div>
     }
+    // {{ModuleItemEnd:SamplePages}}
 
     if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
         <div class="mb-2">

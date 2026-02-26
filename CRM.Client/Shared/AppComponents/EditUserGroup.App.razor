@@ -3,7 +3,6 @@
 @inject BlazorDataModel Model
 
 @{
-    // This component is used to display application-specific settings on the Edit User page.
     if (OverridePage) {
         <div>Create Custom Edit User Group Page Here</div>
     } else {
@@ -20,7 +19,7 @@
 }
 
 @code {
-    [Parameter] public string Area { get; set; } = String.Empty;
+    [Parameter] public string groupid { get; set; } = String.Empty;
 
     /// <summary>
     /// Set this to true to use this page to override the entire built-in page.
@@ -37,11 +36,27 @@
     /// </summary>
     [Parameter] public EventCallback<DataObjects.UserGroup> ValueChanged { get; set; }
 
-    protected bool _loading = false;
-    protected string _pageName = "editusergroup";
+    protected bool _loading = true;
+    protected bool _loadedData = false;
+    protected string _title = "EditUserGroup";
+    protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
 
     public void Dispose() { 
         Model.OnChange -= StateHasChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (Model.Loaded && Model.LoggedIn) {
+            if (!Model.User.Admin) {
+                Helpers.NavigateToRoot();
+                return;
+            }
+
+            if (OverridePage && !_loadedData) {
+                _loadedData = true;
+                await LoadData();
+            }
+        }
     }
 
     protected override void OnInitialized()
@@ -63,6 +78,25 @@
     // {
     //     // Do any work here that needs to be done after the component is rendered or parameters are set.
     // }
+
+    protected async Task LoadData() {
+        if (String.IsNullOrWhiteSpace(groupid)) {
+            _title = "NewUserGroup";
+
+            _userGroup = new DataObjects.UserGroup {
+                TenantId = Model.TenantId,
+                GroupId = Guid.Empty,
+                Enabled = true,
+            };
+        } else {
+            _title = "EditUserGroup";
+
+            // Load your data object here.
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
 
     public DataObjects.ModuleAction Save(DataObjects.User user)
     {
