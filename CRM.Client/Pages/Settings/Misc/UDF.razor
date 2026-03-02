@@ -130,6 +130,7 @@
     protected bool _loading = true;
     protected bool _showHelp = false;
     protected List<DataObjects.udfLabel> _udfLabels = new List<DataObjects.udfLabel>();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "udf";
 
@@ -152,7 +153,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

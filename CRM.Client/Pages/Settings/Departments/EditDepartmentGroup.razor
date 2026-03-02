@@ -85,6 +85,7 @@
     protected bool _newDepartmentGroup = false;
     protected string _title = "";
     protected DataObjects.DepartmentGroup _deptGroup = new DataObjects.DepartmentGroup();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "editdepartmentgroup";
 
@@ -108,7 +109,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(departmentgroupid)) {
                 _loadedData = true;

@@ -40,6 +40,7 @@
     protected bool _loading = true;
     protected List<DataObjects.Payment> _payments = new List<DataObjects.Payment>();
     protected string _token = "";
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "payments";
 
@@ -58,7 +59,10 @@
         }
 
         if (Model.Loaded && Model.LoggedIn) {
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

@@ -246,6 +246,7 @@
     protected DataObjects.Language _language = new DataObjects.Language();
     protected string _value = "";
     protected string _view = "";
+    protected bool _validatedUrl = false;
 
     public void Dispose()
     {
@@ -266,7 +267,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
         }
     }
 

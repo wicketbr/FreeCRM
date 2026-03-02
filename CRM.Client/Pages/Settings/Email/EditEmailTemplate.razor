@@ -180,6 +180,7 @@
     protected string _title = "";
     protected DataObjects.EmailTemplate _template = new DataObjects.EmailTemplate();
     protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
+    protected bool _validatedUrl = false;
 
     //protected RadzenHtmlEditor htmlEditor;
     HtmlEditor _htmlEditor = null!;
@@ -206,7 +207,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

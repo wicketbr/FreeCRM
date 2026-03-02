@@ -347,6 +347,7 @@ namespace CustomAuthenticationProvider {
     protected bool _newTenant = false;
     protected string _title = "";
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
+    protected bool _validatedUrl = false;
 
     protected EditTenant_App AppModule = new EditTenant_App();
 
@@ -371,7 +372,10 @@ namespace CustomAuthenticationProvider {
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData || (tenantid != null && _tenant.TenantId.ToString() != tenantid)) {
                 _loadedData = true;

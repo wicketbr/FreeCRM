@@ -293,6 +293,7 @@
     protected bool _newUser = false;
     protected string _title = "";
     protected DataObjects.User _user = new DataObjects.User();
+    protected bool _validatedUrl = false;
 
     protected EditUser_App AppModule = new EditUser_App();
 
@@ -320,16 +321,32 @@
             }
 
             if (!InDialog) {
-                await Helpers.ValidateUrl(TenantCode);
+                if (!_validatedUrl) {
+                    _validatedUrl = true;
+                    await Helpers.ValidateUrl(TenantCode);
+                }
 
                 if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(userid)) {
+                    Model.NavigationId = userid;
                     _loadedData = true;
-                    await LoadUser();
+
+                    if (AppModule.OverridePage) {
+                        _loading = false;
+                        StateHasChanged();
+                    } else {
+                        await LoadUser();
+                    }
                 }
             } else {
                 if (!_loadedData) {
                     _loadedData = true;
-                    await LoadUser();
+
+                    if (AppModule.OverridePage) {
+                        _loading = false;
+                        StateHasChanged();
+                    } else {
+                        await LoadUser();
+                    }
                 }
             }
         }

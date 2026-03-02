@@ -88,6 +88,7 @@
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected List<DataObjects.Tenant>? _tenants = null;
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "tenants";
 
@@ -110,7 +111,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

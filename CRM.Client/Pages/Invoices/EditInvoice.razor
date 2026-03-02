@@ -226,6 +226,7 @@
     protected bool _newInvoice = false;
     protected bool _showInfo = false;
     protected DataObjects.User _user = new DataObjects.User();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "editinvoice";
 
@@ -249,7 +250,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

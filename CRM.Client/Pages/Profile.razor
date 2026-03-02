@@ -141,6 +141,7 @@
     protected bool _loading = true;
     protected bool _loadingUser = false;
     protected DataObjects.User _user = new DataObjects.User();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "profile";
 
@@ -158,7 +159,10 @@
         }
 
         if (Model.Loaded && Model.LoggedIn) {
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

@@ -154,6 +154,7 @@
     List<PagedRecordset.Formatter> Formatters = new List<PagedRecordset.Formatter>();
     protected bool LoadedFilter = false;
     protected List<string> _rowClasses = new List<string>();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "files";
 
@@ -190,7 +191,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

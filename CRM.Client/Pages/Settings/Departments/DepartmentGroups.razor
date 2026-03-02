@@ -85,6 +85,7 @@
 
     protected bool _loadedData = false;
     protected bool _loading = false;
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "departmentgroups";
 
@@ -108,7 +109,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

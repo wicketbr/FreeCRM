@@ -145,6 +145,7 @@
     protected bool _newTag = false;
     protected string _title = "";
     protected DataObjects.Tag _tag = new DataObjects.Tag();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "edittag";
 
@@ -171,7 +172,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
                 _loadedData = true;

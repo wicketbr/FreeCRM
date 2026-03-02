@@ -246,6 +246,7 @@
 
     protected DataObjects.MailServerConfigMicrosoftGraph _graph = new DataObjects.MailServerConfigMicrosoftGraph();
     protected DataObjects.MailServerConfigSMTP _smtp = new DataObjects.MailServerConfigSMTP();
+    protected bool _validatedUrl = false;
 
     protected AppSettings_App AppModule = new AppSettings_App();
 
@@ -270,7 +271,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

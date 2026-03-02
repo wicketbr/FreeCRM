@@ -139,6 +139,7 @@
     protected bool _newService = false;
     protected string _title = "";
     protected DataObjects.Service _service = new DataObjects.Service();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "editservice";
 
@@ -163,7 +164,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(id)) {
                 _loadedData = true;

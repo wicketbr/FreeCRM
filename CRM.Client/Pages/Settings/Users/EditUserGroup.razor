@@ -129,6 +129,7 @@
     protected bool _newUserGroup = false;
     protected string _title = "";
     protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "editusergroup";
 
@@ -155,11 +156,21 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData || Helpers.StringValue(Model.NavigationId) != Helpers.StringValue(groupid)) {
+                Model.NavigationId = groupid;
                 _loadedData = true;
-                await LoadData();
+
+                if (AppModule.OverridePage) {
+                    _loading = false;
+                    StateHasChanged();
+                } else {
+                    await LoadData();
+                }
             }
         }
     }

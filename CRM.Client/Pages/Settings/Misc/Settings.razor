@@ -683,6 +683,7 @@
     protected Settings_App AppModule = new Settings_App();
 
     protected string _deletePreference = "";
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "settings";
 
@@ -705,7 +706,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 _loadedData = true;

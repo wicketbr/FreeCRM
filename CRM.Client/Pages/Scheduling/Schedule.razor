@@ -78,6 +78,7 @@
 
     IList<DataObjects.Appointment> ShowAppointments = new List<DataObjects.Appointment>();
     List<DataObjects.Appointment> AllAppointments = new List<DataObjects.Appointment>();
+    protected bool _validatedUrl = false;
 
     protected string _pageName = "schedule";
 
@@ -101,7 +102,10 @@
                 return;
             }
 
-            await Helpers.ValidateUrl(TenantCode);
+            if (!_validatedUrl) {
+                _validatedUrl = true;
+                await Helpers.ValidateUrl(TenantCode);
+            }
 
             if (!_loadedData) {
                 // {{ModuleItemStart:Locations}}
