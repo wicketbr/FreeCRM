@@ -251,8 +251,6 @@
     public void Dispose()
     {
         Model.OnChange -= StateHasChanged;
-
-        Model.Subscribers_OnChange.Remove("Languages");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -276,11 +274,7 @@
 
     protected override void OnInitialized()
     {
-        if (!Model.Subscribers_OnChange.Contains("Languages")){
-            Model.Subscribers_OnChange.Add("Languages");
-            Model.OnChange += StateHasChanged;
-        }
-
+        Model.OnChange += StateHasChanged;
         Model.View = "language";
     }
 

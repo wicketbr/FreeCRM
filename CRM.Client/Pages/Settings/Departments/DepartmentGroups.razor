@@ -92,9 +92,6 @@
     public void Dispose() {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
-
-        Model.Subscribers_OnChange.Remove(_pageName);
-        Model.Subscribers_OnSignalRUpdate.Remove(_pageName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -123,16 +120,8 @@
 
     protected override void OnInitialized()
     {
-        if (!Model.Subscribers_OnChange.Contains(_pageName)){
-            Model.Subscribers_OnChange.Add(_pageName);
-            Model.OnChange += OnDataModelUpdated;
-        }
-
-        if (!Model.Subscribers_OnSignalRUpdate.Contains(_pageName)){
-            Model.Subscribers_OnSignalRUpdate.Add(_pageName);
-            Model.OnSignalRUpdate += SignalRUpdate;
-        }
-
+        Model.OnChange += OnDataModelUpdated;
+        Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
     }
 

@@ -32,8 +32,6 @@
     public void Dispose()
     {
         Model.OnChange -= OnDataModelUpdated;
-
-        Model.Subscribers_OnChange.Remove(_pageName);
     }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
@@ -61,11 +59,7 @@
 
     protected override void OnInitialized()
     {
-        if (!Model.Subscribers_OnChange.Contains(_pageName)){
-            Model.Subscribers_OnChange.Add(_pageName);
-            Model.OnChange += OnDataModelUpdated;
-        }
-
+        Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
     }
 

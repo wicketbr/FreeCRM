@@ -29,6 +29,7 @@ using Radzen.Blazor.Rendering;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -3610,6 +3611,23 @@ public static partial class Helpers
                 DateTime d = Convert.ToDateTime(value);
                 output = true;
             } catch { }
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Indicates if the value contains a valid email address.
+    /// </summary>
+    /// <param name="email">The value to check</param>
+    /// <returns>True if the value contain a valid email address.</returns>
+    public static bool IsEmail(string? email)
+    {
+        bool output = false;
+
+        if (!String.IsNullOrWhiteSpace(email)) {
+            var emailAddressAttribute = new EmailAddressAttribute();
+            output = emailAddressAttribute.IsValid(email);
         }
 
         return output;

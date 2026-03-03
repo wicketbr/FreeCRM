@@ -2,6 +2,7 @@
 @page "/{TenantCode}/SortTest"
 @inject BlazorDataModel Model
 @using BlazorSortableList
+@implements IDisposable
 
 <style>
     @((MarkupString)PageCSS)
@@ -33,6 +34,11 @@
     protected string _pageName = "sorttest";
     protected string _value = "Waiting for data...";
 
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender) {
@@ -54,11 +60,7 @@
 
     protected override void OnInitialized()
     {
-        if (!Model.Subscribers_OnChange.Contains(_pageName)) {
-            Model.Subscribers_OnChange.Add(_pageName);
-            Model.OnChange += OnDataModelUpdated;
-        }
-
+        Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
     }
 

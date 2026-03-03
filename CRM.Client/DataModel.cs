@@ -98,9 +98,6 @@ public partial class BlazorDataModel
     private bool _ShowTenantListingWhenMissingTenantCode = false;
     private List<string> _StartupErrors = new List<string>();
     private bool _StartupValidated = false;
-    private List<string> _Subscribers_OnChange = new List<string>();
-    private List<string> _Subscribers_OnDotNetHelperHandler = new List<string>();
-    private List<string> _Subscribers_OnSignalRUpdate = new List<string>();
     // {{ModuleItemStart:Tags}}
     private List<DataObjects.Tag> _Tags = new List<DataObjects.Tag>();
     // {{ModuleItemEnd:Tags}}
@@ -1574,48 +1571,6 @@ public partial class BlazorDataModel
             }
 
             return output;
-        }
-    }
-
-    /// <summary>
-    /// The collection of subscribers to the OnChange event.
-    /// </summary>
-    public List<string> Subscribers_OnChange {
-        get { return _Subscribers_OnChange; }
-        set {
-            if (!ObjectsAreEqual(_Subscribers_OnChange, value)) {
-                _Subscribers_OnChange = value;
-                _ModelUpdated = DateTime.UtcNow;
-                NotifyDataChanged();
-            }
-        }
-    }
-
-    /// <summary>
-    /// The collection of subscribers to the OnDotNetHelperHandler event.
-    /// </summary>
-    public List<string> Subscribers_OnDotNetHelperHandler {
-        get { return _Subscribers_OnDotNetHelperHandler; }
-        set {
-            if (!ObjectsAreEqual(_Subscribers_OnDotNetHelperHandler, value)) {
-                _Subscribers_OnDotNetHelperHandler = value;
-                _ModelUpdated = DateTime.UtcNow;
-                NotifyDataChanged();
-            }
-        }
-    }
-
-    /// <summary>
-    /// The collection of subscribers to the OnSignalRUpdate event.
-    /// </summary>
-    public List<string> Subscribers_OnSignalRUpdate {
-        get { return _Subscribers_OnSignalRUpdate; }
-        set {
-            if (!ObjectsAreEqual(_Subscribers_OnSignalRUpdate, value)) {
-                _Subscribers_OnSignalRUpdate = value;
-                _ModelUpdated = DateTime.UtcNow;
-                NotifyDataChanged();
-            }
         }
     }
 

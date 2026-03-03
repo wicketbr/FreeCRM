@@ -145,17 +145,13 @@
     public void Dispose() {
         dotNetHelper?.Dispose();
 
-        Model.Subscribers_OnChange.Remove("MainLayout");
         Model.OnChange -= StateHasChanged;
 
         NavManager.LocationChanged -= LocationChanged;
     }
 
     protected override async Task OnInitializedAsync() {
-        if (!Model.Subscribers_OnChange.Contains("MainLayout")) {
-            Model.Subscribers_OnChange.Add("MainLayout");
-            Model.OnChange += StateHasChanged;
-        }
+        Model.OnChange += StateHasChanged;
 
         NavManager.LocationChanged += LocationChanged;
 

@@ -245,7 +245,10 @@
 </div>
 
 @code {
-    public void Dispose() { }
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+    }
 
     protected override void OnInitialized()
     {

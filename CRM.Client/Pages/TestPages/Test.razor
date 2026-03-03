@@ -27,8 +27,6 @@
     {
         Model.OnChange -= OnDataModelUpdated;
         _timer.Dispose();
-
-        Model.Subscribers_OnChange.Remove(_pageName);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -52,10 +50,7 @@
 
     protected override void OnInitialized()
     {
-        if (!Model.Subscribers_OnChange.Contains(_pageName)){
-            Model.Subscribers_OnChange.Add(_pageName);
-            Model.OnChange += OnDataModelUpdated;
-        }
+        Model.OnChange += OnDataModelUpdated;
 
         _timer = new System.Timers.Timer();
         _timer.Interval = 1000;
