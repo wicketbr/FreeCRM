@@ -148,6 +148,8 @@
         Model.OnChange -= StateHasChanged;
 
         NavManager.LocationChanged -= LocationChanged;
+
+        DialogService.OnClose -= ClearModelMessages;
     }
 
     protected override async Task OnInitializedAsync() {
@@ -172,6 +174,8 @@
         if (!Model.LoggedIn && StartupValidated) {
             await ValidateLogin();
         }
+
+        DialogService.OnClose += ClearModelMessages;
 
         // Pass the GetOrPost delegate to the Compilation Service so
         // cached data can be retrieved or saved for Blazor plugins.
@@ -342,6 +346,11 @@
                 }
             }
         }
+    }
+
+    protected void ClearModelMessages(dynamic args)
+    {
+        Model.ClearMessages();
     }
 
     public async ValueTask DisposeAsync() {
