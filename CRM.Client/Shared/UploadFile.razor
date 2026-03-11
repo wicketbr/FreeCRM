@@ -3,26 +3,38 @@
 @inject Radzen.DialogService DialogService
 @typeparam UploadType
 <div class="@(_uploading ? "hidden" : "mt-3")">
-    <MudBlazor.MudStack Style="width: 100%;">
-        <MudBlazor.MudFileUpload T="UploadType" OnFilesChanged="UploaderOnInputFileChanged" Hidden="false"
-            Accept="@SupportedFileTypesList" AppendMultipleFiles="true" MaximumFileCount="10"
-            Class="flex-1" InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20" InputStyle="opacity:0"
-            @ondragenter="@UploaderSetDragClass" @ondragleave="@UploaderClearDragClass" @ondragend="@UploaderClearDragClass">
-            <ActivatorContent>
-                <MudBlazor.MudPaper Height="@HeightCss" Outlined="true" Class="@UploaderDragClass">
-                    @if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
-                        <div class="drag-and-drop-instructions">@((MarkupString)UploadInstructions)</div>
-                    }
-                    @if (!String.IsNullOrWhiteSpace(SupportedFileTypesList)) {
-                        <div class="drag-and-drop-instructions-file-types">
-                            <Language Tag="SupportedFileTypes" />:
-                            @((MarkupString)SupportedFileTypesList.ToUpper())
-                        </div>
-                    }
-                </MudBlazor.MudPaper>
-            </ActivatorContent>
-        </MudBlazor.MudFileUpload>
-    </MudBlazor.MudStack>
+    <MudBlazor.MudCard Style="width:100%;">
+        <MudBlazor.MudCardContent>
+            <MudBlazor.MudFileUpload
+                    @ref="_uploadComponent"
+                    T="UploadType"
+                    OnFilesChanged="UploaderOnInputFileChanged"
+                    Hidden="false"
+                    Accept="@SupportedFileTypesList"
+                    AppendMultipleFiles="true"
+                    MaximumFileCount="10"
+                    Class="flex-1"
+                    InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20"
+                    InputStyle="opacity:0"
+                    @ondragenter="@UploaderSetDragClass"
+                    @ondragleave="@UploaderClearDragClass"
+                    @ondragend="@UploaderClearDragClass">
+                <CustomContent>
+                    <MudBlazor.MudPaper Height="@HeightCss" Outlined="true" Class="@UploaderDragClass">
+                        @if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
+                            <div class="drag-and-drop-instructions">@((MarkupString)UploadInstructions)</div>
+                        }
+                        @if (!String.IsNullOrWhiteSpace(SupportedFileTypesList)) {
+                            <div class="drag-and-drop-instructions-file-types">
+                                <Language Tag="SupportedFileTypes" />:
+                                @((MarkupString)SupportedFileTypesList.ToUpper())
+                            </div>
+                        }
+                    </MudBlazor.MudPaper>
+                </CustomContent>
+            </MudBlazor.MudFileUpload>
+        </MudBlazor.MudCardContent>
+    </MudBlazor.MudCard>
 </div>
 @if (_uploading) {
     <div class="mt-3 mb-2">
@@ -52,6 +64,8 @@
     private string UploaderDragClass = UploaderDefaultDragClass;
 
     protected bool _uploading = false;
+
+    protected MudBlazor.MudFileUpload<UploadType>? _uploadComponent;
 
     public void Dispose() { }
 
@@ -163,6 +177,10 @@
                 TenantId = Model.TenantId,
                 Value = null,
             });
+        }
+
+        if (_uploadComponent != null) {
+            await _uploadComponent.ClearAsync();
         }
 
         if (InDialog) {

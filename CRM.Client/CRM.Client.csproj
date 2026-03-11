@@ -29,16 +29,16 @@
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="FreeBlazor" Version="1.0.62" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="Humanizer" Version="3.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
-    <PackageReference Include="MudBlazor" Version="9.0.0" />
-    <PackageReference Include="Radzen.Blazor" Version="9.0.7" />
+    <PackageReference Include="Humanizer" Version="3.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.4" />
+    <PackageReference Include="MudBlazor" Version="9.1.0" />
+    <PackageReference Include="Radzen.Blazor" Version="9.1.0" />
 
 	<PackageReference Include="FluentValidation" Version="12.1.1" />
 	<!--<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />-->
-	<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
-	<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="5.0.0" />
+	<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+	<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="5.3.0" />
 	<PackageReference Include="Microsoft.Net.Compilers.Razor.Toolset" Version="9.0.0-preview.24555.4" PrivateAssets="all" IncludeAssets="none" GeneratePathProperty="true" />
 	<PackageReference Include="MetadataReferenceService.BlazorWasm" Version="0.0.1" />
   </ItemGroup>
