@@ -11,6 +11,7 @@ public class BackgroundProcessor : BackgroundService
     private long _iterations = 0;
     private readonly ILogger<BackgroundProcessor> _logger;
     private List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
+    private List<Guid> _processingAppTasks = new List<Guid>();
     private int _processingIntervalSeconds = 5;
     private List<Guid> _processingPlugins = new List<Guid>();
     private System.Timers.Timer processorTimer = null!;
@@ -76,8 +77,14 @@ public class BackgroundProcessor : BackgroundService
             }
 
             // Process any app-specific tasks.
-            var appTasksForTenant = await da.ProcessBackgroundTasksApp(tenant.TenantId, _iterations);
-            ProcessTasksMessages(appTasksForTenant);
+            if (!_processingAppTasks.Contains(tenant.TenantId)) {
+                _processingAppTasks.Add(tenant.TenantId);
+
+                var appTasksForTenant = await da.ProcessBackgroundTasksApp(tenant.TenantId, _iterations);
+                ProcessTasksMessages(appTasksForTenant);
+
+                _processingAppTasks = _processingAppTasks.Where(x => x != tenant.TenantId).ToList();
+            }
         }
 
         if (_iterations == 1 || _iterations % 100 == 0) {
@@ -86,8 +93,14 @@ public class BackgroundProcessor : BackgroundService
         }
 
         // Process any app-specific tasks for specific tenants.
-        var appTasks = await da.ProcessBackgroundTasksApp(Guid.Empty, _iterations);
-        ProcessTasksMessages(appTasks);
+        if (!_processingAppTasks.Contains(Guid.Empty)) {
+            _processingAppTasks.Add(Guid.Empty);
+
+            var appTasks = await da.ProcessBackgroundTasksApp(Guid.Empty, _iterations);
+            ProcessTasksMessages(appTasks);
+
+            _processingAppTasks = _processingAppTasks.Where(x => x != Guid.Empty).ToList();
+        }
 
         // If there are any plugins that need to be processed, add them to the queue.
         bool startTimer = false;
