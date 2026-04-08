@@ -132,7 +132,7 @@
                     @if (_tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
                         <div class="indented">
                             <label for="edit-tenant-allowUsersToManageBasicProfileInfoElements"><Language Tag="AllowUsersToManageBasicProfileInfoElements" /></label>
-                            <select id="allowUsersToManageBasicProfileInfoElements" class="form-select" multiple size="8" @bind="_allowUsersToManageBasicProfileInfoElements">
+                            <select id="edit-tenant-allowUsersToManageBasicProfileInfoElements" class="form-select" multiple size="8" @bind="_allowUsersToManageBasicProfileInfoElements">
                                 <option value="name">Name</option>
                                 <option value="email">Email Address</option>
                                 <option value="phone">Phone Number</option>
@@ -500,131 +500,201 @@
                         </div>
                     }
 
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th style="width:1%;"></th>
-                                <th style="width:1%;"><Language Tag="WorkScheduleDay" ReplaceSpaces="true" /></th>
-                                <th style="width:1%;"><Language Tag="WorkScheduleAllDay" ReplaceSpaces="true" /></th>
-                                <th><Language Tag="WorkScheduleStart" ReplaceSpaces="true" /></th>
-                                <th><Language Tag="WorkScheduleEnd" ReplaceSpaces="true" /></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Sunday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Sunday" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-tenant-Sunday" class="form-check-label"><Language Tag="DayLabelSunday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SundayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SundayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday || _tenant.TenantSettings.WorkSchedule.SundayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SundayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday || _tenant.TenantSettings.WorkSchedule.SundayAllDay)" /></td>
-                            </tr>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Sunday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Sunday" />
+                            <label for="edit-tenant-Sunday" class="form-check-label"><Language Tag="DayLabelSunday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Sunday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Sunday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SundayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Sunday)" />
+                                    <label for="edit-tenant-Sunday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.SundayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Sunday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Sunday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.SundayStart" />
+                                        </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Monday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Monday" />
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Sunday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Sunday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.SundayEnd" />
+                                        </div>
                                     </div>
-                                </td>
-                                <td><label for="edit-tenant-Monday" class="form-check-label"><Language Tag="DayLabelMonday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.MondayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.MondayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday || _tenant.TenantSettings.WorkSchedule.MondayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.MondayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday || _tenant.TenantSettings.WorkSchedule.MondayAllDay)" /></td>
-                            </tr>
+                                }
+                            </div>
+                        }
+                    </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Tuesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Tuesday" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-tenant-Tuesday" class="form-check-label"><Language Tag="DayLabelTuesday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday || _tenant.TenantSettings.WorkSchedule.TuesdayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday || _tenant.TenantSettings.WorkSchedule.TuesdayAllDay)" /></td>
-                            </tr>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Monday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Monday" />
+                            <label for="edit-tenant-Monday" class="form-check-label"><Language Tag="DayLabelMonday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Monday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Monday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.MondayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Monday)" />
+                                    <label for="edit-tenant-Monday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.MondayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Monday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Monday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.MondayStart" />
+                                        </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Wednesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Wednesday" />
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Monday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Monday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.MondayEnd" />
+                                        </div>
                                     </div>
-                                </td>
-                                <td><label for="edit-tenant-Wednesday" class="form-check-label"><Language Tag="DayLabelWednesday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday || _tenant.TenantSettings.WorkSchedule.WednesdayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday || _tenant.TenantSettings.WorkSchedule.WednesdayAllDay)" /></td>
-                            </tr>
+                                }
+                            </div>
+                        }
+                    </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Thursday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Thursday" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-tenant-Thursday" class="form-check-label"><Language Tag="DayLabelThursday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday || _tenant.TenantSettings.WorkSchedule.ThursdayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday || _tenant.TenantSettings.WorkSchedule.ThursdayAllDay)" /></td>
-                            </tr>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Tuesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Tuesday" />
+                            <label for="edit-tenant-Tuesday" class="form-check-label"><Language Tag="DayLabelTuesday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Tuesday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Tuesday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Tuesday)" />
+                                    <label for="edit-tenant-Tuesday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.TuesdayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Tuesday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Tuesday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayStart" />
+                                        </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Friday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Friday" />
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Tuesday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Tuesday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.TuesdayEnd" />
+                                        </div>
                                     </div>
-                                </td>
-                                <td><label for="edit-tenant-Friday" class="form-check-label"><Language Tag="DayLabelFriday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.FridayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.FridayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday || _tenant.TenantSettings.WorkSchedule.FridayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.FridayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday || _tenant.TenantSettings.WorkSchedule.FridayAllDay)" /></td>
-                            </tr>
+                                }
+                            </div>
+                        }
+                    </div>
 
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" id="edit-tenant-Saturday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Saturday" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-tenant-Saturday" class="form-check-label"><Language Tag="DayLabelSaturday" /></label></td>
-                                <td class="center">
-                                    <div class="form-check form-switch">
-                                        <input type="checkbox" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday)" />
-                                    </div>
-                                </td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayStart" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday || _tenant.TenantSettings.WorkSchedule.SaturdayAllDay)" /></td>
-                                <td><input type="text" class="form-control" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayEnd" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday || _tenant.TenantSettings.WorkSchedule.SaturdayAllDay)" /></td>
-                            </tr>
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Wednesday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Wednesday" />
+                            <label for="edit-tenant-Wednesday" class="form-check-label"><Language Tag="DayLabelWednesday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Wednesday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Wednesday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Wednesday)" />
+                                    <label for="edit-tenant-Wednesday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.WednesdayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Wednesday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Wednesday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayStart" />
+                                        </div>
 
-                        </tbody>
-                    </table>
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Wednesday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Wednesday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.WednesdayEnd" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Thursday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Thursday" />
+                            <label for="edit-tenant-Thursday" class="form-check-label"><Language Tag="DayLabelThursday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Thursday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Thursday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Thursday)" />
+                                    <label for="edit-tenant-Thursday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.ThursdayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Thursday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Thursday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayStart" />
+                                        </div>
+
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Thursday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Thursday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.ThursdayEnd" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Friday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Friday" />
+                            <label for="edit-tenant-Friday" class="form-check-label"><Language Tag="DayLabelFriday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Friday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Friday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.FridayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Friday)" />
+                                    <label for="edit-tenant-Friday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.FridayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Friday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Friday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.FridayStart" />
+                                        </div>
+
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Friday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Friday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.FridayEnd" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div>
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-tenant-Saturday" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.Saturday" />
+                            <label for="edit-tenant-Saturday" class="form-check-label"><Language Tag="DayLabelSaturday" /></label>
+                        </div>
+                        @if (_tenant.TenantSettings.WorkSchedule.Saturday) {
+                            <div class="mb-2 indented">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" id="edit-tenant-Saturday-AllDay" aria-label="@Helpers.Text("WorkScheduleAllDay")" role="switch" class="form-check-input" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayAllDay" disabled="@(!_tenant.TenantSettings.WorkSchedule.Saturday)" />
+                                    <label for="edit-tenant-Saturday-AllDay" class="form-check-label"><Language Tag="AllDay" /></label>
+                                </div>
+                                @if (!_tenant.TenantSettings.WorkSchedule.SaturdayAllDay) {
+                                    <div class="row">
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Saturday-Start"><Language Tag="WorkScheduleStart" /></label>
+                                            <input type="text" id="edit-tenant-Saturday-Start" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayStart" />
+                                        </div>
+
+                                        <div class="mb-2 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                                            <label for="edit-tenant-Saturday-End"><Language Tag="WorkScheduleEnd" /></label>
+                                            <input type="text" id="edit-tenant-Saturday-End" class="form-control" aria-label="@Helpers.Text("WorkScheduleStart")" @bind="_tenant.TenantSettings.WorkSchedule.SaturdayEnd" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
 
                     @if (AppModule.Enabled) {
                         <Settings_App Area="WorkSchedule" @bind-Value="_tenant" />

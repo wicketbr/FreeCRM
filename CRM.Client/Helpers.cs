@@ -5093,7 +5093,7 @@ public static partial class Helpers
                 if (preview.Images != null && preview.Images.Any()) {
                     foreach (var image in preview.Images) {
                         html.AppendLine("<div class=\"mb-2\">");
-                        html.AppendLine("  <img src=\"data:image/jpg;base64," + Convert.ToBase64String(image) + "\" style=\"width:100%;\" />");
+                        html.AppendLine("  <img src=\"data:image/jpg;base64," + Convert.ToBase64String(image) + "\" style=\"width:100%;\" alt=\"" + Text("PDFViewer") + "\" />");
                         html.AppendLine("</div>");
                     }
                 } else {
@@ -6196,6 +6196,7 @@ public static partial class Helpers
                         if (String.IsNullOrWhiteSpace(column.BooleanIcon)) {
                             column.BooleanIcon = column.Label;
                         }
+                        column.AriaLabel = Text(column.DataElementName);
                     } else {
                         column.Label = label;
                     }

@@ -13,6 +13,9 @@
         : "appointment-calendar full-height";
 
     @if (Model.User.ManageAppointments) {
+        <h1 class="hidden">
+            <Language Tag="Schedule" />
+        </h1>
         <div>
             <button type="button" class="btn btn-xs btn-success mb-2" @onclick="AddAppoinment">
                 <Language Tag="AddAppointment" IncludeIcon="true" />
@@ -29,6 +32,10 @@
                 </div>
             }
         </div>
+    } else {
+        <h1 class="hidden">
+            <Language Tag="Schedule" />
+        </h1>
     }
 
     @if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
@@ -38,20 +45,19 @@
     }
 
     <RadzenScheduler @ref=@scheduler
-        AppointmentRender=@OnAppointmentRender
-        AppointmentSelect=@OnAppointmentSelect 
-        class="@calendarClass"
-        Data=@ShowAppointments 
-        EndProperty="End"
-        LoadData=@OnAppointmentLoadData
-      
-        SelectedIndex="2" 
-        SlotRender=@OnSlotRender 
-        SlotSelect=@OnSlotSelect 
-        StartProperty="Start" 
-        TextProperty="TitleDisplay" 
-        TodayText="@Helpers.Text("ScheduleViewToday")"
-        TItem="DataObjects.Appointment" >
+            AppointmentRender=@OnAppointmentRender
+            AppointmentSelect=@OnAppointmentSelect 
+            class="@calendarClass"
+            Data=@ShowAppointments 
+            EndProperty="End"
+            LoadData=@OnAppointmentLoadData
+            SelectedIndex="2" 
+            SlotRender=@OnSlotRender 
+            SlotSelect=@OnSlotSelect 
+            StartProperty="Start" 
+            TextProperty="TitleDisplay" 
+            TodayText="@Helpers.Text("ScheduleViewToday")"
+            TItem="DataObjects.Appointment" >
         <RadzenDayView Text="@Helpers.Text("ScheduleViewDay")" />
         <RadzenWeekView Text="@Helpers.Text("ScheduleViewWeek")" />
         <RadzenMonthView Text="@Helpers.Text("ScheduleViewMonth")" MoreText="@Helpers.Text("ScheduleMore")" />

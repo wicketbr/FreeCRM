@@ -85,11 +85,13 @@
                 <div class="card-header text-bg-primary text-white"><Language Tag="DisabledFeatures" /></div>
                 <div class="card-body">
                     <div class="mb-2">
-                        <Language Tag="DisabledFeaturesInfo" />
+                        <label for="edit-tenant-DisabledFeatures">
+                            <Language Tag="DisabledFeaturesInfo" />
+                        </label>
                     </div>
 
                     <div class="mb-2">
-                        <select class="form-select" size="@Model.Modules.Count()" multiple @bind="_moduleHideElements">
+                        <select class="form-select" id="edit-tenant-DisabledFeatures" size="@Model.Modules.Count()" multiple @bind="_moduleHideElements">
                             @foreach (var item in Model.Modules) {
                                 <option value="@item">@Helpers.Text("FeatureOptIn" + item)</option>
                             }

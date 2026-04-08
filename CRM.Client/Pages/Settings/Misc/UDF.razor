@@ -72,7 +72,7 @@
                 <table class="table table-sm udf-labels">
                     <thead>
                         <tr class="table-dark">
-                            <th class="nowrap" style="width:1%;"><Language Tag="Module" ReplaceSpaces="true" /></th>
+                            <th class="nowrap" style="width:1%;"><Language Tag="UDFModule" ReplaceSpaces="true" /></th>
                             <th class="nowrap" style="width:1%;"><Language Tag="UDF" ReplaceSpaces="true" /></th>
                             <th class="nowrap"><Language Tag="Label" ReplaceSpaces="true" /></th>
                             <th class="nowrap center" style="width:1%;"><Language Tag="ShowColumn" ReplaceSpaces="true" IncludeIcon="true" /></th>
@@ -83,11 +83,12 @@
                     <tbody>
                         @foreach (var udfLabel in _udfLabels) {
                             _index++;
+                            var elementId = "udf-" + (udfLabel.Module + "-" + udfLabel.udf).ToLower();
                             <tr>
                                 <td class="top">@udfLabel.Module</td>
-                                <td class="top">@udfLabel.udf</td>
+                                <td class="top"><label for="@elementId">@udfLabel.udf</label></td>
                                 <td>
-                                    <input type="text" class="form-control" @bind="udfLabel.Label" />
+                                    <input type="text" id="@elementId" class="form-control" @bind="udfLabel.Label" />
                                     <LastModifiedMessage DataObject="udfLabel" />
                                 </td>
                                 <td class="top">
@@ -233,6 +234,13 @@
     {
         get {
             return Helpers.Text("IncludeInSearch");
+        }
+    }
+
+    protected string TextLabel
+    {
+        get {
+            return Helpers.Text("UDFLabelFor");
         }
     }
 

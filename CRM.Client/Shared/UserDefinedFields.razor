@@ -21,58 +21,46 @@
             switch (type) {
                 case "select":
                     @if (options.Any()) {
-                        <tr>
-                            <td>
-                                <label for="@id">@((MarkupString)label)</label>
-                            </td>
-                            <td>
-                                <select class="form-select" id="@id" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))">
-                                    <option value=""></option>
-                                    @foreach(var option in options) {
-                                        <option value="@option" selected="@value==option">@option</option>
-                                    }
-                                </select>
-                            </td>
-                        </tr>
+                        <div class="@Class">
+                            <label for="@id">@((MarkupString)label)</label>
+                            <select class="form-select" id="@id" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))">
+                                <option value=""></option>
+                                @foreach(var option in options) {
+                                    <option value="@option" selected="@value==option">@option</option>
+                                }
+                            </select>
+                        </div>
                     }
                     break;
 
                 case "radio":
                     if (options.Any()) {
-                        <tr>
-                            <td>
-                                <label for="@id">@((MarkupString)label)</label>
-                            </td>
-                            <td>
-                                @foreach(var option in options) {
-                                    index++;
-                                    string optionId = id + "-" + index.ToString();
-                                    <div>
-                                        @if(option == value) {
-                                            <input type="radio" name="@id" id="@optionId" value="@option" checked
-                                                @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
-                                        } else {
-                                            <input type="radio" name="@id" id="@optionId" value="@option"
-                                                @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
-                                        }
+                        <div class="@Class">
+                            <label for="@id">@((MarkupString)label)</label>
+                            @foreach(var option in options) {
+                                index++;
+                                string optionId = id + "-" + index.ToString();
+                                <div>
+                                    @if(option == value) {
+                                        <input type="radio" name="@id" id="@optionId" value="@option" checked
+                                            @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
+                                    } else {
+                                        <input type="radio" name="@id" id="@optionId" value="@option"
+                                            @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
+                                    }
                                         
-                                        <label for="@optionId">&nbsp;@option</label>
-                                    </div>
-                                }
-                            </td>
-                        </tr>
+                                    <label for="@optionId">&nbsp;@option</label>
+                                </div>
+                            }
+                        </div>
                     }
                     break;
 
                 default:
-                    <tr>
-                        <td>
-                            <label for="@id">@((MarkupString)label)</label>
-                        </td>
-                        <td>
-                            <input type="text" class="form-control" id="@id" value="@value" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))" />
-                        </td>
-                    </tr>
+                    <div class="@Class">
+                        <label for="@id">@((MarkupString)label)</label>
+                        <input type="text" class="form-control" id="@id" value="@value" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))" />
+                    </div>
                     break;
             }
         }

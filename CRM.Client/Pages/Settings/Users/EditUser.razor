@@ -124,148 +124,149 @@
 
                 <RequiredIndicator />
 
-                <table class="table table-sm first-column-small first-column-bold first-column-right">
-                    <tbody>
-                        <tr>
-                            <td><label for="edit-user-firstName-@_user.UserId"><Language Tag="FirstName" Required="true" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-firstName-@_user.UserId" @bind="_user.FirstName" @bind:event="oninput" class="@Helpers.MissingValue(_user.FirstName, "form-control")" /></td>
-                        </tr>
-                        <tr>
-                            <td><label for="edit-user-lastName-@_user.UserId"><Language Tag="LastName" Required="true" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-lastName-@_user.UserId" @bind="_user.LastName" @bind:event="oninput" class="@Helpers.MissingValue(_user.LastName, "form-control")" /></td>
-                        </tr>
-                        <tr>
-                            <td><label for="edit-user-email-@_user.UserId"><Language Tag="Email" Required="true" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-email-@_user.UserId" @bind="_user.Email" @bind:event="oninput" class="@Helpers.MissingValue(_user.Email, "form-control")" /></td>
-                        </tr>
-                        <tr>
-                            <td><label for="edit-user-username-@_user.UserId"><Language Tag="Username" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-username-@_user.UserId" class="form-control" @bind="_user.Username" /></td>
-                        </tr>
-                        @if (Model.FeatureEnabledEmployeeId) {
-                            <tr>
-                                <td><label for="edit-user-employeeId-@_user.UserId"><Language Tag="EmployeeId" ReplaceSpaces="true" /></label></td>
-                                <td><input type="text" id="edit-user-employeeId-@_user.UserId" class="form-control" @bind="_user.EmployeeId" /></td>
-                            </tr>
-                        }
-                        <tr>
-                            <td><label for="edit-user-title-@_user.UserId"><Language Tag="Title" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-title-@_user.UserId" class="form-control" @bind="_user.Title" /></td>
-                        </tr>
-                        <!-- {{ModuleItemStart:Locations}} -->
-                        @if (Model.FeatureEnabledLocation) {
-                            <tr>
-                                <td><label for="edit-user-location-@_user.UserId"><Language Tag="Location" ReplaceSpaces="true" /></label></td>
-                                <td><input type="text" id="edit-user-location-@_user.UserId" class="form-control" @bind="_user.Location" /></td>
-                            </tr>
-                        }
-                        <!-- {{ModuleItemEnd:Locations}} -->
-                        <tr>
-                            <td><label for="edit-user-phone-@_user.UserId"><Language Tag="PhoneNumber" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-phone-@_user.UserId" class="form-control" @bind="_user.Phone" /></td>
-                        </tr>
-                        @if (Model.FeatureEnabledDepartments) {
-                            <tr>
-                                <td><label for="edit-user-department-@_user.UserId"><Language Tag="Department" ReplaceSpaces="true" /></label></td>
-                                <td>
-                                    <select id="edit-user-department-@_user.UserId" class="form-select" @bind="_user.DepartmentId">
-                                        <option value=""></option>
-                                        @foreach (var dept in Model.Departments) {
-                                            <option value="@dept.DepartmentId">@dept.DepartmentName</option>
-                                        }
-                                    </select>
-                                </td>
-                            </tr>
-                        }
-                        <tr>
-                            <td><label for="edit-user-source-@_user.UserId"><Language Tag="Source" ReplaceSpaces="true" /></label></td>
-                            <td><input type="text" id="edit-user-source-@_user.UserId" class="form-control" @bind="_user.Source" /></td>
-                        </tr>
-                        <UserDefinedFields Module="users" Id="edit-user-udf" Class="mt-2" Data="_user" />
-                        <tr>
-                            <td>
-                                <div class="form-check form-switch right">
-                                    <input type="checkbox" id="edit-user-enabled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Enabled" />
-                                </div>
-                            </td>
-                            <td><label for="edit-user-enabled-@_user.UserId" class="form-check-label"><Language Tag="Enabled" /></label></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="form-check form-switch right">
-                                    <input type="checkbox" id="edit-user-preventPasswordChange-@_user.UserId" role="switch" class="form-check-input" @bind="_user.PreventPasswordChange" />
-                                </div>
-                            </td>
-                            <td><label for="edit-user-preventPasswordChange-@_user.UserId" class="form-check-label"><Language Tag="PreventPasswordChange" /></label></td>
-                        </tr>
-                        <!-- {{ModuleItemStart:Appointments}} -->
-                        @if (Model.FeatureEnabledScheduling) {
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch right">
-                                        <input type="checkbox" id="edit-user-CanBeScheduled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.CanBeScheduled" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-user-CanBeScheduled-@_user.UserId" class="form-check-label"><Language Tag="CanBeScheduled" /></label></td>
-                            </tr>
-                        }
-                        <!-- {{ModuleItemEnd:Appointments}} -->
-                        <tr>
-                            <td>
-                                <div class="form-check form-switch right">
-                                    <input type="checkbox" id="edit-user-admin-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Admin" />
-                                </div>
-                            </td>
-                            <td><label for="edit-user-admin-@_user.UserId" class="form-check-label"><Language Tag="Admin" /></label></td>
-                        </tr>
+                <div class="row">
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-firstName-@_user.UserId"><Language Tag="FirstName" Required="true" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-firstName-@_user.UserId" @bind="_user.FirstName" @bind:event="oninput" class="@Helpers.MissingValue(_user.FirstName, "form-control")" />
+                    </div>
 
-                        <EditUser_App @bind-Value="_user" />
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-lastName-@_user.UserId"><Language Tag="LastName" Required="true" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-lastName-@_user.UserId" @bind="_user.LastName" @bind:event="oninput" class="@Helpers.MissingValue(_user.LastName, "form-control")" />
+                    </div>
 
-                        <!-- {{ModuleItemStart:Appointments}} -->
-                        @if (!_user.Admin && Model.FeatureEnabledScheduling) {
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch right">
-                                        <input type="checkbox" id="edit-user-ManageAppointments-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageAppointments" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-user-ManageAppointments-@_user.UserId" class="form-check-label"><Language Tag="ManageAppointments" /></label></td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <div class="form-check form-switch right">
-                                        <input type="checkbox" id="edit-user-ManageFiles-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageFiles" />
-                                    </div>
-                                </td>
-                                <td><label for="edit-user-ManageFiles-@_user.UserId" class="form-check-label"><Language Tag="ManageFiles" /></label></td>
-                            </tr>
-                        }
-                        <!-- {{ModuleItemEnd:Appointments}} -->
-                        @if (!_newUser) {
-                            <tr>
-                                <td>
-                                    <label><Language Tag="Photo" ReplaceSpaces="true" /></label>
-                                </td>
-                                <td>
-                                    <div class="note mb-2"><Language Tag="ManageAvatarInfo" /></div>
-                                    @if (_user.Photo.HasValue) {
-                                        <button type="button" class="btn btn-danger btn-sm mb-2" @onclick="DeleteUserPhoto">
-                                            <Language Tag="Delete" IncludeIcon="true" />
-                                        </button>
-                                    }
-                                    <button type="button" class="btn btn-success btn-sm mb-2" @onclick="UploadAvatarImage">
-                                        <Language Tag="UploadFile" IncludeIcon="true" />
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-email-@_user.UserId"><Language Tag="Email" Required="true" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-email-@_user.UserId" @bind="_user.Email" @bind:event="oninput" class="@Helpers.MissingValue(_user.Email, "form-control")" />
+                    </div>
+
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-username-@_user.UserId"><Language Tag="Username" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-username-@_user.UserId" class="form-control" @bind="_user.Username" />
+                    </div>
+
+                    @if (Model.FeatureEnabledEmployeeId) {
+                        <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                            <label for="edit-user-employeeId-@_user.UserId"><Language Tag="EmployeeId" ReplaceSpaces="true" /></label>
+                            <input type="text" id="edit-user-employeeId-@_user.UserId" class="form-control" @bind="_user.EmployeeId" />
+                        </div>
+                    }
+
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-title-@_user.UserId"><Language Tag="Title" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-title-@_user.UserId" class="form-control" @bind="_user.Title" />
+                    </div>
+
+                    <!-- {{ModuleItemStart:Locations}} -->
+                    @if (Model.FeatureEnabledLocation) {
+                        <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                            <label for="edit-user-location-@_user.UserId"><Language Tag="Location" ReplaceSpaces="true" /></label>
+                            <input type="text" id="edit-user-location-@_user.UserId" class="form-control" @bind="_user.Location" />
+                        </div>
+                    }
+                    <!-- {{ModuleItemEnd:Locations}} -->
+
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-phone-@_user.UserId"><Language Tag="PhoneNumber" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-phone-@_user.UserId" class="form-control" @bind="_user.Phone" />
+                    </div>
+
+                    @if (Model.FeatureEnabledDepartments) {
+                        <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                            <label for="edit-user-department-@_user.UserId"><Language Tag="Department" ReplaceSpaces="true" /></label>
+                            <select id="edit-user-department-@_user.UserId" class="form-select" @bind="_user.DepartmentId">
+                                <option value=""></option>
+                                @foreach (var dept in Model.Departments) {
+                                    <option value="@dept.DepartmentId">@dept.DepartmentName</option>
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <div class="mb-2 col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                        <label for="edit-user-source-@_user.UserId"><Language Tag="Source" ReplaceSpaces="true" /></label>
+                        <input type="text" id="edit-user-source-@_user.UserId" class="form-control" @bind="_user.Source" />
+                    </div>
+
+                    <UserDefinedFields Module="users" Id="edit-user-udf" Class="mb-2 col-12" Data="_user" />
+
+                    <div class="mb-2 col-12">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-user-enabled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Enabled" />
+                            <label for="edit-user-enabled-@_user.UserId" class="form-check-label"><Language Tag="Enabled" /></label>
+                        </div>
+                    </div>
+
+                    <div class="mb-2 col-12">
+                        <div class="form-check form-switch">
+                            <input type="checkbox" id="edit-user-preventPasswordChange-@_user.UserId" role="switch" class="form-check-input" @bind="_user.PreventPasswordChange" />
+                            <label for="edit-user-preventPasswordChange-@_user.UserId" class="form-check-label"><Language Tag="PreventPasswordChange" /></label>
+                        </div>
+                    </div>
+
+                    <!-- {{ModuleItemStart:Appointments}} -->
+                    @if (Model.FeatureEnabledScheduling) {
+                        <div class="mb-2 col-12">
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-CanBeScheduled-@_user.UserId" role="switch" class="form-check-input" @bind="_user.CanBeScheduled" />
+                                <label for="edit-user-CanBeScheduled-@_user.UserId" class="form-check-label"><Language Tag="CanBeScheduled" /></label>
+                            </div>
+                        </div>
+                    }
+                    <!-- {{ModuleItemEnd:Appointments}} -->
+
+                    <div class="mb-2 col-12">
+                        <div class="form-check form-switch right">
+                            <input type="checkbox" id="edit-user-admin-@_user.UserId" role="switch" class="form-check-input" @bind="_user.Admin" />
+                            <label for="edit-user-admin-@_user.UserId" class="form-check-label"><Language Tag="Admin" /></label>
+                        </div>
+                    </div>
+
+                    <EditUser_App @bind-Value="_user" />
+
+                    <!-- {{ModuleItemStart:Appointments}} -->
+                    @if (!_user.Admin && Model.FeatureEnabledScheduling) {
+                        <div class="mb-2 col-12">
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-ManageAppointments-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageAppointments" />
+                                <label for="edit-user-ManageAppointments-@_user.UserId" class="form-check-label"><Language Tag="ManageAppointments" /></label>
+                            </div>
+                        </div>
+
+                        <div class="mb-2 col-12">
+                            <div class="form-check form-switch right">
+                                <input type="checkbox" id="edit-user-ManageFiles-@_user.UserId" role="switch" class="form-check-input" @bind="_user.ManageFiles" />
+                                <label for="edit-user-ManageFiles-@_user.UserId" class="form-check-label"><Language Tag="ManageFiles" /></label>
+                            </div>
+                        </div>
+                    }
+                    <!-- {{ModuleItemEnd:Appointments}} -->
+                    @if (!_newUser) {
+                        <div class="mb-2 col-12">
+                            <label for="edit-user-UploadAvatarImage">
+                                <Language Tag="Photo" ReplaceSpaces="true" />
+                            </label>
+                            <span class="note mb-2">- <Language Tag="ManageAvatarInfo" /></span>
+                            
+                            <div class="mb-2">
+                                @if (_user.Photo.HasValue) {
+                                    <button type="button" class="btn btn-danger btn-sm mb-2" @onclick="DeleteUserPhoto">
+                                        <Language Tag="Delete" IncludeIcon="true" />
                                     </button>
-                                    @if (_user.Photo.HasValue) {
-                                        <div>
-                                            <img class="user-icon-small" src="@UserAvatarUrl" />
-                                        </div>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                }
+                                <button type="button" id="edit-user-UploadAvatarImage" class="btn btn-success btn-sm mb-2" @onclick="UploadAvatarImage">
+                                    <Language Tag="UploadFile" IncludeIcon="true" />
+                                </button>
+                            </div>
+
+                            @if (_user.Photo.HasValue) {
+                                <div class="mb-2">
+                                    <img class="user-icon-small" src="@UserAvatarUrl" />
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
 
                 @if (!_newUser) {
                     <div class="mt-2 mb-2">

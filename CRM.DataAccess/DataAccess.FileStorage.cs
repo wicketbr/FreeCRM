@@ -204,7 +204,7 @@ public partial class DataAccess
         filter.Columns = new List<DataObjects.FilterColumn> { 
             new DataObjects.FilterColumn { 
                 Sortable = false,
-                Label = "",
+                Label = GetLanguageItem("FileId", language),
                 DataElementName = "FileId",
                 DataType = "Guid",
             },

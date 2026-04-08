@@ -27,7 +27,7 @@
             <table class="table table-sm">
                 <thead>
                     <tr class="table-dark">
-                        <th style="width:1%;"></th>
+                        <td style="width:1%;"></td>
                         <th style="width:1%;" class="min-100">
                             <Language Tag="Code" />
                         </th>
@@ -172,15 +172,16 @@
             </div>
 
             @foreach (var item in _language.Phrases) {
+                var itemId = "edit-language-item-" + Helpers.StringLower(item.Id).Replace(" ", "-");
                 var tagName = "" + item.Id;
                 var defaultValue = Helpers.DefaultLanguage(tagName);
                 string itemClass = defaultValue == item.Value ? "badge text-bg-secondary" : "badge text-bg-warning";
 
                 <div class="mb-3">
                     <div class="mb-1">
-                        <b>@item.Id</b><span>:&nbsp;</span><span class="@itemClass">@defaultValue</span>
+                        <label for="@itemId">@item.Id</label><span>:&nbsp;</span><span class="@itemClass">@defaultValue</span>
                     </div>
-                    <input type="text" class="form-control" @bind="item.Value" />
+                    <input type="text" id="@itemId" class="form-control" @bind="item.Value" />
                 </div>
             }
             break;
@@ -212,7 +213,7 @@
             <table class="table table-sm">
                 <thead>
                     <tr class="table-dark">
-                        <th style="width:1%;"></th>
+                        <td style="width:1%;"></td>
                         <th style="width:1%;" class="min-100">
                             <Language Tag="Code" />
                         </th>

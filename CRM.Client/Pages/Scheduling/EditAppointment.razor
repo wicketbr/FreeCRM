@@ -70,60 +70,47 @@
                         </div>
                     </div>
 
-                    <div class="mb-2">
-                        <table class="full">
-                            <tbody>
-                                <tr>
-                                    <td style="width:50%;">
-                                        <label for="edit-appt-StartDate">
-                                            <Language Tag="AppointmentStart" Required="true" />
-                                        </label>
-                                    </td>
-                                    <td style="width:50%;">
-                                        <label for="edit-appt-EndDate">
-                                            <Language Tag="AppointmentEnd" Required="true" />
-                                        </label>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        @if (_appointment.AllDay) {
-                                            <DateTimePicker Class="form-control"
-                                                            Id="edit-appt-StartDate"
-                                                            OnUpdate="@((DateOnly? v) => _startDate = Helpers.DateOnlyToDateTime(v))"
-                                                            TableClass="datetime-picker"
-                                                            TValue="DateOnly ?"
-                                                            Value="Helpers.DateTimeToDateOnly(_startDate)" />
-                                        } else {
-                                            <DateTimePicker Class="form-control"
-                                                            Id="edit-appt-StartDate"
-                                                            OnUpdate="@((DateTime? v) => _startDate = v)"
-                                                            TableClass="datetime-picker"
-                                                            TValue="DateTime ?"
-                                                            Value="_startDate" />
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @if (_appointment.AllDay) {
-                                            <DateTimePicker Class="form-control"
-                                                            Id="edit-appt-EndDate"
-                                                            OnUpdate="@((DateOnly? v) => _endDate = Helpers.DateOnlyToDateTime(v))"
-                                                            TableClass="datetime-picker"
-                                                            TValue="DateOnly ?"
-                                                            Value="Helpers.DateTimeToDateOnly(_endDate)" />
-                                        } else {
-                                            <DateTimePicker Class="form-control"
-                                                            Id="edit-appt-EndDate"
-                                                            OnUpdate="@((DateTime? v) => _endDate = v)"
-                                                            TableClass="datetime-picker"
-                                                            TValue="DateTime ?"
-                                                            Value="_endDate" />
-                                        }
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="row">
+                        <div class="col mb-2">
+                            <label for="edit-appt-StartDate">
+                                <Language Tag="AppointmentStart" Required="true" />
+                            </label>
+                            @if (_appointment.AllDay) {
+                                <DateTimePicker Class="form-control date-picker all-day"
+                                        Id="edit-appt-StartDate"
+                                        OnUpdate="@((DateOnly? v) => _startDate = Helpers.DateOnlyToDateTime(v))"
+                                        TableClass="datetime-picker"
+                                        TValue="DateOnly ?"
+                                        Value="Helpers.DateTimeToDateOnly(_startDate)" />
+                            } else {
+                                <DateTimePicker Class="form-control date-picker"
+                                        Id="edit-appt-StartDate"
+                                        OnUpdate="@((DateTime? v) => _startDate = v)"
+                                        TableClass="datetime-picker"
+                                        TValue="DateTime ?"
+                                        Value="_startDate" />
+                            }
+                        </div>
+                        <div class="col mb-2">
+                            <label for="edit-appt-EndDate">
+                                <Language Tag="AppointmentEnd" Required="true" />
+                            </label>
+                            @if (_appointment.AllDay) {
+                                <DateTimePicker Class="form-control date-picker all-day"
+                                        Id="edit-appt-EndDate"
+                                        OnUpdate="@((DateOnly? v) => _endDate = Helpers.DateOnlyToDateTime(v))"
+                                        TableClass="datetime-picker"
+                                        TValue="DateOnly?"
+                                        Value="Helpers.DateTimeToDateOnly(_endDate)" />
+                            } else {
+                                <DateTimePicker Class="form-control date-picker"
+                                        Id="edit-appt-EndDate"
+                                        OnUpdate="@((DateTime? v) => _endDate = v)"
+                                        TableClass="datetime-picker"
+                                        TValue="DateTime?"
+                                        Value="_endDate" />
+                            }
+                        </div>
                     </div>
 
                     <div class="mb-2 input-group">
@@ -240,37 +227,55 @@
                                 <!-- {{ModuleItemEnd:Locations}} -->
 
                                 <div class="col col-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <label for="edit-appt-bgColor">
+                                    <fieldset>
+                                        <legend>
+                                            <Language Tag="BackgroundColor" />
+                                        </legend>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
                                                 <Language Tag="BackgroundColorAbbreviation" />
                                                 <Tooltip TipText="@Helpers.Text("BackgroundColor")" />
-                                            </label>
-                                        </span>
-                                        <RadzenColorPicker id="edit-appt-bgColor" @bind-Value="_appointment.BackgroundColor"
-                                                           ShowHSV="true" ShowRGBA="true" ShowColors="true"
-                                                           ShowButton="true" Change="@((args) => _appointment.BackgroundColor = args)" />
-                                        <span class="input-group-text pointer" @onclick="@(() => _appointment.BackgroundColor = "")">
-                                            <Language Tag="Clear" />
-                                        </span>
-                                    </div>
+                                            </span>
+                                            <RadzenColorPicker
+                                                id="edit-appt-bgColor"
+                                                @bind-Value="_appointment.BackgroundColor"
+                                                ShowHSV="true"
+                                                ShowRGBA="true"
+                                                ShowColors="true"
+                                                ShowButton="true"
+                                                Change="@((args) => _appointment.BackgroundColor = args)" />
+                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.BackgroundColor = "")">
+                                                <Language Tag="Clear" />
+                                            </span>
+                                        </div>
+                                    </fieldset>
                                 </div>
 
                                 <div class="col col-6">
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <label for="edit-appt-fgColor">
-                                                <Language Tag="ForegroundColorAbbreviation" />
-                                                <Tooltip TipText="@Helpers.Text("ForegroundColor")" />
-                                            </label>
-                                        </span>
-                                        <RadzenColorPicker id="edit-appt-fgColor" @bind-Value="_appointment.ForegroundColor"
-                                                           ShowHSV="true" ShowRGBA="true" ShowColors="true"
-                                                           ShowButton="true" Change="@((args) => _appointment.ForegroundColor = args)" />
-                                        <span class="input-group-text pointer" @onclick="@(() => _appointment.ForegroundColor = "")">
-                                            <Language Tag="Clear" />
-                                        </span>
-                                    </div>
+                                    <fieldset>
+                                        <legend>
+                                            <Language Tag="ForegroundColor" />
+                                        </legend>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <strong for="edit-appt-fgColor">
+                                                    <Language Tag="ForegroundColorAbbreviation" />
+                                                    <Tooltip TipText="@Helpers.Text("ForegroundColor")" />
+                                                </strong>
+                                            </span>
+                                            <RadzenColorPicker
+                                                id="edit-appt-fgColor"
+                                                @bind-Value="_appointment.ForegroundColor"
+                                                ShowHSV="true"
+                                                ShowRGBA="true"
+                                                ShowColors="true"
+                                                ShowButton="true"
+                                                Change="@((args) => _appointment.ForegroundColor = args)" />
+                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.ForegroundColor = "")">
+                                                <Language Tag="Clear" />
+                                            </span>
+                                        </div>
+                                    </fieldset>
                                 </div>
                             </div>
 
@@ -286,15 +291,16 @@
                                         <Language Tag="AddNewUser" IncludeIcon="true" />
                                     </button>
                                     <AutoComplete Class="form-control"
-                                                  Disabled="false"
-                                                  GetAutoCompleteItems="UserLookup"
-                                                  HighlightFirstMatch="true"
-                                                  Id="edit-appt-AddUser"
-                                                  LookupDelay="300"
-                                                  MatchParentWidth="true"
-                                                  MinimumCharacters="1"
-                                                  OnSelected="UserLookupItemSelected"
-                                                  PlaceholderText="@UserLookupPlaceholderText" />
+                                            AriaLabel="@Helpers.Text("AddNewUser")"
+                                            Disabled="false"
+                                            GetAutoCompleteItems="UserLookup"
+                                            HighlightFirstMatch="true"
+                                            Id="edit-appt-AddUser"
+                                            LookupDelay="300"
+                                            MatchParentWidth="true"
+                                            MinimumCharacters="1"
+                                            OnSelected="UserLookupItemSelected"
+                                            PlaceholderText="@UserLookupPlaceholderText" />
                                 </div>
 
                                 <div class="mb-2">
@@ -302,7 +308,7 @@
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th style="width:1%;"></th>
+                                                    <td style="width:1%;"></td>
                                                     <th>
                                                         <Language Tag="Name" ReplaceSpaces="true" />
                                                     </th>
@@ -318,13 +324,13 @@
                                                 @foreach (var user in _appointment.Users.OrderBy(x => x.DisplayName)) {
                                                     <tr>
                                                         <td>
-                                                            <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="@(() => RemoveUserFromAppointment(user.UserId))">
+                                                            <button type="button" class="btn btn-xs btn-danger nowrap" @onclick="@(() => RemoveUserFromAppointment(user.UserId))" aria-label="@Helpers.Text("Delete")">
                                                                 <Icon Name="Delete" />
                                                             </button>
                                                         </td>
                                                         <td>@user.DisplayName</td>
                                                         <td>
-                                                            <select class="form-select" @bind="user.AttendanceCode">
+                                                            <select class="form-select" @bind="user.AttendanceCode" aria-label="@Helpers.Text("AppointmentStatus")">
                                                                 <option value="invited"><Language Tag="AppointmentAttendanceCodeInvited" /></option>
                                                                 <option value="accepted"><Language Tag="AppointmentAttendanceCodeAccepted" /></option>
                                                                 <option value="declined"><Language Tag="AppointmentAttendanceCodeDeclined" /></option>
@@ -332,7 +338,7 @@
                                                             </select>
                                                         </td>
                                                         <td>
-                                                            <input type="number" class="form-control" min="0" @bind="user.Fees" />
+                                                            <input type="number" class="form-control" min="0" @bind="user.Fees" aria-label="@Helpers.Text("AppointmentFees")" />
                                                         </td>
                                                     </tr>
                                                 }
@@ -350,8 +356,8 @@
                             </div>
                         }
 
-                        <div id="tabApptNotes" class="tab-pane" role="tabpanel" aria-labelledby="tabApptNotesButton">
-                            @if (_appointment.Notes.Any(x => x.Deleted == false)) {
+                        @if (_appointment.Notes.Any(x => x.Deleted == false)) {
+                            <div id="tabApptNotes" class="tab-pane" role="tabpanel" aria-labelledby="tabApptNotesButton">
                                 <div class="mb-2">
                                     <strong><Language Tag="AppointmentNotes" /></strong>
                                     <Tooltip TipText="@Helpers.Text("AppointmentNotesInfo")" />
@@ -379,22 +385,22 @@
                                         </div>
                                     }
                                 </div>
-                            }
 
-                            @if (AppModule.Enabled) {
-                                <EditAppointment_App Area="Notes" AllowEdit="AllowEdit" @bind-Value="_appointment" />
-                            }
-                        </div>
+                                @if (AppModule.Enabled) {
+                                    <EditAppointment_App Area="Notes" AllowEdit="AllowEdit" @bind-Value="_appointment" />
+                                }
+                            </div>
+                        }
 
                         <!-- {{ModuleItemStart:Services}} -->
-                        @if (Model.FeatureEnabledServices) {
+                        @if (_appointment.Meeting && Model.FeatureEnabledServices) {
                             <div id="tabApptServices" class="tab-pane" role="tabpanel" aria-labelledby="tabApptServicesButton">
                                 @if (Model.FeatureEnabledServices && Model.Services.Any(x => x.Enabled == true && x.Deleted == false)) {
                                     <div class="mb-2">
                                         <table class="table table-sm">
                                             <thead>
                                                 <tr>
-                                                    <th style="width:1%;"></th>
+                                                    <td style="width:1%;"></td>
                                                     <th>
                                                         <Language Tag="Service" ReplaceSpaces="true" />
                                                         <button type="button" class="btn btn-xs btn-success" @onclick="AddService">
@@ -408,7 +414,7 @@
                                                 @foreach (var service in _appointment.Services.Where(x => x.Deleted == false)) {
                                                     <tr>
                                                         <td>
-                                                            <button type="button" class="btn btn-xs btn-danger" @onclick="@(() => DeleteAppointmentService(service))">
+                                                            <button type="button" class="btn btn-xs btn-danger" @onclick="@(() => DeleteAppointmentService(service))" aria-label="@Helpers.Text("Delete")">
                                                                 <Icon Name="Delete" />
                                                             </button>
                                                         </td>
@@ -417,7 +423,10 @@
                                                                 int index = 0;
                                                                 int thisIndex = index + 0;
 
-                                                                <select class="form-select" value="@service.ServiceId" @onchange="@((ChangeEventArgs args) => ServiceChanged(service, args))">
+                                                                <select class="form-select"
+                                                                        aria-label="@Helpers.Text("Service")"
+                                                                        value="@service.ServiceId"
+                                                                        @onchange="@((ChangeEventArgs args) => ServiceChanged(service, args))">
                                                                     @foreach (var serviceItem in Model.Services.Where(x => x.Enabled == true && x.Deleted == false)) {
                                                                         <option value="@serviceItem.ServiceId">@serviceItem.Description</option>
                                                                         index++;
@@ -428,7 +437,7 @@
                                                             }
                                                         </td>
                                                         <td style="width:1%;">
-                                                            <input type="number" class="form-control fixed-100" @bind="service.Fee" />
+                                                            <input type="number" class="form-control fixed-100" @bind="service.Fee" aria-label="@Helpers.Text("AppointmentFees")" />
                                                         </td>
                                                     </tr>
                                                 }
@@ -449,7 +458,7 @@
 
                             <div id="tabApptTags" class="tab-pane" role="tabpanel" aria-labelledby="tabApptTagsButton">
                                 <div class="mb-2">
-                                    <select class="form-select" @onchange="AddTag" id="edit-appt-addTag" disabled="@tagsDisabled">
+                                    <select class="form-select" @onchange="AddTag" id="edit-appt-addTag" disabled="@tagsDisabled" aria-label="@Helpers.Text("AddTag")">
                                         <option value=""><Language Tag="AddTag" /></option>
                                         @foreach (var tag in AvailableTags) {
                                             <option value="@tag.TagId">@tag.Name</option>

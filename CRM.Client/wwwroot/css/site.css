@@ -421,7 +421,7 @@ table.table.paged-recordset-table tr.sep-row td {
 
 table.table tbody tr.disabled td {
     font-style: italic;
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 table.table.no-lines tr td {
@@ -603,13 +603,18 @@ ul {
 }
 
 select.m-r,
+select:focus.m-r,
 select.m-r option,
+select:focus.m-r option,
 textarea.m-r,
+textarea:focus.m-r,
 input.m-r,
-.m-r input[type="text"] {
+input:focus.m-r,
+.m-r input[type="text"],
+.m-r input:focus[type="text"] {
     background-color: palevioletred;
     border-color: darkred;
-    color: #fff;
+    color: #000;
 }
 
 div.required {
@@ -622,7 +627,7 @@ div.m-r {
     border: solid 1px darkred;
     border-radius:.4em;
     padding: .1em .2em .1em .4em;
-    color: #fff;
+    color: #000;
 }
 
 div.m-r .required-flag {
@@ -635,7 +640,7 @@ div.m-r .required-flag {
 }
 
 .m-r::placeholder {
-    color: #fff;
+    color: #000;
 }
 
 .unbold {
@@ -925,17 +930,23 @@ table.udf-labels tbody tr td.top {
     text-transform: none;
 }
 
+.rz-slot {
+    color: #000 !important;
+}
+
 .rz-slot.today {
     background-color: lightgoldenrodyellow;
 }
 
 :root {
     --rz-datepicker-calendar-selected-background-color: #0d6efd;
+    --rz-scheduler-event-background-color: #a0cfec !important;
+    --rz-scheduler-event-color: black !important;
     --rz-scheduler-prev-next-button-background-color: #eee;
     --rz-scheduler-view-button-background-color: #eee;
     --rz-scheduler-view-button-color: #000;
-    --rz-scheduler-view-selected-color: #555;
-    --rz-scheduler-view-selected-background-color: #ddd;
+    --rz-scheduler-view-selected-color: #555 !important;
+    --rz-scheduler-view-selected-background-color: #ddd !important;
     --rz-primary: #0d6efd;
     --rz-dialog-title-padding: .5rem .5rem .5rem .5rem;
     --rz-dialog-title-padding-block: 1rem 0;
@@ -1342,4 +1353,17 @@ label.unbold {
     position:relative;
     top:-8px;
     font-size:0.6em;
+}
+
+fieldset legend {
+    font-size:1em;
+    font-weight:bold;
+}
+
+.date-picker {
+    width:220px;
+}
+
+.date-picker.all-day {
+    width:150px;
 }

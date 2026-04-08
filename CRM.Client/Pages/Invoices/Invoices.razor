@@ -81,7 +81,7 @@
 
                 @if (Model.User.Admin) {
                     <div class="col col-lg-2 col-md-3 col-sm-4 col-12 mb-2">
-                        <label for="invoices-filter-enabled"><Language Tag="InvoiceSentStatus" /></label>
+                        <label for="invoices-filter-SentStatus"><Language Tag="InvoiceSentStatus" /></label>
                         <select class="form-control" size="4" id="invoices-filter-SentStatus" @onchange="FilterChangedSentStatus" value="@Filter.SentStatus">
                             <option value="">All</option>
                             <option value="sent">Sent Invoices Only</option>

@@ -120,7 +120,7 @@
 
                             @if (String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
                                 <li class="nav-item dropdown" title="@Helpers.Text("Theme")">
-                                    <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="javascript:void('@Helpers.Text("Theme")');" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="@Helpers.Text("SelectTheme")">
                                         @switch (Model.Theme) {
                                             case "dark":
                                                 <Icon Name="ThemeDark" />
@@ -136,24 +136,26 @@
                                         }
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="themeDropdown">
+                                        @*
                                         <li>
-                                            <a class="dropdown-item disabled" href="javascript:void('0');">
+                                            <a class="dropdown-item disabled" href="#">
                                                 <Language Tag="Theme" IncludeIcon="true" />
                                             </a>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
+                                        *@
                                         <li>
-                                            <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("auto"))">
+                                            <a class="dropdown-item" href="javascript:void('@Helpers.Text("ThemeAuto")');" @onclick="@(() => Helpers.SetTheme("auto"))">
                                                 <Language Tag="ThemeAuto" IncludeIcon="true" />
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("light"))">
+                                            <a class="dropdown-item" href="javascript:void('@Helpers.Text("ThemeLight")');" @onclick="@(() => Helpers.SetTheme("light"))">
                                                 <Language Tag="ThemeLight" IncludeIcon="true" />
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="javascript:void('0');" @onclick="@(() => Helpers.SetTheme("dark"))">
+                                            <a class="dropdown-item" href="javascript:void('@Helpers.Text("ThemeDark")');" @onclick="@(() => Helpers.SetTheme("dark"))">
                                                 <Language Tag="ThemeDark" IncludeIcon="true" />
                                             </a>
                                         </li>
@@ -161,15 +163,15 @@
                                 </li>
                             }
                             <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="offcanvas" href="#offcanvasUserMenu" role="button" aria-controls="offcanvasUserMenu">
+                                <a class="nav-link" data-bs-toggle="offcanvas" href="#offcanvasUserMenu" role="button" aria-controls="offcanvasUserMenu" aria-labelledby="offcanvas-icon" title="@Helpers.Text("InfoMenu")">
                                     @if (Model.LoggedIn) {
                                         @if (!String.IsNullOrWhiteSpace(Helpers.UserAvatarUrl)) {
-                                            <img class="user-menu-icon" src="@Helpers.UserAvatarUrl" />
+                                            <img class="user-menu-icon" src="@Helpers.UserAvatarUrl" alt="@Helpers.Text("Info")" aria-label="@Helpers.Text("Info")" id="offcanvas-icon" />
                                         } else {
-                                            <Icon Name="User" />
+                                            <Icon Name="User" Title="@Helpers.Text("Info")" Id="offcanvas-icon" />
                                         }
                                     } else {
-                                        <Icon Name="Info" />
+                                        <Icon Name="Info" Title="@Helpers.Text("Info")" Id="offcanvas-icon" />
                                     }
                                 </a>
                             </li>

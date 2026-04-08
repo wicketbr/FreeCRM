@@ -56,6 +56,7 @@
                     </label>
                     <br />
                     <DateTimePicker 
+                        Id="filter-files-Start"
                         Class="form-control full-width"
                         OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "Start", v, LoadFilter))"
                         TableClass="datetime-picker full-width"
@@ -65,11 +66,12 @@
                 </div>
 
                 <div class="col col-lg-3 col-md-4 col-sm-4 col-12 mb-2">
-                    <label for="filter-files-Start">
+                    <label for="filter-files-End">
                         <Language Tag="FilterEnd" />
                     </label>
                     <br />
                     <DateTimePicker 
+                        Id="filter-files-End"
                         Class="form-control full-width"
                         OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "End", v, LoadFilter))"
                         TableClass="datetime-picker full-width"

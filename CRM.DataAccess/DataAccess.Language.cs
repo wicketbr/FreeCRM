@@ -152,6 +152,7 @@ public partial class DataAccess
             // Files
             { "Extension", "Extension" },
             { "Extensions", "Extensions" },
+            { "FileId", "File Id" },
 
             // {{ModuleItemStart:Invoices}}
             // Invoices
@@ -258,6 +259,8 @@ public partial class DataAccess
             // UDF Labels
             { "FeatureOptInUdf", "Use the User-Defined Fields" },
             { "UDF", "UDF" },
+            { "UDFLabelFor", "Label for UDF Element" },
+            { "UDFModule", "Module" },
             { "UserDefinedFields", "User-Defined Fields" },
             { "UserDefinedFieldsHelpIntro", "For a simple text input just enter the field name in the Label field.<br /><br />Alternatively, you can specify that the field should be a select element or a list of radio buttons by using the following format:<br /><br />Label|select|options,separated,by,commas<br />Label|radio|options,separated,by,commas" },
             { "UserDefinedFieldsOptions", "Options:" },
@@ -455,6 +458,7 @@ public partial class DataAccess
             { "IncludeInSearchInfo", "If this option is selected this field will be included when using the keyword search." },
             { "IndicatesRequiredField", "Indicates a Required Field" },
             { "Info", "Info" },
+            { "InfoMenu", "Info Menu" },
             { "InsertField", "Insert a Field" },
             { "InsertFieldAppointmentDatesAndTimes", "Dates and Times" },
             { "InsertFieldAppointmentEnd", "End" },
@@ -651,6 +655,7 @@ public partial class DataAccess
             { "SelectCulture", "Select a Language Culture" },
             { "SelectFile", "Select a File" },
             { "SelectImageFile", "Select an Image File" },
+            { "SelectRecord", "Select Records" },
             { "SelectTenant", "Select a Tenant" },
             { "SelectTenantInfo", "To log in you must first select the tenant account you wish to log in to." },
             { "SelectTheme", "Select Theme" },
@@ -717,6 +722,7 @@ public partial class DataAccess
             { "ThemeTeal", "Teal" },
             { "ThemeYellow", "Yellow" },
             { "Title", "Title" },
+            { "ToggleAllCheckboxes", "Toggle All Checkboxes" },
             { "ToggleStickyMenus", "Toggle Sticky Menus" },
             { "Total", "Total" },
             { "Undelete", "Undelete" },
@@ -735,6 +741,7 @@ public partial class DataAccess
             { "UploadingWait", "Uploading, Please Wait..." },
             { "UserLockedOut", "User account was locked out at {0} due to too many failed login attempts." },
             { "User", "User" },
+            { "UserAvatar", "User Avatar" },
             { "Username", "Username" },
             { "Users", "Users" },
             { "UserScheduleInfo", "You are scheduled for this event and can update your attendance below." },

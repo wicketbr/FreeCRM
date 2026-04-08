@@ -308,6 +308,7 @@ public partial class DataObjects
         public bool Sortable { get; set; }
         public string? Class { get; set; }
         public string? BooleanIcon { get; set; }
+        public string? AriaLabel { get; set; }
     }
 
     public partial class FilterFileStorage : Filter

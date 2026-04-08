@@ -103,21 +103,31 @@
             </div>
 
             <div class="mb-2">
-                <label for="edit-location-CalendarBackgroundColor">
-                    <Language Tag="BackgroundColor" />
-                </label>
-                <RadzenColorPicker id="edit-location-CalendarBackgroundColor" @bind-Value="_location.CalendarBackgroundColor"
-                    ShowHSV="true" ShowRGBA="true" ShowColors="true" 
-                    ShowButton="true" Change="@((args) => _location.CalendarBackgroundColor = args)" />
+                <fieldset>
+                    <legend><Language Tag="BackgroundColor" /></legend>
+                    <RadzenColorPicker
+                            ToggleAriaLabel="@Helpers.Text("BackgroundColor")"
+                            @bind-Value="_location.CalendarBackgroundColor"
+                            ShowHSV="true"
+                            ShowRGBA="true"
+                            ShowColors="true" 
+                            ShowButton="true"
+                            Change="@((args) => _location.CalendarBackgroundColor = args)" />
+                </fieldset>
             </div>
 
             <div class="mb-2">
-                <label for="edit-location-CalendarForegroundColor">
-                    <Language Tag="ForegroundColor" />
-                </label>
-                <RadzenColorPicker id="edit-location-CalendarForegroundColor" @bind-Value="_location.CalendarForegroundColor"
-                    ShowHSV="true" ShowRGBA="true" ShowColors="true"
-                    ShowButton="true" Change="@((args) => _location.CalendarForegroundColor = args)" />
+                <fieldset>
+                    <legend><Language Tag="ForegroundColor" /></legend>
+                    <RadzenColorPicker
+                            ToggleAriaLabel="@Helpers.Text("ForegroundColor")"
+                            @bind-Value="_location.CalendarForegroundColor"
+                            ShowHSV="true"
+                            ShowRGBA="true"
+                            ShowColors="true"
+                            ShowButton="true"
+                            Change="@((args) => _location.CalendarForegroundColor = args)" />
+                </fieldset>
             </div>
 
             if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {

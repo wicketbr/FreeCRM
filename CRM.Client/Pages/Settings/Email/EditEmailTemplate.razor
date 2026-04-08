@@ -92,68 +92,69 @@
             </div>
 
             <div class="mb-2">
-                <div class="mb-2">
-                    <label for="edit-emailtemplate-body" @onclick="EditorFocus">
+                <fieldset>
+                    <legend @onclick="EditorFocus">
                         <Language Tag="EmailTemplateBody" Required="true" />
-                    </label>
-                </div>
+                    </legend>
 
-                <div class="mb-2">
-                    <Language Tag="InsertFieldInfo" />
-                </div>
+                    <div class="mb-2">
+                        <Language Tag="InsertFieldInfo" />
+                    </div>
 
-                @if(_allowSave){
-                    <div class="input-group mb-2">
-                        <select id="edit-emailtemplate-insertvalue" class="form-select" @onchange="InsertField">
-                            <option value=""><Language Tag="InsertField" /></option>
-                            <optgroup label="@(Helpers.Text("InsertFieldGroupGeneral"))">
-                                <option value="{{FirstName}}"><Language Tag="InsertFieldFirstName" /></option>
-                                <option value="{{LastName}}"><Language Tag="InsertFieldLastName" /></option>
-                                <option value="{{Email}}"><Language Tag="InsertFieldEmail" /></option>
+                    @if(_allowSave){
+                        <div class="input-group mb-2">
+                        
+                            <select id="edit-emailtemplate-insertvalue" class="form-select" @onchange="InsertField" aria-label="@Helpers.Text("InsertField")">
+                                <option value=""><Language Tag="InsertField" /></option>
+                                <optgroup label="@(Helpers.Text("InsertFieldGroupGeneral"))">
+                                    <option value="{{FirstName}}"><Language Tag="InsertFieldFirstName" /></option>
+                                    <option value="{{LastName}}"><Language Tag="InsertFieldLastName" /></option>
+                                    <option value="{{Email}}"><Language Tag="InsertFieldEmail" /></option>
 
-                                @if (Model.FeatureEnabledEmployeeId) {
-                                    <option value="{{EmployeeId}}"><Language Tag="InsertFieldEmployeeId" /></option>
-                                }
-                            </optgroup>
-
-                            <!-- {{ModuleItemStart:Appointments}} -->
-                            @if (Model.FeatureEnabledScheduling) {
-                                <optgroup label="@(Helpers.Text("InsertFieldGroupScheduling"))">
-                                    <option value="{{Appointment:Title}}"><Language Tag="InsertFieldAppointmentTitle" /></option>
-                                    <option value="{{Appointment:Start}}"><Language Tag="InsertFieldAppointmentStart" /></option>
-                                    <option value="{{Appointment:End}}"><Language Tag="InsertFieldAppointmentEnd" /></option>
-                                    <option value="{{Appointment:DatesAndTimes}}"><Language Tag="InsertFieldAppointmentDatesAndTimes" /></option>
-                                    <option value="{{Appointment:Note}}"><Language Tag="InsertFieldAppointmentNote" /></option>
-                                    if (Model.FeatureEnabledLocation) {
-                                    <option value="{{Appointment:Location}}"><Language Tag="InsertFieldAppointmentLocation" /></option>
+                                    @if (Model.FeatureEnabledEmployeeId) {
+                                        <option value="{{EmployeeId}}"><Language Tag="InsertFieldEmployeeId" /></option>
                                     }
                                 </optgroup>
-                            }
-                            <!-- {{ModuleItemEnd:Appointments}} -->
 
-                            <!-- {{ModuleItemStart:Services}} -->
-                            @if (Model.FeatureEnabledServices) {
-                                <optgroup label="@(Helpers.Text("InsertFieldGroupServices"))">
-                                    <option value="{{Service:Code}}"><Language Tag="InsertFieldServiceCode" /></option>
-                                    <option value="{{Service:Description}}"><Language Tag="InsertFieldServiceDescription" /></option>
-                                    <option value="{{Service:Rate}}"><Language Tag="InsertFieldServiceRate" /></option>
-                                </optgroup>
+                                <!-- {{ModuleItemStart:Appointments}} -->
+                                @if (Model.FeatureEnabledScheduling) {
+                                    <optgroup label="@(Helpers.Text("InsertFieldGroupScheduling"))">
+                                        <option value="{{Appointment:Title}}"><Language Tag="InsertFieldAppointmentTitle" /></option>
+                                        <option value="{{Appointment:Start}}"><Language Tag="InsertFieldAppointmentStart" /></option>
+                                        <option value="{{Appointment:End}}"><Language Tag="InsertFieldAppointmentEnd" /></option>
+                                        <option value="{{Appointment:DatesAndTimes}}"><Language Tag="InsertFieldAppointmentDatesAndTimes" /></option>
+                                        <option value="{{Appointment:Note}}"><Language Tag="InsertFieldAppointmentNote" /></option>
+                                        if (Model.FeatureEnabledLocation) {
+                                        <option value="{{Appointment:Location}}"><Language Tag="InsertFieldAppointmentLocation" /></option>
+                                        }
+                                    </optgroup>
+                                }
+                                <!-- {{ModuleItemEnd:Appointments}} -->
+
+                                <!-- {{ModuleItemStart:Services}} -->
+                                @if (Model.FeatureEnabledServices) {
+                                    <optgroup label="@(Helpers.Text("InsertFieldGroupServices"))">
+                                        <option value="{{Service:Code}}"><Language Tag="InsertFieldServiceCode" /></option>
+                                        <option value="{{Service:Description}}"><Language Tag="InsertFieldServiceDescription" /></option>
+                                        <option value="{{Service:Rate}}"><Language Tag="InsertFieldServiceRate" /></option>
+                                    </optgroup>
+                                }
+                                <!-- {{ModuleItemEnd:Services}} -->
+                            </select>
+                            @if (Model.ImageFiles.Any()) {
+                                <span class="input-group-text pointer" @onclick="InsertImage">
+                                    <Language Tag="InsertImage" IncludeIcon="true" />
+                                </span>
                             }
-                            <!-- {{ModuleItemEnd:Services}} -->
-                        </select>
-                        @if (Model.ImageFiles.Any()) {
-                            <span class="input-group-text pointer" @onclick="InsertImage">
-                                <Language Tag="InsertImage" IncludeIcon="true" />
-                            </span>
-                        }
-                    </div>
-                } else {
-                    <div class="alert alert-warning">
-                        <Language Tag="HtmlEditorInSourceViewWarning" />
-                    </div>
-                }
+                        </div>
+                    } else {
+                        <div class="alert alert-warning">
+                            <Language Tag="HtmlEditorInSourceViewWarning" />
+                        </div>
+                    }
                 
-                <HtmlEditor @ref="_htmlEditor" OnModeChanged="HtmlEditorModeChanged" />
+                    <HtmlEditor @ref="_htmlEditor" OnModeChanged="HtmlEditorModeChanged" />
+                </fieldset>
             </div>
 
             <div class="mb-2 form-check form-switch">

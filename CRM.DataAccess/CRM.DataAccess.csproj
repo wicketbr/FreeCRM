@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.19.0" />
+    <PackageReference Include="Azure.Identity" Version="1.20.0" />
     <PackageReference Include="Brad.Wickett_Sql2LINQ" Version="3.0.1" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
     <PackageReference Include="JWTHelpers" Version="1.0.1" />

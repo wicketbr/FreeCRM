@@ -189,7 +189,11 @@
                         NavigationLocation="PagedRecordset.NavLocation.Both"
                         RecordData="Data"
                         RowClasses="_rowClasses"
-                        UseBootstrap="true" />
+                        UseBootstrap="true"
+                        AriaLabelRecordsPerPage="@Helpers.Text("RecordsPerPage")"
+                        CheckboxAriaLabel="@Helpers.Text("SelectRecord")"
+                        CheckboxToggleAllAriaLabel="@Helpers.Text("ToggleAllCheckboxes")"
+                    />
                 }
             }
 
@@ -596,6 +600,7 @@
                     Label = column.Label,
                     Sortable = column.Sortable,
                     TipText = column.TipText,
+                    AriaLabel = column.AriaLabel,
                 });
             }
         }

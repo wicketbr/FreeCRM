@@ -225,7 +225,7 @@ public partial class DataAccess
         // If this is the local database and we are in debug mode, then make sure
         // that the test events are in the current month.
 #if DEBUG
-        if (_connectionString == "Data Source=localhost;Initial Catalog=CRM;TrustServerCertificate=True;User ID=sa;Password=saPassword;MultipleActiveResultSets=True;") {
+        if (_connectionString == "Data Source=(local);Initial Catalog=CRM;Integrated Security=True;TrustServerCertificate=True;MultipleActiveResultSets=True;") {
             var events = data.Appointments.Where(x => x.TenantId == _guid2).ToList();
             if(events != null && events.Any()) {
                 foreach(var item in events) {

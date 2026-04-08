@@ -2,11 +2,19 @@
 @{
     switch (_source) {
         case "google":
-            <i class="icon icon-google material-symbols-outlined" title="@_title">@_icon</i>
+            if (!String.IsNullOrWhiteSpace(_title)) {
+                <i class="icon icon-google material-symbols-outlined" alt="@_title" aria-label="@_title" id="@ElementId">@_icon</i>
+            } else {
+                <i class="icon icon-google material-symbols-outlined" id="@ElementId">@_icon</i>
+            }
             break;
 
         case "fa":
-            <i class="icon icon-fa @_icon"></i>
+            if (!String.IsNullOrWhiteSpace(_title)) {
+                <i class="icon icon-fa @_icon" alt="@_title" aria-label="@_title" id="@ElementId"></i>
+            } else {
+                <i class="icon icon-fa @_icon" id="@ElementId"></i>
+            }
             break;
 
         case "svg":
@@ -17,6 +25,9 @@
 @code {
     protected string _icon = String.Empty;
     protected string _title = String.Empty;
+
+    [Parameter]
+    public string? Id { get; set; }
 
     [Parameter]
     public string? Name { get; set; }
@@ -32,6 +43,12 @@
     protected override void OnInitialized()
     {
         RenderIcon();
+    }
+
+    protected string ElementId {
+        get {
+            return !String.IsNullOrWhiteSpace(Id) ? Id : String.Empty;
+        }
     }
 
     protected void RenderIcon()

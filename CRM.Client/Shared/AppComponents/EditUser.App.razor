@@ -7,16 +7,14 @@
     if (OverridePage) {
         <div>Create Custom Edit User Page Here</div>
     } else {
-        // The edit user interface uses a table for layout, so we need to follow that structure in this file as well.
+        // The edit user interface uses a row and column layout.
         if (!Value.Admin) {
-            @*<tr>
-            <td>
-                <div class="form-check form-switch right">
-                    <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" @bind:after="ValueHasChanged" />
-                </div>
-            </td>
-            <td><label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label></td>
-        </tr>*@
+            @*<div class="row col-12">
+            <div class="form-check form-switch right">
+                <input type="checkbox" id="app-editUser-MyPermission" role="switch" class="form-check-input" @bind="Value.MyPermission" @bind:after="ValueHasChanged" />
+                <label for="app-editUser-MyPermission" class="form-check-label"><Language Tag="MyPermission" /></label>
+            </div>
+        </div>*@
         }
     }
 }

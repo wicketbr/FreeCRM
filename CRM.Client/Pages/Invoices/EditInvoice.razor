@@ -142,7 +142,7 @@
                     <table class="table table-sm">
                         <thead>
                             <tr class="table-dark">
-                                <th style="width:1%;"></th>
+                                <td style="width:1%;"></td>
                                 <th>
                                     <Language Tag="InvoiceItemDescription" ReplaceSpaces="true" Required="true" />
                                 </th>
@@ -172,18 +172,21 @@
                                     </td>
                                     <td>
                                         <input type="text" id="@descId"
-                                               class="@Helpers.MissingValue(item.Description, "form-control")"
-                                               @bind="item.Description" @bind:event="oninput" />
+                                                aria-label="@Helpers.Text("InvoiceItemDescription")"
+                                                class="@Helpers.MissingValue(item.Description, "form-control")"
+                                                @bind="item.Description" @bind:event="oninput" />
                                     </td>
                                     <td>
                                         <input type="number" id="@priceId" min="0"
-                                               class="@Helpers.MissingValue(item.Price, "form-control")"
-                                               @bind="item.Price" @bind:event="oninput" />
+                                                aria-label="@Helpers.Text("InvoiceItemPrice")"
+                                                class="@Helpers.MissingValue(item.Price, "form-control")"
+                                                @bind="item.Price" @bind:event="oninput" />
                                     </td>
                                     <td>
                                         <input type="number" id="@qtyId" min="0"
-                                               class="@Helpers.MissingValue(item.Quantity, "form-control")"
-                                               @bind="item.Quantity" @bind:event="oninput" />
+                                                aria-label="@Helpers.Text("InvoiceItemQuantity")"
+                                                class="@Helpers.MissingValue(item.Quantity, "form-control")"
+                                                @bind="item.Quantity" @bind:event="oninput" />
                                     </td>
                                     <td class="right">
                                         @((MarkupString)InvoiceItemTotal(item))
