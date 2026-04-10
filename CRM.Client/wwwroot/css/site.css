@@ -604,8 +604,8 @@ ul {
 
 select.m-r,
 select:focus.m-r,
-select.m-r option,
-select:focus.m-r option,
+select[multiple].m-r option,
+select[multiple]:focus.m-r option,
 textarea.m-r,
 textarea:focus.m-r,
 input.m-r,

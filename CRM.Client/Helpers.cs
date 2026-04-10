@@ -4531,6 +4531,21 @@ public static partial class Helpers
     /// <summary>
     /// Returns the class that marks a field as missing if no value is provided.
     /// </summary>
+    /// <param name="values">A nullable array object.</param>
+    /// <param name="defaultClass">An optional default class to append to the output.</param>
+    /// <returns>The class value.</returns>
+    public static string MissingValue(object[]? values, string? defaultClass = "")
+    {
+        if (String.IsNullOrWhiteSpace(defaultClass)) {
+            return values == null || values.Length == 0 ? MissingValueClass : "";
+        } else {
+            return values == null || values.Length == 0 ? MissingValueClass + " " + defaultClass : defaultClass;
+        }
+    }
+
+    /// <summary>
+    /// Returns the class that marks a field as missing if no value is provided.
+    /// </summary>
     /// <param name="value">A nullable string value.</param>
     /// <param name="defaultClass">An optional default class to append to the output.</param>
     /// <returns>The class value.</returns>
