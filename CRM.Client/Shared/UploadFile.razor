@@ -6,6 +6,7 @@
     <MudBlazor.MudCard Style="width:100%;">
         <MudBlazor.MudCardContent>
             <MudBlazor.MudFileUpload
+                    aria-label="@AriaLabel"
                     @ref="_uploadComponent"
                     T="UploadType"
                     OnFilesChanged="UploaderOnInputFileChanged"
@@ -44,6 +45,9 @@
 @code {
     [Parameter]
     public bool? AllowMultipleUploads { get; set; } = false;
+
+    [Parameter]
+    public string AriaLabel { get; set; } = "File Upload";
 
     [Parameter]
     public int Height { get; set; } = 200;

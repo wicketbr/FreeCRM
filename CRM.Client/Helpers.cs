@@ -6216,23 +6216,34 @@ public static partial class Helpers
     /// <param name="SupportedFileTypes">A list of extensions if you wish to limit the upload types allowed.</param>
     /// <param name="AllowMultipleUploads">Option to indicate if the user can upload only a single file or multiple files.</param>
     /// <param name="Height">The height of the upload area in pixels (defaults to 200px.)</param>
+    /// <param name="AriaLabel">The aria-label for the file upload input element. Defaults to "File Upload/File Uploads".</param>
     public static async Task UploadFile(
         Delegate OnUploadComplete,
         string Title = "",
         string UploadInstructions = "",
         List<string>? SupportedFileTypes = null,
         bool AllowMultipleUploads = false,
-        int Height = 200
+        int Height = 200,
+        string AriaLabel = ""
     )
     {
         if (String.IsNullOrWhiteSpace(Title)) {
             Title = Text("UploadFile");
         }
 
+        if (String.IsNullOrWhiteSpace(AriaLabel)) {
+            if (AllowMultipleUploads) {
+                AriaLabel = Text("UploadFiles");
+            } else {
+                AriaLabel = Text("UploadFile");
+            }
+        }
+
         Dictionary<string, object> parameters = new Dictionary<string, object>();
         parameters.Add("OnUploadComplete", OnUploadComplete);
         parameters.Add("InDialog", true);
         parameters.Add("Height", Height);
+        parameters.Add("AriaLabel", AriaLabel);
 
         if (!String.IsNullOrWhiteSpace(UploadInstructions)) {
             parameters.Add("UploadInstructions", UploadInstructions);
