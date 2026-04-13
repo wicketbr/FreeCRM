@@ -3304,6 +3304,39 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Creates a tooltip for a highcharts chart using labels and values.
+    /// </summary>
+    /// <param name="tooltip">The HighchartsTooltip object.</param>
+    /// <returns>A string with the tooltip.</returns>
+    public static string HighchartsTooltips(DataObjects.HighchartsTooltip tooltip)
+    {
+        StringBuilder output = new StringBuilder();
+
+        if (!String.IsNullOrWhiteSpace(tooltip.Header)) {
+            output.AppendLine("<div class=\"highcharts-tooltips-header\">" + tooltip.Header + "</div>");
+        }
+
+        var total = 0;
+        foreach (var row in tooltip.Rows) {
+            total += row.Value;
+
+            output.AppendLine("<div class=\"highcharts-tooltips-row\">");
+            output.AppendLine("  <div class=\"highcharts-tooltips-left-column\">" + row.Label + "</div>");
+            output.AppendLine("  <div class=\"highcharts-tooltips-right-column\">" + row.Value.ToString() + "</div>");
+            output.AppendLine("</div>");
+        }
+
+        if (tooltip.IncludeTotalRow && tooltip.Rows.Count() > 1) {
+            output.AppendLine("<div class=\"highcharts-tooltips-row total\">");
+            output.AppendLine("  <div class=\"highcharts-tooltips-left-column\">" + Text("Total") + "</div>");
+            output.AppendLine("  <div class=\"highcharts-tooltips-right-column\">" + total.ToString() + "</div>");
+            output.AppendLine("</div>");
+        }
+
+        return output.ToString();
+    }
+
+    /// <summary>
     /// Highlights HTML elements that have a given class name.
     /// </summary>
     /// <param name="className">The class name to find.</param>

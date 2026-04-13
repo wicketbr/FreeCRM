@@ -1367,3 +1367,55 @@ fieldset legend {
 .date-picker.all-day {
     width:150px;
 }
+
+.highcharts-tooltips-header {
+    font-weight:bold;
+    font-size:1.5em !important;
+}
+
+.highcharts-tooltips-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: baseline;
+}
+
+.highcharts-tooltips-row.total {
+    margin-top:.3em;
+    padding-top:.2em;
+    border-top: solid 1px var(--bs-border-color);
+}
+
+.highcharts-tooltips-left-column {
+    font-weight:bold;
+    flex-grow:1;
+    line-height: 1.4em;
+    font-size: 1.2em;
+}
+
+.highcharts-tooltips-right-column {
+    margin-left: auto;
+    text-align: right;
+    line-height: 1.4em;
+    font-size: 1.2em;
+    padding-left:.3em;
+}
+
+.stats-listing .row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: baseline;
+}
+
+.stats-listing .row .label {
+    flex-grow:0;
+    flex-shrink: 0;
+    flex-basis:content;
+    font-weight:bold;
+    text-align:right;
+}
+
+.stats-listing .row .value {
+    flex-grow:1;
+}

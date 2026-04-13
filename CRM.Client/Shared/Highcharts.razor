@@ -1,5 +1,4 @@
-﻿@implements IDisposable
-@using System.ComponentModel
+﻿@using System.ComponentModel
 @inject Microsoft.JSInterop.IJSRuntime jsRuntime
 
 <style>
@@ -13,35 +12,39 @@
     //
     // This control currently only supports a few of the chart types we use.
 
-    [Parameter]
-    public string? ChartSubtitle { get; set; }
+    [Parameter] public string? ChartSubtitle { get; set; }
+    [Parameter] public string? ChartTitle { get; set; }
+    [Parameter] public ChartTypes? ChartType { get; set; }
+    [Parameter] public string? ElementId { get; set; }
 
-    [Parameter]
-    public string? ChartTitle { get; set; }
+    /// <summary>
+    /// A flag that can be used with no other parameters to preload the highcharts resources.
+    /// This is useful if you want to preload the resources before rendering the chart, especially when
+    /// there are multiple charts on the same page.
+    /// </summary>
+    [Parameter] public bool PreloadResources { get; set; }
 
-    [Parameter]
-    public ChartTypes? ChartType { get; set; }
+    [Parameter] public Delegate? OnItemClicked { get; set; }
 
-    [Parameter]
-    public string? ElementId { get; set; }
+    [Parameter] public string? yAxisText { get; set; }
 
-    [Parameter]
-    public Delegate? OnItemClicked { get; set; }
+    // Column-specific
+    [Parameter] public string[]? SeriesCategories { get; set; }
+    [Parameter] public SeriesData[]? SeriesDataItems { get; set; }
+    [Parameter] public SeriesDataArray[]? SeriesDataArrayItems { get; set; }
 
-    [Parameter]
-    public string? yAxisText { get; set; }
+    // Line/Column/Area time-series (array of [epochMs, value] pairs per series)
+    [Parameter] public SeriesDataXYArray[]? SeriesDataXYArrayItems { get; set; }
 
-    [Parameter]
-    public string[]? SeriesCategories { get; set; }
+    // Zoom hint toggle (for zoomable charts)
+    [Parameter] public bool ShowZoomHint { get; set; } = true;
 
-    [Parameter]
-    public SeriesData[]? SeriesDataItems { get; set; }
+    // Pie with drilldown
+    [Parameter] public SeriesData[]? PieRootItems { get; set; }                  // parent (Incoming/Outgoing)
+    [Parameter] public DrilldownSeries[]? PieDrilldownItems { get; set; }        // child series per root id
+    [Parameter] public bool PieSortDescending { get; set; } = true;
 
-    [Parameter]
-    public SeriesDataArray[]? SeriesDataArrayItems { get; set; }
-
-    [Parameter]
-    public Func<int, string>? TooltipCallbackHandler { get; set; }
+    [Parameter] public Func<int, string>? TooltipCallbackHandler { get; set; }
 
     protected bool _chartRendered = false;
     protected string _chartSubtitle = "";
@@ -50,9 +53,9 @@
     protected bool _highchartsResourcesLoaded = false;
     protected string _seriesData = "";
     protected string _yAxisText = "";
-
     protected IJSObjectReference? jsModule;
     protected DotNetObjectReference<Highcharts>? dotNetHelper;
+    protected bool _resourcesLoaded = false;
 
     public void Dispose()
     {
@@ -63,10 +66,7 @@
     {
         if (firstRender) {
             dotNetHelper = DotNetObjectReference.Create(this);
-
-            jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import",
-                "./Shared/Highcharts.Razor.js?v=" + Guid.NewGuid().ToString().Replace("-", ""));
-
+            jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Shared/Highcharts.Razor.js?v=" + Guid.NewGuid().ToString().Replace("-", ""));
             await jsModule.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
 
             // Call the method to make sure the Highcharts javascript libraries have been loaded.
@@ -78,7 +78,8 @@
     [JSInvokable]
     public async Task OnHighchartsLoaded()
     {
-        if (!_highchartsResourcesLoaded) {
+        _resourcesLoaded = true;
+        if (!PreloadResources && !_highchartsResourcesLoaded) {
             _highchartsResourcesLoaded = true;
             await RenderChart();
         }
@@ -86,10 +87,14 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (PreloadResources) {
+            return;
+        }
+
         bool valuesChanged = false;
 
         string chartSubtitle = !String.IsNullOrWhiteSpace(ChartSubtitle) ? ChartSubtitle : "";
-        if(_chartSubtitle != chartSubtitle) {
+        if (_chartSubtitle != chartSubtitle) {
             _chartSubtitle = chartSubtitle;
             valuesChanged = true;
         }
@@ -101,7 +106,7 @@
         }
 
         string elementId = !String.IsNullOrWhiteSpace(ElementId) ? ElementId : "";
-        if(_elementId != elementId) {
+        if (_elementId != elementId) {
             _elementId = elementId;
             valuesChanged = true;
         }
@@ -113,25 +118,32 @@
         }
 
         if (String.IsNullOrWhiteSpace(_elementId)) {
-            await Helpers.ConsoleLog("Missing the Required Parameter ElementId");
+            Console.WriteLine("Missing the Required Parameter ElementId");
             return;
         }
 
         string seriesData = "";
-
-        if(ChartType != null) {
+        if (ChartType != null) {
             switch (ChartType) {
                 case ChartTypes.Column:
                     seriesData = Helpers.SerializeObject(SeriesDataArrayItems);
                     break;
-
                 case ChartTypes.Pie:
                     seriesData = Helpers.SerializeObject(SeriesDataItems);
+                    break;
+                case ChartTypes.LineTimeSeries:
+                case ChartTypes.ColumnTimeSeries:
+                case ChartTypes.AreaTotals:
+                    seriesData = Helpers.SerializeObject(SeriesDataXYArrayItems);
+                    break;
+                case ChartTypes.PieWithDrilldown:
+                    // Serialize both root and drilldown inputs together to detect changes
+                    seriesData = Helpers.SerializeObject(new object?[] { PieRootItems, PieDrilldownItems, PieSortDescending });
                     break;
             }
         }
 
-        if(_seriesData != seriesData) {
+        if (_seriesData != seriesData) {
             _seriesData = seriesData;
             valuesChanged = true;
         }
@@ -152,14 +164,29 @@
                 case ChartTypes.Column:
                     await ChartRender_Column();
                     break;
-
                 case ChartTypes.Pie:
                     await ChartRender_Pie();
                     break;
+                case ChartTypes.LineTimeSeries:
+                    await ChartRender_LineTimeSeries();
+                    break;
+                case ChartTypes.PieWithDrilldown:
+                    await ChartRender_PieWithDrilldown();
+                    break;
+                case ChartTypes.ColumnTimeSeries:
+                    await ChartRender_ColumnTimeSeries();
+                    break;
+                case ChartTypes.AreaTotals:
+                    await ChartRender_AreaTotals();
+                    break;
             }
         } else {
-            await Helpers.ConsoleLog("Missing the Required Parameter ChartType");
+            Console.WriteLine("Missing the Required Parameter ChartType");
         }
+    }
+
+    public bool ResourcesLoaded {
+        get { return _resourcesLoaded; }
     }
 
     [JSInvokable]
@@ -173,16 +200,16 @@
     protected async Task ChartRender_Column()
     {
         if (SeriesCategories == null || SeriesCategories.Length == 0) {
-            await Helpers.ConsoleLog("Missing Required Parameter SeriesCategories");
+            Console.WriteLine("Missing Required Parameter SeriesCategories");
             return;
         }
 
-        if(SeriesDataArrayItems == null || SeriesDataArrayItems.Length == 0) {
-            await Helpers.ConsoleLog("Missing Required Parameter SeriesDataArrayItems");
+        if (SeriesDataArrayItems == null || SeriesDataArrayItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter SeriesDataArrayItems");
             return;
         }
 
-        if(jsModule != null) {
+        if (jsModule != null) {
             _chartRendered = true;
             await jsModule.InvokeVoidAsync("RenderChart_Column", _elementId, _chartTitle, _chartSubtitle, _yAxisText, SeriesCategories, SeriesDataArrayItems);
         }
@@ -191,7 +218,7 @@
     protected async Task ChartRender_Pie()
     {
         if (SeriesDataItems == null || SeriesDataItems.Length == 0) {
-            await Helpers.ConsoleLog("Missing Required Parameter SeriesDataItems");
+            Console.WriteLine("Missing Required Parameter SeriesDataItems");
             return;
         }
 
@@ -203,10 +230,66 @@
         }
     }
 
+    protected async Task ChartRender_LineTimeSeries()
+    {
+        if (SeriesDataXYArrayItems == null || SeriesDataXYArrayItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter SeriesDataXYArrayItems");
+            return;
+        }
+
+        if (jsModule != null) {
+            _chartRendered = true;
+            await jsModule.InvokeVoidAsync("RenderChart_LineTimeSeries", _elementId, _chartTitle, _chartSubtitle, _yAxisText, SeriesDataXYArrayItems, ShowZoomHint);
+        }
+    }
+
+    protected async Task ChartRender_PieWithDrilldown()
+    {
+        if (PieRootItems == null || PieRootItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter PieRootItems");
+            return;
+        }
+        if (PieDrilldownItems == null || PieDrilldownItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter PieDrilldownItems");
+            return;
+        }
+
+        if (jsModule != null) {
+            _chartRendered = true;
+            await jsModule.InvokeVoidAsync("RenderChart_PieWithDrilldown", _elementId, _chartTitle, _chartSubtitle, PieRootItems, PieDrilldownItems, PieSortDescending);
+        }
+    }
+
+    protected async Task ChartRender_ColumnTimeSeries()
+    {
+        if (SeriesDataXYArrayItems == null || SeriesDataXYArrayItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter SeriesDataXYArrayItems");
+            return;
+        }
+
+        if (jsModule != null) {
+            _chartRendered = true;
+            await jsModule.InvokeVoidAsync("RenderChart_ColumnTimeSeries", _elementId, _chartTitle, _chartSubtitle, _yAxisText, SeriesDataXYArrayItems, ShowZoomHint);
+        }
+    }
+
+    protected async Task ChartRender_AreaTotals()
+    {
+        if (SeriesDataXYArrayItems == null || SeriesDataXYArrayItems.Length == 0) {
+            Console.WriteLine("Missing Required Parameter SeriesDataXYArrayItems");
+            return;
+        }
+
+        if (jsModule != null) {
+            _chartRendered = true;
+            await jsModule.InvokeVoidAsync("RenderChart_AreaTotals", _elementId, _chartTitle, _chartSubtitle, _yAxisText, SeriesDataXYArrayItems, ShowZoomHint);
+        }
+    }
+
     protected void FormatDefaultTooltips()
     {
-        if(SeriesDataItems != null && SeriesDataItems.Any()) {
-            foreach(var item in SeriesDataItems) {
+        if (SeriesDataItems != null && SeriesDataItems.Any()) {
+            foreach (var item in SeriesDataItems) {
                 if (String.IsNullOrWhiteSpace(item.tooltip)) {
                     item.tooltip = item.name + ": " + item.data.ToString();
                 }
@@ -218,8 +301,13 @@
     {
         Column,
         Pie,
+        LineTimeSeries,
+        PieWithDrilldown,
+        ColumnTimeSeries,
+        AreaTotals
     }
 
+    // Pie
     public class SeriesData
     {
         public string name { get; set; } = "";
@@ -227,9 +315,29 @@
         public string tooltip { get; set; } = "";
     }
 
+    // Column (categorical)
     public class SeriesDataArray
     {
         public string name { get; set; } = "";
         public decimal[] data { get; set; } = [];
+    }
+
+    // Line/Column/Area time-series (pairs of [epochMs, value])
+    public class SeriesDataXYArray
+    {
+        public string name { get; set; } = "";
+        public long[][] data { get; set; } = [];
+    }
+
+    // Drilldown pie support
+    public class DrilldownSeries
+    {
+        public string id { get; set; } = ""; // must match a root slice name
+        public DrilldownPoint[] data { get; set; } = [];
+    }
+    public class DrilldownPoint
+    {
+        public string name { get; set; } = "";
+        public decimal y { get; set; }
     }
 }

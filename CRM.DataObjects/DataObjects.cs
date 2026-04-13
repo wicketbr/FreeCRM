@@ -338,6 +338,19 @@ public partial class DataObjects
         public string? udf10 { get; set; }
     }
 
+    public class HighchartsTooltip
+    {
+        public string? Header { get; set; }
+        public bool IncludeTotalRow { get; set; }
+        public List<HighchartsRow> Rows { get; set; } = new List<HighchartsRow>();
+    }
+
+    public class HighchartsRow
+    {
+        public string Label { get; set; } = String.Empty;
+        public int Value { get; set; }
+    }
+
     public partial class Language
     {
         public Guid TenantId { get; set; }
