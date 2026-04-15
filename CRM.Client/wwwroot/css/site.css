@@ -958,6 +958,7 @@ table.udf-labels tbody tr td.top {
     --rz-dropdown-item-selected-color:#fff;
     --rz-dropdown-item-selected-hover-background-color: #333;
     --rz-dropdown-item-selected-hover-color: #fff;
+    --rz-input-placeholder-color: #555;
 
     --highcharts-background-color: transparent !important;
     --highcharts-hilight-color: #0275d8 !important;

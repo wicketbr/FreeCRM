@@ -299,6 +299,37 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Cleans a filename to be a readable string.
+    /// </summary>
+    /// <param name="filename">Text containing a filename.</param>
+    /// <returns>The cleaned filename.</returns>
+    public static string CleanFileName(string? filename)
+    {
+        string output = String.Empty;
+
+        if (!String.IsNullOrWhiteSpace(filename)) {
+            output = System.IO.Path.GetFileNameWithoutExtension(filename)
+                .Trim()
+                .Replace(".", " ")
+                .Replace("-", " ")
+                .Replace("_", " ")
+                .Replace("#", " ")
+                .Replace("~", " ")
+                .Replace("$", " ")
+                .Replace("(", " ")
+                .Replace(")", " ")
+                .Replace("[", " ")
+                .Replace("]", " ")
+                .Replace("{", " ")
+                .Replace("}", " ")
+                .Humanize(LetterCasing.Title)
+                .Trim();
+        }
+
+        return output;
+    }
+
+    /// <summary>
     /// Cleans HTML
     /// </summary>
     /// <param name="html">The text that might contain HTML.</param>

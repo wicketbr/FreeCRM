@@ -2,19 +2,23 @@
 @inject BlazorDataModel Model
 @if (_files.Any()) {
     foreach (var file in _files) {
+        string altText = Helpers.CleanFileName(file.FileName);
         string thumbnail = Helpers.FileThumbnail(file.Extension);
         string title = Helpers.BytesToFileSizeLabel(file.Bytes) + " - " + file.FileName;
         bool imageFile = Helpers.IsImage(file);
 
-        <div class="item-file @(OnClick != null ? "item-file-clickable" : "")" title="@title">
+        <div class="@(OnClick != null ? "item-file item-file-clickable" : "item-file")" title="@title">
             @if (OnDelete != null) {
                 <div class="item-file-delete-button">
                     @if (UseDeleteConfirmation) {
                         <DeleteConfirmation OnConfirmed="@(() => DeleteFile(file.FileId))"
-                                            CancelText="@Helpers.ConfirmButtonTextCancel"
-                                            DeleteText="@Helpers.ConfirmButtonTextDelete"
-                                            ConfirmDeleteText="@Helpers.Text("Confirm")"
-                                            ButtonSize="xs" />
+                                ButtonSize="xs"
+                                CancelButtonAriaLabel="@Helpers.ConfirmButtonTextCancel"
+                                CancelText="@Helpers.ConfirmButtonTextCancel"
+                                ConfirmDeleteButtonAriaLabel="@Helpers.Text("Confirm")"
+                                ConfirmDeleteText="@Helpers.Text("Confirm")"
+                                DeleteButtonAriaLabel="@Helpers.ConfirmButtonTextDelete"
+                                DeleteText="none" />
                     } else {
                         <button type="button" class="btn btn-xs btn-danger show-on-hover" @onclick="@(() => DeleteFile(file.FileId))">
                             <Language Tag="Delete" IncludeIcon="true" />
@@ -30,12 +34,12 @@
                             string extension = Helpers.StringValue(file.Extension).Replace(".", "").ToLower();
                             string imageData = "data:image/" + extension + "; base64," + Convert.ToBase64String(file.Value);
 
-                            <img src="@imageData" />
+                            <img src="@imageData" alt="@altText" />
                         } else {
-                            <img src="@(Model.ApplicationUrl + "File/Embed/" + file.FileId.ToString())" />
+                            <img src="@(Model.ApplicationUrl + "File/Embed/" + file.FileId.ToString())" alt="@altText" />
                         }
                     } else {
-                        <img src="@(Model.ApplicationUrl + "images/file-icons/" + thumbnail)" />
+                        <img src="@(Model.ApplicationUrl + "images/file-icons/" + thumbnail)" alt="@altText" />
                     }
                 </div>
 
