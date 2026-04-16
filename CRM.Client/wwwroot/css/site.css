@@ -746,17 +746,20 @@ table.full {
 }
 
 table.first-column-bold thead th:first-child,
-table.first-column-bold tbody td:first-child {
+table.first-column-bold tbody td:first-child,
+table.first-column-bold tbody th:first-child {
     font-weight: bold;
 }
 
 table.first-column-right thead th:first-child:not(.center),
-table.first-column-right tbody td:first-child:not(.center) {
+table.first-column-right tbody td:first-child:not(.center),
+table.first-column-right tbody th:first-child:not(.center) {
     text-align: right;
 }
 
 table.first-column-small thead th:first-child,
-table.first-column-small tbody td:first-child {
+table.first-column-small tbody td:first-child,
+table.first-column-small tbody th:first-child {
     width: 1%;
 }
 
@@ -777,6 +780,7 @@ table.first-column-right th table th.right:first-child {
 
 table.first-column-nowrap table tr th:first-child,
 table.first-column-nowrap tbody tr td:first-child,
+table.first-column-nowrap tbody tr th:first-child,
 table.first-column-nowrap tfoot tr td:first-child {
     white-space: nowrap;
 }

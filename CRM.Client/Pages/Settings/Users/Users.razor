@@ -457,9 +457,17 @@
     protected string FormatPhoto(string? value)
     {
         string output = "";
+        string ariaLabel = Helpers.Text("UserAvatar");
+
+        if (Filter.Records != null) {
+            var record = Filter.Records.FirstOrDefault(x => x.Photo.ToString() == value);
+            if (record != null) {
+                ariaLabel += " - " + record.FirstName + " " + record.LastName;
+            }
+        }
 
         if (!String.IsNullOrWhiteSpace(value)) {
-            output = "<img src=\"" + Helpers.BaseUri + "File/View/" + value + "\" class=\"paged-recordset-photo\" />";
+            output = "<img src=\"" + Helpers.BaseUri + "File/View/" + value + "\" class=\"paged-recordset-photo\" aria-label=\"" + ariaLabel + "\" />";
         }
 
         return output;
