@@ -3382,7 +3382,7 @@ public static partial class Helpers
     /// <param name="OnEditCompleted">The required Delegate that will receive the HTML when the OK button is clicked.</param>
     /// <param name="HTML">Optional HTML to set in the editor.</param>
     /// <param name="Title">Optional title to override the default title.</param>
-    /// <param name="config">Optional HtmlEditorConfiguration object to override default editor options.</param>
+    /// <param name="config">Optional Configuration object to override default editor options.</param>
     /// <param name="width">Optional width. Leave empty for the default or set to "auto" for the dialog defaults.</param>
     /// <param name="height">Optional width. Leave empty for the default or set to "auto" for the dialog defaults.</param>
     /// <param name="setFocusOnLoad">Option to set the focus to the editor when it loads.</param>
@@ -3390,7 +3390,7 @@ public static partial class Helpers
     public static async Task HtmlEditor(Delegate OnEditCompleted,
         string? HTML = "",
         string? Title = "",
-        FreeBlazor.HtmlEditor.HtmlEditorConfiguration? config = null,
+        FreeBlazor.HtmlEditor2.Configuration? config = null,
         string width = "",
         string height = "",
         bool setFocusOnLoad = true,
@@ -3400,7 +3400,7 @@ public static partial class Helpers
             Title = Text("EditHTML");
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnEditCompleted", OnEditCompleted);
 
         if (!String.IsNullOrWhiteSpace(HTML)) {

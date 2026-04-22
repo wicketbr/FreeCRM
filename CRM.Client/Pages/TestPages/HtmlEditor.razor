@@ -1,0 +1,61 @@
+﻿@page "/HtmlEditor"
+@page "/{TenantCode}/HtmlEditor"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+<button type="button" class="btn btn-primary" @onclick="EditHtml">
+    Edit HTML
+</button>
+
+@if (!String.IsNullOrWhiteSpace(_html)) {
+    <div class="mt-4">
+        <b>HTML:</b>
+        <div class="border p-2">@((MarkupString)_html)</div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected string _html = String.Empty;
+    protected string _pageName = "htmleditor";
+
+    public void Dispose() { }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+            } else {
+                Helpers.NavigateToLogin();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.View = _pageName;
+    }
+
+    protected async Task EditHtml()
+    {
+        Delegate onEditComplete = (string? html) => {
+            if (String.IsNullOrWhiteSpace(html)) {
+                _html = "No HTML Returned";
+            } else {
+                _html = html;
+            }
+
+            StateHasChanged();
+        };
+
+        await Helpers.HtmlEditor(onEditComplete, _html, "Edit HTML", new HtmlEditor2.Configuration{
+            UseMonacoForSourceView = true,
+        });
+    }
+}

@@ -6,7 +6,7 @@
     <button type="button" class="btn btn-dark" @onclick="Cancel">
         <Language Tag="Cancel" IncludeIcon="true" />
     </button>
-    <button type="button" class="btn btn-success" @onclick="Save" disabled="@(_mode == "source")">
+    <button type="button" class="btn btn-success" @onclick="Save">
         <Language Tag="OK" IncludeIcon="true" />
     </button>
 </div>
@@ -15,17 +15,15 @@
     <div class="mb-2">@((MarkupString)Instructions)</div>
 }
 
-<HtmlEditor 
-    @ref="_htmlEditor"
-    Config="@Config"
-    Value="@Value"
-    OnModeChanged="EditorModeHasChanged"
-    SetFocusOnLoad="SetFocusOnLoad" />
+<HtmlEditor2 @ref="_htmlEditor"
+        Config="@Config"
+        Value="@Value"
+        SetFocusOnLoad="SetFocusOnLoad" />
 @code {
     /// <summary>
-    /// Optional HtmlEditorConfiguration to override default value.
+    /// Optional Configuration to override default value.
     /// </summary>
-    [Parameter] public FreeBlazor.HtmlEditor.HtmlEditorConfiguration? Config { get; set; }
+    [Parameter] public FreeBlazor.HtmlEditor2.Configuration? Config { get; set; }
 
     /// <summary>
     /// Optional instructions to show above the editor.
@@ -54,28 +52,13 @@
     /// </summary>
     [Parameter] public string? Value { get; set; }
 
-    protected FreeBlazor.HtmlEditor.HtmlEditorConfiguration _config = new FreeBlazor.HtmlEditor.HtmlEditorConfiguration();
-    FreeBlazor.HtmlEditor? _htmlEditor;
-    protected string _mode = "editor";
+    FreeBlazor.HtmlEditor2? _htmlEditor;
 
     public void Dispose() { }
 
     protected void Cancel()
     {
         DialogService.Close();
-    }
-
-    protected void EditorModeHasChanged(string mode)
-    {
-        if (mode != _mode) {
-            _mode = mode;
-
-            if (OnModeChanged != null) {
-                OnModeChanged.DynamicInvoke(_mode);
-            }
-
-            StateHasChanged();
-        }
     }
 
     protected async Task Save()
@@ -89,7 +72,7 @@
             OnEditCompleted.DynamicInvoke(output);
             DialogService.Close();
         } else {
-            Model.AddMessage("Missing Callback Handler", MessageType.Danger);
+            Model.AddMessage("Missing OnEditCompleted Callback Handler", MessageType.Danger);
         }
     }
 }
