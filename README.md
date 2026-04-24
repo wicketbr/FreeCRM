@@ -13,10 +13,10 @@ The rename tool now supports adding the rename value as a command-line argument.
 
 `"Rename FreeCRM.exe" MyNewProjectName`
 
-## Step 2 - Remove Unneeded Modules
+## Step 2 - Remove Unwanted Modules
 
 If you want to remove one or more of the optional components from the application
-(Appointments, EmailTemplates, Invoices, Locations, Payments, Services, or Tags)
+(Appointments, EmailTemplates, Invoices, Locations, Payments, SamplePages, Services, or Tags)
 you can use the "Remove Modules from FreeCRM.exe" console application.
 This utility may still leave remnants of the removed modules in the code.
 If you find any items that are not removed that you believe should be,
@@ -65,7 +65,7 @@ already built into the application. The types built in out of the box are:
 "Auth", "BackgroundProcess", "Example", and "UserUpdate".
 
 Plugins can have a .cs file extension and be included in your project as source code,
-or they can have the .plugin extension for files that may provide build conflicts
+or they can have the .plugin extension for files that may have build conflicts
 with your solution. For example, the HelloWorld sample plugin uses an external dll
 file that would cause build issues if it were included as a .cs file.
 See the .assemblies file used with that plugin to see how external files can be included.

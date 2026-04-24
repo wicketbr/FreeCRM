@@ -4,14 +4,33 @@
 @inject BlazorDataModel Model
 @using BlazorSortableList
 
-<button type="button" class="btn btn-primary" @onclick="EditHtml">
-    Edit HTML
-</button>
+<h1>HTML Editor</h1>
+
+<div class="mb-2">
+    <button type="button" class="btn btn-primary" @onclick="EditHtml">
+        Popup HTML Editor
+    </button>
+</div>
+
+<h2>Inline Editor</h2>
+
+<div class="mb-2">
+    <button type="button" class="btn btn-dark" @onclick="ToggleSimpleView">
+        Toggle Simple View
+    </button>
+</div>
+
+<HtmlEditor2 @ref="_editor"
+        Config="_config"
+        OnUpdate="InlineEditorUpdated" />
 
 @if (!String.IsNullOrWhiteSpace(_html)) {
     <div class="mt-4">
-        <b>HTML:</b>
-        <div class="border p-2">@((MarkupString)_html)</div>
+        <div><b>HTML:</b></div>
+
+        <AutoGrowText 
+                Class="form-control"
+                Value="@_html" />
     </div>
 }
 
@@ -21,11 +40,18 @@
     protected string _html = String.Empty;
     protected string _pageName = "htmleditor";
 
-    public void Dispose() { }
+    protected HtmlEditor2 _editor = null!;
+    protected bool _simpleView = false;
+    protected string _theme = String.Empty;
+
+    public void Dispose() { 
+        Model.OnChange -= OnDataModelUpdated;
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender) {
+            _theme = Model.Theme;
             Model.TenantCodeFromUrl = TenantCode;
         }
 
@@ -40,16 +66,43 @@
     protected override void OnInitialized()
     {
         Model.View = _pageName;
+        Model.OnChange += OnDataModelUpdated;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+
+            if (Model.Theme != _theme) {
+                _theme = Model.Theme;
+                _editor.UpdateConfig(_config);
+            }
+        }
+    }
+
+    protected HtmlEditor2.Configuration _config
+    {
+        get {
+            return new HtmlEditor2.Configuration {
+                BeautifyOutput = true,
+                DarkMode = Helpers.StringLower(Model.Theme) == "dark",
+                SimpleView = _simpleView,
+                UseMonacoForSourceView = true,
+            };
+        }
     }
 
     protected async Task EditHtml()
     {
-        Delegate onEditComplete = (string? html) => {
+        Delegate onEditComplete = async(string? html) => {
             if (String.IsNullOrWhiteSpace(html)) {
                 _html = "No HTML Returned";
             } else {
                 _html = html;
             }
+
+            await _editor.SetHTML(_html);
 
             StateHasChanged();
         };
@@ -57,5 +110,22 @@
         await Helpers.HtmlEditor(onEditComplete, _html, "Edit HTML", new HtmlEditor2.Configuration{
             UseMonacoForSourceView = true,
         });
+    }
+
+    protected void InlineEditorUpdated(string html)
+    {
+        if (String.IsNullOrWhiteSpace(html)) {
+            _html = "No HTML Returned";
+        } else {
+            _html = html;
+        }
+
+        StateHasChanged();
+    }
+
+    protected void ToggleSimpleView()
+    {
+        _simpleView = !_simpleView;
+        _editor.UpdateConfig(_config);
     }
 }
