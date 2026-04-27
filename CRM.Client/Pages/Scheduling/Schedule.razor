@@ -331,21 +331,23 @@
 
     void OnSlotRender(SchedulerSlotRenderEventArgs args)
     {
-        // Highlight today in month view
-        if (args.View.GetType() == typeof(Radzen.Blazor.RadzenMonthView) && args.Start.Date == DateTime.Today) {
-            //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
-            args.Attributes["class"] = "today";
-        }
+        if (args.View != null) {
+            // Highlight today in month view
+            if (args.View.GetType() == typeof(Radzen.Blazor.RadzenMonthView) && args.Start.Date == DateTime.Today) {
+                //args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+                args.Attributes["class"] = "today";
+            }
 
-        // Highlight working hours (9-18)
-        if ((args.View.GetType() == typeof(Radzen.Blazor.RadzenWeekView) || args.View.GetType() == typeof(Radzen.Blazor.RadzenDayView)) && args.Start.Hour > 8 && args.Start.Hour < 19) {
-            args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+            // Highlight working hours (9-18)
+            if ((args.View.GetType() == typeof(Radzen.Blazor.RadzenWeekView) || args.View.GetType() == typeof(Radzen.Blazor.RadzenDayView)) && args.Start.Hour > 8 && args.Start.Hour < 19) {
+                args.Attributes["style"] = "background: rgba(255,220,40,.2);";
+            }
         }
     }
 
     async Task OnSlotSelect(SchedulerSlotSelectEventArgs args)
     {
-        if (Model.User.ManageAppointments) {
+        if (Model.User.ManageAppointments && args.View != null) {
             if (args.View.GetType() != typeof(Radzen.Blazor.RadzenYearView) && args.View.GetType() != typeof(Radzen.Blazor.RadzenMonthView)) {
                 int minutes = Model.Tenant.TenantSettings.DefaultAppointmentDuration;
                 if (minutes == 0) {
@@ -381,19 +383,21 @@
 
     async void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<DataObjects.Appointment> args)
     {
-        // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
-        if (args.Data.Deleted) {
-            args.Attributes["class"] = "rz-event-content deleted";
-        } else {
-            // {{ModuleItemStart:Locations}}
-            // See if this location has any special color formatting.
-            var style = await Helpers.GetLocationStyle(args.Data.LocationId, args.Data);
+        if (args.Data != null) {
+            // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+            if (args.Data.Deleted) {
+                args.Attributes["class"] = "rz-event-content deleted";
+            } else {
+                // {{ModuleItemStart:Locations}}
+                // See if this location has any special color formatting.
+                var style = await Helpers.GetLocationStyle(args.Data.LocationId, args.Data);
 
-            if (!String.IsNullOrWhiteSpace(style)) {
-                args.Attributes["style"] = style;
+                if (!String.IsNullOrWhiteSpace(style)) {
+                    args.Attributes["style"] = style;
+                }
+                // {{ModuleItemEnd:Locations}}
+                args.Attributes["class"] = "rz-event-content";
             }
-            // {{ModuleItemEnd:Locations}}
-            args.Attributes["class"] = "rz-event-content";
         }
     }
 
@@ -477,7 +481,7 @@
             await Delete(appointment);
         };
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
             
         if (Model.User.ManageAppointments) {
             parameters.Add("OnComplete", onComplete);

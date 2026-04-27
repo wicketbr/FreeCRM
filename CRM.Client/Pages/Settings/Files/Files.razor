@@ -432,7 +432,7 @@
                     await DeleteFile(file.FileId);
                 };
 
-                Dictionary<string, object> parameters = new Dictionary<string, object>();
+                Dictionary<string, object?> parameters = new Dictionary<string, object?>();
                 parameters.Add("FileId", file.FileId);
                 parameters.Add("OnComplete", onComplete);
                 parameters.Add("OnDelete", onDelete);

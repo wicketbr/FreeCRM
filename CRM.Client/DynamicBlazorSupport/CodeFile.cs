@@ -1,6 +1,7 @@
 ﻿namespace Try.Core
 {
     using System;
+    using System.Collections.Specialized;
     using System.Text.Json.Serialization;
 
     public class CodeFile
@@ -10,9 +11,9 @@
 
         private CodeFileType? type;
 
-        public string Path { get; init; }
+        public string Path { get; init; } = String.Empty;
 
-        public string Content { get; set; }
+        public string Content { get; set; } = String.Empty;
 
         public CodeFile() { }
         public CodeFile(string path, string content)

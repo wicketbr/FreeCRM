@@ -1242,7 +1242,7 @@ public static partial class Helpers
     /// <param name="height">The height of the dialog (defaults to "auto".)</param>
     public static async Task EditUser(Guid UserId, Delegate? OnSaved = null, string width = "auto", string height = "auto")
     {
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("InDialog", true);
         parameters.Add("userid", UserId.ToString());
 
@@ -2170,7 +2170,7 @@ public static partial class Helpers
         string width = "",
         string height = "")
     {
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnInputAccepted", OnInputAccepted);
 
         parameters.Add("UserInputType", UserInputType);
@@ -2313,7 +2313,7 @@ public static partial class Helpers
             Title = Text("GeneratePassword");
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnPasswordAccepted", OnPasswordAccepted);
 
         if (String.IsNullOrWhiteSpace(Class)) {
@@ -3233,9 +3233,9 @@ public static partial class Helpers
     /// <typeparam name="T">The type of object to return.</typeparam>
     /// <param name="guid">A Guid that might be in the number format.</param>
     /// <returns>The number or zero as type T.</returns>
-    public static T GuidToNumber<T>(Guid? guid)
+    public static T? GuidToNumber<T>(Guid? guid)
     {
-        T output = default(T);
+        T? output = default(T);
 
         if (guid.HasValue) {
             var g = guid.Value.ToString().Replace("-", "");
@@ -4649,7 +4649,7 @@ public static partial class Helpers
     /// <param name="height">Optional height for the dialog (defaults to auto-sized.)</param>
     public async static Task ModalMessage(string message, string title = "", bool DisableClose = false, string width = "auto", string height = "auto")
     {
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("Message", message);
 
         if (width == "auto") {
@@ -5052,7 +5052,7 @@ public static partial class Helpers
             Title = Text("PDFViewer");
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("AllowDownload", AllowDownload);
         parameters.Add("FileId", FileId);
         parameters.Add("PdfFile", Model.ApplicationUrl + "File/View/" + FileId.ToString() + "?TenantId=" + Model.TenantId.ToString() + "&Token=" + Model.User.AuthToken);
@@ -5651,7 +5651,7 @@ public static partial class Helpers
             Title = Text("SelectFile");
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnFileSelected", OnFileSelected);
         parameters.Add("ImagesOnly", ImagesOnly);
         parameters.Add("ShowCancelButton", ShowCancelButton);
@@ -5687,7 +5687,7 @@ public static partial class Helpers
             Title = Text("SelectTags");
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnComplete", OnComplete);
 
         if (Module != null) {
@@ -6318,7 +6318,7 @@ public static partial class Helpers
             }
         }
 
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
         parameters.Add("OnUploadComplete", OnUploadComplete);
         parameters.Add("InDialog", true);
         parameters.Add("Height", Height);

@@ -59,7 +59,7 @@
     //var promptValues = new List<CRM.DataObjects.Dictionary>();
     List<PluginPromptValue>? promptValues = null;
     var missingPrompts = new List<string>();
-    //var updatedPrompts = new Dictionary<string, object>();
+    //var updatedPrompts = new Dictionary<string, object?>();
 
     if (plugin.Prompts != null && plugin.Prompts.Count > 0) {
         // This plugin uses prompts, so get the encrypted prompts from the URL

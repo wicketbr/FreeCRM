@@ -1424,3 +1424,7 @@ fieldset legend {
 .stats-listing .row .value {
     flex-grow:1;
 }
+
+.no-opacity {
+    opacity:0;
+}

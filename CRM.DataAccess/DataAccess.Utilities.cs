@@ -60,7 +60,7 @@ public partial interface IDataAccess
     Guid GuidFromNumber(long number);
     Guid GuidFromNumber(double number);
     int GuidToInt(Guid? guid);
-    T GuidToNumber<T>(Guid? guid);
+    T? GuidToNumber<T>(Guid? guid);
     Guid GuidValue(Guid? guid);
     string HashPassword(string? password);
     public bool HashPasswordValidate(string? password, string? hashedPassword);
@@ -1534,9 +1534,9 @@ public partial class DataAccess
         return GuidToNumber<int>(guid);
     }
 
-    public T GuidToNumber<T>(Guid? guid)
+    public T? GuidToNumber<T>(Guid? guid)
     {
-        T output = default(T);
+        T? output = default(T);
 
         if (guid.HasValue) {
             var g = guid.Value.ToString().Replace("-", "");

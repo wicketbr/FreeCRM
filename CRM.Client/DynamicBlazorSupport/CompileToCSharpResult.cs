@@ -5,11 +5,11 @@
 
     internal class CompileToCSharpResult
     {
-        public RazorProjectItem ProjectItem { get; set; }
+        public RazorProjectItem? ProjectItem { get; set; }
 
-        public string Code { get; set; }
+        public string Code { get; set; } = String.Empty;
 
-        public string FilePath { get; set; }
+        public string FilePath { get; set; } = String.Empty;
 
         public IEnumerable<CompilationDiagnostic> Diagnostics { get; set; } = [];
     }

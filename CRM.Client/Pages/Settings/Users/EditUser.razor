@@ -261,7 +261,7 @@
 
                             @if (_user.Photo.HasValue) {
                                 <div class="mb-2">
-                                    <img class="user-icon-small" src="@UserAvatarUrl" />
+                                    <img class="user-icon-small" src="@UserAvatarUrl" aria-label="@Helpers.Text("UserAvatar")" />
                                 </div>
                             }
                         </div>
