@@ -89,7 +89,7 @@
                     @if (Model.AllowUsersToManagePhone) {
                         <div class="mb-2">
                             <label for="edit-profile-phone"><Language Tag="PhoneNumber" /></label>
-                            <input type="phone" class="form-control" id="edit-profile-phone" @bind="_user.Phone" />
+                            <input type="tel" class="form-control" id="edit-profile-phone" @bind="_user.Phone" />
                         </div>
                     }
                     @if (Model.AllowUsersToManageEmployeeId) {

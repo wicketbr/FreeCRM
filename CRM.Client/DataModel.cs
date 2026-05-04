@@ -6,7 +6,7 @@ using System.Windows.Markup;
 
 namespace CRM.Client;
 
-#region Enumerations and Data Objects used by the CRM
+#region Enumerations and Data Objects used by the application
 public enum MessageType
 {
     Primary,

@@ -3301,6 +3301,12 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Indicates if the selected page has any Blazor plugins for a given position.
+    /// </summary>
+    /// <param name="pageName">The name of the page.</param>
+    /// <param name="position">The position of the plugin on the page.</param>
+    /// <returns>True if any plugins exist for the given page and position.</returns>
     public static bool HaveBlazorPlugins(string pageName, string position)
     {
         bool output = false;
