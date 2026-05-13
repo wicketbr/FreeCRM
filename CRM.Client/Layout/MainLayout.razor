@@ -127,6 +127,7 @@
 
     protected bool DeletedRecordCountsLoaded = false;
     protected bool FirstRun = true;
+    protected double _iterations = 0;
     protected string LastUserPreferencesJson = String.Empty;
     protected bool Loading = true;
     protected bool StartupValidated = false;
@@ -273,9 +274,12 @@
 
             if (!versionInfoLoaded) {
                 var info = await Helpers.GetOrPost<DataObjects.VersionInfo>("api/Data/GetVersionInfo");
+
                 if (info != null) {
                     versionInfo = info;
                     versionInfoLoaded = true;
+
+                    await Helpers.UpdateUserToken(info.Token);
                 }
             }
         }
@@ -306,9 +310,18 @@
             bool reload = false;
             bool wasOnline = Model.AppOnline;
 
-            var info = await Helpers.GetOrPost<DataObjects.VersionInfo>("api/Data/GetVersionInfo");
+            var url = "api/Data/GetVersionInfo";
+            if (_iterations == 0 || _iterations % 90 == 0) {
+                // Every 15 minutes this will make a call that returns an updated JWT token.
+                url = "api/Data/GetVersionInfoWithToken";
+            }
+            var info = await Helpers.GetOrPost<DataObjects.VersionInfo>(url);
+
+            _iterations++;
 
             if (info != null) {
+                await Helpers.UpdateUserToken(info.Token);
+
                 if (!String.IsNullOrWhiteSpace(info.Version)) {
                     Model.AppOnline = true;
                 }

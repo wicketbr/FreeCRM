@@ -87,6 +87,7 @@ public partial interface IDataAccess
     void SetHttpResponse(Microsoft.AspNetCore.Http.HttpResponse? response);
     Guid StringToGuid(string? input);
     string StringValue(string? input);
+    bool TokenAutoRenew { get; }
     Task<DataObjects.BooleanResponse> UndeleteRecord(string? Type, Guid RecordId, DataObjects.User CurrentUser);
     /// <summary>
     /// A unique string generated when the application starts.
@@ -2303,6 +2304,12 @@ public partial class DataAccess
     public string StringValue(string? input)
     {
         return !String.IsNullOrEmpty(input) ? input : String.Empty;
+    }
+
+    public bool TokenAutoRenew {
+        get {
+            return _tokenAutoRenew;
+        }
     }
 
     public async Task<DataObjects.BooleanResponse> UndeleteRecord(string? Type, Guid RecordId, DataObjects.User CurrentUser)

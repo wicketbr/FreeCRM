@@ -336,9 +336,12 @@ table.table:not([class*="mb-2"]) {
 }
 
 table.table thead tr th,
+table.table thead tr td,
+table.table tbody tr th,
 table.table tbody tr td,
+table.table tfoot tr th,
 table.table tfoot tr td {
-    vertical-align:middle;
+    vertical-align: middle;
 }
 
 table.table thead tr th.no-pad-right,
@@ -805,7 +808,11 @@ table.first-column-right td:first-child .form-switch {
 }
 
 table.padded thead tr th,
-table.padded tbody tr td {
+table.padded thead tr td,
+table.padded tbody tr th,
+table.padded tbody tr td,
+table.padded tfoot tr th,
+table.padded tfoot tr td {
     padding: 5px;
 }
 
@@ -1361,8 +1368,9 @@ label.unbold {
 }
 
 fieldset legend {
-    font-size:1em;
-    font-weight:bold;
+    font-size: 1em;
+    font-weight: bold;
+    margin-bottom: 0;
 }
 
 .date-picker {

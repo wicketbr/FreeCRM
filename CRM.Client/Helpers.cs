@@ -39,6 +39,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using static CRM.DataObjects;
 using static MudBlazor.Colors;
 
 namespace CRM.Client;
@@ -6290,6 +6291,18 @@ public static partial class Helpers
         }
 
         return output;
+    }
+
+    /// <summary>
+    /// Updates the user's JWT token and saves it in a cookie.
+    /// </summary>
+    /// <param name="token">A string containing the new token.</param>
+    public static async Task UpdateUserToken(string? token)
+    {
+        if (!String.IsNullOrWhiteSpace(token)) {
+            Model.User.AuthToken = token;
+            await CookieWrite("user-token", token);
+        }
     }
 
     /// <summary>

@@ -42,7 +42,7 @@ public partial class DataAccess
         var settings = GetTenantSettings(TenantId);
         var jwt = new JWTHelper(_appName, StringValue(settings.JwtRsaPublicKey), StringValue(settings.JwtRsaPrivateKey));
 
-        var encoded = jwt.Encode(Payload);
+        var encoded = jwt.Encode(Payload, _tokenDays);
         if (encoded.Success) {
             output += encoded.Token;
         }

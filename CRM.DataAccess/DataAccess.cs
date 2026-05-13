@@ -23,8 +23,10 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("5/7/2026"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("5/13/2026"));
     private IServiceProvider? _serviceProvider;
+    private bool _tokenAutoRenew = true; // If true, a new token will be sent to the client to keep the token automatically renewed.
+    private int _tokenDays = 7; // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
     private bool _useMigrations = false;
     private bool _useBackgroundService = false;
