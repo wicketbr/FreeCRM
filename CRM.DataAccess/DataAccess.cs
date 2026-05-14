@@ -5,13 +5,9 @@ namespace CRM;
 
 public partial class DataAccess: IDisposable, IDataAccess
 {
-    private int _accountLockoutMaxAttempts = 5;
-    private int _accountLockoutMinutes = 10;
-    private string _appName = "freeCRM";
     private DataObjects.AuthenticationProviders? _authenticationProviders;
     private string _connectionString;
     private string _cookiePrefix = "";
-    private string _copyright = "Company Name";
     private EFDataModel data;
     private string _databaseType;
     private bool _firstInit = true;
@@ -23,14 +19,9 @@ public partial class DataAccess: IDisposable, IDataAccess
     private bool _inMemoryDatabase = false;
     private string _localModeUrl = "";
     private bool _open;
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("5/13/2026"));
     private IServiceProvider? _serviceProvider;
-    private bool _tokenAutoRenew = true; // If true, a new token will be sent to the client to keep the token automatically renewed.
-    private int _tokenDays = 7; // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
-    private bool _useMigrations = false;
     private bool _useBackgroundService = false;
-    private string _version = "2.0.0";
 
     public DataAccess(
         string ConnectionString = "",

@@ -1,5 +1,4 @@
 ﻿@implements IDisposable
-@using Humanizer
 @inject BlazorDataModel Model
 
 @if (Model.Loaded && Model.View == _pageName && (Model.LoggedIn || !RequireLogin)) {

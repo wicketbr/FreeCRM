@@ -10,6 +10,34 @@ public partial interface IDataAccess
 
 public partial class DataAccess
 {
+    // The number of bad login attempts before an account is locked out.
+    private int _accountLockoutMaxAttempts = 5;
+
+    // The number of minutes an account is locked out after reaching the maximum number of bad login attempts.
+    private int _accountLockoutMinutes = 10;
+
+    // The name of the application.
+    private string _appName = "freeCRM";
+
+    // The copyright name used in the application.
+    private string _copyright = "Company Name";
+
+    // The date this version of your application was released.
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("5/14/2026"));
+
+    // If true, a new token will be sent to the client to keep the token automatically renewed.
+    private bool _tokenAutoRenew = true;
+
+    // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
+    private int _tokenDays = 7;
+
+    // Indicates if the app uses data migrations. If false, you will manage your own database schema updates.
+    private bool _useMigrations = false;
+
+    // The version of your application.
+    private string _version = "2.0.0";
+
+
     /// <summary>
     /// Use this area to add your custom language tags for your app, or to override built-in language tags (eg: AppTitle).
     /// </summary>
