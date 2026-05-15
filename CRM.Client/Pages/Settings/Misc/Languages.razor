@@ -88,6 +88,9 @@
                     <button type="button" class="btn btn-primary" @onclick="EditAll">
                         <Language Tag="EditAll" IncludeIcon="true" />
                     </button>
+                    <button type="button" class="btn btn-primary" @onclick="EditModified" disabled="@(ResetAllDisabled)">
+                        <Language Tag="EditModified" IncludeIcon="true" />
+                    </button>
                     <button type="button" class="btn btn-warning" @onclick="ResetAll" disabled="@(ResetAllDisabled)">
                         <Icon Name="Reset" />
                         <Language Tag="ResetLanguageDefaults" />
@@ -161,6 +164,9 @@
                     <button type="button" class="btn btn-dark" @onclick="Cancel">
                         <Language Tag="Cancel" IncludeIcon="true" />
                     </button>
+                    <button type="button" class="btn btn-primary" @onclick="EditModified" disabled="@(ResetAllDisabled)">
+                        <Language Tag="EditModified" IncludeIcon="true" />
+                    </button>
                     <button type="button" class="btn btn-warning" @onclick="ResetAll">
                         <Icon Name="Reset" />
                         <Language Tag="ResetLanguageDefaults" />
@@ -171,15 +177,64 @@
                 </div>
             </div>
 
-            @foreach (var item in _language.Phrases) {
+            @foreach (var item in _language.Phrases.OrderBy(x => x.Id)) {
                 var itemId = "edit-language-item-" + Helpers.StringLower(item.Id).Replace(" ", "-");
-                var tagName = "" + item.Id;
+                var tagName = String.Empty + item.Id;
                 var defaultValue = Helpers.DefaultLanguage(tagName);
                 string itemClass = defaultValue == item.Value ? "badge text-bg-secondary" : "badge text-bg-warning";
 
                 <div class="mb-3">
                     <div class="mb-1">
                         <label for="@itemId">@item.Id</label><span>:&nbsp;</span><span class="@itemClass">@defaultValue</span>
+                        @if (defaultValue != item.Value) {
+                            <button type="button" class="btn btn-xs btn-warning ms-1" @onclick="@(() => ResetItem(tagName))">
+                                <Language Tag="Reset" IncludeIcon="true" />
+                            </button>
+                        }
+                    </div>
+                    <input type="text" id="@itemId" class="form-control" @bind="item.Value" />
+                </div>
+            }
+            break;
+
+        case "editmodified":
+            <div class="@Model.StickyMenuClass">
+                <h1 class="page-title">
+                    <Language Tag="EditLanguage" IncludeIcon="true" /> &ldquo;<span>@_cultureCode</span>&rdquo;
+                    <StickyMenuIcon />
+                </h1>
+
+                <div class="btn-group mb-2" role="group">
+                    <button type="button" class="btn btn-dark" @onclick="Cancel">
+                        <Language Tag="Cancel" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="btn btn-primary" @onclick="EditAll">
+                        <Language Tag="EditAll" IncludeIcon="true" />
+                    </button>
+                    <button type="button" class="btn btn-warning" @onclick="ResetAll">
+                        <Icon Name="Reset" />
+                        <Language Tag="ResetLanguageDefaults" />
+                    </button>
+                    <button type="button" class="btn btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                </div>
+            </div>
+
+            @foreach (var item in _language.Phrases.Where(x => _modifiedItems.Contains(String.Empty + x.Id)).OrderBy(x => x.Id)) {
+                var itemId = "edit-language-item-" + Helpers.StringLower(item.Id).Replace(" ", "-");
+                var tagName = String.Empty + item.Id;
+                var defaultValue = Helpers.DefaultLanguage(tagName);
+                string itemClass = defaultValue == item.Value ? "badge text-bg-secondary" : "badge text-bg-warning";
+
+                <div class="mb-3">
+                    <div class="mb-1">
+                        <label for="@itemId">@item.Id</label><span>:&nbsp;</span><span class="@itemClass">@defaultValue</span>
+                        @if (defaultValue != item.Value) {
+                            <button type="button" class="btn btn-xs btn-warning ms-1" @onclick="@(() => ResetItem(tagName))">
+                                <Language Tag="Reset" IncludeIcon="true" />
+                            </button>
+                        }
                     </div>
                     <input type="text" id="@itemId" class="form-control" @bind="item.Value" />
                 </div>
@@ -245,6 +300,7 @@
     protected string _cultureCode = "";
     protected string _editingItem = "";
     protected DataObjects.Language _language = new DataObjects.Language();
+    protected List<string> _modifiedItems = new List<string>();
     protected string _value = "";
     protected string _view = "";
     protected bool _validatedUrl = false;
@@ -383,6 +439,25 @@
         _editingItem = "";
         _value = "";
         _view = "editall";
+        StateHasChanged();
+    }
+
+    protected void EditModified()
+    {
+        _editingItem = "";
+        _value = "";
+        _view = "editmodified";
+
+        _modifiedItems = new List<string>();
+        foreach(var item in _language.Phrases) {
+            var tagName = String.Empty + item.Id;
+            var defaultValue = Helpers.DefaultLanguage(tagName);
+            if (defaultValue != item.Value) {
+                _modifiedItems.Add(tagName);
+            }
+        }
+
+
         StateHasChanged();
     }
 

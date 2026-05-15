@@ -3615,7 +3615,7 @@ public static partial class Helpers
                 { "fa:fa-solid fa-magnifying-glass",             new List<string> { "IncludeInSearch", "Preview", "Search", "View" }},
                 { "fa:fa-solid fa-moon",                         new List<string> { "ThemeDark" }},
                 { "fa:fa-solid fa-paper-plane",                  new List<string> { "SendTestEmail" }},
-                { "fa:fa-solid fa-pen-to-square",                new List<string> { "Edit", "EditAll", "Manage" }},
+                { "fa:fa-solid fa-pen-to-square",                new List<string> { "Edit", "EditAll", "EditModified", "Manage" }},
                 { "fa:fa-solid fa-person-digging",               new List<string> { "MaintenanceMode" }},
                 { "fa:fa-solid fa-play",                         new List<string> { "Play", "Process", "Reprocess", "TestCode", "TestPlugin" }},
                 { "fa:fa-solid fa-repeat",                       new List<string> { "SwitchTenant" }},
