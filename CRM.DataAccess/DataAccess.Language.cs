@@ -68,6 +68,12 @@ public partial class DataAccess
         Dictionary<string, string> language = new Dictionary<string, string> {
             // Module-Specific Language Tags
 
+            // {{ModuleItemStart:About}}
+            // About
+            { "About", "About" },
+            { "HideAbout", "Hide the About Page" },
+            // {{ModuleItemEnd:About}}
+
             // Active Directory
             { "ActiveDirectoryNames", "Active Directory Names" },
             { "ActiveDirectoryNamesInfo", "Bracket-separated names of AD groups to match for this department (eg: {Enrollment IT]{Admissions}, etc.)" },
@@ -275,7 +281,6 @@ public partial class DataAccess
             { "UsersInGroup", "Users in Group" },
 
             // General Language Tags
-            { "About", "About" },
             { "AccessDenied", "Access Denied" },
             { "Action", "Action" },
             { "Active", "Active" },
@@ -444,7 +449,6 @@ public partial class DataAccess
             { "GraphTenantId", "Tenant ID" },
             { "Help", "Help" },
             { "Hide", "Hide" },
-            { "HideAbout", "Hide the About Page" },
             { "HideHelp", "Hide Help" },
             { "HideFilter", "Hide Filter" },
             { "HomeMenuText", "Home" },

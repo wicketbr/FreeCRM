@@ -199,32 +199,44 @@
             }
         }
 
-        @if (Model.LoggedIn || !Model.Tenant.TenantSettings.HideAbout) {
-            @if (Model.LoggedIn) {
-                <hr />
-                @if (AllowManageProfile) {
-                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Profile"))">
-                        <Language Tag="ManageProfile" IncludeIcon="true" />
-                    </div>
-                }
-
-                @if (!Model.User.PreventPasswordChange) {
-                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("ChangePassword"))">
-                        <Language Tag="ChangePassword" IncludeIcon="true" />
-                    </div>
-                }
-
-                <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Logout"))">
-                    <Language Tag="Logout" IncludeIcon="true" />
-                </div>
+        @{
+            bool showAdditionalMenuItems = Model.LoggedIn;
+            // {{ModuleItemStart:About}}
+            if (!showAdditionalMenuItems && !Model.Tenant.TenantSettings.HideAbout) {
+                showAdditionalMenuItems = true;
             }
+            // {{ModuleItemEnd:About}}
 
-            @if (!Model.Tenant.TenantSettings.HideAbout) {
-                <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
-                    <Language Tag="About" IncludeIcon="true" />
-                </div>
+            if (showAdditionalMenuItems) {
+                if (Model.LoggedIn) {
+                    <hr />
+                    @if (AllowManageProfile) {
+                        <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Profile"))">
+                            <Language Tag="ManageProfile" IncludeIcon="true" />
+                        </div>
+                    }
+
+                    @if (!Model.User.PreventPasswordChange) {
+                        <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("ChangePassword"))">
+                            <Language Tag="ChangePassword" IncludeIcon="true" />
+                        </div>
+                    }
+
+                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Logout"))">
+                        <Language Tag="Logout" IncludeIcon="true" />
+                    </div>
+                }
+
+                // {{ModuleItemStart:About}}
+                if (!Model.Tenant.TenantSettings.HideAbout) {
+                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
+                        <Language Tag="About" IncludeIcon="true" />
+                    </div>
+                }
+                // {{ModuleItemEnd:About}}
             }
         }
+
 
         @if (!String.IsNullOrWhiteSpace(Model.Version)) {
             <hr />

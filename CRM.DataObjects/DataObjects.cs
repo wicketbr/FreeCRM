@@ -497,7 +497,9 @@ public partial class DataObjects
         public string? DefaultReplyToAddress { get; set; }
         public DeletePreference DeletePreference { get; set; } = DeletePreference.MarkAsDeleted;
         public int DeleteMarkedRecordsAfterDays { get; set; } = 90;
+        // {{ModuleItemStart:About}}
         public bool HideAbout { get; set; } = true;
+        // {{ModuleItemEnd:About}}
         [Sensitive]
         public string? LdapLookupRoot { get; set; }
         [Sensitive]

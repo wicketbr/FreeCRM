@@ -43,6 +43,7 @@ You can also remove all optional modules without having to list them all by usin
 Do not use any spaces in the command line options. The names of the modules that can be
 kept or removed are:
 
+- About
 - Appointments
 - EmailTemplates
 - Invoices
@@ -117,3 +118,28 @@ If you are hosting on IIS and want to ensure that the background service is alwa
 set the Application Pool Start Mode to "AlwaysRunning" and set the Preload Enabled flag
 for the application settings to true. The Preload Enabled flag is only available
 if you have installed the Application Initialization feature for IIS.
+
+## Upgrade
+
+If you are running an older version of an application based on the FreeCRM
+framework and you have already migrated to use .app. files for all of your
+app-specific code, then you can use the new "Upgrade FreeCRM.exe" console
+application to upgrade your existing application. To do so download a fresh
+copy of the FreeCRM files, run the "Rename FreeCRM.exe" utility to rename
+the application using the exact same namespace as your existing application.
+Then, use the "Remove Modules from FreeCRM.exe" utility to remove any modules
+that you won't be using in your application. Finally, run this new
+"Upgrade FreeCRM.exe" utility which will attempt to migrate your existing
+code into the new version.
+
+This tool can take a single command-line argument of the path to your
+existing application. For example:
+
+`"Upgrade FreeCRM.exe" C:\MyExistingApp`
+
+There are edge cases that cannot be updated with this tool, such as having
+additional project in your solution. The tool will copy those projects,
+but any references in other projects must be added manually.
+
+The tool will produce a report that will help with any additional steps
+that will be required for the migration.

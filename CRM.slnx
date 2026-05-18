@@ -7,6 +7,7 @@
     <File Path="README.md" />
     <File Path="Remove Modules from FreeCRM.exe" />
     <File Path="Rename FreeCRM.exe" />
+    <File Path="Upgrade FreeCRM.exe" />
   </Folder>
   <Project Path="CRM.Client/CRM.Client.csproj" />
   <Project Path="CRM.DataAccess/CRM.DataAccess.csproj" Id="daf00842-3dab-4880-b902-61775be8dbcc" />
