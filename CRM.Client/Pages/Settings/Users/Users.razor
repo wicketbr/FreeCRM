@@ -445,12 +445,7 @@
 
     protected string FormatEmailAddress(string? value)
     {
-        string output = "";
-
-        if (!String.IsNullOrWhiteSpace(value)) {
-            output = "<a href=\"mailto:" + value + "\">" + value + "</a>";
-        }
-
+        string output = Helpers.FormatEmailAddress(value);
         return output;
     }
 
@@ -635,6 +630,8 @@
                     } else {
                         _rowClasses.Add("");
                     }
+
+                    Helpers.AutoTruncatePagedRecordsetData(record, columns);
                 }
             }
         }

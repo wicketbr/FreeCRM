@@ -253,13 +253,24 @@
 
     protected string FormatDateTimeValue(string? value)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (!String.IsNullOrWhiteSpace(value)) {
             try {
                 var dt = Convert.ToDateTime(value);
-                output = dt.ToShortDateString() + " " + dt.ToShortTimeString();
+                output = Helpers.FormatDateTime(dt, true);
             } catch { }
+        }
+
+        return output;
+    }
+
+    protected string FormatGuid(string? value)
+    {
+        string output = String.Empty;
+
+        if (!String.IsNullOrWhiteSpace(value) && !value.Contains("<span")) {
+            output = "<div title=\"" + value + "\"><span>" + value + "</span></div>";
         }
 
         return output;
@@ -313,6 +324,10 @@
             new PagedRecordset.Formatter {
                 DataType = "datetime",
                 CallbackHandler = FormatDateTimeValue,
+            },
+            new PagedRecordset.Formatter { 
+                DataType = "guid",
+                CallbackHandler = FormatGuid,
             },
         };
 
@@ -520,6 +535,8 @@
                     }
 
                     _rowClasses.Add(userDeleted ? "item-deleted" : "");
+
+                    Helpers.AutoTruncatePagedRecordsetData(record, columns);
                 }
             }
         }

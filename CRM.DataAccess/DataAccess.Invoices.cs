@@ -210,6 +210,7 @@ public partial class DataAccess
                 Sortable = true,
                 DataElementName = "Title",
                 DataType = "text",
+                Class = "auto-truncate",
             },
             new DataObjects.FilterColumn {
                 Align = "",
@@ -519,7 +520,8 @@ public partial class DataAccess
                     TipText = "",
                     Sortable = true,
                     DataElementName = "UserDisplay",
-                    DataType = "string"
+                    DataType = "string",
+                    Class = "auto-truncate",
                 });
             }
 

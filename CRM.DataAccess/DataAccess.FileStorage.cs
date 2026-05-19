@@ -207,12 +207,14 @@ public partial class DataAccess
                 Label = GetLanguageItem("FileId", language),
                 DataElementName = "FileId",
                 DataType = "Guid",
+                Class = "auto-truncate",
             },
             new DataObjects.FilterColumn {
                 Sortable = true,
                 Label = GetLanguageItem("FileName", language),
                 DataElementName = "FileName",
                 DataType = "string",
+                Class = "auto-truncate",
             },
             new DataObjects.FilterColumn {
                 Sortable = true,

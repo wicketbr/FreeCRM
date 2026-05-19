@@ -893,7 +893,8 @@ public partial class DataAccess
                 TipText = "",
                 Sortable = true,
                 DataElementName = "email",
-                DataType = "email"
+                DataType = "email",
+                Class = "auto-truncate",
             },
             new DataObjects.FilterColumn{
                 Align = "",
@@ -901,7 +902,8 @@ public partial class DataAccess
                 TipText = "",
                 Sortable = true,
                 DataElementName = "username",
-                DataType = "string"
+                DataType = "string",
+                Class = "auto-truncate",
             }
         };
 
@@ -922,7 +924,8 @@ public partial class DataAccess
                 TipText = "",
                 Sortable = true,
                 DataElementName = "employeeId",
-                DataType = "string"
+                DataType = "string",
+                Class = "auto-truncate d-none d-xl-table-cell",
             });
         }
 
@@ -935,7 +938,8 @@ public partial class DataAccess
                 TipText = "",
                 Sortable = true,
                 DataElementName = "departmentName",
-                DataType = "string"
+                DataType = "string",
+                Class = "auto-truncate d-none d-xl-table-cell",
             });
         }
 
@@ -947,7 +951,8 @@ public partial class DataAccess
             TipText = "Enabled",
             Sortable = true,
             DataElementName = "enabled",
-            DataType = "boolean"
+            DataType = "boolean",
+            Class = "one-percent",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "Enabled", language, CurrentUser));
@@ -958,7 +963,8 @@ public partial class DataAccess
             TipText = "Admin",
             Sortable = true,
             DataElementName = "admin",
-            DataType = "boolean"
+            DataType = "boolean",
+            Class = "one-percent"
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "Admin", language, CurrentUser));
@@ -969,7 +975,8 @@ public partial class DataAccess
             TipText = "",
             Sortable = true,
             DataElementName = "lastLogin",
-            DataType = "datetime"
+            DataType = "datetime",
+            Class = "d-none d-xl-table-cell",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "LastLogin", language, CurrentUser));
@@ -981,6 +988,7 @@ public partial class DataAccess
             Sortable = false,
             DataElementName = "failedLoginAttempts",
             DataType = "number",
+            Class= "d-none d-xl-table-cell",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "FailedLoginAttempts", language, CurrentUser));

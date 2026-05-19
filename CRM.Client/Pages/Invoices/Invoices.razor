@@ -296,7 +296,7 @@
 
     protected string FormatDateTimeValue(string? value)
     {
-        return Helpers.FormatDateTime(value);
+        return Helpers.FormatDateTime(value, true);
     }
 
     protected string FormatDateValue(string? value)
@@ -522,6 +522,8 @@
                     }
 
                     _rowClasses.Add(userDeleted ? "item-deleted" : "");
+
+                    Helpers.AutoTruncatePagedRecordsetData(record, columns);
                 }
             }
         }
