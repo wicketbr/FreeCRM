@@ -197,7 +197,7 @@ public static partial class Helpers
                 var dataValue = GetObjectPropertyValue<string>(record, column.DataElementName);
 
                 if (!String.IsNullOrWhiteSpace(dataValue) && !dataValue.Contains("<span")) {
-                    string el = "<div title=\"" + dataValue + "\"><span>" + dataValue + "</span></div>";
+                    string el = "<div title=\"" + dataValue + "\" class=\"auto-truncate-overflow\"><span>" + dataValue + "</span></div>";
 
                     SetObjectPropertyValue(
                         record,
