@@ -988,7 +988,7 @@ public partial class DataAccess
             Sortable = false,
             DataElementName = "failedLoginAttempts",
             DataType = "number",
-            Class= "d-none d-xl-table-cell",
+            Class = "d-none d-xl-table-cell",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "FailedLoginAttempts", language, CurrentUser));
