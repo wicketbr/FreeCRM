@@ -1,5 +1,6 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
+
 @if (_files.Any()) {
     foreach (var file in _files) {
         string altText = Helpers.CleanFileName(file.FileName);
@@ -50,6 +51,7 @@
 } else {
     <Language Tag="NoItemsToShow" />
 }
+
 @code {
     /// <summary>
     /// The collection of FileStorage objects.
@@ -73,7 +75,9 @@
 
     protected List<DataObjects.FileStorage> _files = new List<DataObjects.FileStorage>();
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnParametersSet()
     {

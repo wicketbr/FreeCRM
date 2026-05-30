@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject BlazorDataModel Model
 @using Plugins
+
 @if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
     <h1 class="page-title">
         Example Plugins
@@ -126,6 +127,7 @@
         </div>
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

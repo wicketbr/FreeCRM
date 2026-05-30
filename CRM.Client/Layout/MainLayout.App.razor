@@ -1,5 +1,4 @@
 ﻿@implements IDisposable
-@using Humanizer
 @inject BlazorDataModel Model
 
 @{
@@ -26,7 +25,8 @@
     // Set this to true to hide all of those and handle all rendering yourself in this component.
     [Parameter] public bool OverrideCompleteLayout { get; set; } = false;
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= StateHasChanged;
     }
 

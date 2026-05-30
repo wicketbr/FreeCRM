@@ -1,12 +1,15 @@
 ﻿@implements IDisposable
+
 <div>@((MarkupString)_message)</div>
+
 @code {
-    protected string _message = "";
+    [Parameter] public string? Message { get; set; }
 
-    [Parameter]
-    public string? Message { get; set; }
+    protected string _message = String.Empty;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnInitialized()
     {

@@ -13,11 +13,11 @@
 
     <div class="mb-2">
         <SortableList Id="sortable-list"
-                      Items="Model.Tenant.Users"
-                      OnUpdate="ListSorted"
-                      Context="user"
-                      Group="sort-share"
-                      Pull="clone">
+                Items="Model.Tenant.Users"
+                OnUpdate="ListSorted"
+                Context="user"
+                Group="sort-share"
+                Pull="clone">
             <SortableItemTemplate>
                 <div class="prevent-select sortable-item">
                     @user.FirstName @user.LastName
@@ -26,6 +26,7 @@
         </SortableList>
     </div>
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

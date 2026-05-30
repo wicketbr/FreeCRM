@@ -3,12 +3,11 @@
 @page "/{TenantCode}/Invoices"
 @page "/{TenantCode}/Invoices/{userid}"
 @implements IDisposable
-@using Blazored.LocalStorage
 @inject IJSRuntime jsRuntime
 @inject HttpClient Http
-@inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -118,6 +117,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
     [Parameter] public string? userid { get; set; }
@@ -133,13 +133,14 @@
     protected bool LoadedFilter = false; 
     protected bool _loading = true;
     protected List<string> _rowClasses = new List<string>(); 
-    protected string _token = "";
+    protected string _token = String.Empty;
     protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
 
     protected string _pageName = "invoices";
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -178,7 +179,7 @@
                 _loadedData = true;
                 await LoadData();
             } else {
-                if(_forUser && String.IsNullOrWhiteSpace(userid)) {
+                if (_forUser && String.IsNullOrWhiteSpace(userid)) {
                     _forUser = false;
                     _user = new DataObjects.User();
                     await ClearFilter();
@@ -203,7 +204,7 @@
 
     protected async Task ClearFilter()
     {
-        Filter.CultureCode = Model.CultureCode;
+        Filter.CultureCode = Model.User.UserPreferences.CultureCode;
         Filter.Keyword = null;
         Filter.Sort = "InvoiceCreated";
         Filter.SortOrder = "DESC";
@@ -335,7 +336,7 @@
         };
 
         // Get the saved filter if it exists.
-        var savedFilter = await LocalStorage.GetItemAsync<DataObjects.FilterInvoices>("invoices-filter-" + Model.TenantId.ToString());
+        var savedFilter = Model.User.UserPreferences.filterInvoices;
         if (savedFilter != null) {
             Filter = savedFilter;
         }
@@ -346,7 +347,7 @@
             try {
                 userId = new Guid(userid);
             } catch { }
-            if(userId != Guid.Empty) {
+            if (userId != Guid.Empty) {
                 Filter.UserId = userId;
                 _user = await Helpers.GetUser(userId);
                 _forUser = _user.ActionResponse.Result;
@@ -456,7 +457,6 @@
                     }
                     await LoadFilter();
                 }
-
                 break;
         }
     }
@@ -478,7 +478,7 @@
 
     protected async void Preview(object? record)
     {
-        if(record != null) {
+        if (record != null) {
             var invoice = (DataObjects.Invoice)record;
             await Helpers.PreviewInvoice(invoice);
         }
@@ -571,7 +571,7 @@
             UserId = Filter.UserId,
         };
 
-        await LocalStorage.SetItemAsync("invoices-filter-" + Model.TenantId.ToString(), saveFilter);
+        Model.User.UserPreferences.filterInvoices = saveFilter;
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

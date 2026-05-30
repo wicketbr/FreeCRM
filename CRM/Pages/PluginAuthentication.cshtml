@@ -17,7 +17,7 @@
         return;
     }
 
-    string strTenantId = "";
+    string strTenantId = String.Empty;
 
     try {
         strTenantId += data.Request("TenantId");
@@ -34,8 +34,8 @@
         return;
     }
 
-    string strPluginName = "";
-    string strPluginNameRaw = "";
+    string strPluginName = String.Empty;
+    string strPluginNameRaw = String.Empty;
     try {
         strPluginNameRaw += data.Request("Name");
         strPluginName += strPluginNameRaw.Replace("_", " ");
@@ -56,10 +56,8 @@
 
     string fingerprint = data.Request("Fingerprint");
 
-    //var promptValues = new List<CRM.DataObjects.Dictionary>();
     List<PluginPromptValue>? promptValues = null;
     var missingPrompts = new List<string>();
-    //var updatedPrompts = new Dictionary<string, object?>();
 
     if (plugin.Prompts != null && plugin.Prompts.Count > 0) {
         // This plugin uses prompts, so get the encrypted prompts from the URL

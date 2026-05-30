@@ -121,7 +121,7 @@ public partial class DataAccess
 
         List<Payment>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = await data.Payments.Where(x => x.TenantId == TenantId).ToListAsync();
         } else {
             recs = await data.Payments.Where(x => x.TenantId == TenantId && x.Deleted != true).ToListAsync();

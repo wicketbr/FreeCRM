@@ -1,4 +1,5 @@
 ﻿@inject BlazorDataModel Model
+
 <span class="@IconClass" @onclick="ToggleStickyMenus" title="@Helpers.Text("ToggleStickyMenus")">
 @if (Model.User.UserPreferences.StickyMenus) {
     <i class="fa-solid fa-thumbtack"></i>

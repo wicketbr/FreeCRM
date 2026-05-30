@@ -119,7 +119,7 @@ public partial class DataAccess
 
         List<Location>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = await data.Locations.Where(x => x.TenantId == TenantId).ToListAsync();
         } else {
             recs = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted != true).ToListAsync();

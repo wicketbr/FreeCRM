@@ -45,9 +45,17 @@ public partial class DataAccess
         return output;
     }
 
-    private async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo(string Lookup, DataObjects.UserLookupType Type,
-        string? LdapRoot, string? SearchBase, int? LdapPort, string? LdapQueryUsername, string? LdapQueryPassword, string? LdapLocationAttribute)
-    {
+    private async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo
+    (
+        string Lookup,
+        DataObjects.UserLookupType Type,
+        string? LdapRoot,
+        string? SearchBase,
+        int? LdapPort,
+        string? LdapQueryUsername,
+        string? LdapQueryPassword,
+        string? LdapLocationAttribute
+    ){
         if (String.IsNullOrWhiteSpace(LdapLocationAttribute)) {
             LdapLocationAttribute = "physicalDeliveryOfficeName";
         }
@@ -139,10 +147,13 @@ public partial class DataAccess
         return output;
     }
 
-    private async Task<List<DataObjects.ActiveDirectoryUserInfo>?> GetActiveDirectorySearchResults(Guid TenantId, string SearchText,
+    private async Task<List<DataObjects.ActiveDirectoryUserInfo>?> GetActiveDirectorySearchResults
+    (
+        Guid TenantId,
+        string SearchText,
         int MaxResults,
-        List<string>? excludeEmails)
-    {
+        List<string>? excludeEmails
+    ){
         // Get the LDAP settings from the tenant
         var settings = GetTenantSettings(TenantId);
         var ldapLookupRoot = settings.LdapLookupRoot;

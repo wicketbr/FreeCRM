@@ -7,6 +7,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -61,8 +62,7 @@
                         OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "Start", v, LoadFilter))"
                         TableClass="datetime-picker full-width"
                         TValue="DateTime?"
-                        Value="Filter.Start"
-                    />
+                        Value="Filter.Start" />
                 </div>
 
                 <div class="col col-lg-3 col-md-4 col-sm-4 col-12 mb-2">
@@ -76,8 +76,7 @@
                         OnUpdate="@((DateTime? v) => Helpers.OnChangeHandler(Filter, "End", v, LoadFilter))"
                         TableClass="datetime-picker full-width"
                         TValue="DateTime?"
-                        Value="Filter.End"
-                    />
+                        Value="Filter.End" />
                 </div>
 
                 @if (Filter.AvailableExtensions.Any()) {
@@ -86,10 +85,10 @@
                             <Language Tag="Extension" />
                         </label>
                         <select class="form-select" id="filter-files-Extensions" multiple size="4" @bind="Filter.Extensions" @bind:after="LoadFilter">
-                            @foreach(var item in Filter.AvailableExtensions) {
-                                if(Filter.Extensions != null && Filter.Extensions.Contains(item)) {
+                            @foreach (var item in Filter.AvailableExtensions) {
+                                if (Filter.Extensions != null && Filter.Extensions.Contains(item)) {
                                     <option value="@item" selected>@item</option>
-                                }else{
+                                } else {
                                     <option value="@item">@item</option>
                                 }
                             }
@@ -104,8 +103,7 @@
                         id="files-IncludeDeletedRecords"
                         class="form-check-input"
                         @bind="Model.User.UserPreferences.IncludeDeletedItems" 
-                        @bind:after="LoadFilter"
-                    />
+                        @bind:after="LoadFilter" />
                     <label for="files-IncludeDeletedRecords" class="form-check-label"><Language Tag="IncludeDeletedItems" /></label>
                 </div>
             </div>
@@ -142,12 +140,13 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
     protected bool _loading = true;
-    protected string _token = "";
+    protected string _token = String.Empty;
 
     List<PagedRecordset.ActionHandler> ActionHandlers = new List<PagedRecordset.ActionHandler>();
     PagedRecordset.Config Config = new PagedRecordset.Config();
@@ -160,7 +159,8 @@
 
     protected string _pageName = "files";
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -218,7 +218,7 @@
 
     protected async Task ClearFilter()
     {
-        Filter.CultureCode = Model.CultureCode;
+        Filter.CultureCode = Model.User.UserPreferences.CultureCode;
         Filter.End = null;
         Filter.Extensions = new string[] { };
         Filter.Keyword = null;
@@ -240,7 +240,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 await LoadData();
             } else {
@@ -429,7 +429,6 @@
                     }
                     await LoadFilter();
                 }
-
                 break;
         }
     }
@@ -490,7 +489,7 @@
     {
         if (record != null) {
             var file = (DataObjects.FileStorage)record;
-            if(file.FileId != Guid.Empty) {
+            if (file.FileId != Guid.Empty) {
                 string url = Helpers.BaseUri + "File/View/" + file.FileId.ToString() + "?TenantId=" + Model.TenantId.ToString() + "&Token=" + _token;
                 await jsRuntime.InvokeVoidAsync("open", url, "_blank");
             }
@@ -592,7 +591,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 await LoadFilter();
             } else {
@@ -641,8 +640,8 @@
 
         List<string> errors = new List<string>();
 
-        if(files != null && files.Any()) {
-            foreach(var file in files) {
+        if (files != null && files.Any()) {
+            foreach (var file in files) {
                 if (file.ActionResponse.Result) {
                     bool allowedExtension = true;
                     string extension = !String.IsNullOrWhiteSpace(file.Extension) ? file.Extension : String.Empty;

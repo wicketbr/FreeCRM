@@ -24,7 +24,7 @@
                 <div class="navbar-collapse collapse" id="navBarToggler">
                     <ul class="navbar-nav me-auto">
                         @if (Model.LoggedIn) {
-                            foreach(var item in Helpers.MenuItems) {
+                            foreach (var item in Helpers.MenuItems) {
                                 var itemClass = "nav-link";
 
                                 if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
@@ -121,7 +121,7 @@
                             @if (String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
                                 <li class="nav-item dropdown" title="@Helpers.Text("Theme")">
                                     <a class="nav-link dropdown-toggle" href="javascript:void('@Helpers.Text("Theme")');" id="themeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="@Helpers.Text("SelectTheme")">
-                                        @switch (Model.Theme) {
+                                        @switch (Model.User.UserPreferences.Theme) {
                                             case "dark":
                                                 <Icon Name="ThemeDark" />
                                                 break;
@@ -131,6 +131,7 @@
                                                 break;
 
                                             case "auto":
+                                            default:
                                                 <Icon Name="ThemeAuto" />
                                                 break;
                                         }
@@ -184,12 +185,12 @@
 }
 
 @code {
-    [Parameter]
-    public bool Loading { get; set; }
+    [Parameter] public bool Loading { get; set; }
 
     protected NavigationMenu_App navigationMenuApp = new NavigationMenu_App();
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= StateHasChanged;
     }
 

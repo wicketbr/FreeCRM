@@ -5,6 +5,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.View == _pageName) {
     if (_loading) {
         <LoadingMessage />
@@ -22,9 +23,10 @@
         }
     }
 }
+
 @code {
-    protected string _pageTitle = "";
-    protected string _info = "";
+    protected string _pageTitle = String.Empty;
+    protected string _info = String.Empty;
     protected bool _loading = true;
 
     protected string _pageName = "invalidtenantcode";

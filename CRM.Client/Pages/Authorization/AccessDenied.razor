@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.View == _pageName){
     <h1 class="page-title">
         <Language Tag="AccessDenied" IncludeIcon="true" />
@@ -19,14 +20,16 @@
         <Language Tag="BackToLogin" IncludeIcon="true" />
     </button>
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    private string _info = "";
+    private string _info = String.Empty;
 
     protected string _pageName = "accessdenied";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
     }
 

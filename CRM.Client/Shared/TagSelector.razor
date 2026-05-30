@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (_loading) {
     <LoadingMessage />
 } else {
@@ -24,7 +25,7 @@
                 </div>
             }
 
-            foreach(var tag in AvailableTags) {
+            foreach (var tag in AvailableTags) {
                 <div class="tag-selector" @onclick="@(() => ToggleTag(tag.TagId))">
                     <div class="add-remove">
                         @if (_selectedTags.Contains(tag.TagId)) {
@@ -79,6 +80,7 @@
         }
     }
 }
+
 @code {
     /// <summary>
     /// Appointments, EmailTemplates, or Services
@@ -141,7 +143,9 @@
     protected List<Guid> _selectedTags = new List<Guid>();
     protected bool _showCurrentTags = true;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -160,8 +164,7 @@
         }
     }
 
-    protected List<DataObjects.Tag> AvailableTagList
-    {
+    protected List<DataObjects.Tag> AvailableTagList {
         get {
             List<DataObjects.Tag> output = new List<DataObjects.Tag>();
 
@@ -277,7 +280,7 @@
         string output = String.Empty;
 
         var tag = Model.Tags.FirstOrDefault(x => x.TagId == TagId);
-        if(tag != null) {
+        if (tag != null) {
             output += tag.Name;
         }
 
@@ -297,8 +300,7 @@
         }
     }
 
-    protected List<DataObjects.Tag> InitialTagList
-    {
+    protected List<DataObjects.Tag> InitialTagList {
         get {
             var output = new List<DataObjects.Tag>();
 

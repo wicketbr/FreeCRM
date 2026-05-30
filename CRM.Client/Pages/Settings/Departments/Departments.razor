@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -58,8 +59,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach(var dept in Model.Departments) {
-                        if(!dept.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                    @foreach (var dept in Model.Departments) {
+                        if (!dept.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
                             <tr class="@(dept.Deleted ? "item-deleted": "")">
                                 <td>
                                     <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditDepartment(dept.DepartmentId))">
@@ -86,6 +87,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -95,7 +97,8 @@
 
     protected string _pageName = "departments";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -106,7 +109,7 @@
             Model.TenantCodeFromUrl = TenantCode;
         }
 
-        if(Model.Loaded && Model.LoggedIn) {
+        if (Model.Loaded && Model.LoggedIn) {
             if (!Model.FeatureEnabledDepartments || !Model.User.Admin) {
                 Helpers.NavigateToRoot();
                 return;

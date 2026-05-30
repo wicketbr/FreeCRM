@@ -84,7 +84,7 @@ public partial class DataAccess
 
         EmailTemplate? rec = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             rec = await data.EmailTemplates
                 .FirstOrDefaultAsync(x => x.EmailTemplateId == EmailTemplateId);
         } else {
@@ -92,7 +92,7 @@ public partial class DataAccess
                 .FirstOrDefaultAsync(x => x.EmailTemplateId == EmailTemplateId && x.Deleted != true);
         }
 
-        if(rec != null) {
+        if (rec != null) {
             output = new DataObjects.EmailTemplate { 
                 ActionResponse = GetNewActionResponse(true),
                 EmailTemplateId = rec.EmailTemplateId,
@@ -133,8 +133,8 @@ public partial class DataAccess
                 .Where(x => x.TenantId == TenantId && x.Deleted != true).ToListAsync();
         }
 
-        if(recs != null && recs.Any()) {
-            foreach(var rec in recs) {
+        if (recs != null && recs.Any()) {
+            foreach (var rec in recs) {
                 var t = new DataObjects.EmailTemplate {
                     ActionResponse = GetNewActionResponse(true),
                     EmailTemplateId = rec.EmailTemplateId,
@@ -172,8 +172,8 @@ public partial class DataAccess
 
         var rec = await data.EmailTemplates.FirstOrDefaultAsync(x => x.EmailTemplateId == output.EmailTemplateId);
 
-        if(rec != null && rec.Deleted) {
-            if(AdminUser(CurrentUser)) {
+        if (rec != null && rec.Deleted) {
+            if (AdminUser(CurrentUser)) {
                 // Ok to edit this record that is marked as deleted.
             } else {
                 output.ActionResponse.Messages.Add("Email Template '" + output.EmailTemplateId.ToString() + "' No Longer Exists");
@@ -181,8 +181,8 @@ public partial class DataAccess
             }
         }
 
-        if(rec == null) {
-            if(output.EmailTemplateId == Guid.Empty) {
+        if (rec == null) {
+            if (output.EmailTemplateId == Guid.Empty) {
                 newRecord = true;
                 output.EmailTemplateId = Guid.NewGuid();
 
@@ -206,7 +206,7 @@ public partial class DataAccess
         rec.LastModified = now;
         rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             rec.Deleted = output.Deleted;
 
             if (!output.Deleted) {
@@ -235,7 +235,7 @@ public partial class DataAccess
                 Message = "Saved",
                 UserId = CurrentUserId(CurrentUser),
             });
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             output.ActionResponse.Messages.Add("Error Saving Email Template " + output.EmailTemplateId.ToString() + ":");
             output.ActionResponse.Messages.AddRange(RecurseException(ex));
         }
@@ -248,7 +248,7 @@ public partial class DataAccess
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
         var _details = DeserializeObject<DataObjects.EmailTemplateDetails>(template.Template);
-        if(_details == null) {
+        if (_details == null) {
             output.Messages.Add("Unable to Deserialize Template Details");
         } else {
             string subject = ReplaceTagsInText(_details.Subject, CurrentUser, obj);
@@ -280,7 +280,6 @@ public partial class DataAccess
 
         var today = DateTime.Now;
 
-
         // {{ModuleItemStart:Appointments}}
         DataObjects.Appointment appt = new DataObjects.Appointment { 
             AppointmentId = Guid.Empty,
@@ -299,7 +298,7 @@ public partial class DataAccess
         };
 
         var _details = DeserializeObject<DataObjects.EmailTemplateDetails>(template.Template);
-        if(_details == null) {
+        if (_details == null) {
             output.Messages.Add("Unable to Deserialize Template Details");
         } else {
             string subject = ReplaceTagsInText(_details.Subject, user, appt);

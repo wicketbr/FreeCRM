@@ -8,6 +8,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -101,7 +102,7 @@
                         <Language Tag="InsertFieldInfo" />
                     </div>
 
-                    @if(_allowSave){
+                    @if (_allowSave) {
                         <div class="input-group mb-2">
                         
                             <select id="edit-emailtemplate-insertvalue" class="form-select" @onchange="InsertField" aria-label="@Helpers.Text("InsertField")">
@@ -170,6 +171,7 @@
         }
     </div>
 }
+
 @code {
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -178,17 +180,17 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newItem = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.EmailTemplate _template = new DataObjects.EmailTemplate();
     protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
     protected bool _validatedUrl = false;
 
-    //protected RadzenHtmlEditor htmlEditor;
     HtmlEditor _htmlEditor = null!;
 
     protected string _pageName = "editemailtemplate";
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -199,7 +201,7 @@
             Model.TenantCodeFromUrl = TenantCode;
         }
 
-        if(Model.Loaded && Model.LoggedIn) {
+        if (Model.Loaded && Model.LoggedIn) {
             if (!Model.FeatureEnabledEmailTemplates || !Model.User.Admin) {
                 Helpers.NavigateToRoot();
                 return;
@@ -244,7 +246,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Helpers.NavigateTo("Settings/EmailTemplates");
             } else {
@@ -257,7 +259,6 @@
 
     protected async Task EditorFocus()
     {
-        //await htmlEditor.FocusAsync();
         await _htmlEditor.SetFocus();
     }
 
@@ -270,7 +271,7 @@
     protected async Task InsertField(ChangeEventArgs e)
     {
         string value = String.Empty;
-        if(e.Value != null) {
+        if (e.Value != null) {
             value += e.Value.ToString();
         }
 
@@ -288,14 +289,11 @@
             await InsertText(img);
         };
 
-        //await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
-
         await Helpers.SelectFile(onImageSelected, Helpers.Text("SelectImageFile"), true);
     }
 
     protected async Task InsertText(string value)
     {
-        //await htmlEditor.ExecuteCommandAsync(HtmlEditorCommands.InsertHtml, value);
         await _htmlEditor.InsertText(value);
     }
 
@@ -351,7 +349,7 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (_htmlEditor != null) {
             _details.Body = await _htmlEditor.GetHTML();
@@ -359,15 +357,15 @@
 
         if (String.IsNullOrWhiteSpace(_template.Name)) {
             errors.Add(Helpers.MissingRequiredField("EmailTemplateName"));
-            if (focus == "") { focus = "edit-emailtemplate-name"; }
+            if (focus == String.Empty) { focus = "edit-emailtemplate-name"; }
         }
         if (String.IsNullOrWhiteSpace(_details.Subject)) {
             errors.Add(Helpers.MissingRequiredField("EmailTemplateSubject"));
-            if (focus == "") { focus = "edit-emailtemplate-subject"; }
+            if (focus == String.Empty) { focus = "edit-emailtemplate-subject"; }
         }
         if (String.IsNullOrWhiteSpace(_details.Body)) {
             errors.Add(Helpers.MissingRequiredField("EmailTemplateBody"));
-            if(focus == "") {
+            if (focus == String.Empty) {
                 await EditorFocus();
             }
         }
@@ -386,7 +384,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/EmailTemplates");
             } else {
@@ -412,7 +410,7 @@
 
         Model.ClearMessages();
 
-        if(sent != null) {
+        if (sent != null) {
             if (sent.Result) {
                 Model.Message_Sent();
             } else {

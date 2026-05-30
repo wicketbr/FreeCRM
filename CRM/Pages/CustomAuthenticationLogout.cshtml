@@ -1,12 +1,11 @@
 ﻿@page "/Authorization/CustomAuthenticationLogout"
 @inject CRM.IDataAccess data
 @inject Microsoft.AspNetCore.Hosting.Server.IServer server
-
 @{
     data.SetHttpRequest(Request);
     data.SetHttpResponse(Response);
 
-    string strTenantId = "";
+    string strTenantId = String.Empty;
 
     try {
         strTenantId += data.Request("TenantId");

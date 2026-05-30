@@ -47,12 +47,12 @@
     [Parameter] public Func<int, string>? TooltipCallbackHandler { get; set; }
 
     protected bool _chartRendered = false;
-    protected string _chartSubtitle = "";
-    protected string _chartTitle = "";
-    protected string _elementId = "";
+    protected string _chartSubtitle = String.Empty;
+    protected string _chartTitle = String.Empty;
+    protected string _elementId = String.Empty;
     protected bool _highchartsResourcesLoaded = false;
-    protected string _seriesData = "";
-    protected string _yAxisText = "";
+    protected string _seriesData = String.Empty;
+    protected string _yAxisText = String.Empty;
     protected IJSObjectReference? jsModule;
     protected DotNetObjectReference<Highcharts>? dotNetHelper;
     protected bool _resourcesLoaded = false;
@@ -122,20 +122,23 @@
             return;
         }
 
-        string seriesData = "";
+        string seriesData = String.Empty;
         if (ChartType != null) {
             switch (ChartType) {
                 case ChartTypes.Column:
                     seriesData = Helpers.SerializeObject(SeriesDataArrayItems);
                     break;
+
                 case ChartTypes.Pie:
                     seriesData = Helpers.SerializeObject(SeriesDataItems);
                     break;
+
                 case ChartTypes.LineTimeSeries:
                 case ChartTypes.ColumnTimeSeries:
                 case ChartTypes.AreaTotals:
                     seriesData = Helpers.SerializeObject(SeriesDataXYArrayItems);
                     break;
+
                 case ChartTypes.PieWithDrilldown:
                     // Serialize both root and drilldown inputs together to detect changes
                     seriesData = Helpers.SerializeObject(new object?[] { PieRootItems, PieDrilldownItems, PieSortDescending });
@@ -164,18 +167,23 @@
                 case ChartTypes.Column:
                     await ChartRender_Column();
                     break;
+
                 case ChartTypes.Pie:
                     await ChartRender_Pie();
                     break;
+
                 case ChartTypes.LineTimeSeries:
                     await ChartRender_LineTimeSeries();
                     break;
+
                 case ChartTypes.PieWithDrilldown:
                     await ChartRender_PieWithDrilldown();
                     break;
+
                 case ChartTypes.ColumnTimeSeries:
                     await ChartRender_ColumnTimeSeries();
                     break;
+
                 case ChartTypes.AreaTotals:
                     await ChartRender_AreaTotals();
                     break;
@@ -310,34 +318,35 @@
     // Pie
     public class SeriesData
     {
-        public string name { get; set; } = "";
+        public string name { get; set; } = String.Empty;
         public decimal data { get; set; }
-        public string tooltip { get; set; } = "";
+        public string tooltip { get; set; } = String.Empty;
     }
 
     // Column (categorical)
     public class SeriesDataArray
     {
-        public string name { get; set; } = "";
+        public string name { get; set; } = String.Empty;
         public decimal[] data { get; set; } = [];
     }
 
     // Line/Column/Area time-series (pairs of [epochMs, value])
     public class SeriesDataXYArray
     {
-        public string name { get; set; } = "";
+        public string name { get; set; } = String.Empty;
         public long[][] data { get; set; } = [];
     }
 
     // Drilldown pie support
     public class DrilldownSeries
     {
-        public string id { get; set; } = ""; // must match a root slice name
+        public string id { get; set; } = String.Empty; // must match a root slice name
         public DrilldownPoint[] data { get; set; } = [];
     }
+
     public class DrilldownPoint
     {
-        public string name { get; set; } = "";
+        public string name { get; set; } = String.Empty;
         public decimal y { get; set; }
     }
 }

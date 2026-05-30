@@ -2,7 +2,6 @@
 @page "/{TenantCode}/HtmlEditor"
 @implements IDisposable
 @inject BlazorDataModel Model
-@using BlazorSortableList
 
 <h1>HTML Editor</h1>
 
@@ -42,16 +41,17 @@
 
     protected HtmlEditor2 _editor = null!;
     protected bool _simpleView = false;
-    protected string _theme = String.Empty;
+    protected string? _theme = String.Empty;
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
     }
 
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender) {
-            _theme = Model.Theme;
+            _theme = Model.User.UserPreferences.Theme;
             Model.TenantCodeFromUrl = TenantCode;
         }
 
@@ -74,19 +74,18 @@
         if (Model.View == _pageName) {
             StateHasChanged();
 
-            if (Model.Theme != _theme) {
-                _theme = Model.Theme;
+            if (Model.User.UserPreferences.Theme != _theme) {
+                _theme = Model.User.UserPreferences.Theme;
                 _editor.UpdateConfig(_config);
             }
         }
     }
 
-    protected HtmlEditor2.Configuration _config
-    {
+    protected HtmlEditor2.Configuration _config {
         get {
             return new HtmlEditor2.Configuration {
                 BeautifyOutput = true,
-                DarkMode = Helpers.StringLower(Model.Theme) == "dark",
+                DarkMode = Helpers.StringLower(Model.User.UserPreferences.Theme) == "dark",
                 SimpleView = _simpleView,
                 UseMonacoForSourceView = true,
             };

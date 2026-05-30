@@ -151,7 +151,7 @@ namespace ExamplePlugin
                         },
                         new PluginPrompt { 
                             Name = "Select with Values from Function",
-                            Description = "",
+                            Description = String.Empty,
                             ElementClass = "col col-3",
                             Hidden = true,
                             Type = PluginPromptType.Select,
@@ -320,7 +320,7 @@ namespace ExamplePlugin
             bool hidden = false;
             bool foundCheckbox = false;
 
-            foreach(var prompt in plugin.Prompts) {
+            foreach (var prompt in plugin.Prompts) {
                 if (foundCheckbox) {
                     prompt.Hidden = hidden;
                 }

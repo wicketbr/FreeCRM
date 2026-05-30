@@ -38,7 +38,7 @@ public partial class DataAccess
     /// <returns>A standard byte array string</returns>
     public string CompressedByteArrayStringToFullString(string? compressedByteArray)
     {
-        System.Text.StringBuilder output = new System.Text.StringBuilder();
+        StringBuilder output = new StringBuilder();
 
         if (!String.IsNullOrWhiteSpace(compressedByteArray)) {
             int len = compressedByteArray.Length;
@@ -58,19 +58,10 @@ public partial class DataAccess
 
     private byte[] ConvertByteArrayStringToByteArray(string ByteArrayString)
     {
-        //byte[] output = new byte[] { };
-        //if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
-        //    try {
-        //        output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
-        //    } catch { }
-        //}
-        //return output;
-
         List<byte> output = new List<byte>();
 
         if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
             try {
-                //var byteString = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2));
                 var bytes = ByteArrayString.Split(',');
 
                 if (bytes != null) {
@@ -99,9 +90,11 @@ public partial class DataAccess
     private string ConvertByteArrayToString(byte[] ByteArray)
     {
         string output = String.Empty;
+
         if (ByteArray != null) {
             output = "0x" + BitConverter.ToString(ByteArray).Replace("-", ",0x");
         }
+
         return output;
     }
 
@@ -225,11 +218,13 @@ public partial class DataAccess
     public string GetNewEncryptionKey()
     {
         string output = String.Empty;
+
         var e = new Encryption.Encryption(GetEncryptionKey);
         var newKey = e.GetNewEncryptionKey();
         if (newKey != null && newKey.Length > 0) {
             output = ConvertByteArrayToString(newKey);
         }
+
         return output;
     }
 
@@ -251,7 +246,7 @@ public partial class DataAccess
             var encNew = new Encryption.Encryption(newKeyAsByteArrayString);
 
             // Decrypt and re-encrypt all encrypted settings.
-            var settings = data.Settings.Where(x => x.SettingType != null && x.SettingType.ToLower() == "encryptedtext" && x.SettingText != null && x.SettingText != "");
+            var settings = data.Settings.Where(x => x.SettingType != null && x.SettingType.ToLower() == "encryptedtext" && x.SettingText != null && x.SettingText != String.Empty);
             if (settings != null && settings.Any()) {
                 foreach (var rec in settings) {
                     string currentValue = StringValue(rec.SettingText);
@@ -264,7 +259,7 @@ public partial class DataAccess
             data.SaveChanges();
 
             // Decrypt and re-encrypt all local passwords.
-            var users = data.Users.Where(x => x.Password != null && x.Password != "");
+            var users = data.Users.Where(x => x.Password != null && x.Password != String.Empty);
             if (users != null && users.Any()) {
                 foreach (var rec in users) {
                     string currentValue = StringValue(rec.Password);

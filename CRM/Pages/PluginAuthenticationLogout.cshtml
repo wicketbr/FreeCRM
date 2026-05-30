@@ -16,7 +16,7 @@
         return;
     }
 
-    string strTenantId = "";
+    string strTenantId = String.Empty;
 
     try {
         strTenantId += data.Request("TenantId");
@@ -33,8 +33,8 @@
         return;
     }
 
-    string strPluginName = "";
-    string strPluginNameRaw = "";
+    string strPluginName = String.Empty;
+    string strPluginNameRaw = String.Empty;
     try {
         strPluginNameRaw += data.Request("Name");
         strPluginName += strPluginNameRaw.Replace("_", " ");
@@ -72,8 +72,6 @@
         return;
     }
 
-
-
     if (String.IsNullOrWhiteSpace(plugin.Code)) {
         <h1>Error</h1>
         <p>The plugin &ldquo;@strPluginName&rdquo; does not have any code.</p>
@@ -87,8 +85,4 @@
     };
 
     var result = data.ExecutePlugin(req);
-
-    if (result != null) {
-
-    }
 }

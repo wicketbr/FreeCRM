@@ -24,7 +24,7 @@ public partial class DataAccess
             update.ObjectAsString = SerializeObject(update.Object);
         }
 
-        if(update.UserId.HasValue && String.IsNullOrWhiteSpace(update.UserDisplayName)) {
+        if (update.UserId.HasValue && String.IsNullOrWhiteSpace(update.UserDisplayName)) {
             update.UserDisplayName = LastModifiedDisplayName(update.UserId.ToString());
         }
 

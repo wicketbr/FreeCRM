@@ -11,6 +11,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     <h1 class="page-title">
         <Language Tag="@(_newInvoice ? "CreateInvoice" : "EditInvoice")" IncludeIcon="true" />@((MarkupString)(_newInvoice && _user.ActionResponse.Result ? " " + Helpers.Text("ForUser") + " " + _user.DisplayName : ""))
@@ -218,6 +219,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -233,7 +235,8 @@
 
     protected string _pageName = "editinvoice";
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -280,7 +283,7 @@
     {
         _invoice.InvoiceItems.Add(new DataObjects.InvoiceItem {
             Id = Guid.NewGuid(),
-            Description = "",
+            Description = String.Empty,
             Price = 0,
             Quantity = 1,
         });
@@ -295,22 +298,19 @@
         }
     }
 
-    protected string ConfirmButtonTextCancel
-    {
+    protected string ConfirmButtonTextCancel {
         get {
             return Helpers.Text("Cancel");
         }
     }
 
-    protected string ConfirmButtonTextConfirmDelete
-    {
+    protected string ConfirmButtonTextConfirmDelete {
         get {
             return Helpers.Text("ConfirmDelete");
         }
     }
 
-    protected string ConfirmButtonTextDelete
-    {
+    protected string ConfirmButtonTextDelete {
         get {
             return Helpers.Text("Delete");
         }
@@ -335,7 +335,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 // {{ModuleItemStart:Tags}}
                 Model.Tags = Model.Tags.Where(x => x.TagId.ToString() != id).ToList();
@@ -367,8 +367,7 @@
         return output;
     }
 
-    protected decimal InvoiceTotal
-    {
+    protected decimal InvoiceTotal {
         get {
             decimal output = 0;
 
@@ -388,7 +387,7 @@
 
     protected async Task LoadData()
     {
-        string focus = "";
+        string focus = String.Empty;
 
         string url = Helpers.CurrentUrl;
         _newInvoice = url.ToLower().Contains("createinvoice");
@@ -446,21 +445,21 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_invoice.Title)) {
             errors.Add(Helpers.MissingRequiredField("InvoiceTitle"));
-            if (focus == "") { focus = "edit-invoice-Title"; }
+            if (focus == String.Empty) { focus = "edit-invoice-Title"; }
         }
 
         if (_invoice.InvoiceSendDate == null) {
             errors.Add(Helpers.MissingRequiredField("InvoiceSendDate"));
-            if (focus == "") { focus = "edit-invoice-InvoiceSendDate"; }
+            if (focus == String.Empty) { focus = "edit-invoice-InvoiceSendDate"; }
         }
 
         if (_invoice.InvoiceDueDate == null) {
             errors.Add(Helpers.MissingRequiredField("InvoiceDue"));
-            if (focus == "") { focus = "edit-invoice-InvoiceDueDate"; }
+            if (focus == String.Empty) { focus = "edit-invoice-InvoiceDueDate"; }
         }
 
         if (!_invoice.InvoiceItems.Any()) {
@@ -471,17 +470,17 @@
             foreach (var item in _invoice.InvoiceItems) {
                 if (String.IsNullOrWhiteSpace(item.Description)) {
                     missingElements = true;
-                    if (focus == "") { focus = "invoice-item-desc-" + item.Id.ToString(); }
+                    if (focus == String.Empty) { focus = "invoice-item-desc-" + item.Id.ToString(); }
                 }
 
                 if (item.Price < 0) {
                     missingElements = true;
-                    if (focus == "") { focus = "invoice-item-price-" + item.Id.ToString(); }
+                    if (focus == String.Empty) { focus = "invoice-item-price-" + item.Id.ToString(); }
                 }
 
                 if (item.Quantity <= 0) {
                     missingElements = true;
-                    if (focus == "") { focus = "invoice-item-qty-" + item.Id.ToString(); }
+                    if (focus == String.Empty) { focus = "invoice-item-qty-" + item.Id.ToString(); }
                 }
             }
 
@@ -502,7 +501,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Invoices");
             } else {

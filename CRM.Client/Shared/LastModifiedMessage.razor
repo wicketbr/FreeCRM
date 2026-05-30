@@ -1,4 +1,5 @@
 ﻿@implements IDisposable
+
 @if (!String.IsNullOrWhiteSpace(_addedBy) || (_lastModified.HasValue && _lastModified != DateTime.MinValue)) {
     <div class="last-modified">
         @if (!String.IsNullOrWhiteSpace(_addedBy)) {
@@ -27,19 +28,21 @@
         }
     </div>
 }
+
 @code {
+    /// <summary>
+    /// The object containing the Added, AddedBy, LastModified, and LastModifiedBy properties (or UploadDate and UploadedBy for files.)
+    /// </summary>
+    [Parameter] public Object? DataObject { get; set; }
+
     protected DateTime? _added;
     protected string? _addedBy;
     protected DateTime? _lastModified;
     protected string? _lastModifiedBy;
 
-    /// <summary>
-    /// The object containing the Added, AddedBy, LastModified, and LastModifiedBy properties (or UploadDate and UploadedBy for files.)
-    /// </summary>
-    [Parameter]
-    public Object? DataObject { get; set; }
-
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnParametersSet()
     {

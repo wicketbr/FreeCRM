@@ -41,9 +41,12 @@
     [Parameter]
     public EventCallback<string> ValueChanged { get; set; }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
-    protected override void OnInitialized() {
+    protected override void OnInitialized()
+    {
         if (OnInitializedCallback.HasDelegate) {
             OnInitializedCallback.InvokeAsync(PluginName);
         }

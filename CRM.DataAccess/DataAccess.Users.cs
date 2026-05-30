@@ -1,6 +1,4 @@
-﻿//using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-
-namespace CRM;
+﻿namespace CRM;
 
 public partial interface IDataAccess
 {
@@ -97,7 +95,7 @@ public partial class DataAccess
         rec.Deleted = false;
         rec.Email = EmailAddress;
         rec.Enabled = true;
-        rec.FirstName = "";
+        rec.FirstName = String.Empty;
         rec.LastName = EmailAddress;
         rec.LastModified = now;
         rec.PreventPasswordChange = false;
@@ -135,7 +133,7 @@ public partial class DataAccess
             var tenantSettings = GetTenantSettings(tenantId);
 
             // First, fix or delete all relational user records
-            if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
                 try {
                     var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
                     if (!deleteAppRecords.Result) {
@@ -236,7 +234,7 @@ public partial class DataAccess
                 rec.Deleted = true;
                 rec.DeletedAt = now;
                 rec.LastModified = now;
-                if(CurrentUser != null) {
+                if (CurrentUser != null) {
                     rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
                 }
             }
@@ -321,6 +319,7 @@ public partial class DataAccess
 
             output += "]";
         }
+
         return output;
     }
 
@@ -458,7 +457,7 @@ public partial class DataAccess
         var output = new DataObjects.ActiveUser();
 
         var rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == userId && x.LastLogin != null && x.LastLogin > DateTime.UtcNow.AddMinutes(-1));
-        if(rec != null) {
+        if (rec != null) {
             var preferences = DeserializeObject<DataObjects.UserPreferences>(rec.Preferences);
             if (preferences == null) {
                 preferences = new DataObjects.UserPreferences();
@@ -471,8 +470,8 @@ public partial class DataAccess
                 FirstName = rec.FirstName,
                 LastAccess = rec.LastLogin,
                 LastName = rec.LastName,
-                TenantName = "",
-                DisplayName = "",
+                TenantName = String.Empty,
+                DisplayName = String.Empty,
                 Photo = await GetUserPhoto(rec.UserId),
                 UserPreferences = preferences,
             };
@@ -509,8 +508,8 @@ public partial class DataAccess
                     FirstName = rec.FirstName,
                     LastAccess = rec.LastLogin,
                     LastName = rec.LastName,
-                    TenantName = "",
-                    DisplayName = "",
+                    TenantName = String.Empty,
+                    DisplayName = String.Empty,
                     Photo = await GetUserPhoto(rec.UserId),
                     UserPreferences = preferences,
                 };
@@ -533,10 +532,11 @@ public partial class DataAccess
     public async Task<string> GetDisplayNameFromUserId(Guid? UserId, bool LastNameFirst = false, DataObjects.User? CurrentUser = null)
     {
         string output = String.Empty;
+
         if (UserId.HasValue && UserId != Guid.Empty) {
             User? rec = null;
 
-            if(AdminUser(CurrentUser)) {
+            if (AdminUser(CurrentUser)) {
                 rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == (Guid)UserId);
             } else {
                 rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == (Guid)UserId && x.Deleted != true);
@@ -559,16 +559,18 @@ public partial class DataAccess
                 }
             }
         }
+
         return output;
     }
 
     public async Task<string> GetEmailFromUserId(Guid? UserId, DataObjects.User? CurrentUser = null)
     {
         string output = String.Empty;
+
         if (UserId.HasValue && UserId != Guid.Empty) {
             User? rec = null;
 
-            if(AdminUser(CurrentUser)) {
+            if (AdminUser(CurrentUser)) {
                 rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == (Guid)UserId);
             } else {
                 rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == (Guid)UserId && x.Deleted != true);
@@ -578,6 +580,7 @@ public partial class DataAccess
                 output = rec.Email;
             }
         }
+
         return output;
     }
 
@@ -619,12 +622,14 @@ public partial class DataAccess
     public async Task<string> GetFirstNameFromUserId(Guid? UserId)
     {
         string output = String.Empty;
+
         if (UserId.HasValue && UserId != Guid.Empty) {
             var rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == (Guid)UserId && x.Deleted != true);
             if (rec != null && !String.IsNullOrEmpty(rec.FirstName)) {
                 output = rec.FirstName;
             }
         }
+
         return output;
     }
 
@@ -671,7 +676,7 @@ public partial class DataAccess
 
         User? rec = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             rec = await data.Users
                 .Include(x => x.Department)
                 .Include(x => x.UserInGroups)
@@ -763,7 +768,7 @@ public partial class DataAccess
 
             output.DisplayName = DisplayNameFromLastAndFirst(output.LastName, output.FirstName, output.Email, output.DepartmentName, output.Location);
 
-            if(_inMemoryDatabase && output.DepartmentId.HasValue && String.IsNullOrEmpty(output.DepartmentName)) {
+            if (_inMemoryDatabase && output.DepartmentId.HasValue && String.IsNullOrEmpty(output.DepartmentName)) {
                 output.DepartmentName = GetDepartmentName(output.TenantId, GuidValue(output.DepartmentId));
             }
 
@@ -814,19 +819,18 @@ public partial class DataAccess
     {
         var output = await GetExistingUser(TenantId, EmployeeId, DataObjects.UserLookupType.EmployeeId, AddIfNotFound);
         return output;
-
     }
 
     public async Task<DataObjects.User> GetUserByUsername(Guid TenantId, string Username, bool AddIfNotFound = false)
     {
         var output = await GetExistingUser(TenantId, Username, DataObjects.UserLookupType.Username, AddIfNotFound);
         return output;
-
     }
 
     public async Task<DataObjects.User> GetUserByUsernameOrEmail(Guid TenantId, string search, bool AddIfNotFound = true)
     {
         DataObjects.User output = new DataObjects.User();
+
         if (!String.IsNullOrWhiteSpace(search)) {
             if (search.Contains("@")) {
                 output = await GetUserByEmailAddress(TenantId, search, AddIfNotFound);
@@ -834,6 +838,7 @@ public partial class DataAccess
                 output = await GetUserByUsername(TenantId, search, AddIfNotFound);
             }
         }
+
         return output;
     }
 
@@ -845,8 +850,8 @@ public partial class DataAccess
             var rec = await data.Users
                 .Select(x => new { x.UserId, x.FirstName, x.LastName, x.Deleted })
                 .FirstOrDefaultAsync(x => x.UserId == UserId && x.Deleted != true);
-                    
-            if(rec != null) {
+
+            if (rec != null) {
                 output = rec.FirstName + " " + rec.LastName;
             }
         }
@@ -865,41 +870,41 @@ public partial class DataAccess
         output.Columns = new List<DataObjects.FilterColumn> {
             new DataObjects.FilterColumn{
                 Align = "center",
-                Label = "",
-                TipText = "",
+                Label = String.Empty,
+                TipText = String.Empty,
                 Sortable = false,
                 DataElementName = "photo",
                 DataType = "photo"
             },
             new DataObjects.FilterColumn{
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("FirstName", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "firstName",
                 DataType = "string"
             },
             new DataObjects.FilterColumn{
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("LastName", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "lastName",
                 DataType = "string"
             },
             new DataObjects.FilterColumn{
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("Email", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "email",
                 DataType = "email",
                 Class = "auto-truncate",
             },
             new DataObjects.FilterColumn{
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("Username", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "username",
                 DataType = "string",
@@ -919,9 +924,9 @@ public partial class DataAccess
 
         if (showEmployeeId) {
             output.Columns.Add(new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("EmployeeId", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "employeeId",
                 DataType = "string",
@@ -933,9 +938,9 @@ public partial class DataAccess
 
         if (showDepartments) {
             output.Columns.Add(new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("Department", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "departmentName",
                 DataType = "string",
@@ -970,9 +975,9 @@ public partial class DataAccess
         output.Columns.AddRange(GetFilterColumnsApp("Users", "Admin", language, CurrentUser));
 
         output.Columns.Add(new DataObjects.FilterColumn {
-            Align = "",
+            Align = String.Empty,
             Label = GetLanguageItem("LastLogin", language),
-            TipText = "",
+            TipText = String.Empty,
             Sortable = true,
             DataElementName = "lastLogin",
             DataType = "datetime",
@@ -1005,9 +1010,9 @@ public partial class DataAccess
                         label = udf.ToUpper();
                     }
                     output.Columns.Add(new DataObjects.FilterColumn {
-                        Align = "",
+                        Align = String.Empty,
                         Label = label,
-                        TipText = "",
+                        TipText = String.Empty,
                         Sortable = true,
                         DataElementName = udf,
                         DataType = "string"
@@ -1020,7 +1025,7 @@ public partial class DataAccess
 
         IQueryable<User>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = data.Users
                 .Include(x => x.Department)
                 .Where(x => x.TenantId == output.TenantId && x.Username != null && x.Username.ToLower() != "admin");
@@ -1298,7 +1303,6 @@ public partial class DataAccess
                 var u = new DataObjects.User {
                     ActionResponse = GetNewActionResponse(true),
                     Added = rec.Added,
-                    //AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     Admin = rec.Admin,
                     // {{ModuleItemStart:Appointments}}
                     CanBeScheduled = rec.CanBeScheduled,
@@ -1343,7 +1347,7 @@ public partial class DataAccess
 
                 if (_inMemoryDatabase && u.DepartmentId.HasValue && String.IsNullOrEmpty(u.DepartmentName)) {
                     var dept = departments.FirstOrDefault(x => x.DepartmentId == u.DepartmentId);
-                    if(dept != null) {
+                    if (dept != null) {
                         u.DepartmentName = dept.DepartmentName;
                     }
                 }
@@ -1369,14 +1373,14 @@ public partial class DataAccess
             // Need to try each active Tenant to see which key can decrypt this token.
             // Since all RSA keys are unique, the first that decrypts the token and finds a valid user is the valid tenant.
             var tenants = await GetTenants();
-            if (tenants.Any()) { 
-                foreach(var tenant in tenants.Where(x => x.Enabled == true)) {
+            if (tenants.Any()) {
+                foreach (var tenant in tenants.Where(x => x.Enabled == true)) {
                     Guid UserId = Guid.Empty;
                     string tokenFingerprint = String.Empty;
                     bool sudoLogin = false;
 
                     Dictionary<string, object> decrypted = JwtDecode(tenant.TenantId, Token);
-                    if(decrypted != null && decrypted.Any()) {
+                    if (decrypted != null && decrypted.Any()) {
                         if (decrypted.ContainsKey("UserId")) {
                             try {
                                 string guid = decrypted["UserId"] + String.Empty;
@@ -1516,6 +1520,7 @@ public partial class DataAccess
     public async Task<Guid?> GetUserPhoto(Guid UserId)
     {
         Guid? output = (Guid?)null;
+
         try {
             var rec = await data.FileStorages.FirstOrDefaultAsync(x => x.ItemId == null && x.UserId == UserId && x.Deleted != true);
             if (rec != null) {
@@ -1526,6 +1531,7 @@ public partial class DataAccess
 
             }
         }
+
         return output;
     }
 
@@ -1534,7 +1540,7 @@ public partial class DataAccess
         DataObjects.SimpleResponse output = new DataObjects.SimpleResponse();
 
         var rec = await data.FileStorages.FirstOrDefaultAsync(x => x.ItemId == null && x.UserId == UserId && x.Deleted != true);
-        if(rec != null) {
+        if (rec != null) {
             output = new DataObjects.SimpleResponse { 
                 Result = true,
                 Message = rec.FileId.ToString(),
@@ -1637,7 +1643,7 @@ public partial class DataAccess
 
         List<User>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = await data.Users.Where(x => x.TenantId == TenantId && x.DepartmentId == DepartmentId)
                 .OrderBy(x => x.LastName).ThenBy(x => x.FirstName).ToListAsync();
         } else {
@@ -1779,8 +1785,8 @@ public partial class DataAccess
                     .Select(x => new { x.UserId, x.FirstName, x.LastName })
                     .FirstOrDefault(x => x.UserId == guidTest);
 
-                if(rec != null) {
-                    if(!String.IsNullOrWhiteSpace(rec.FirstName) || !String.IsNullOrWhiteSpace(rec.LastName)) {
+                if (rec != null) {
+                    if (!String.IsNullOrWhiteSpace(rec.FirstName) || !String.IsNullOrWhiteSpace(rec.LastName)) {
                         output = rec.FirstName + " " + rec.LastName;
                     }
                 }
@@ -1792,7 +1798,7 @@ public partial class DataAccess
 
     public string LastModifiedDisplayName(DataObjects.User? CurrentUser)
     {
-        if(CurrentUser != null) {
+        if (CurrentUser != null) {
             return LastModifiedDisplayName(CurrentUser.UserId.ToString());
         } else {
             return String.Empty;
@@ -1808,15 +1814,15 @@ public partial class DataAccess
         }
 
         bool validatePassword = true;
-        if(currentUser.Admin && currentUser.UserId != reset.UserId) {
+        if (currentUser.Admin && currentUser.UserId != reset.UserId) {
             validatePassword = false;
         }
 
         if (validatePassword) {
-            if(String.IsNullOrWhiteSpace(reset.CurrentPassword) || String.IsNullOrWhiteSpace(reset.NewPassword)) {
+            if (String.IsNullOrWhiteSpace(reset.CurrentPassword) || String.IsNullOrWhiteSpace(reset.NewPassword)) {
                 output.Messages.Add("Missing Current or New Password");
             }
-        }else if (String.IsNullOrWhiteSpace(reset.NewPassword)) {
+        } else if (String.IsNullOrWhiteSpace(reset.NewPassword)) {
             output.Messages.Add("Missing New Password");
         }
         if (output.Messages.Any()) {
@@ -1882,8 +1888,8 @@ public partial class DataAccess
         var output = user;
         output.ActionResponse = GetNewActionResponse();
 
-        string originalEmail = "";
-        string originalUsername = "";
+        string originalEmail = String.Empty;
+        string originalUsername = String.Empty;
 
         DateTime now = DateTime.UtcNow;
 
@@ -1907,14 +1913,14 @@ public partial class DataAccess
             originalUsername = StringValue(rec.Username);
         }
 
-        if(String.IsNullOrWhiteSpace(output.Username) && !String.IsNullOrWhiteSpace(output.Email)) {
+        if (String.IsNullOrWhiteSpace(output.Username) && !String.IsNullOrWhiteSpace(output.Email)) {
             output.Username = output.Email;
         }
 
         // If this is a new record make sure the username or email are not already in use.
         if (newRecord || StringValue(output.Email).ToLower() != originalEmail.ToLower()) {
             var emailInUse = await data.Users.FirstOrDefaultAsync(x => x.TenantId == output.TenantId && x.Email != null && x.Email.ToLower() == StringValue(output.Email).ToLower());
-            if(emailInUse != null) {
+            if (emailInUse != null) {
                 output.ActionResponse.Messages.Add("Email '" + output.Email + "' Already in use.");
                 return output;
             }
@@ -2149,7 +2155,7 @@ public partial class DataAccess
 
         rec.LastModified = now;
 
-        if(CurrentUser != null) {
+        if (CurrentUser != null) {
             rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
         }
 
@@ -2191,7 +2197,7 @@ public partial class DataAccess
                 var tenantId = rec.TenantId;
 
                 var previousPreferences = DeserializeObject<DataObjects.UserPreferences>(rec.Preferences);
-                if(previousPreferences == null) {
+                if (previousPreferences == null) {
                     previousPreferences = new DataObjects.UserPreferences();
                 }
 
@@ -2199,7 +2205,7 @@ public partial class DataAccess
                 await data.SaveChangesAsync();
 
                 // Any time a user preference is saved push out the update to all clients via SignalR.
-                if(previousPreferences.LastNavigationId != userPreferences.LastNavigationId ||
+                if (previousPreferences.LastNavigationId != userPreferences.LastNavigationId ||
                     previousPreferences.LastView != userPreferences.LastView ||
                     previousPreferences.LastUrl != userPreferences.LastUrl) {
 
@@ -2259,9 +2265,11 @@ public partial class DataAccess
     public async Task<DataObjects.User> UpdateUserFromPlugins(Guid userId)
     {
         var output = await GetUser(userId);
+
         if (output.ActionResponse.Result) {
             output = await UpdateUserFromPlugins(output);
         }
+
         return output;
     }
 
@@ -2441,9 +2449,10 @@ public partial class DataAccess
 
         string code = GenerateRandomCode(6);
 
-        string body = "<p>You are receiving this email because you signed up for an account at <strong>" + websiteName + "</strong>.</p>" +
-                "<p>Use the following confirmation code on that page to confirm your new account:</p>" +
-                "<p style='font-size:2em;'>" + code + "</p>";
+        string body = 
+            "<p>You are receiving this email because you signed up for an account at <strong>" + websiteName + "</strong>.</p>" +
+            "<p>Use the following confirmation code on that page to confirm your new account:</p>" +
+            "<p style='font-size:2em;'>" + code + "</p>";
 
         List<string> to = new List<string>();
         to.Add(StringValue(user.Email));

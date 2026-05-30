@@ -7,6 +7,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -54,7 +55,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach(var item in Model.EmailTemplates) {
+                    @foreach (var item in Model.EmailTemplates) {
                         var details = Helpers.EmailTemplateDetails(item.Template);
 
                         if (!item.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
@@ -83,12 +84,13 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
     protected bool _loading = true;
-    protected string _token = "";
+    protected string _token = String.Empty;
     protected bool _validatedUrl = false;
 
     protected string _pageName = "emailtemplates";
@@ -152,7 +154,7 @@
         _loading = true;
 
         var templates = await Helpers.GetOrPost<List<DataObjects.EmailTemplate>>("api/Data/GetEmailTemplates");
-        if(templates != null && templates.Any()) {
+        if (templates != null && templates.Any()) {
             Model.EmailTemplates = templates;
         } else {
             Model.EmailTemplates = new List<DataObjects.EmailTemplate>();

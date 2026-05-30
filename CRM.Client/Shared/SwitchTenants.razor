@@ -2,7 +2,7 @@
 @inject BlazorDataModel Model
 
 @if (Model.Tenants != null && Model.Tenants.Count() > 1) {
-    switch(Helpers.StringLower(SeparateWithHr)) {
+    switch (Helpers.StringLower(SeparateWithHr)) {
         case "above":
         case "both":
             <hr />
@@ -57,17 +57,19 @@
 @code {
     // An optional class to add to available tenants (not the active tenant.)
     [Parameter]
-    public string AddClass { get; set; } = "";
+    public string AddClass { get; set; } = String.Empty;
 
     // Options are "above", "below", "both", or "" (none)
     [Parameter]
-    public string SeparateWithHr { get; set; } = "";
+    public string SeparateWithHr { get; set; } = String.Empty;
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= StateHasChanged;
     }
 
-    protected override void OnInitialized() {
+    protected override void OnInitialized()
+    {
         Model.OnChange += StateHasChanged;
     }
 }

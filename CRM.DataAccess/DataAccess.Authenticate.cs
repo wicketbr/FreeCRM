@@ -52,7 +52,7 @@ public partial class DataAccess
         // Find the first user record for this user where the account is not in the admin tenant.
         List<User>? users = null;
 
-        if(emailAddress.ToLower() == "admin") {
+        if (emailAddress.ToLower() == "admin") {
             users = await data.Users
                 .Include(x => x.Tenant)
                 .Where(x =>
@@ -61,7 +61,7 @@ public partial class DataAccess
                     x.Enabled == true &&
                     x.Deleted != true
                 ).ToListAsync();
-        }else if(emailAddress.Contains("@")) {
+        } else if (emailAddress.Contains("@")) {
             users = await data.Users
                 .Include(x => x.Tenant)
                 .Where(x =>
@@ -84,9 +84,9 @@ public partial class DataAccess
                 ).ToListAsync();
         }
 
-        if(!authenticate.TenantId.HasValue && !String.IsNullOrEmpty(authenticate.TenantCode)) {
+        if (!authenticate.TenantId.HasValue && !String.IsNullOrEmpty(authenticate.TenantCode)) {
             var tenant = await GetTenantFromCode(authenticate.TenantCode);
-            if(tenant.ActionResponse.Result) {
+            if (tenant.ActionResponse.Result) {
                 authenticate.TenantId = tenant.TenantId;
             }
         }
@@ -111,9 +111,9 @@ public partial class DataAccess
             }
         }
 
-        if(users != null && users.Any()) {
+        if (users != null && users.Any()) {
             // Find the first matching password
-            foreach(var user in users) {
+            foreach (var user in users) {
                 if (user != null) {
                     userId = user.UserId;
 

@@ -2,6 +2,7 @@
 @inject IJSRuntime jsRuntime
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 <div class="btn-group mt-2 mb-2" role="group">
     <button type="button" class="btn btn-dark" @onclick="Cancel">
         <Language Tag="Cancel" IncludeIcon="true" />
@@ -19,6 +20,7 @@
         Config="@Config"
         Value="@Value"
         SetFocusOnLoad="SetFocusOnLoad" />
+
 @code {
     /// <summary>
     /// Optional Configuration to override default value.
@@ -54,7 +56,9 @@
 
     FreeBlazor.HtmlEditor2? _htmlEditor;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected void Cancel()
     {
@@ -65,7 +69,7 @@
     {
         if (OnEditCompleted != null) {
             string output = String.Empty;
-            if(_htmlEditor != null) {
+            if (_htmlEditor != null) {
                 output = await _htmlEditor.GetHTML();
             }
             

@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -236,10 +237,11 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    protected string _lastKey = "";
+    protected string _lastKey = String.Empty;
     protected bool _loadedData = false;
     protected bool _loading = false;
     protected DataObjects.ApplicationSettings _settings = new DataObjects.ApplicationSettings();
@@ -296,17 +298,12 @@
 
     protected async Task Decrypt(string field)
     {
-        string value = "";
-
-        //if (!String.IsNullOrWhiteSpace(field)) {
-            // switch (field.ToLower()) {
-            // }
-        //}
+        string value = String.Empty;
 
         Model.ClearMessages();
         if (!String.IsNullOrWhiteSpace(value)) {
             var response = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/Decrypt", new DataObjects.SimplePost { SingleItem = value });
-            if(response != null) {
+            if (response != null) {
                 if (response.Result) {
                     string decrypted = Helpers.StringValue(response.Messages[0]);
                 } else {
@@ -320,12 +317,7 @@
 
     protected async Task Encrypt(string field)
     {
-        string value = "";
-
-        // if (!String.IsNullOrWhiteSpace(field)) {
-        //     switch (field.ToLower()) {
-        //     }
-        // }
+        string value = String.Empty;
 
         Model.ClearMessages();
         if (!String.IsNullOrWhiteSpace(value)) {
@@ -352,7 +344,7 @@
         }
 
         var newKey = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/GetNewEncryptionKey");
-        if(newKey != null) {
+        if (newKey != null) {
             if (newKey.Result) {
                 string key = newKey.Messages[0];
                 _settings.EncryptionKey = key;
@@ -377,7 +369,7 @@
 
         var getSettings = await Helpers.GetOrPost<DataObjects.ApplicationSettings>("api/Data/GetApplicationSettings");
 
-        if(getSettings != null) {
+        if (getSettings != null) {
             _settings = getSettings;
 
             _graph = new DataObjects.MailServerConfigMicrosoftGraph();
@@ -386,14 +378,14 @@
             switch (_settings.MailServerConfig.Type.ToUpper()) {
                 case "GRAPH":
                     var desGraph = Helpers.DeserializeObject<DataObjects.MailServerConfigMicrosoftGraph>(_settings.MailServerConfig.Config);
-                    if(desGraph != null) {
+                    if (desGraph != null) {
                         _graph = desGraph;
                     }
                     break;
 
                 case "SMTP":
                     var desSMTP = Helpers.DeserializeObject<DataObjects.MailServerConfigSMTP>(_settings.MailServerConfig.Config);
-                    if(desSMTP != null) {
+                    if (desSMTP != null) {
                         _smtp = desSMTP;
                     }
                     break;
@@ -440,7 +432,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 _settings = saved;
                 Model.Message_Saved();

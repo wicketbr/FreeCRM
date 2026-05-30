@@ -6,13 +6,14 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="Services" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         <div class="@Model.StickyMenuClass">
             <h1 class="page-title">
                 <Language Tag="Services" IncludeIcon="true" />
@@ -50,7 +51,7 @@
                         <th style="width:1%;"><Language Tag="ServiceCode" ReplaceSpaces="true" /></th>
                         <th><Language Tag="ServiceDescription" ReplaceSpaces="true" /></th>
                         <!-- {{ModuleItemStart:Tags}} -->
-                        @if(Model.FeatureEnabledTags){
+                        @if (Model.FeatureEnabledTags) {
                             <th><Language Tag="Tags" ReplaceSpaces="true" /></th>
                         }
                         <!-- {{ModuleItemEnd:Tags}} -->
@@ -59,7 +60,7 @@
                 </thead>
                 <tbody>
                     @foreach (var service in Model.Services) {
-                        @if(!service.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                        @if (!service.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
                             <tr class="@(service.Deleted ? "item-deleted" : "")">
                                 <td>
                                     <button type="button" class="btn btn-xs btn-primary nowrap" @onclick="@(() => EditService(service.ServiceId))">
@@ -90,6 +91,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

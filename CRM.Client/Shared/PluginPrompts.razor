@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
 @using Plugins
+
 @if (_prompts != null && _prompts.Count > 0) {
     var missingRequired = new List<string>();
     int index = 0;
@@ -154,8 +155,6 @@
                             </div>
                         </div>
                     }
-
-
                     break;
 
                 case PluginPromptType.Date:
@@ -598,6 +597,7 @@
 
     SetMissingRequiredValues(missingRequired);
 }
+
 @code {
     /// <summary>
     /// If you are going to use any buttons in the prompts, you must provide a method to handle the button click.
@@ -629,7 +629,9 @@
     protected List<PluginPrompt>? _prompts;
     protected List<PluginPromptValue> _promptValues = new List<PluginPromptValue>();
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -774,7 +776,7 @@
         };
 
         Delegate onUploadsComplete = async(List<DataObjects.FileStorage> files) => {
-            foreach(var file in files) {
+            foreach (var file in files) {
                 if (!String.IsNullOrWhiteSpace(file.FileName) && file.Value != null && file.ActionResponse.Result && file.Value.Length > 0) {
                     string bytesAsString = Convert.ToBase64String(file.Value);
 

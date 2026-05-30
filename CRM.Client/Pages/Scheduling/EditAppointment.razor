@@ -244,7 +244,7 @@
                                                 ShowColors="true"
                                                 ShowButton="true"
                                                 Change="@((args) => _appointment.BackgroundColor = args)" />
-                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.BackgroundColor = "")">
+                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.BackgroundColor = String.Empty)">
                                                 <Language Tag="Clear" />
                                             </span>
                                         </div>
@@ -271,7 +271,7 @@
                                                 ShowColors="true"
                                                 ShowButton="true"
                                                 Change="@((args) => _appointment.ForegroundColor = args)" />
-                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.ForegroundColor = "")">
+                                            <span class="input-group-text pointer" @onclick="@(() => _appointment.ForegroundColor = String.Empty)">
                                                 <Language Tag="Clear" />
                                             </span>
                                         </div>
@@ -592,20 +592,21 @@
 </div>
 
 @code {
+    [Parameter] public DataObjects.Appointment? Appointment { get; set; }
+    [Parameter] public Delegate? OnComplete { get; set; }
+    [Parameter] public Delegate? OnDelete { get; set; }
+
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected bool _newAppointment = false;
-    //protected string _originalItemJson = String.Empty;
     protected bool _updatingAttendance = false;
-    protected string _userAttendance = "";
+    protected string _userAttendance = String.Empty;
     protected bool _userIsScheduled = false;
     protected bool _visible = false;
     protected bool _wasDeleted = false;
 
     protected DateTime? _startDate;
-    //protected TimeOnly? _startTime;
     protected DateTime? _endDate;
-    //protected TimeOnly? _endTime;
 
     protected string _hourFormat = Convert.ToDateTime("1/1/2000 13:00:00").ToString("t").ToUpper().Contains("PM") ? "12" : "24";
 
@@ -613,21 +614,14 @@
 
     protected EditAppointment_App AppModule = new EditAppointment_App();
 
-    [Parameter]
-    public DataObjects.Appointment? Appointment { get; set; }
-
-    [Parameter]
-    public Delegate? OnComplete { get; set; }
-
-    [Parameter]
-    public Delegate? OnDelete { get; set; }
-
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= StateHasChanged;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
         if (Model.Loaded && Model.LoggedIn) {
             if (!Model.FeatureEnabledUDF) {
                 Helpers.NavigateToRoot();
@@ -650,8 +644,6 @@
                     }
 
                 }
-
-                //_originalItemJson = GetItemJson(_appointment);
 
                 Model.NavigationId = _appointment.AppointmentId.ToString();
                 Model.ViewIsEditPage = true;
@@ -687,12 +679,14 @@
         }
     }
 
-    protected override void OnInitialized() {
+    protected override void OnInitialized()
+    {
         Model.OnChange += StateHasChanged;
         Model.OnSignalRUpdate += SignalRUpdate;
     }
 
-    protected async Task AddNewUser() {
+    protected async Task AddNewUser()
+    {
         Delegate onUserAdded = (DataObjects.User user) => {
             var existing = _appointment.Users.FirstOrDefault(x => x.UserId == user.UserId);
             if (existing == null) {
@@ -726,7 +720,8 @@
     }
 
     // {{ModuleItemStart:Services}}
-    protected void AddService() {
+    protected void AddService()
+    {
         // If there is a single service set that.
         Guid serviceId = Guid.Empty;
         decimal fee = 0;
@@ -745,7 +740,8 @@
     // {{ModuleItemEnd:Services}}
 
     // {{ModuleItemStart:Tags}}
-    protected async Task AddTag(ChangeEventArgs e) {
+    protected async Task AddTag(ChangeEventArgs e)
+    {
         Guid tagId = Guid.Empty;
 
         if (e != null && e.Value != null) {
@@ -777,7 +773,8 @@
     }
 
     // {{ModuleItemStart:Invoices}}
-    protected void AppointmentInvoices() {
+    protected void AppointmentInvoices()
+    {
         DialogService.Close();
         Helpers.NavigateTo("AppointmentInvoices/" + _appointment.AppointmentId.ToString());
     }
@@ -797,12 +794,14 @@
     }
     // {{ModuleItemEnd:Tags}}
 
-    protected void Close() {
+    protected void Close()
+    {
         _visible = false;
         DialogService.Close();
     }
 
-    protected void Delete() {
+    protected void Delete()
+    {
         if (OnDelete != null) {
             OnDelete.DynamicInvoke(Appointment);
         }
@@ -811,7 +810,8 @@
         DialogService.Close();
     }
 
-    protected async Task DeleteAppointmentNote(Guid AppointmentNoteId) {
+    protected async Task DeleteAppointmentNote(Guid AppointmentNoteId)
+    {
         Model.ClearMessages();
         Model.Message_Deleting();
 
@@ -830,25 +830,8 @@
         }
     }
 
-    // protected string GetItemJson(DataObjects.Appointment item) {
-    //     string output = String.Empty;
-
-    //     var dup = Helpers.DuplicateObject<DataObjects.Appointment>(item);
-    //     if (dup != null) {
-    //         dup.ActionResponse = new DataObjects.BooleanResponse();
-    //         dup.Added = DateTime.MinValue;
-    //         dup.AddedBy = null;
-    //         dup.Deleted = false;
-    //         dup.DeletedAt = null;
-    //         dup.LastModified = DateTime.MinValue;
-    //         dup.LastModifiedBy = null;
-    //         output = Helpers.SerializeObject(dup);
-    //     }
-
-    //     return output;
-    // }
-
-    protected void DeleteAppointmentService(DataObjects.AppointmentService service) {
+    protected void DeleteAppointmentService(DataObjects.AppointmentService service)
+    {
         service.Deleted = true;
     }
 
@@ -871,23 +854,9 @@
     }
     // {{ModuleItemEnd:Locations}}
 
-    // protected bool PreventSave {
-    //     get {
-    //         if (_wasDeleted) {
-    //             return false;
-    //         }
-
-    //         var currentJson = GetItemJson(_appointment);
-
-    //         Console.WriteLine("Original: " + _originalItemJson);
-    //         Console.WriteLine("Current:  " + currentJson);
-
-    //         return _originalItemJson == currentJson;
-    //     }
-    // }
-
     // {{ModuleItemStart:Tags}}
-    protected void RemoveTag(string TagId) {
+    protected void RemoveTag(string TagId)
+    {
         if (_appointment.Tags != null && _appointment.Tags.Any()) {
             _appointment.Tags = _appointment.Tags.Where(x => x.ToString() != TagId).ToList();
             SortAppointmentTags();
@@ -895,11 +864,13 @@
     }
     // {{ModuleItemEnd:Tags}}
 
-    protected void RemoveUserFromAppointment(Guid UserId) {
+    protected void RemoveUserFromAppointment(Guid UserId)
+    {
         _appointment.Users = _appointment.Users.Where(x => x.UserId != UserId).ToList();
     }
 
-    protected async Task Save() {
+    protected async Task Save()
+    {
         if (String.IsNullOrWhiteSpace(_appointment.Title)) {
             await Helpers.DelayedFocus("edit-appt-Title");
             return;
@@ -931,21 +902,10 @@
                 await Helpers.DelayedFocus("edit-appt-StartDate");
                 return;
             }
-            // if (!_startTime.HasValue) {
-            //     await Helpers.DelayedFocus("edit-appt-StartTime");
-            //     return;
-            // }
             if (!_endDate.HasValue) {
                 await Helpers.DelayedFocus("edit-appt-EndDate");
                 return;
             }
-            // if (!_endTime.HasValue) {
-            //     await Helpers.DelayedFocus("edit-appt-EndTime");
-            //     return;
-            // }
-
-            //start = Convert.ToDateTime((_startDate.Value).ToShortDateString() + " " + (_startTime.Value).ToShortTimeString());
-            //end = Convert.ToDateTime((_endDate.Value).ToShortDateString() + " " + (_endTime.Value).ToShortTimeString());
 
             start = _startDate.Value;
             end = _endDate.Value;
@@ -982,7 +942,8 @@
         }
     }
 
-    protected void ServiceChanged(DataObjects.AppointmentService service, ChangeEventArgs args) {
+    protected void ServiceChanged(DataObjects.AppointmentService service, ChangeEventArgs args)
+    {
         string value = String.Empty;
         Guid serviceId = Guid.Empty;
 
@@ -1007,7 +968,8 @@
         // {{ModuleItemEnd:Services}}
     }
 
-    protected void SignalRUpdate(DataObjects.SignalRUpdate update) {
+    protected void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
         if (_visible && Model.View == "schedule") {
             string message = update.Message.ToLower();
 
@@ -1101,12 +1063,14 @@
     }
 
     // {{ModuleItemStart:Tags}}
-    protected void SortAppointmentTags() {
+    protected void SortAppointmentTags()
+    {
         _appointment.Tags = Helpers.SortTagList(_appointment.Tags);
     }
     // {{ModuleItemEnd:Tags}}
 
-    protected async Task UpdateAttendance(string attendance) {
+    protected async Task UpdateAttendance(string attendance)
+    {
         _updatingAttendance = true;
 
         DataObjects.AppointmentAttendanceUpdate update = new DataObjects.AppointmentAttendanceUpdate {
@@ -1132,7 +1096,8 @@
         }
     }
 
-    protected async Task<List<(string key, string label)>?> UserLookup(string search) {
+    protected async Task<List<(string key, string label)>?> UserLookup(string search)
+    {
         List<Guid> excludeUsers = new List<Guid>();
 
         if (_appointment.Users.Any()) {
@@ -1150,7 +1115,8 @@
         }
     }
 
-    protected async Task UserLookupItemSelected((string key, string label) item) {
+    protected async Task UserLookupItemSelected((string key, string label) item)
+    {
         //Model.AddMessage("Selected '" + item.Value + "'", MessageType.Warning);
         // Make sure the user isn't already in the list.
 

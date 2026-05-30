@@ -2,6 +2,7 @@
 @page "/{TenantCode}/ServerUpdated"
 @implements IDisposable
 @inject BlazorDataModel Model
+
 <h1 class="page-title">
     <Language Tag="ServerUpdated" IncludeIcon="true" />
 </h1>
@@ -25,7 +26,9 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {

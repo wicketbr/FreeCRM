@@ -139,7 +139,7 @@ public partial class DataAccess
 
         List<Service>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = await data.Services
                 .Where(x => x.TenantId == TenantId).ToListAsync();
         } else {
@@ -221,9 +221,9 @@ public partial class DataAccess
         output.Description = MaxStringLength(output.Description, 200);
 
         rec.Code = output.Code;
-        
+
         // If this is being set as the default service and it wasn't previously then update other records.
-        if(output.DefaultService == true && rec.DefaultService != true) {
+        if (output.DefaultService == true && rec.DefaultService != true) {
             await data.Database.ExecuteSqlRawAsync("UPDATE Services SET DefaultService=0 WHERE TenantId={0}", output.TenantId);
         }
 

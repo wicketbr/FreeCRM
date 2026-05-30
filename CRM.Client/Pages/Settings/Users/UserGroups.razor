@@ -6,13 +6,14 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="UserGroups" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         if (AppModule.OverridePage) {
             <UserGroups_App />
         } else {
@@ -64,7 +65,7 @@
                     </thead>
                     <tbody>
                         @foreach (var userGroup in Model.UserGroups) {
-                            @if(!userGroup.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
+                            @if (!userGroup.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
                                 string itemClass = String.Empty;
                                 if (userGroup.Deleted) {
                                     itemClass = "item-deleted";
@@ -97,6 +98,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

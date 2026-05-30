@@ -1,10 +1,6 @@
-﻿using CRM;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Server.HttpSys;
 using Plugins;
-using System.Security.Claims;
 
 namespace CRM.Server.Controllers;
 
@@ -13,9 +9,9 @@ public class AuthorizationController : ControllerBase
     private HttpContext? context;
     private IDataAccess da;
     private IPlugins plugins;
-    private string _baseUrl = "";
-    private string _requestedUrl = "";
-    private string _fingerprint = "";
+    private string _baseUrl = String.Empty;
+    private string _requestedUrl = String.Empty;
+    private string _fingerprint = String.Empty;
 
     public AuthorizationController(IDataAccess daInjection, IHttpContextAccessor httpContextAccessor, IPlugins daPlugins)
     {
@@ -71,7 +67,7 @@ public class AuthorizationController : ControllerBase
 
     private string QueryStringValue(string valueName)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (context != null) {
             try {
@@ -84,7 +80,7 @@ public class AuthorizationController : ControllerBase
 
     private string RequestValue(string parameter)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (context != null) {
             output = QueryStringValue(parameter);

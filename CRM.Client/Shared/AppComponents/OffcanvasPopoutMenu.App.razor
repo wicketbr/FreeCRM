@@ -4,7 +4,7 @@
 
 @{
     // This component is used to display application-specific actions in the offcanvas popout menu.
-    switch(Helpers.StringLower(Model.QuickAction)) {
+    switch (Helpers.StringLower(Model.QuickAction)) {
         case "myaction":
             // Create your custom action here.
             break;
@@ -12,7 +12,8 @@
 }
 
 @code {
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= StateHasChanged;
     }
 
@@ -20,19 +21,4 @@
     {
         Model.OnChange += StateHasChanged;
     }
-
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected override void OnParametersSet()
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected void RenderComponent()
-    // {
-    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
-    // }
 }

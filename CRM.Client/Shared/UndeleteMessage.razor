@@ -1,5 +1,6 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
+
 <div class="alert alert-danger marked-as-deleted">
     <div class="mb-2 marked-as-deleted-info">
         <Language Tag="RecordMarkedAsDeletedInfo" />
@@ -26,34 +27,34 @@
         <Language Tag="UndeleteRecord" IncludeIcon="true" />
     </button>
 </div>
+
 @code {
     /// <summary>
     /// Required callback event to invoke when the Undelete Record button is clicked.
     /// </summary>
-    [Parameter]
-    public EventCallback OnUndelete { get; set; }
+    [Parameter] public EventCallback OnUndelete { get; set; }
 
     /// <summary>
     /// Optional DeletedAt datetime? value.
     /// </summary>
-    [Parameter]
-    public DateTime? DeletedAt { get; set; }
+    [Parameter] public DateTime? DeletedAt { get; set; }
 
     /// <summary>
     /// Optional DeletedBy value.
     /// </summary>
-    [Parameter]
-    public string? LastModifiedBy { get; set; }
+    [Parameter] public string? LastModifiedBy { get; set; }
 
     protected DateTime? WillDeleteAt;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnParametersSet()
     {
         if (DeletedAt.HasValue) {
             int deleteAfterDays = Model.Tenant.TenantSettings.DeleteMarkedRecordsAfterDays;
-            if(deleteAfterDays > 0) {
+            if (deleteAfterDays > 0) {
                 WillDeleteAt = ((DateTime)DeletedAt).AddDays(deleteAfterDays);
             }
         }

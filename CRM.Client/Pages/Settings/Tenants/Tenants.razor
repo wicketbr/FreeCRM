@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     <div class="@Model.StickyMenuClass">
         <h1 class="page-title">
@@ -82,6 +83,7 @@
         </div>
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

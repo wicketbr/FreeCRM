@@ -3,22 +3,17 @@
 @typeparam TValue
 
 @if (_plugins.Any()) {
-    foreach(var plugin in _plugins) {
+    foreach (var plugin in _plugins) {
         <BlazorPlugin Plugin="plugin" Button="Button" Parameters="Parameters" />
     }
 }
 
 @code {
     [Parameter] public bool Button { get; set; }
-
     [Parameter] public string? Position { get; set; }
-
     [Parameter] public string Module { get; set; } = String.Empty;
-
     [Parameter] public EventCallback<string> OnInitializedCallback { get; set; }
-
     [Parameter] public TValue? Value { get; set; }
-
     [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
 
     List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
@@ -34,11 +29,8 @@
         StateHasChanged();
     }
 
-    // protected override async Task OnAfterRenderAsync(bool firstRender)
-    // {
-    // }
-
-    protected override void OnInitialized() {
+    protected override void OnInitialized()
+    {
         Model.OnChange += StateHasChanged;
 
         var plugins = Model.Plugins
@@ -59,7 +51,7 @@
                 match += Module.ToLower() + "_";
             }
 
-            foreach(var plugin in plugins.OrderBy(x => x.SortOrder).ThenBy(x => x.Name)) {
+            foreach (var plugin in plugins.OrderBy(x => x.SortOrder).ThenBy(x => x.Name)) {
                 if (plugin.Name.ToLower().StartsWith(match)) {
                     modulePlugins.Add(plugin);
                 }

@@ -8,6 +8,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     <div class="@Model.StickyMenuClass">
         <h1 class="page-title">
@@ -338,6 +339,7 @@ namespace CustomAuthenticationProvider {
         </div>
     }
 }
+
 @code {
     [Parameter] public string? tenantid { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -349,7 +351,7 @@ namespace CustomAuthenticationProvider {
     protected string[] _loginOptions = new string[] { };
     protected string[] _moduleHideElements = new string[] { };
     protected bool _newTenant = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
     protected bool _validatedUrl = false;
 
@@ -399,57 +401,49 @@ namespace CustomAuthenticationProvider {
         }
     }
 
-    protected bool AuthOptionApple
-    {
+    protected bool AuthOptionApple {
         get {
             return _loginOptions != null && _loginOptions.Contains("apple");
         }
     }
 
-    protected bool AuthOptionCustom
-    {
+    protected bool AuthOptionCustom {
         get {
             return _loginOptions != null && _loginOptions.Contains("custom");
         }
     }
 
-    protected bool AuthOptionFacebook
-    {
+    protected bool AuthOptionFacebook {
         get {
             return _loginOptions != null && _loginOptions.Contains("facebook");
         }
     }
 
-    protected bool AuthOptionGoogle
-    {
+    protected bool AuthOptionGoogle {
         get {
             return _loginOptions != null && _loginOptions.Contains("google");
         }
     }
 
-    protected bool AuthOptionLocal
-    {
+    protected bool AuthOptionLocal {
         get {
             return _loginOptions != null && _loginOptions.Contains("local");
         }
     }
 
-    protected bool AuthOptionMicrosoft
-    {
+    protected bool AuthOptionMicrosoft {
         get {
             return _loginOptions != null && _loginOptions.Contains("microsoft");
         }
     }
 
-    protected bool AuthOptionOpenId
-    {
+    protected bool AuthOptionOpenId {
         get {
             return _loginOptions != null && _loginOptions.Contains("openid");
         }
     }
 
-    protected int CustomAuthenticationProviderCount
-    {
+    protected int CustomAuthenticationProviderCount {
         get {
             int output = 1;
 
@@ -482,18 +476,18 @@ namespace CustomAuthenticationProvider {
         Model.Message_Deleting();
 
         var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("/api/Data/DeleteTenant/" + _tenant.TenantId.ToString());
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 // If this was the active tenant, then update to the default Guid2 tenant.
-                if(Model.TenantId == _tenant.TenantId) {
+                if (Model.TenantId == _tenant.TenantId) {
                     Model.TenantId = Helpers.Guid2;
                     var defaultTenant = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
-                    if(defaultTenant != null) {
+                    if (defaultTenant != null) {
                         Model.Tenant = defaultTenant;
                     }
 
                     var defaultUser = Model.Users.FirstOrDefault(x => x.TenantId == Model.TenantId);
-                    if(defaultUser != null) {
+                    if (defaultUser != null) {
                         Model.User = defaultUser;
                     }
                 }
@@ -564,7 +558,7 @@ namespace CustomAuthenticationProvider {
 
         // Make sure all required fields have been filled in.
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_tenant.Name)) {
             errors.Add(Helpers.MissingRequiredField("TenantName"));
@@ -572,7 +566,7 @@ namespace CustomAuthenticationProvider {
         }
         if (String.IsNullOrWhiteSpace(_tenant.TenantCode)) {
             errors.Add(Helpers.MissingRequiredField("TenantCode"));
-            if(focus == "") {
+            if (focus == String.Empty) {
                 focus = "edit-tenant-code";
             }
         }
@@ -583,14 +577,14 @@ namespace CustomAuthenticationProvider {
                 errors.AddRange(saveApp.Messages);
             }
 
-            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+            if (focus == String.Empty && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
                 focus = saveApp.Focus;
             }
         }
 
         if (errors.Any()) {
             Model.ErrorMessages(errors);
-            if(focus != "") {
+            if (focus != String.Empty) {
                 await Helpers.DelayedFocus(focus);
             }
             return;
@@ -607,19 +601,19 @@ namespace CustomAuthenticationProvider {
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 // Update any Model objects
-                if(Model.TenantId == saved.TenantId) {
+                if (Model.TenantId == saved.TenantId) {
                     var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
-                    if(dup != null) {
+                    if (dup != null) {
                         Model.Tenant = dup;
                     }
 
                     var listItem = Model.Tenants.FirstOrDefault(x => x.TenantId == saved.TenantId);
-                    if(listItem != null) {
+                    if (listItem != null) {
                         var dup2 = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
-                        if(dup2 != null) {
+                        if (dup2 != null) {
                             listItem = dup2;
                         }
                     }
@@ -638,8 +632,7 @@ namespace CustomAuthenticationProvider {
         }
     }
 
-    protected bool ShowCustomAuthenticationOptions
-    {
+    protected bool ShowCustomAuthenticationOptions {
         get {
             bool output = _tenant.TenantId == Helpers.Guid1;
 
@@ -651,25 +644,23 @@ namespace CustomAuthenticationProvider {
         }
     }
 
-    protected int TextareaHeightCustomAuthenticationCode
-    {
+    protected int TextareaHeightCustomAuthenticationCode {
         get {
             int output = Helpers.LinesInString(_tenant.TenantSettings.CustomAuthenticationCode);
-            if(output < 5) {
+            if (output < 5) {
                 output = 5;
             }
             return output;
         }
     }
 
-    protected int TextareaHeightRSA
-    {
+    protected int TextareaHeightRSA {
         get {
             int output = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPrivateKey);
 
             int publicKey = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPublicKey);
 
-            if(publicKey > output) {
+            if (publicKey > output) {
                 output = publicKey;
             }
 

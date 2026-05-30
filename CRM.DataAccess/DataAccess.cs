@@ -1,23 +1,20 @@
-﻿using Microsoft.AspNetCore.Http;
-using Plugins;
-
-namespace CRM;
+﻿namespace CRM;
 
 public partial class DataAccess: IDisposable, IDataAccess
 {
     private DataObjects.AuthenticationProviders? _authenticationProviders;
     private string _connectionString;
-    private string _cookiePrefix = "";
+    private string _cookiePrefix = String.Empty;
     private EFDataModel data;
     private string _databaseType;
     private bool _firstInit = true;
     private Guid _guid1 = new Guid("00000000-0000-0000-0000-000000000001");
     private Guid _guid2 = new Guid("00000000-0000-0000-0000-000000000002");
-    private HttpContext? _httpContext;
-    private HttpRequest? _httpRequest;
-    private HttpResponse? _httpResponse;
+    private Microsoft.AspNetCore.Http.HttpContext? _httpContext;
+    private Microsoft.AspNetCore.Http.HttpRequest? _httpRequest;
+    private Microsoft.AspNetCore.Http.HttpResponse? _httpResponse;
     private bool _inMemoryDatabase = false;
-    private string _localModeUrl = "";
+    private string _localModeUrl = String.Empty;
     private bool _open;
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
@@ -30,8 +27,7 @@ public partial class DataAccess: IDisposable, IDataAccess
         IServiceProvider? serviceProvider = null,
         string CookiePrefix = "",
         bool UseBackgroundService = false
-    )
-    {
+    ){
         _cookiePrefix = CookiePrefix;
         _connectionString = ConnectionString;
         _databaseType = DatabaseType;

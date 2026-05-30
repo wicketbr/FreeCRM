@@ -132,7 +132,7 @@ namespace LoginPlugin
                         messages.Add("Missing the URL Parameter");
                     }
                 }
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 messages.Add("Error in Login: " + ex.Message);
             }
 
@@ -163,7 +163,7 @@ namespace LoginPlugin
                 } else {
                     messages.Add("Missing DataAccess Library Reference");
                 }
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 messages.Add("Error in Logout: " + ex.Message);
             }
 

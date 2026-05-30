@@ -124,14 +124,6 @@ public class Encryption : IEncryption
     /// <returns>a byte array or null</returns>
     public byte[] ConvertByteArrayStringToByteArray(string ByteArrayString)
     {
-        //byte[] output = new byte[] { };
-        //if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
-        //	try {
-        //		output = ByteArrayString.Split(',').Select(x => x.Trim().Substring(2)).Select(x => Convert.ToByte(x, 16)).ToArray();
-        //	} catch { }
-        //}
-        //return output;
-
         List<byte> output = new List<byte>();
 
         if (!string.IsNullOrWhiteSpace(ByteArrayString)) {
@@ -170,9 +162,11 @@ public class Encryption : IEncryption
     public string ConvertByteArrayToString(byte[] ByteArray)
     {
         string output = String.Empty;
+
         if (ByteArray != null) {
             output = "0x" + BitConverter.ToString(ByteArray).Replace("-", ",0x");
         }
+
         return output;
     }
 
@@ -184,9 +178,11 @@ public class Encryption : IEncryption
     public string Decrypt(string? EncryptedData)
     {
         string output = String.Empty;
+
         if (!String.IsNullOrEmpty(EncryptedData)) {
             output = Decrypt(ConvertByteArrayStringToByteArray(EncryptedData));
         }
+
         return output;
     }
 
@@ -198,6 +194,7 @@ public class Encryption : IEncryption
     public string Decrypt(byte[] EncryptedData)
     {
         string output = String.Empty;
+
         if (this._key != null && EncryptedData != null && EncryptedData.Length > 16) {
             // Decrypt using AES encryption
             using (Aes aes = Aes.Create()) {
@@ -220,6 +217,7 @@ public class Encryption : IEncryption
                 }
             }
         }
+
         return output;
     }
 
@@ -232,6 +230,7 @@ public class Encryption : IEncryption
     public T? DecryptObject<T>(byte[]? EncryptedObject)
     {
         var output = default(T);
+
         if (EncryptedObject != null) {
             XmlSerializer serializer = new XmlSerializer(typeof(T));
             XmlReaderSettings settings = new XmlReaderSettings();
@@ -248,6 +247,7 @@ public class Encryption : IEncryption
                 }
             }
         }
+
         return output;
     }
 
@@ -259,6 +259,7 @@ public class Encryption : IEncryption
     public string Encrypt(string? ToEncrypt)
     {
         string output = String.Empty;
+
         try {
             if (!String.IsNullOrEmpty(ToEncrypt)) {
                 var bytes = Encrypter(ToEncrypt);
@@ -267,6 +268,7 @@ public class Encryption : IEncryption
                 }
             }
         } catch { }
+
         return output;
     }
 
@@ -278,6 +280,7 @@ public class Encryption : IEncryption
     private byte[]? Encrypter(string ToEncrypt)
     {
         byte[]? output = null;
+
         if (this._key != null) {
             // Encrypt using AES encryption
             using (Aes aes = Aes.Create()) {
@@ -302,6 +305,7 @@ public class Encryption : IEncryption
                 output = aes.IV.ToList().Concat(encrypted.ToList()).ToArray();
             }
         }
+
         return output;
     }
 
@@ -313,6 +317,7 @@ public class Encryption : IEncryption
     public byte[]? EncryptObject(object o)
     {
         byte[]? output = null;
+
         XmlSerializer serializer = new XmlSerializer(o.GetType());
 
         XmlWriterSettings settings = new XmlWriterSettings();
@@ -328,6 +333,7 @@ public class Encryption : IEncryption
             xml = textWriter.ToString();
             output = Encrypter(xml);
         }
+
         return output;
     }
 
@@ -338,13 +344,15 @@ public class Encryption : IEncryption
     /// <returns>A fixed-length hash</returns>
     public string GenerateChecksum(string input)
     {
-        string output = "";
+        string output = String.Empty;
+
         try {
             var sha1 = SHA1.Create();
             byte[] buf = System.Text.Encoding.UTF8.GetBytes(input);
             byte[] hash = sha1.ComputeHash(buf, 0, buf.Length);
             output = System.BitConverter.ToString(hash).Replace("-", "");
         } catch { }
+
         return output;
     }
 

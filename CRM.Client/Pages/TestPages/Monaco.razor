@@ -35,8 +35,8 @@
     protected bool _loading = false;
     protected string _pageName = "monaco";
 
-    protected string _monacoContent = "";
-    protected string _monacoContentToDiff = "";
+    protected string _monacoContent = String.Empty;
+    protected string _monacoContentToDiff = String.Empty;
     protected bool _monacoReadOnly = false;
 
     public void Dispose()
@@ -66,7 +66,6 @@
     protected override void OnInitialized()
     {
         _monacoContent = "<div>" + Environment.NewLine + "\tSome sample <b>HTML</b> content." + Environment.NewLine + "</div>";
-        //_monacoContentToDiff = _monacoContent;
 
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;

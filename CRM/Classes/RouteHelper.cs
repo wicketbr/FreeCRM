@@ -9,7 +9,7 @@ public class RouteHelper
     {
         _context = httpContext;
         _routeInfo = new RouteInformation();
-        string path = "";
+        string path = String.Empty;
 
         if (_context != null) {
             try {
@@ -65,7 +65,7 @@ public class RouteHelper
 
     public string GetBaseUrl()
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_context != null) {
             try {

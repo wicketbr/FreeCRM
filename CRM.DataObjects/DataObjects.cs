@@ -97,7 +97,7 @@ public partial class DataObjects
         public List<DataObjects.ActiveUser> ActiveUsers { get; set; } = new List<ActiveUser>();
         public CustomLoginProvider AdminCustomLoginProvider { get; set; } = new CustomLoginProvider();
         public List<Tenant> AllTenants { get; set; } = new List<Tenant>();
-        public string ApplicationUrl { get; set; } = "";
+        public string ApplicationUrl { get; set; } = String.Empty;
         public DataObjects.ApplicationSettingsUpdate AppSettings { get; set; } = new ApplicationSettingsUpdate();
         public AuthenticationProviders? AuthenticationProviders { get; set; }
         public string CultureCode { get; set; } = "en-US";
@@ -115,7 +115,7 @@ public partial class DataObjects
         public User User { get; set; } = new User();
         public List<User> Users { get; set; } = new List<User>();
         public bool UseTenantCodeInUrl { get; set; }
-        public string Version { get; set; } = "";
+        public string Version { get; set; } = String.Empty;
     }
 
     public partial class BooleanResponse
@@ -154,10 +154,10 @@ public partial class DataObjects
 
     public partial class CustomLoginProvider
     {
-        public string Name { get; set; } = "";
-        public string Icon { get; set; } = "";
-        public string ButtonClass { get; set; } = "";
-        public string Code { get; set; } = "";
+        public string Name { get; set; } = String.Empty;
+        public string Icon { get; set; } = String.Empty;
+        public string ButtonClass { get; set; } = String.Empty;
+        public string Code { get; set; } = String.Empty;
     }
 
     public partial class DataMigration
@@ -195,9 +195,9 @@ public partial class DataObjects
     public partial class DeletedRecordItem
     {
         public Guid ItemId { get; set; }
-        public string Display { get; set; } = "";
+        public string Display { get; set; } = String.Empty;
         public DateTime DeletedAt { get; set; }
-        public string DeletedBy { get; set; } = "";
+        public string DeletedBy { get; set; } = String.Empty;
     }
 
     public partial class DeletedRecords
@@ -234,14 +234,14 @@ public partial class DataObjects
 
     public partial class EmailMessage : ActionResponseObject
     {
-        public string From { get; set; } = "";
+        public string From { get; set; } = String.Empty;
         public string? FromDisplayName { get; set; }
         public string? ReplyTo { get; set; }
         public List<string> To { get; set; } = new List<string>();
         public List<string> Cc { get; set; } = new List<string>();
         public List<string> Bcc { get; set; } = new List<string>();
-        public string Subject { get; set; } = "";
-        public string Body { get; set; } = "";
+        public string Subject { get; set; } = String.Empty;
+        public string Body { get; set; } = String.Empty;
         public List<DataObjects.FileStorage>? Files { get; set; }
     }
 
@@ -377,7 +377,7 @@ public partial class DataObjects
 
     public partial class MailServerConfig
     {
-        public string Type { get; set; } = "";
+        public string Type { get; set; } = String.Empty;
         public string? Config { get; set; }
         public bool AllowSendingFromIndividualEmailAddresses { get; set; }
     }
@@ -401,9 +401,9 @@ public partial class DataObjects
 
     public partial class MenuItem
     {
-        public string Title { get; set; } = "";
+        public string Title { get; set; } = String.Empty;
         public string? Icon { get; set; }
-        public string url { get; set; } = "";
+        public string url { get; set; } = String.Empty;
         public List<string> PageNames { get; set; } = new List<string>();
         public bool AppAdminOnly { get; set; }
         public int SortOrder { get; set; }
@@ -473,8 +473,8 @@ public partial class DataObjects
     public partial class TenantList
     {
         public Guid TenantId { get; set; }
-        public string Name { get; set; } = "";
-        public string TenantCode { get; set; } = "";
+        public string Name { get; set; } = String.Empty;
+        public string TenantCode { get; set; } = String.Empty;
     }
 
     public partial class TenantSettings
@@ -519,10 +519,10 @@ public partial class DataObjects
         public int MaxToastMessages { get; set; } = -1;
         public List<string> ModuleHideElements { get; set; } = new List<string>();
         public List<string> ModuleOptInElements { get; set; } = new List<string>();
-        public string? Theme { get; set; } = "";
-        public string? ThemeCss { get; set; } = "";
-        public string? ThemeFont { get; set; } = "";
-        public string? ThemeFontCssImport { get; set; } = "";
+        public string? Theme { get; set; } = String.Empty;
+        public string? ThemeCss { get; set; } = String.Empty;
+        public string? ThemeFont { get; set; } = String.Empty;
+        public string? ThemeFontCssImport { get; set; } = String.Empty;
         public WorkSchedule WorkSchedule { get; set; } = new WorkSchedule();
         public bool RequirePreExistingAccountToLogIn { get; set; }
         public List<ListItem>? ListItems { get; set; } = null!;
@@ -600,8 +600,8 @@ public partial class DataObjects
         public Guid UserId { get; set; }
         public Guid TenantId { get; set; }
         public bool Enabled { get; set; }
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
+        public string FirstName { get; set; } = String.Empty;
+        public string LastName { get; set; } = String.Empty;
     }
 
     public partial class UserListing
@@ -630,6 +630,7 @@ public partial class DataObjects
 
     public partial class UserPreferences
     {
+        public string? CultureCode { get; set; }
         public int DefaultAppointmentDuration { get; set; }
         public bool EnabledItemsOnly { get; set; }
         public FilterFileStorage filterFileStorage { get; set; } = new FilterFileStorage();
@@ -642,6 +643,7 @@ public partial class DataObjects
         public string? LastUrl { get; set; }
         public string? LastView { get; set; }
         public bool StickyMenus { get; set; }
+        public string? Theme { get; set; }
     }
 
     public partial class UserTenant

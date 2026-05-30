@@ -6,7 +6,7 @@
     // This component is used to display application-specific settings on the AppSettings page.
     // Enabled must be set to true for any of these to render.
 
-    switch(Helpers.StringLower(Area)) {
+    switch (Helpers.StringLower(Area)) {
         case "top":
             break;
 
@@ -43,7 +43,8 @@
     /// </summary>
     [Parameter] public EventCallback<DataObjects.ApplicationSettings> ValueChanged { get; set; }
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= StateHasChanged;
     }
 
@@ -52,22 +53,8 @@
         Model.OnChange += StateHasChanged;
     }
 
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected override void OnParametersSet()
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected void RenderComponent()
-    // {
-    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
-    // }
-
-    public DataObjects.ModuleAction Save(DataObjects.ApplicationSettings appSettings) {
+    public DataObjects.ModuleAction Save(DataObjects.ApplicationSettings appSettings)
+    {
         var output = new DataObjects.ModuleAction { Result = true };
 
         // Perform and pre-save checks here. Return false if there is an error and include any error messages.
@@ -76,7 +63,8 @@
         return output;
     }
 
-    protected void ValueHasChanged() {
+    protected void ValueHasChanged()
+    {
         ValueChanged.InvokeAsync(Value);
         StateHasChanged();
     }

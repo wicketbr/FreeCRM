@@ -1,13 +1,7 @@
-﻿using Azure.Identity;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Graph.Models;
-using Plugins;
-using System.Net.Http;
 using System.Reflection;
-using Utilities;
 
 namespace CRM;
 
@@ -89,9 +83,6 @@ public partial interface IDataAccess
     string StringValue(string? input);
     bool TokenAutoRenew { get; }
     Task<DataObjects.BooleanResponse> UndeleteRecord(string? Type, Guid RecordId, DataObjects.User CurrentUser);
-    /// <summary>
-    /// A unique string generated when the application starts.
-    /// </summary>
     string UniqueId { get; }
     void UpdateApplicationURL(string? url);
     string UrlDecode(string? input);
@@ -112,10 +103,12 @@ public partial class DataAccess
     public string AppendWithComma(string Original, string New)
     {
         string output = Original;
+
         if (!String.IsNullOrWhiteSpace(Original)) {
             output += ", ";
         }
         output += New;
+
         return output;
     }
 
@@ -126,10 +119,12 @@ public partial class DataAccess
             }
 
             string output = StringValue(CacheStore.GetCachedItem<string>(Guid.Empty, "ApplicationURL"));
+
             if (String.IsNullOrWhiteSpace(output)) {
                 output += GetSetting<string>("ApplicationURL", DataObjects.SettingType.Text);
                 CacheStore.SetCacheItem(Guid.Empty, "ApplicationURL", output);
             }
+
             return output;
         }
     }
@@ -141,6 +136,7 @@ public partial class DataAccess
         }
 
         string output = StringValue(CacheStore.GetCachedItem<string>(TenantId.Value, "ApplicationURL"));
+
         if (String.IsNullOrWhiteSpace(output)) {
             var tenantSettings = GetTenantSettings(TenantId.Value);
             output = StringValue(tenantSettings.ApplicationUrl);
@@ -182,7 +178,7 @@ public partial class DataAccess
                 if (tenants != null && tenants.Any()) {
                     List<string> tenantUrls = new List<string>();
 
-                    foreach(var tenantId in tenants) {
+                    foreach (var tenantId in tenants) {
                         var settings = GetSetting<DataObjects.TenantSettings>("Settings", DataObjects.SettingType.Object, tenantId);
                         if (settings != null && !String.IsNullOrWhiteSpace(settings.ApplicationUrl) && hostUrl.ToLower().StartsWith(settings.ApplicationUrl.ToLower())) {
                             if (!tenantUrls.Contains(settings.ApplicationUrl)) {
@@ -207,8 +203,7 @@ public partial class DataAccess
         }
     }
 
-    private DataObjects.ApplicationSettingsUpdate AppSettings
-    {
+    private DataObjects.ApplicationSettingsUpdate AppSettings {
         get {
             var output = new DataObjects.ApplicationSettingsUpdate {
                 ApplicationURL = ApplicationURL,
@@ -230,7 +225,7 @@ public partial class DataAccess
 
     public string BytesToFileSizeLabel(long? bytes, List<string>? labels = null)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (labels == null || labels.Count() < 4) {
             labels = new List<string> { "b", "kb", "m", "gb" };
@@ -254,6 +249,7 @@ public partial class DataAccess
     public string CleanHtml(string? html)
     {
         string output = StringValue(html);
+
         if (!String.IsNullOrWhiteSpace(output)) {
             // First, if there are body tags only get the text in between the start and end tag.
             int BodyStart = output.ToLower().IndexOf("<body");
@@ -284,6 +280,7 @@ public partial class DataAccess
                 StyleStart = output.ToLower().IndexOf("<style>");
             }
         }
+
         return output;
     }
 
@@ -299,10 +296,14 @@ public partial class DataAccess
         }
     }
 
-    private List<string> ConcatenateErrorMessages(DataObjects.User ReportedBy,
-        DataObjects.User AffectedUser, List<DataObjects.User> AdditionalAffectedUsers)
-    {
+    private List<string> ConcatenateErrorMessages
+    (
+        DataObjects.User ReportedBy,
+        DataObjects.User AffectedUser,
+        List<DataObjects.User> AdditionalAffectedUsers
+    ){
         List<string> output = new List<string>();
+
         if (!ReportedBy.ActionResponse.Result) {
             if (ReportedBy.ActionResponse.Messages != null && ReportedBy.ActionResponse.Messages.Count() > 0) {
                 foreach (var msg in ReportedBy.ActionResponse.Messages) {
@@ -330,15 +331,18 @@ public partial class DataAccess
                 }
             }
         }
+
         return output;
     }
 
     public string ConnectionString(bool full = false)
     {
         string output = ConnectionStringReport(_connectionString);
+
         if (full) {
             output = _connectionString;
         }
+
         return output;
     }
 
@@ -349,7 +353,7 @@ public partial class DataAccess
         if (!String.IsNullOrWhiteSpace(output)) {
             List<string> elements = output.Split(';').ToList();
             if (elements != null && elements.Count() > 0) {
-                string report = "";
+                string report = String.Empty;
                 foreach (var element in elements) {
                     List<string> items = element.Split('=').ToList();
                     if (items != null && items.Count() > 0) {
@@ -395,10 +399,10 @@ public partial class DataAccess
     {
         string output = String.Empty;
 
-        if(!String.IsNullOrWhiteSpace(cookieName)) {
+        if (!String.IsNullOrWhiteSpace(cookieName)) {
             if (_httpContext != null) {
                 try {
-                    if(_httpContext.Request != null) {
+                    if (_httpContext.Request != null) {
                         var ck = _httpContext.Request.Cookies[_cookiePrefix + cookieName];
                         if (!String.IsNullOrWhiteSpace(ck)) {
                             output = ck;
@@ -410,7 +414,7 @@ public partial class DataAccess
                 if (output.ToLower() == "cleared") { output = String.Empty; }
             } else if (_httpRequest != null) {
                 var cookieValue = _httpRequest.Cookies[_cookiePrefix + cookieName];
-                if(!String.IsNullOrWhiteSpace(cookieValue)) {
+                if (!String.IsNullOrWhiteSpace(cookieValue)) {
                     output = cookieValue;
                 }
             }
@@ -421,7 +425,7 @@ public partial class DataAccess
 
     public void CookieWrite(string cookieName, string value, string cookieDomain = "")
     {
-        if(!String.IsNullOrWhiteSpace(cookieName)) {
+        if (!String.IsNullOrWhiteSpace(cookieName)) {
             DateTime now = DateTime.UtcNow;
             Microsoft.AspNetCore.Http.CookieOptions option = new Microsoft.AspNetCore.Http.CookieOptions();
             option.Expires = now.AddYears(1);
@@ -511,7 +515,7 @@ public partial class DataAccess
     private string DefaultReplyToAddress {
         get {
             string output = String.Empty;
-            if(CacheStore.ContainsKey(Guid.Empty, "DefaultReplyToAddress")) {
+            if (CacheStore.ContainsKey(Guid.Empty, "DefaultReplyToAddress")) {
                 output += CacheStore.GetCachedItem<string>(Guid.Empty, "DefaultReplyToAddress");
             } else {
                 output += GetSetting<string>("DefaultReplyToAddress", DataObjects.SettingType.Text);
@@ -537,14 +541,15 @@ public partial class DataAccess
         return output;
     }
 
-    public string DefaultTenantCode
-    {
+    public string DefaultTenantCode {
         get {
             string output = StringValue(CacheStore.GetCachedItem<string>(Guid.Empty, "DefaultTenantCode"));
+
             if (String.IsNullOrWhiteSpace(output)) {
                 output += GetSetting<string>("DefaultTenantCode", DataObjects.SettingType.Text);
                 CacheStore.SetCacheItem(Guid.Empty, "DefaultTenantCode", output);
             }
+
             return output;
         }
     }
@@ -572,8 +577,8 @@ public partial class DataAccess
         try {
             // {{ModuleItemStart:Appointments}}
             var appointments = await data.Appointments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(appointments != null && appointments.Any()) {
-                foreach(var rec in appointments) {
+            if (appointments != null && appointments.Any()) {
+                foreach (var rec in appointments) {
                     var result = await DeleteAppointment(rec.AppointmentId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -585,7 +590,7 @@ public partial class DataAccess
 
             var appointmentNotes = await data.AppointmentNotes.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (appointmentNotes != null && appointmentNotes.Any()) {
-                foreach(var rec in appointmentNotes) {
+                foreach (var rec in appointmentNotes) {
                     var result = await DeleteAppointmentNote(rec.AppointmentNoteId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -597,7 +602,7 @@ public partial class DataAccess
 
             var appointmentServices = await data.AppointmentServices.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (appointmentServices != null && appointmentServices.Any()) {
-                foreach(var rec in appointmentServices) {
+                foreach (var rec in appointmentServices) {
                     var result = await DeleteAppointmentService(rec.AppointmentServiceId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -610,8 +615,8 @@ public partial class DataAccess
 
             // Other items need to call their delete method to get all related data.
             var departmentGroups = await data.DepartmentGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(departmentGroups != null && departmentGroups.Any()) {
-                foreach(var rec in departmentGroups) {
+            if (departmentGroups != null && departmentGroups.Any()) {
+                foreach (var rec in departmentGroups) {
                     var result = await DeleteDepartmentGroup(rec.DepartmentGroupId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -622,8 +627,8 @@ public partial class DataAccess
             }
 
             var departments = await data.Departments.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(departments != null && departments.Any()) {
-                foreach(var rec in departments) {
+            if (departments != null && departments.Any()) {
+                foreach (var rec in departments) {
                     var result = await DeleteDepartment(rec.DepartmentId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -636,7 +641,7 @@ public partial class DataAccess
             // {{ModuleItemStart:EmailTemplates}}
             var emailTemplates = await data.EmailTemplates.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
             if (emailTemplates != null && emailTemplates.Any()) {
-                foreach(var rec in emailTemplates) {
+                foreach (var rec in emailTemplates) {
                     var result = await DeleteEmailTemplate(rec.EmailTemplateId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -661,7 +666,7 @@ public partial class DataAccess
 
             // {{ModuleItemStart:Locations}}
             var locations = await data.Locations.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(locations != null && locations.Any()) {
+            if (locations != null && locations.Any()) {
                 foreach (var rec in locations) {
                     // Clear out this location in any appointments
                     await data.Database.ExecuteSqlRawAsync("UPDATE Appointments SET LocationId = NULL WHERE LocationId={0}", rec.LocationId);
@@ -679,8 +684,8 @@ public partial class DataAccess
 
             // {{ModuleItemStart:Services}}
             var services = await data.Services.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(services != null && services.Any()) {
-                foreach(var rec in services) {
+            if (services != null && services.Any()) {
+                foreach (var rec in services) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM AppointmentServices WHERE ServiceId={0}", rec.ServiceId);
                     await data.SaveChangesAsync();
 
@@ -697,8 +702,8 @@ public partial class DataAccess
             // {{ModuleItemStart:Tags}}
             // For tags, remove any related items first, then delete the tags.
             var tags = await data.Tags.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(tags != null && tags.Any()) {
-                foreach(var rec in tags) {
+            if (tags != null && tags.Any()) {
+                foreach (var rec in tags) {
                     await data.Database.ExecuteSqlRawAsync("DELETE FROM TagItems WHERE TagId={0}", rec.TagId);
                     await data.SaveChangesAsync();
 
@@ -713,7 +718,7 @@ public partial class DataAccess
             // {{ModuleItemEnd:Tags}}
 
             var userGroups = await data.UserGroups.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(userGroups != null &&  userGroups.Any()) {
+            if (userGroups != null &&  userGroups.Any()) {
                 foreach (var rec in userGroups) {
                     var result = await DeleteUserGroup(rec.GroupId, null, true);
                     if (!result.Result) {
@@ -725,8 +730,8 @@ public partial class DataAccess
             }
 
             var users = await data.Users.Where(x => x.TenantId == TenantId && x.Deleted == true && (x.DeletedAt == null || x.DeletedAt < OlderThan)).ToListAsync();
-            if(users != null && users.Any()) {
-                foreach(var rec in users) { 
+            if (users != null && users.Any()) {
+                foreach (var rec in users) { 
                     var result = await DeleteUser(rec.UserId, null, true);
                     if (!result.Result) {
                         errors.AddRange(result.Messages);
@@ -747,7 +752,8 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.BooleanResponse> DeletePendingDeletedRecords() {
+    public async Task<DataObjects.BooleanResponse> DeletePendingDeletedRecords()
+    {
         var output = new DataObjects.BooleanResponse();
         var errors = new List<string>();
         var messages = new List<string>();
@@ -939,16 +945,16 @@ public partial class DataAccess
         string endTime = end.ToString("t");
 
         if (allDay) {
-            if(startDate == endDate) {
+            if (startDate == endDate) {
                 output = startDate + " All Day";
             } else {
                 output = startDate + " - " + endDate + " All Day";
             }
         } else {
-            if(startDate == endDate) {
+            if (startDate == endDate) {
                 output = startDate + " " + startTime;
 
-                if(endTime != startTime) {
+                if (endTime != startTime) {
                     output += " - " + endTime;
                 }
             } else {
@@ -982,6 +988,7 @@ public partial class DataAccess
     public string GenerateRandomCode(int Length)
     {
         string output = String.Empty;
+
         char[] Possibilities = "1234567890".ToCharArray();
         Random Randomizer = new Random();
 
@@ -997,7 +1004,7 @@ public partial class DataAccess
     {
         DataObjects.AuthenticationProviders output = new DataObjects.AuthenticationProviders();
 
-        if(_authenticationProviders != null) {
+        if (_authenticationProviders != null) {
             output = _authenticationProviders;
         }
 
@@ -1011,7 +1018,7 @@ public partial class DataAccess
 
         var tenantsList = GetTenantsList();
         if (tenantsList.Any()) {
-            foreach(var item in tenantsList) {
+            foreach (var item in tenantsList) {
                 RemoveSensitiveData(item);
             }
         }
@@ -1227,7 +1234,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Note, x.AppointmentNoteId })
             .ToListAsync();
         if (appointmentNoteRecords != null && appointmentNoteRecords.Any()) {
-            foreach(var item in appointmentNoteRecords) {
+            foreach (var item in appointmentNoteRecords) {
                 appointmentNotes.Add(new DataObjects.DeletedRecordItem { 
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1243,7 +1250,7 @@ public partial class DataAccess
             .Select(x => new { x.Deleted, x.LastModified, x.LastModifiedBy, x.DeletedAt, x.Title, x.AppointmentId, x.Start, x.End, x.AllDay })
             .ToListAsync();
         if (appointmentRecords != null && appointmentRecords.Any()) {
-            foreach(var item in appointmentRecords) {
+            foreach (var item in appointmentRecords) {
                 appointments.Add(new DataObjects.DeletedRecordItem { 
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1279,7 +1286,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.DepartmentGroupName, x.DepartmentGroupId })
             .ToListAsync();
         if (departmentGroupRecords != null && departmentGroupRecords.Any()) {
-            foreach(var item in departmentGroupRecords) {
+            foreach (var item in departmentGroupRecords) {
                 departmentGroups.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1295,7 +1302,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.DepartmentName, x.DepartmentId })
             .ToListAsync();
         if (departmentRecords != null && departmentRecords.Any()) {
-            foreach(var item in departmentRecords) {
+            foreach (var item in departmentRecords) {
                 departments.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1311,8 +1318,8 @@ public partial class DataAccess
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Name, x.EmailTemplateId })
             .ToListAsync();
-        if(emailTemplateRecords != null && emailTemplateRecords.Any()) {
-            foreach(var item in emailTemplateRecords) {
+        if (emailTemplateRecords != null && emailTemplateRecords.Any()) {
+            foreach (var item in emailTemplateRecords) {
                 emailTemplates.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1329,7 +1336,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.FileName, x.FileId })
             .ToListAsync();
         if (fileStorageRecord != null && fileStorageRecord.Any()) {
-            foreach(var item in fileStorageRecord) {
+            foreach (var item in fileStorageRecord) {
                 fileStorage.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1346,7 +1353,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Name, x.LocationId })
             .ToListAsync();
         if (locationRecords != null && locationRecords.Any()) {
-            foreach(var item in locationRecords) {
+            foreach (var item in locationRecords) {
                 locations.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1364,7 +1371,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Description, x.ServiceId })
             .ToListAsync();
         if (serviceRecords != null && serviceRecords.Any()) {
-            foreach(var item in serviceRecords) {
+            foreach (var item in serviceRecords) {
                 services.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1381,8 +1388,8 @@ public partial class DataAccess
             .Where(x => x.TenantId == TenantId && x.Deleted == true)
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Name, x.TagId})
             .ToListAsync();
-        if(tagRecords != null && tagRecords.Any()) {
-            foreach(var item in tagRecords) {
+        if (tagRecords != null && tagRecords.Any()) {
+            foreach (var item in tagRecords) {
                 tags.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1399,7 +1406,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.Name, x.GroupId })
             .ToListAsync();
         if (userGroupRecords != null && userGroupRecords.Any()) {
-            foreach(var item in userGroupRecords) {
+            foreach (var item in userGroupRecords) {
                 userGroups.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1415,7 +1422,7 @@ public partial class DataAccess
             .Select(x => new { x.DeletedAt, x.LastModified, x.LastModifiedBy, x.FirstName, x.LastName, x.Email, x.UserId })
             .ToListAsync();
         if (userRecords != null && userRecords.Any()) {
-            foreach(var item in userRecords) {
+            foreach (var item in userRecords) {
                 users.Add(new DataObjects.DeletedRecordItem {
                     DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
@@ -1457,7 +1464,7 @@ public partial class DataAccess
 
     public string GetFullUrl()
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_httpContext != null) {
             try {
@@ -1488,7 +1495,7 @@ public partial class DataAccess
 
     public string GetFullUrlWithoutQuerystring()
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_httpContext != null) {
             try {
@@ -1500,7 +1507,7 @@ public partial class DataAccess
                     _httpContext.Request.Path.ToUriComponent()
                 );
             } catch { }
-        } else if(_httpRequest != null) {
+        } else if (_httpRequest != null) {
             output = string.Concat(
                 _httpRequest.Scheme,
                 "://",
@@ -1635,31 +1642,32 @@ public partial class DataAccess
 
     public int IntValue(int? value)
     {
-        int output = value.HasValue ? (int)value : 0;
+        int output = value.HasValue ? value.Value : 0;
         return output;
     }
 
     private DataObjects.MailServerConfig MailServerConfig {
         get {
             DataObjects.MailServerConfig output = new DataObjects.MailServerConfig();
+
             if (CacheStore.ContainsKey(Guid.Empty, "MailServerConfig")) {
                 var cachedItem = CacheStore.GetCachedItem<DataObjects.MailServerConfig>(Guid.Empty, "MailServerConfig");
-                if(cachedItem != null) {
+                if (cachedItem != null) {
                     output = cachedItem;
                 }
             } else {
                 var savedItem = GetSetting<DataObjects.MailServerConfig>("MailServerConfig", DataObjects.SettingType.EncryptedObject);
-                if(savedItem != null) {
+                if (savedItem != null) {
                     output = savedItem;
                     CacheStore.SetCacheItem(Guid.Empty, "MailServerConfig", output);
                 }
             }
+
             return output;
         }
     }
 
-    private bool MaintenanceMode
-    {
+    private bool MaintenanceMode {
         get {
             bool output = false;
 
@@ -1743,12 +1751,14 @@ public partial class DataAccess
     private string OptionPairValue(List<DataObjects.OptionPair>? Options, string Id)
     {
         string output = String.Empty;
+
         if (Options != null && Options.Count() > 0) {
             var opt = Options.FirstOrDefault(x => x.Id != null && x.Id.ToLower() == Id.ToLower());
             if (opt != null) {
                 output += opt.Value;
             }
         }
+        
         return output;
     }
 
@@ -1846,7 +1856,7 @@ public partial class DataAccess
                 // In my testing so far it seems like only string is a problem.
                 if (thisObject != null) {
                     if (thisObject.GetType() == typeof(System.String)) {
-                        defaultValue = "";
+                        defaultValue = String.Empty;
                     }
                 }
 
@@ -1870,7 +1880,7 @@ public partial class DataAccess
 
         if (!String.IsNullOrWhiteSpace(output) && !String.IsNullOrWhiteSpace(replaceText)) {
             if (String.IsNullOrWhiteSpace(withText)) {
-                withText = "";
+                withText = String.Empty;
             }
 
             output = Regex.Replace(
@@ -1952,7 +1962,7 @@ public partial class DataAccess
 
     public string Request(string parameter)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_httpContext != null) {
             // First, try the querystring.
@@ -1964,7 +1974,7 @@ public partial class DataAccess
                     output += _httpContext.Request.Form[parameter].ToString();
                 } catch { }
             }
-        }else if (_httpRequest != null) {
+        } else if (_httpRequest != null) {
             output = QueryStringValue(parameter);
 
             if (String.IsNullOrWhiteSpace(output)) {
@@ -2009,7 +2019,7 @@ public partial class DataAccess
     {
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
-        if(config == null) {
+        if (config == null) {
             config = MailServerConfig;
         }
 
@@ -2020,8 +2030,8 @@ public partial class DataAccess
         switch (StringValue(config.Type).ToUpper()) {
             case "GRAPH":
                 var graphConfig = DeserializeObject<DataObjects.MailServerConfigMicrosoftGraph>(config.Config);
-                if(graphConfig != null) {
-                    if(!String.IsNullOrWhiteSpace(graphConfig.ClientId) && !String.IsNullOrWhiteSpace(graphConfig.TenantId) && !String.IsNullOrWhiteSpace(graphConfig.ClientSecret)) {
+                if (graphConfig != null) {
+                    if (!String.IsNullOrWhiteSpace(graphConfig.ClientId) && !String.IsNullOrWhiteSpace(graphConfig.TenantId) && !String.IsNullOrWhiteSpace(graphConfig.ClientSecret)) {
                         var graph = new GraphClient(graphConfig.ClientId, graphConfig.TenantId, graphConfig.ClientSecret);
 
                         output = graph.SendEmail(message).Result;
@@ -2044,7 +2054,7 @@ public partial class DataAccess
 
             case "SMTP":
                 var smtpConfig = DeserializeObject<DataObjects.MailServerConfigSMTP>(config.Config);
-                if(smtpConfig != null) {
+                if (smtpConfig != null) {
                     output = SendEmailViaSMTP(message, smtpConfig);
                 } else {
                     output.Messages.Add("SMTP Mail Configuration Not Set");
@@ -2061,14 +2071,6 @@ public partial class DataAccess
 
     public DataObjects.BooleanResponse SendEmailViaSMTP(DataObjects.EmailMessage message, DataObjects.MailServerConfigSMTP config)
     {
-        //if (!String.IsNullOrWhiteSpace(config.Username)) {
-        //    config.Username = Decrypt(config.Username);
-        //}
-
-        //if (!String.IsNullOrWhiteSpace(config.Password)) {
-        //    config.Password = Decrypt(config.Password);
-        //}
-
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
         if (String.IsNullOrWhiteSpace(message.From)) {
@@ -2214,7 +2216,6 @@ public partial class DataAccess
         XmlSerializer serializer = new XmlSerializer(o.GetType());
 
         XmlWriterSettings settings = new XmlWriterSettings();
-        //settings.Encoding = new UnicodeEncoding(false, false); // no BOM in a .NET string
         settings.Indent = true;
         settings.OmitXmlDeclaration = OmitXmlDeclaration;
 
@@ -2262,28 +2263,28 @@ public partial class DataAccess
 
     public void SetAuthenticationProviders(DataObjects.AuthenticationProviders? authenticationProviders)
     {
-        if(authenticationProviders != null) {
+        if (authenticationProviders != null) {
             _authenticationProviders = authenticationProviders;
         }
     }
 
     public void SetHttpContext(Microsoft.AspNetCore.Http.HttpContext? context)
     {
-        if(context != null) {
+        if (context != null) {
             _httpContext = context;
         }
     }
 
     public void SetHttpRequest(HttpRequest? request)
     {
-        if(request != null) {
+        if (request != null) {
             _httpRequest = request;
         }
     }
 
     public void SetHttpResponse(HttpResponse? response)
     {
-        if(response != null) {
+        if (response != null) {
             _httpResponse = response;
         }
     }
@@ -2308,7 +2309,7 @@ public partial class DataAccess
     {
         Guid output = Guid.Empty;
 
-        if(!String.IsNullOrWhiteSpace(input)) {
+        if (!String.IsNullOrWhiteSpace(input)) {
             try {
                 Guid g = new Guid(input);
                 output = g;
@@ -2417,7 +2418,7 @@ public partial class DataAccess
                     // {{ModuleItemStart:EmailTemplates}}
                     case "emailtemplate":
                         var recEmailTemplate = await data.EmailTemplates.FirstOrDefaultAsync(x => x.EmailTemplateId == RecordId);
-                        if(recEmailTemplate != null) {
+                        if (recEmailTemplate != null) {
                             recEmailTemplate.Deleted = false;
                             recEmailTemplate.DeletedAt = null;
                             await data.SaveChangesAsync();
@@ -2552,8 +2553,7 @@ public partial class DataAccess
         return output;
     }
 
-    public string UniqueId
-    {
+    public string UniqueId {
         get {
             return _uniqueId;
         }
@@ -2566,11 +2566,6 @@ public partial class DataAccess
             SaveSetting("ApplicationURL", DataObjects.SettingType.Text, url);
             CacheStore.SetCacheItem(Guid.Empty, "ApplicationURL", url);
         }
-
-        //if (!String.IsNullOrWhiteSpace(url) && url.ToLower() != ApplicationURL.ToLower() && url.ToLower().StartsWith("https://")) {
-        //    SaveSetting("ApplicationURL", DataObjects.SettingType.Text, url);
-        //    CacheStore.SetCacheItem(Guid.Empty, "ApplicationURL", url);
-        //}
     }
 
     private DataObjects.EmailMessage UpdateEmailReplyAddress(Guid TenantId, DataObjects.EmailMessage message)
@@ -2585,7 +2580,7 @@ public partial class DataAccess
             message.From = DefaultReplyToAddressForTenant(TenantId);
         }
 
-        if(message.From.ToLower() != defaultReplyToAddress.ToLower()) {
+        if (message.From.ToLower() != defaultReplyToAddress.ToLower()) {
             // If the mail server does not support allowing other reply address, then just use the default from the config.
             if (config.AllowSendingFromIndividualEmailAddresses) {
                 // The server allows sending from other addresses, so this is OK.
@@ -2630,8 +2625,7 @@ public partial class DataAccess
         }
     }
 
-    public bool UseTenantCodeInUrl
-    {
+    public bool UseTenantCodeInUrl {
         get {
             var output = false;
 

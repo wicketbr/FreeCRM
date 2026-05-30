@@ -1,8 +1,9 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
 @inject IJSRuntime jsRuntime
+
 @for(int x = 1; x <= _count; x++) {
-    if(Model.UdfShowField(Module, x)) {
+    if (Model.UdfShowField(Module, x)) {
         string label = Model.UdfLabel(Module, x);
 
         if (!String.IsNullOrWhiteSpace(label)) {
@@ -25,7 +26,7 @@
                             <label for="@id">@((MarkupString)label)</label>
                             <select class="form-select" id="@id" @onchange="@((ChangeEventArgs args) => OnValueUpdated(args, itemId))">
                                 <option value=""></option>
-                                @foreach(var option in options) {
+                                @foreach (var option in options) {
                                     <option value="@option" selected="@value==option">@option</option>
                                 }
                             </select>
@@ -37,11 +38,11 @@
                     if (options.Any()) {
                         <div class="@Class">
                             <label for="@id">@((MarkupString)label)</label>
-                            @foreach(var option in options) {
+                            @foreach (var option in options) {
                                 index++;
                                 string optionId = id + "-" + index.ToString();
                                 <div>
-                                    @if(option == value) {
+                                    @if (option == value) {
                                         <input type="radio" name="@id" id="@optionId" value="@option" checked
                                             @onchange="@((ChangeEventArgs args) => OnRadioUpdated(args, id, itemId))" />
                                     } else {
@@ -66,23 +67,19 @@
         }
     }
 }
+
 @code {
-    [Parameter]
-    public string? Module { get; set; }
-
-    [Parameter]
-    public string? Class { get; set; } = "";
-
-    [Parameter]
-    public string? Id { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
-
-    [Parameter]
-    public object? Data { get; set; }
+    [Parameter] public string? Module { get; set; }
+    [Parameter] public string? Class { get; set; } = String.Empty;
+    [Parameter] public string? Id { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
+    [Parameter] public object? Data { get; set; }
 
     private int _count = 0;
     private IJSObjectReference? jsModule;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -118,13 +115,13 @@
     protected void OnValueUpdated(ChangeEventArgs args, int Item)
     {
         string value = String.Empty;
-        if(args.Value != null) {
+        if (args.Value != null) {
             try {
                 value += args.Value.ToString();
             } catch { }
         }
 
-        if(Data != null) {
+        if (Data != null) {
             string udf = "UDF" + (Item < 10 ? "0" : "") + Item.ToString();
             Data = Helpers.SetObjectPropertyValue(Data, udf, value);
         }

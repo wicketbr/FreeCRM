@@ -4,7 +4,6 @@
 @inject BlazorDataModel Model
 @using BlazorSortableList
 
-
 @if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
     <h1>Timer Test Page</h1>
 
@@ -14,6 +13,7 @@
 
     <div>@_timerOutput</div>
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -21,7 +21,7 @@
     protected bool _loading = false;
     protected string _pageName = "timer";
     protected System.Timers.Timer _timer = new System.Timers.Timer();
-    protected string _timerOutput = "";
+    protected string _timerOutput = String.Empty;
 
     public void Dispose()
     {

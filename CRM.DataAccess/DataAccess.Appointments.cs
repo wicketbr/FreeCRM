@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting.Server.Features;
-using Microsoft.AspNetCore.Mvc.ViewComponents;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-
-namespace CRM;
+﻿namespace CRM;
 
 public partial interface IDataAccess
 {
@@ -24,7 +19,6 @@ public partial interface IDataAccess
     // {{ModuleItemEnd:Invoices}}
     Task<DataObjects.AppointmentNote> SaveAppointmentNote(DataObjects.AppointmentNote AppointmentNote, DataObjects.User? CurrentUser = null);
     Task<DataObjects.AppointmentAttendanceUpdate> UpdateUserAttendance(DataObjects.AppointmentAttendanceUpdate update);
-
 }
 
 public partial class DataAccess
@@ -34,7 +28,7 @@ public partial class DataAccess
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == AppointmentId);
-        if(rec == null) {
+        if (rec == null) {
             output.Messages.Add("Error Deleting Appointment '" + AppointmentId.ToString() + "' - Record No Longer Exists");
             return output;
         }
@@ -60,7 +54,7 @@ public partial class DataAccess
                 // {{ModuleItemEnd:Tags}}
 
                 await data.SaveChangesAsync();
-            }catch (Exception ex) {
+            } catch (Exception ex) {
                 output.Messages.Add("Error Deleting Related Appointment Records for User " + AppointmentId.ToString() + ":");
                 output.Messages.AddRange(RecurseException(ex));
                 return output;
@@ -71,7 +65,7 @@ public partial class DataAccess
                 await data.SaveChangesAsync();
 
                 output.Result = true;
-            }catch(Exception ex) {
+            } catch (Exception ex) {
                 output.Messages.Add("Error Deleting Appointment " + AppointmentId.ToString() + ":");
                 output.Messages.AddRange(RecurseException(ex));
             }
@@ -107,11 +101,12 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.BooleanResponse> DeleteAppointmentNote(Guid AppointmentNoteId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false){
+    public async Task<DataObjects.BooleanResponse> DeleteAppointmentNote(Guid AppointmentNoteId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
+    {
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.AppointmentNotes.FirstOrDefaultAsync(x => x.AppointmentNoteId == AppointmentNoteId);
-        if(rec == null) {
+        if (rec == null) {
             output.Messages.Add("Error Deleting Appointment Note '" + AppointmentNoteId.ToString() + "' - Record No Longer Exists");
             return output;
         }
@@ -120,7 +115,7 @@ public partial class DataAccess
         Guid tenantId = GuidValue(rec.TenantId);
         var tenantSettings = GetTenantSettings(tenantId);
 
-        if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+        if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
             var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
             if (!deleteAppRecords.Result) {
                 output.Messages.AddRange(deleteAppRecords.Messages);
@@ -131,7 +126,7 @@ public partial class DataAccess
                 data.AppointmentNotes.Remove(rec);
                 await data.SaveChangesAsync();
                 output.Result = true;
-            }catch(Exception ex ) {
+            } catch (Exception ex ) {
                 output.Messages.Add("Error Deleting Appointment Note " + AppointmentNoteId.ToString() + ":");
                 output.Messages.AddRange(RecurseException(ex));
             }
@@ -141,13 +136,13 @@ public partial class DataAccess
                 rec.DeletedAt = now;
                 rec.LastModified = now;
 
-                if(CurrentUser != null) {
+                if (CurrentUser != null) {
                     rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
                 }
 
                 await data.SaveChangesAsync();
                 output.Result = true;
-            }catch(Exception ex) {
+            } catch (Exception ex) {
                 output.Messages.Add("Error Deleting Appointment Note " + AppointmentNoteId.ToString() + ":");
                 output.Messages.AddRange(RecurseException(ex));
             }
@@ -232,7 +227,7 @@ public partial class DataAccess
 
         Appointment? rec = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             rec = await data.Appointments
                 .Include(x => x.AppointmentUsers).ThenInclude(x => x.User)
                 .Include(x => x.AppointmentServices)
@@ -244,7 +239,7 @@ public partial class DataAccess
                 .FirstOrDefaultAsync(x => x.AppointmentId == AppointmentId && x.Deleted != true);
         }
 
-        if(rec != null) {
+        if (rec != null) {
             output = new DataObjects.Appointment { 
                 ActionResponse = GetNewActionResponse(true),
                 AppointmentId = rec.AppointmentId,
@@ -274,8 +269,8 @@ public partial class DataAccess
 
             GetDataApp(rec, output, CurrentUser);
 
-            if(rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
-                foreach(var apptUser in rec.AppointmentUsers) {
+            if (rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
+                foreach (var apptUser in rec.AppointmentUsers) {
                     var u = new DataObjects.AppointmentUser {
                         UserId = apptUser.UserId,
                         AttendanceCode = StringValue(apptUser.AttendanceCode),
@@ -291,8 +286,8 @@ public partial class DataAccess
                 }
             }
 
-            if(rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
-                foreach(var service in rec.AppointmentServices) {
+            if (rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
+                foreach (var service in rec.AppointmentServices) {
                     var s = new DataObjects.AppointmentService {
                         AppointmentServiceId = service.AppointmentServiceId,
                         ServiceId = service.ServiceId,
@@ -335,8 +330,8 @@ public partial class DataAccess
             .Include(x => x.Appointment)
             .Where(x => x.AppointmentId == AppointmentId).ToListAsync();
 
-        if(recs != null && recs.Any()) {
-            foreach(var rec in recs) {
+        if (recs != null && recs.Any()) {
+            foreach (var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
                 var i = new DataObjects.Invoice {
@@ -377,12 +372,13 @@ public partial class DataAccess
         return output;
     }
     // {{ModuleItemEnd:Invoices}}
+
     public async Task<DataObjects.AppointmentNote> GetAppointmentNote(Guid AppointmentNoteId)
     {
         var output = new DataObjects.AppointmentNote();
 
         var rec = await data.AppointmentNotes.FirstOrDefaultAsync(x => x.AppointmentNoteId ==  AppointmentNoteId);
-        if(rec == null) {
+        if (rec == null) {
             output.ActionResponse.Messages.Add("Error Loading Appointment Note '" + AppointmentNoteId.ToString() + "' - Record Not Found");
             return output;
         }
@@ -411,8 +407,8 @@ public partial class DataAccess
         List<DataObjects.AppointmentNote> output = new List<DataObjects.AppointmentNote>();
 
         var recs = await data.AppointmentNotes.Where(x => x.AppointmentId == AppointmentId).ToListAsync();
-        if(recs != null && recs.Any()) {
-            foreach(var rec in recs) {
+        if (recs != null && recs.Any()) {
+            foreach (var rec in recs) {
                 var n = new DataObjects.AppointmentNote {
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
@@ -453,8 +449,8 @@ public partial class DataAccess
             .Where(x => x.TenantId == loader.TenantId && x.Start >= start && x.End <= end)
             .ToListAsync();
 
-        if(recs != null && recs.Any()) {
-            foreach(var rec in recs) {
+        if (recs != null && recs.Any()) {
+            foreach (var rec in recs) {
                 var appt = new DataObjects.Appointment { 
                     ActionResponse = GetNewActionResponse(true),
                     AppointmentId = rec.AppointmentId,
@@ -485,7 +481,7 @@ public partial class DataAccess
                 GetDataApp(rec, appt, CurrentUser);
 
                 if (rec.AppointmentUsers != null && rec.AppointmentUsers.Any()) {
-                    foreach(var user in rec.AppointmentUsers) {
+                    foreach (var user in rec.AppointmentUsers) {
                         var u = new DataObjects.AppointmentUser {
                             UserId = user.UserId,
                             AttendanceCode = StringValue(user.AttendanceCode),
@@ -498,7 +494,7 @@ public partial class DataAccess
                     }
                 }
 
-                if(rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
+                if (rec.AppointmentServices != null && rec.AppointmentServices.Any()) {
                     foreach (var service in rec.AppointmentServices) {
                         var s = new DataObjects.AppointmentService {
                             AppointmentServiceId = service.AppointmentServiceId,
@@ -534,8 +530,8 @@ public partial class DataAccess
 
         var rec = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == output.AppointmentId);
 
-        if(rec != null && rec.Deleted) {
-            if(AdminUser(CurrentUser)) {
+        if (rec != null && rec.Deleted) {
+            if (AdminUser(CurrentUser)) {
                 // Ok to edit this record that is marked as deleted.
             } else {
                 output.ActionResponse.Messages.Add("Appointment '" + output.AppointmentId.ToString() + "' No Longer Exists");
@@ -543,8 +539,8 @@ public partial class DataAccess
             }
         }
 
-        if(rec == null) {
-            if(appointment.AppointmentId == Guid.Empty) {
+        if (rec == null) {
+            if (appointment.AppointmentId == Guid.Empty) {
                 newRecord = true;
                 output.AppointmentId = Guid.NewGuid();
                 rec = new Appointment { 
@@ -627,11 +623,11 @@ public partial class DataAccess
         output.ActionResponse = GetNewActionResponse();
 
         if (appointment.Invoices.Any()) {
-            foreach(var invoice in appointment.Invoices) {
+            foreach (var invoice in appointment.Invoices) {
                 var saved = await SaveInvoice(invoice, CurrentUser);
                 if (!saved.ActionResponse.Result) {
                     if (saved.ActionResponse.Messages.Any()) {
-                        foreach(var msg in saved.ActionResponse.Messages) {
+                        foreach (var msg in saved.ActionResponse.Messages) {
                             output.ActionResponse.Messages.Add(msg);
                         }
                     }
@@ -655,8 +651,8 @@ public partial class DataAccess
         DateTime now = DateTime.UtcNow;
 
         var rec = await data.AppointmentNotes.FirstOrDefaultAsync(x => x.AppointmentNoteId == output.AppointmentNoteId);
-        if(rec == null) {
-            if(output.AppointmentNoteId == Guid.Empty) {
+        if (rec == null) {
+            if (output.AppointmentNoteId == Guid.Empty) {
                 newRecord = true;
 
                 output.AppointmentNoteId = Guid.NewGuid();
@@ -674,17 +670,17 @@ public partial class DataAccess
             }
         }
 
-        if(rec.Note != output.Note) {
+        if (rec.Note != output.Note) {
             rec.Note = output.Note;
             modified = true;
         }
 
-        if(newRecord || modified) {
+        if (newRecord || modified) {
             rec.LastModified = now;
             rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
         }
 
-        if(CurrentUser != null && CurrentUser.ManageAppointments) {
+        if (CurrentUser != null && CurrentUser.ManageAppointments) {
             rec.Deleted = output.Deleted;
         }
 
@@ -707,7 +703,7 @@ public partial class DataAccess
                 UserId = CurrentUserId(CurrentUser),
                 Object = outputObject,
             });
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             output.ActionResponse.Messages.Add("Error Saving Appointment Note " + AppointmentNote.AppointmentNoteId.ToString() + ":");
             output.ActionResponse.Messages.AddRange(RecurseException(ex));
         }
@@ -759,7 +755,7 @@ public partial class DataAccess
 
             SaveDataApp(rec, service, CurrentUser);
 
-            if(rec.Deleted != service.Deleted) {
+            if (rec.Deleted != service.Deleted) {
                 rec.Deleted = service.Deleted;
 
                 if (service.Deleted) {
@@ -796,12 +792,12 @@ public partial class DataAccess
         await data.SaveChangesAsync();
 
         // Now, make sure we have an updated record for every users.
-        foreach(var user in appointment.Users) {
+        foreach (var user in appointment.Users) {
             bool newRecord = false;
 
 
             var rec = await data.AppointmentUsers.FirstOrDefaultAsync(x => x.AppointmentId == appointment.AppointmentId && x.UserId == user.UserId);
-            if(rec == null) {
+            if (rec == null) {
                 rec = new AppointmentUser { 
                     AppointmentUserId = Guid.NewGuid(),
                     AppointmentId = appointment.AppointmentId,
@@ -832,13 +828,13 @@ public partial class DataAccess
         output.ActionResponse = GetNewActionResponse();
 
         var rec = await data.AppointmentUsers.FirstOrDefaultAsync(x => x.AppointmentId == output.AppointmentId && x.UserId == output.UserId);
-        if(rec != null) {
+        if (rec != null) {
             try {
                 rec.AttendanceCode = output.AttendanceCode;
                 await data.SaveChangesAsync();
 
                 output.ActionResponse.Result = true;
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 output.ActionResponse.Messages.Add("Error Updating User Attendance:");
                 output.ActionResponse.Messages.AddRange(RecurseException(ex));
             }

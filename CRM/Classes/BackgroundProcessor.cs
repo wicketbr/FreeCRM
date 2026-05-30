@@ -24,14 +24,15 @@ public class BackgroundProcessor : BackgroundService
         IServiceProvider ServiceProvider,
         int ProcessingIntervalSeconds,
         bool StartOnLoad
-    ) {
+    ){
         _logger = logger;
         _processingIntervalSeconds = ProcessingIntervalSeconds > 0 ? ProcessingIntervalSeconds : 15;
         _serviceProvider = ServiceProvider;
         _startOnLoad = StartOnLoad;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
         _logger.LogInformation("Background Processor is starting.");
 
         var da = _serviceProvider.GetRequiredService<IDataAccess>();
@@ -104,7 +105,7 @@ public class BackgroundProcessor : BackgroundService
 
         // If there are any plugins that need to be processed, add them to the queue.
         bool startTimer = false;
-        foreach(var plugin in _availablePlugins) {
+        foreach (var plugin in _availablePlugins) {
             if (!_processingPlugins.Contains(plugin.Id)) {
                 _plugins.Add(plugin);
                 startTimer = true;
@@ -126,7 +127,7 @@ public class BackgroundProcessor : BackgroundService
         var pluginsToProcess = _plugins.Where(x => !_processingPlugins.Contains(x.Id)).ToList();
 
         if (pluginsToProcess != null && pluginsToProcess.Count > 0) {
-            foreach(var plugin in pluginsToProcess) {
+            foreach (var plugin in pluginsToProcess) {
                 _processingPlugins.Add(plugin.Id);
 
                 var pluginExecuteRequest = new PluginExecuteRequest { 

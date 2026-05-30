@@ -9,6 +9,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         if (!InDialog){
@@ -17,7 +18,7 @@
             </h1>
         }
         <LoadingMessage />
-    }else{
+    } else {
         if (AppModule.OverridePage) {
             <EditUser_App Value="_user" />
         } else {
@@ -62,9 +63,9 @@
                         @if (!_newUser) {
                             if (!InDialog) {
                                 <DeleteConfirmation OnConfirmed="Delete"
-                                                    CancelText="@Helpers.ConfirmButtonTextCancel"
-                                                    DeleteText="@Helpers.ConfirmButtonTextDelete"
-                                                    ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
+                                        CancelText="@Helpers.ConfirmButtonTextCancel"
+                                        DeleteText="@Helpers.ConfirmButtonTextDelete"
+                                        ConfirmDeleteText="@Helpers.ConfirmButtonTextConfirmDelete" />
                             }
 
                             if (!InDialog && Model.User.AppAdmin && _user.UserAccounts.Count > 1) {
@@ -283,6 +284,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public bool InDialog { get; set; }
     [Parameter] public Delegate? OnSaved { get; set; }
@@ -292,7 +294,7 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newUser = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
 
@@ -381,12 +383,12 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Model.Tenant.Users = Model.Tenant.Users.Where(x => x.UserId.ToString() != userid).ToList();
 
                 var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
-                if(tenantItem != null) {
+                if (tenantItem != null) {
                     tenantItem.Users = tenantItem.Users.Where(x => x.UserId.ToString() != userid).ToList();
                 }
 
@@ -408,7 +410,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 _user.Photo = null;
             } else {
@@ -499,7 +501,7 @@
 
         Model.ClearMessages();
 
-        if(result != null) {
+        if (result != null) {
             if (result.Result) {
                 Model.AddMessage(Helpers.Text("PasswordReset"), MessageType.Success);
             } else {
@@ -515,19 +517,19 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_user.FirstName)) {
             errors.Add(Helpers.MissingRequiredField("FirstName"));
-            if (focus == "") { focus = "edit-user-firstName"; }
+            if (focus == String.Empty) { focus = "edit-user-firstName"; }
         }
         if (String.IsNullOrWhiteSpace(_user.LastName)) {
             errors.Add(Helpers.MissingRequiredField("LastName"));
-            if (focus == "") { focus = "edit-user-lastName"; }
+            if (focus == String.Empty) { focus = "edit-user-lastName"; }
         }
         if (String.IsNullOrWhiteSpace(_user.Email)) {
             errors.Add(Helpers.MissingRequiredField("Email"));
-            if (focus == "") { focus = "edit-user-email"; }
+            if (focus == String.Empty) { focus = "edit-user-email"; }
         }
 
         var saveApp = AppModule.Save(_user);
@@ -536,7 +538,7 @@
                 errors.AddRange(saveApp.Messages);
             }
 
-            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+            if (focus == String.Empty && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
                 focus = saveApp.Focus;
             }
         }
@@ -553,7 +555,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 await Helpers.ReloadTenantUsers();
 
@@ -596,7 +598,7 @@
 
         Model.ClearMessages();
 
-        if(unlock != null) {
+        if (unlock != null) {
             if (unlock.ActionResponse.Result) {
                 _user = unlock;
             } else {
@@ -614,9 +616,8 @@
             await UploadedAvatarImage(fileStorage);
         };
 
-        string title = "";
+        string title = String.Empty;
         string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
-        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
         List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
 
         await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
@@ -677,10 +678,9 @@
         StateHasChanged();
     }
 
-    protected string UserAccountLockedMessage
-    {
+    protected string UserAccountLockedMessage {
         get {
-            string output = "";
+            string output = String.Empty;
 
             if (_user.LastLockoutDate.HasValue) {
                 DateTime lockedOut = (DateTime)_user.LastLockoutDate;
@@ -692,10 +692,9 @@
         }
     }
 
-    protected string UserAvatarUrl
-    {
+    protected string UserAvatarUrl {
         get {
-            string output = "";
+            string output = String.Empty;
 
             if (_user.Photo.HasValue && _user.Photo != Guid.Empty) {
                 output = Helpers.BaseUri + "File/View/" + ((Guid)_user.Photo).ToString();// + "?Random=" + Guid.NewGuid().ToString();

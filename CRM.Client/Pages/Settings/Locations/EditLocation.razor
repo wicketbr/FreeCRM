@@ -9,19 +9,20 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="@_title" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         if (_location.Deleted) {
             <h1 class="page-title">
                 <Language Tag="@_title" IncludeIcon="true" />
             </h1>
             <UndeleteMessage DeletedAt="_location.DeletedAt" LastModifiedBy="@_location.LastModifiedBy" OnUndelete="(() => _location.Deleted = false)" />
-        }else{
+        } else {
             <div class="@Model.StickyMenuClass">
                 <h1 class="page-title">
                     <Language Tag="@_title" IncludeIcon="true" />
@@ -138,6 +139,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -145,7 +147,7 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newLocation = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.Location _location = new DataObjects.Location();
     protected bool _validatedUrl = false;
 
@@ -163,7 +165,7 @@
             Model.TenantCodeFromUrl = TenantCode;
         }
 
-        if(Model.Loaded && Model.LoggedIn) {
+        if (Model.Loaded && Model.LoggedIn) {
             if (!Model.FeatureEnabledLocation || !Model.User.Admin) {
                 Helpers.NavigateToRoot();
                 return;
@@ -209,7 +211,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Model.Locations = Model.Locations.Where(x => x.LocationId.ToString() != id).ToList();
 
@@ -265,11 +267,11 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_location.Name)) {
             errors.Add(Helpers.MissingRequiredField("ServiceDescription"));
-            if (focus == "") { focus = "edit-location-Name"; }
+            if (focus == String.Empty) { focus = "edit-location-Name"; }
         }
 
         if (errors.Any()) {
@@ -284,7 +286,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/Locations");
             } else {

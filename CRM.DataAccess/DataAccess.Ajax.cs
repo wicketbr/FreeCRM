@@ -63,12 +63,8 @@ public partial class DataAccess
         recs = recs.OrderBy(x => x.LastName).ThenBy(x => x.FirstName);
 
         if (recs != null && recs.Count() > 0) {
-            //results.Add(new DataObjects.AjaxResults {
-            //	value = Guid.Empty.ToString(),
-            //	label = "--- Local ---"
-            //});
             foreach (var rec in recs) {
-                if(StringValue(rec.Username).ToLower() != "admin") {
+                if (StringValue(rec.Username).ToLower() != "admin") {
                     Local += 1;
                     if (Local < 26) {
                         string deptName = rec.Department != null && !String.IsNullOrEmpty(rec.Department.DepartmentName) ? rec.Department.DepartmentName : String.Empty;

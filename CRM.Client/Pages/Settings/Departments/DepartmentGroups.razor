@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -55,7 +56,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach(var dg in Model.DepartmentGroups) {
+                    @foreach (var dg in Model.DepartmentGroups) {
                         @if (!dg.Deleted || Model.User.UserPreferences.IncludeDeletedItems) {
                             <tr class="@(dg.Deleted ? "item-deleted" : "")">
                                 <td>
@@ -80,6 +81,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -89,7 +91,8 @@
 
     protected string _pageName = "departmentgroups";
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }

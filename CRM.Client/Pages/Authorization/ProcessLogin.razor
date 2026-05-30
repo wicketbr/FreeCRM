@@ -2,13 +2,16 @@
 @page "/{TenantCode}/ProcessLogin"
 @implements IDisposable
 @inject BlazorDataModel Model
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
     // This page is hit immediately after a local login to make sure the entire login has been
     // processed and the Model has completely loaded and logged the user in before redirecting
     // to the main application home page.
 
-    public void Dispose() {}
+    public void Dispose()
+    {
+    }
 
     protected override void OnAfterRender(bool firstRender)
     {

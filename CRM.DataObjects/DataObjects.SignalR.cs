@@ -50,7 +50,7 @@ public partial class DataObjects
         public Guid? UserId { get; set; }
         public string? UserDisplayName { get; set; }
         public string UpdateType { get; set; } = "Unknown";
-        public string Message { get; set; } = "";
+        public string Message { get; set; } = String.Empty;
         public object? Object { get; set; }
         public string? ObjectAsString { get; set; }
     }

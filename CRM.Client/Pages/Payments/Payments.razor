@@ -7,6 +7,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     <h1 class="page-title">
         <Language Tag="Payments" IncludeIcon="true" />
@@ -31,20 +32,21 @@
         }
     }
 }
+
 @code {
     // This page is not yet complete. It is a placeholder for future functionality.
-
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected List<DataObjects.Payment> _payments = new List<DataObjects.Payment>();
-    protected string _token = "";
+    protected string _token = String.Empty;
     protected bool _validatedUrl = false;
 
     protected string _pageName = "payments";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }

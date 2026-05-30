@@ -6,13 +6,14 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="Locations" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         <div class="@Model.StickyMenuClass">
             <h1 class="page-title">
                 <Language Tag="Locations" IncludeIcon="true" />
@@ -90,6 +91,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -150,7 +152,7 @@
 
     protected string FormatLocationStyle(DataObjects.Location location)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (!String.IsNullOrWhiteSpace(location.CalendarBackgroundColor)) {
             output += "background-color:" + location.CalendarBackgroundColor + ";";

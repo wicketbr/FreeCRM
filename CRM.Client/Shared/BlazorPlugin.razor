@@ -5,7 +5,6 @@
 @inject BlazorDataModel Model
 @inject CompilationService _compilationService
 @inject IJSInProcessRuntime JsRuntime
-@* @inject SpawnDev.BlazorJS.CodeRunner.CompilationService _compilationService *@
 
 @if (_compiledType != null) {
     <DynamicComponent Type="@_compiledType" Parameters="Parameters" />

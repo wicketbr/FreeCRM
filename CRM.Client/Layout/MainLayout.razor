@@ -142,7 +142,8 @@
 
     protected MainLayout_App AppLayout = new MainLayout_App();
 
-    public void Dispose() {
+    public void Dispose()
+    {
         dotNetHelper?.Dispose();
 
         Model.OnChange -= StateHasChanged;
@@ -152,7 +153,8 @@
         DialogService.OnClose -= ClearModelMessages;
     }
 
-    protected override async Task OnInitializedAsync() {
+    protected override async Task OnInitializedAsync()
+    {
         Model.OnChange += StateHasChanged;
 
         NavManager.LocationChanged += LocationChanged;
@@ -218,7 +220,8 @@
         }, new System.Threading.AutoResetEvent(false), 0, 10000);
     }
 
-    protected async override Task OnAfterRenderAsync(bool firstRender) {
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
         if (firstRender) {
             dotNetHelper = DotNetObjectReference.Create(this);
             await jsRuntime.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
@@ -285,7 +288,8 @@
     }
 
     [JSInvokable]
-    public void DotNetHelperHandler(params string[] arguments) {
+    public void DotNetHelperHandler(params string[] arguments)
+    {
         if (arguments != null) {
             Model.DotNetHelperHandler(arguments.ToList());
         }
@@ -304,7 +308,8 @@
         }
     }
 
-    protected async Task CheckForUpdates() {
+    protected async Task CheckForUpdates()
+    {
         if (versionInfoLoaded) {
             bool reload = false;
             bool wasOnline = Model.AppOnline;
@@ -365,7 +370,8 @@
         Model.ClearMessages();
     }
 
-    public async ValueTask DisposeAsync() {
+    public async ValueTask DisposeAsync()
+    {
         if (hubConnection is not null) {
             await hubConnection.DisposeAsync();
         }
@@ -402,7 +408,8 @@
     public bool IsSignalRConnected =>
         hubConnection?.State == HubConnectionState.Connected;
 
-    void LocationChanged(object? sender, LocationChangedEventArgs e) {
+    void LocationChanged(object? sender, LocationChangedEventArgs e)
+    {
         // Remove any messages
         Model.Messages = new List<Message>();
         Model.NavigationId = String.Empty;
@@ -418,7 +425,8 @@
         });
     }
 
-    protected void MessageWatcher() {
+    protected void MessageWatcher()
+    {
         if (Model.Messages.Any()) {
             int maxMessages = Model.Tenant.TenantSettings.MaxToastMessages;
             int totalPersistentMessages = 0;
@@ -462,7 +470,8 @@
         }
     }
 
-    protected async Task ProcessSignalRUpdate(DataObjects.SignalRUpdate update) {
+    protected async Task ProcessSignalRUpdate(DataObjects.SignalRUpdate update)
+    {
         if (update != null && (update.TenantId == null || update.TenantId == Model.TenantId)) {
             var itemId = update.ItemId;
             string message = update.Message.ToLower();
@@ -756,7 +765,8 @@
         }
     }
 
-    protected async Task SavePendingUserPreferences() {
+    protected async Task SavePendingUserPreferences()
+    {
         if (Model.LoggedIn) {
             string json = Helpers.SerializeObject(Model.User.UserPreferences);
 
@@ -772,12 +782,14 @@
     }
 
     [JSInvokable]
-    public void SetFingerprint(string fingerprint) {
+    public void SetFingerprint(string fingerprint)
+    {
         Model.Fingerprint = fingerprint;
     }
 
-    protected async Task ThemeWatcher() {
-        string theme = Model.Theme;
+    protected async Task ThemeWatcher()
+    {
+        var theme = Model.User.UserPreferences.Theme;
 
         if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.Theme)) {
             theme = Model.Tenant.TenantSettings.Theme;
@@ -786,7 +798,8 @@
         await jsRuntime.InvokeVoidAsync("SetPreferredColorScheme", theme);
     }
 
-    protected async Task ValidateLogin() {
+    protected async Task ValidateLogin()
+    {
         if (!Validating) {
             Validating = true;
 
@@ -896,7 +909,8 @@
         }
     }
 
-    protected async Task ValidateStartupState() {
+    protected async Task ValidateStartupState()
+    {
         bool redirected = false;
 
         DataObjects.SimplePost post = new DataObjects.SimplePost {

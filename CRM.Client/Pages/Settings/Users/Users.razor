@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -182,18 +183,17 @@
                     <Language Tag="NoItemsToShow" />
                 } else {
                     <PagedRecordset ActionHandlers="ActionHandlers"
-                        CenterItems="CenterItems"
-                        Configuration="Config"
-                        Formatters="Formatters"
-                        NavigationCallbackHander="NavigationCallbackHander"
-                        NavigationLocation="PagedRecordset.NavLocation.Both"
-                        RecordData="Data"
-                        RowClasses="_rowClasses"
-                        UseBootstrap="true"
-                        AriaLabelRecordsPerPage="@Helpers.Text("RecordsPerPage")"
-                        CheckboxAriaLabel="@Helpers.Text("SelectRecord")"
-                        CheckboxToggleAllAriaLabel="@Helpers.Text("ToggleAllCheckboxes")"
-                    />
+                            CenterItems="CenterItems"
+                            Configuration="Config"
+                            Formatters="Formatters"
+                            NavigationCallbackHander="NavigationCallbackHander"
+                            NavigationLocation="PagedRecordset.NavLocation.Both"
+                            RecordData="Data"
+                            RowClasses="_rowClasses"
+                            UseBootstrap="true"
+                            AriaLabelRecordsPerPage="@Helpers.Text("RecordsPerPage")"
+                            CheckboxAriaLabel="@Helpers.Text("SelectRecord")"
+                            CheckboxToggleAllAriaLabel="@Helpers.Text("ToggleAllCheckboxes")" />
                 }
             }
 
@@ -205,9 +205,9 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
-    // MultiSelect msItem;
 
     List<PagedRecordset.ActionHandler> ActionHandlers = new List<PagedRecordset.ActionHandler>();
     Dictionary<string, Action?> CenterItems = new Dictionary<string, Action?>();
@@ -339,7 +339,7 @@
 
         // Get the saved filter if it exists.
         Filter = Model.User.UserPreferences.filterUsers;
-        if(Filter.FilterDepartments == null){ Filter.FilterDepartments = new Guid[] { }; }
+        if (Filter.FilterDepartments == null){ Filter.FilterDepartments = new Guid[] { }; }
 
         await LoadFilter();
     }
@@ -352,7 +352,7 @@
     protected async Task ClearFilter()
     {
         Filter.Admin = null;
-        Filter.CultureCode = Model.CultureCode;
+        Filter.CultureCode = Model.User.UserPreferences.CultureCode;
         Filter.Keyword = null;
         Filter.Sort = "lastLogin";
         Filter.SortOrder = "DESC";
@@ -377,7 +377,7 @@
     protected async Task FilterChangedUDF(ChangeEventArgs e, int Item)
     {
         string value = String.Empty;
-        if(e.Value != null) {
+        if (e.Value != null) {
             try {
                 value += e.Value.ToString();
             } catch { }
@@ -387,40 +387,49 @@
             case 1:
                 Filter.udf01 = value;
                 break;
+
             case 2:
                 Filter.udf02 = value;
                 break;
+
             case 3:
                 Filter.udf03 = value;
                 break;
+
             case 4:
                 Filter.udf04 = value;
                 break;
+
             case 5:
                 Filter.udf05 = value;
                 break;
+
             case 6:
                 Filter.udf06 = value;
                 break;
+
             case 7:
                 Filter.udf07 = value;
                 break;
+
             case 8:
                 Filter.udf08 = value;
                 break;
+
             case 9:
                 Filter.udf09 = value;
                 break;
+
             case 10:
                 Filter.udf10 = value;
                 break;
+
         }
 
         await LoadFilter();
     }
 
-    protected string FilterSearchPlaceholder
-    {
+    protected string FilterSearchPlaceholder {
         get {
             string output = Helpers.Text("SearchUsers");
             return output;
@@ -429,7 +438,7 @@
 
     protected string FormatDateTimeValue(string? value)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (!String.IsNullOrWhiteSpace(value)) {
             try {
@@ -451,7 +460,7 @@
 
     protected string FormatPhoto(string? value)
     {
-        string output = "";
+        string output = String.Empty;
         string ariaLabel = Helpers.Text("UserAvatar");
 
         if (Filter.Records != null) {
@@ -513,7 +522,7 @@
                 try {
                     recordsPerPage = Convert.ToInt32(o);
                 } catch { }
-                if(recordsPerPage > -1) {
+                if (recordsPerPage > -1) {
                     Filter.RecordsPerPage = recordsPerPage;
                     await LoadFilter();
                 }
@@ -524,7 +533,7 @@
                 try {
                     page = Convert.ToInt32(o);
                 } catch { }
-                if(page > -1) {
+                if (page > -1) {
                     Filter.Page = page;
                     await LoadFilter();
                 }
@@ -540,7 +549,7 @@
                     string currentDirection = Helpers.StringValue(Filter.SortOrder);
 
                     if (currentSort.ToLower() == dataElementName.ToLower()) {
-                        if(currentDirection.ToUpper() == "ASC") {
+                        if (currentDirection.ToUpper() == "ASC") {
                             Filter.SortOrder = "DESC";
                         } else {
                             Filter.SortOrder = "ASC";
@@ -548,7 +557,7 @@
                     } else {
                         Filter.Sort = dataElementName;
 
-                        if(dataElementName.ToLower() == "lastlogin") {
+                        if (dataElementName.ToLower() == "lastlogin") {
                             Filter.SortOrder = "DESC";
                         } else {
                             Filter.SortOrder = "ASC";
@@ -556,15 +565,12 @@
                     }
                     await LoadFilter();
                 }
-
                 break;
         }
     }
 
     protected void OnRecordSelected(object? record)
     {
-        
-
         if (record != null) {
             try {
                 var user = (DataObjects.User)record;
@@ -575,7 +581,7 @@
 
     protected void OnShowInvoices(object? record)
     {
-        if(record != null) {
+        if (record != null) {
             Guid userId = Helpers.GetObjectPropertyValue<Guid>(record, "UserId");
             if (userId != Guid.Empty) {
                 Helpers.NavigateTo("Invoices/" + userId.ToString());
@@ -694,13 +700,13 @@
         if (update.UpdateType == DataObjects.SignalRUpdateType.User && Model.View == _pageName && update.UserId != Model.User.UserId) {
             // Update the filter if it contains the record.
             if (!Filter.Loading) {
-                if(Filter.Records != null && Filter.Records.Any()) {
+                if (Filter.Records != null && Filter.Records.Any()) {
                     bool userInFilter = false;
 
                     foreach (var record in Filter.Records) {
                         try {
                             Guid UserId = Helpers.GetObjectPropertyValue<Guid>(record, "UserId");
-                            if(UserId == update.ItemId) {
+                            if (UserId == update.ItemId) {
                                 userInFilter = true;
                                 break;
                             }

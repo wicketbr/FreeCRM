@@ -1,6 +1,7 @@
 ﻿@implements IDisposable
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (_loading) {
     <LoadingMessage />
 } else {
@@ -22,7 +23,7 @@
         }
         @if (_files.Any()) {
             <div>
-            @foreach(var file in _files) {
+            @foreach (var file in _files) {
                 string thumbnail = Helpers.FileThumbnail(file.Extension);
                 string title = Helpers.BytesToFileSizeLabel(file.Bytes) + " - " + file.FileName;
                 bool imageFile = false;
@@ -56,6 +57,7 @@
         }
     </div>
 }
+
 @code {
     /// <summary>
     /// The delegate that will receive the Guid of the selected file.
@@ -83,7 +85,9 @@
     protected bool _showCancelButton = true;
     protected bool _showRefreshButton = true;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,7 +114,7 @@
     protected void FileSelected(Guid fileId)
     {
         DialogService.Close();
-        if(OnFileSelected != null) {
+        if (OnFileSelected != null) {
             OnFileSelected.DynamicInvoke(fileId);
         }
     }
@@ -124,7 +128,7 @@
             _files = Model.ImageFiles;
         } else {
             var files = await Helpers.GetOrPost<List<DataObjects.FileStorage>>("api/Data/GetFileStorageItems");
-            if(files != null && files.Any()) {
+            if (files != null && files.Any()) {
                 _files = files;
             } else {
                 _files = new List<DataObjects.FileStorage>();

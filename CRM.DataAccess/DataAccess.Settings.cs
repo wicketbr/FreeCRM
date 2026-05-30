@@ -38,42 +38,50 @@ public partial class DataAccess
                     rec.SettingNotes = "The Base URL to the Application";
                     rec.SettingText = "https://your.app.url/";
                     break;
+
                 case "activedirectoryroot":
                     rec.SettingName = "ActiveDirectoryRoot";
                     rec.SettingType = "text";
                     rec.SettingNotes = "the root of your Active Directory for LDAP lookup purposes";
                     rec.SettingText = "your.ad.root";
                     break;
+
                 case "mailserver":
                     rec.SettingName = "MailServer";
                     rec.SettingType = "text";
                     rec.SettingNotes = "The name of your SMTP Server.";
                     break;
+
                 case "mailserverpassword":
                     rec.SettingName = "MailServerPassword";
                     rec.SettingType = "encrypted";
                     rec.SettingNotes = "The optional password for your SMTP Server";
                     break;
+
                 case "mailserverport":
                     rec.SettingName = "MailServerPort";
                     rec.SettingType = "number";
                     rec.SettingNotes = "The port of your SMTP Server (default is 25)";
                     break;
+
                 case "mailserverusername":
                     rec.SettingName = "MailServerUsername";
                     rec.SettingType = "text";
                     rec.SettingNotes = "The optional username for your SMTP Server";
                     break;
+
                 case "ldapusername":
                     rec.SettingName = "ldapUsername";
                     rec.SettingType = "encrypted";
                     rec.SettingNotes = "Optional username to use when accessing your LDAP server";
                     break;
+
                 case "ldappassword":
                     rec.SettingName = "ldapPassword";
                     rec.SettingType = "encrypted";
                     rec.SettingNotes = "Optional password to use when accessing your LDAP server";
                     break;
+
                 case "ldaplocationattribute":
                     rec.SettingName = "ldapLocationAttribute";
                     rec.SettingType = "text";
@@ -363,7 +371,7 @@ public partial class DataAccess
                             if (!String.IsNullOrWhiteSpace(encrypted)) {
                                 rec.SettingText = encrypted;
                             } else {
-                                rec.SettingText = "";
+                                rec.SettingText = String.Empty;
                             }
                         } else {
                             rec.SettingText = StringValue(setting.SettingText);
@@ -380,7 +388,7 @@ public partial class DataAccess
                 if (save) {
                     try {
                         rec.LastModified = DateTime.UtcNow;
-                        if(CurrentUser != null) {
+                        if (CurrentUser != null) {
                             rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
                         }
 
@@ -448,7 +456,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((bool)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -457,7 +465,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((DateTime)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -466,7 +474,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = Encrypt(SerializeObject(Value));
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -482,14 +490,14 @@ public partial class DataAccess
                         if (!String.IsNullOrWhiteSpace(encrypted)) {
                             rec.SettingText = encrypted;
                         } else {
-                            rec.SettingText = "";
+                            rec.SettingText = String.Empty;
                         }
                     } else {
                         rec.SettingText = (string)Value;
                     }
 
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -498,7 +506,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((Guid)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -507,7 +515,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((decimal)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -516,7 +524,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((double)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -525,7 +533,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = ((int)Value).ToString();
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -534,7 +542,7 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = SerializeObject(Value);
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
 
@@ -543,15 +551,14 @@ public partial class DataAccess
                 if (Value != null) {
                     rec.SettingText = (string)Value;
                 } else {
-                    rec.SettingText = "";
+                    rec.SettingText = String.Empty;
                 }
                 break;
-
         }
 
         try {
             rec.LastModified = DateTime.UtcNow;
-            if(CurrentUser != null) {
+            if (CurrentUser != null) {
                 rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
             }
 

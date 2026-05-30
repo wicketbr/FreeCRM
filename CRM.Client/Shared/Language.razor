@@ -3,9 +3,6 @@
 @inject BlazorDataModel Model
 @if (!String.IsNullOrWhiteSpace(Icon)) {<Icon Name="@Icon" /><span class="@_class">@((MarkupString)LanguageTag)</span>} else {<i class="@_class">@((MarkupString)LanguageTag)</i>}
 @code {
-    protected string Icon = String.Empty;
-    protected string LanguageTag = String.Empty;
-
     /// <summary>
     /// An optional class to add around the text.
     /// </summary>
@@ -24,7 +21,7 @@
     /// <summary>
     /// The required name of the language tag.
     /// </summary>
-    [Parameter] public string Tag { get; set; } = "";
+    [Parameter] public string Tag { get; set; } = String.Empty;
 
     /// <summary>
     /// Option to replace any spaces in the text with &nbsp; characters.
@@ -41,16 +38,19 @@
     /// </summary>
     [Parameter] public TextCase? TransformCase { get; set; }
 
-    protected string _class = "";
+    protected string Icon = String.Empty;
+    protected string LanguageTag = String.Empty;
 
-    public void Dispose() { 
+    protected string _class = String.Empty;
+
+    public void Dispose()
+    { 
         Model.OnChange -= StateHasChanged;
     }
 
     protected override void OnInitialized()
     {
         Model.OnChange += StateHasChanged;
-        //RenderText();
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -110,7 +110,7 @@
         _class = !String.IsNullOrWhiteSpace(Class) ? Class : "";
 
         if (!String.IsNullOrWhiteSpace(Icon)) {
-            if (_class != "") {
+            if (_class != String.Empty) {
                 _class += " ";
             }
             _class += "icon-text";

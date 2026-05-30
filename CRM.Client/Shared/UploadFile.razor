@@ -2,6 +2,7 @@
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
 @typeparam UploadType
+
 <div class="@(_uploading ? "hidden" : "mt-3")">
     <MudBlazor.MudCard Style="width:100%;">
         <MudBlazor.MudCardContent>
@@ -41,27 +42,15 @@
         <Language Tag="UploadingWait" IncludeIcon="true" />
     </div>
 }
+
 @code {
-    [Parameter]
-    public bool? AllowMultipleUploads { get; set; } = false;
-
-    [Parameter]
-    public string AriaLabel { get; set; } = "File Upload";
-
-    [Parameter]
-    public int Height { get; set; } = 200;
-
-    [Parameter]
-    public bool InDialog { get; set; }
-
-    [Parameter]
-    public Delegate? OnUploadComplete { get; set; }
-
-    [Parameter]
-    public List<string>? SupportedFileTypes { get; set; }
-
-    [Parameter]
-    public string? UploadInstructions { get; set; }
+    [Parameter] public bool? AllowMultipleUploads { get; set; } = false;
+    [Parameter] public string AriaLabel { get; set; } = "File Upload";
+    [Parameter] public int Height { get; set; } = 200;
+    [Parameter] public bool InDialog { get; set; }
+    [Parameter] public Delegate? OnUploadComplete { get; set; }
+    [Parameter] public List<string>? SupportedFileTypes { get; set; }
+    [Parameter] public string? UploadInstructions { get; set; }
 
     private static string UploaderDefaultDragClass = "drag-and-drop-upload";
     private string UploaderDragClass = UploaderDefaultDragClass;
@@ -70,7 +59,9 @@
 
     protected MudBlazor.MudFileUpload<UploadType>? _uploadComponent;
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected string HeightCss {
         get {
@@ -86,14 +77,13 @@
         }
     }
 
-    protected string SupportedFileTypesList
-    {
+    protected string SupportedFileTypesList {
         get {
             string output = String.Empty;
 
-            if(SupportedFileTypes != null && SupportedFileTypes.Any()) {
+            if (SupportedFileTypes != null && SupportedFileTypes.Any()) {
                 for(int x = 0; x < SupportedFileTypes.Count(); x++) {
-                    if(x > 0) {
+                    if (x > 0) {
                         output += ", ";
                     }
 
@@ -163,7 +153,7 @@
                     output.Add(fileStorage);
                 }
             }
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             await Helpers.ConsoleLog("Error in File Upload: File '" + lastFileName + "' - " + ex.Message);
 
             var errorMessages = new List<string> { "An error occurred while uploading the file '" + lastFileName + "'." };
@@ -191,8 +181,8 @@
         }
 
         if (output.Any()) {
-            if(OnUploadComplete != null) {
-                if(AllowMultipleUploads.HasValue && (bool)AllowMultipleUploads == true) {
+            if (OnUploadComplete != null) {
+                if (AllowMultipleUploads.HasValue && (bool)AllowMultipleUploads == true) {
                     OnUploadComplete.DynamicInvoke(output);
                 } else {
                     OnUploadComplete.DynamicInvoke(output[0]);

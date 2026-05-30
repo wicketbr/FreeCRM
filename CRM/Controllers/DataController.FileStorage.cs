@@ -139,7 +139,7 @@ public partial class DataController
     {
         string filename = String.Empty;
         byte[]? fileContent = null;
-        string mimeType = "";
+        string mimeType = String.Empty;
 
         if (id != Guid.Empty && context != null) {
             DataObjects.FileStorage file = await da.GetFileStorage(id);
@@ -165,7 +165,7 @@ public partial class DataController
     {
         string filename = String.Empty;
         byte[]? fileContent = null;
-        string mimeType = "";
+        string mimeType = String.Empty;
 
         if (id != Guid.Empty && context != null) {
             DataObjects.FileStorage file = await da.GetFileStorage(id, CurrentUser);

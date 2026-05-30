@@ -7,6 +7,7 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     var calendarClass = Model.User.ManageAppointments 
         ? "appointment-calendar"
@@ -70,6 +71,7 @@
         </div>
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -88,7 +90,8 @@
 
     protected string _pageName = "schedule";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -162,7 +165,7 @@
         Guid? defaultLocationId = null;
         if (Model.Locations.Any()) {
             var defaultLocation = Model.Locations.FirstOrDefault(x => x.DefaultLocation == true);
-            if(defaultLocation != null) {
+            if (defaultLocation != null) {
                 defaultLocationId = defaultLocation.LocationId;  
             }
         }
@@ -172,7 +175,7 @@
         List<DataObjects.AppointmentService> services = new List<DataObjects.AppointmentService>();
         if (Model.FeatureEnabledServices && Model.Services.Any(x => x.DefaultService == true)) {
             var defaultService = Model.Services.FirstOrDefault(x => x.DefaultService == true);
-            if(defaultService != null) {
+            if (defaultService != null) {
                 services.Add(new DataObjects.AppointmentService {
                     AppointmentServiceId = Guid.NewGuid(),
                     ServiceId = defaultService.ServiceId,
@@ -223,14 +226,14 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 AllAppointments = AllAppointments.Where(x => x.AppointmentId != appt.AppointmentId).ToList();
 
                 // If this tenant is just marking items for delete, then this item will still exist in the database.
                 // So, try and reload the item.
                 var deletedItem = await Helpers.GetOrPost<DataObjects.Appointment>("api/Data/GetAppointment/" + appt.AppointmentId.ToString());
-                if(deletedItem != null && deletedItem.ActionResponse.Result) {
+                if (deletedItem != null && deletedItem.ActionResponse.Result) {
                     await AddAppointmentToList(deletedItem);
                 }
 
@@ -285,8 +288,8 @@
                 End = args.End,
             });
 
-            if(appts != null && appts.Any()) {
-                foreach(var appt in appts) {
+            if (appts != null && appts.Any()) {
+                foreach (var appt in appts) {
                     // Remove the appointment first.
                     AllAppointments = AllAppointments.Where(x => x.AppointmentId != appt.AppointmentId).ToList();
 
@@ -316,7 +319,7 @@
 
                     add.TitleDisplay = FormatAppointmentTitle(add);
 
-                    if(!add.Deleted || Model.User.Admin) {
+                    if (!add.Deleted || Model.User.Admin) {
                         AllAppointments.Add(add);
                     }
                 }
@@ -410,7 +413,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 await AddAppointmentToList(saved);
             } else {

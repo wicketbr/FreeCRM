@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Query.Internal;
-using Microsoft.Extensions.DependencyInjection;
-using MySqlX.XDevAPI.Common;
-using Org.BouncyCastle.Utilities;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Plugins;
 
 namespace CRM;
@@ -25,7 +22,7 @@ public partial class DataAccess
             if (plugins.Any(x => x.Type.ToLower() == "blazor")) {
                 List<string> validHashes = new List<string>();
 
-                foreach(var plugin in plugins.Where(x => x.Type.ToLower() == "blazor")) {
+                foreach (var plugin in plugins.Where(x => x.Type.ToLower() == "blazor")) {
                     var hash = MD5.ComputeHashString(System.Text.Encoding.UTF8.GetBytes(plugin.Code));
                     if (!String.IsNullOrWhiteSpace(hash)) {
                         validHashes.Add("CachedBlazorBinary_" + hash);
@@ -37,7 +34,7 @@ public partial class DataAccess
                 if (recs != null && recs.Any()) {
                     bool removedRecords = false;
 
-                    foreach(var rec in recs) {
+                    foreach (var rec in recs) {
                         if (!validHashes.Contains(rec.SettingName)) {
                             data.Settings.Remove(rec);
                             removedRecords = true;
@@ -264,7 +261,8 @@ public partial class DataAccess
         } catch { }
     }
 
-    private void SavePluginsToCache() {
+    private void SavePluginsToCache()
+    {
         if (PluginsInterface != null) {
             // First, mark all records as StillExists = false;
 
@@ -324,7 +322,6 @@ public partial class DataAccess
                             }
                             break;
                     }
-
                 }
 
                 data.SaveChanges();

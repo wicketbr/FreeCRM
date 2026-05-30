@@ -128,8 +128,7 @@
                     optimizationLevel: OptimizationLevel.Release,
                     concurrentBuild: false,
                     //// Warnings CS1701 and CS1702 are disabled when compiling in VS too
-                    specificDiagnosticOptions: new[]
-                    {
+                    specificDiagnosticOptions: new[] {
                         new KeyValuePair<string, ReportDiagnostic>("CS1701", ReportDiagnostic.Suppress),
                         new KeyValuePair<string, ReportDiagnostic>("CS1702", ReportDiagnostic.Suppress),
                     }));
@@ -329,8 +328,7 @@
 
                     //Console.WriteLine("Generated Code: " + cSharpDocument.GeneratedCode);
 
-                    declarations[index] = new CompileToCSharpResult
-                    {
+                    declarations[index] = new CompileToCSharpResult {
                         FilePath = codeFile.Path,
                         ProjectItem = projectItem,
                         Code = cSharpDocument.GeneratedCode,
@@ -366,8 +364,7 @@
             await (updateStatusFunc?.Invoke("Preparing Project") ?? Task.CompletedTask);
 
             var results = new CompileToCSharpResult[declarations.Length];
-            for (index = 0; index < declarations.Length; index++)
-            {
+            for (index = 0; index < declarations.Length; index++) {
                 var declaration = declarations[index];
                 var isRazorDeclaration = declaration.ProjectItem != null;
 
@@ -385,9 +382,7 @@
                             Diagnostics = cSharpDocument.Diagnostics.Select(CompilationDiagnostic.FromRazorDiagnostic).ToList(),
                         };
                     }
-                }
-                else
-                {
+                } else {
                     results[index] = declaration;
                 }
             }
@@ -517,7 +512,6 @@
 
                             goto IL_0138;
                     }
-
                     break;
                 IL_0138:
                     uint num13 = num9;

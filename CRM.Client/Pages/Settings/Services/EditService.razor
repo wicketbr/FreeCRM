@@ -9,19 +9,20 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="@_title" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         if (_service.Deleted) {
             <h1 class="page-title">
                 <Language Tag="@_title" IncludeIcon="true" />
             </h1>
             <UndeleteMessage DeletedAt="_service.DeletedAt" LastModifiedBy="@_service.LastModifiedBy" OnUndelete="(() => _service.Deleted = false)" />
-        }else{
+        } else {
             <div class="@Model.StickyMenuClass">
                 <h1 class="page-title">
                     <Language Tag="@_title" IncludeIcon="true" />
@@ -130,6 +131,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -137,7 +139,7 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newService = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.Service _service = new DataObjects.Service();
     protected bool _validatedUrl = false;
 
@@ -219,8 +221,7 @@
     }
 
     // {{ModuleItemStart:Tags}}
-    protected List<DataObjects.Tag> AvailableTags
-    {
+    protected List<DataObjects.Tag> AvailableTags {
         get {
             var output = Model.Tags.ToList();
 
@@ -242,7 +243,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Model.Services = Model.Services.Where(x => x.ServiceId.ToString() != id).ToList();
 
@@ -305,16 +306,16 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_service.Code)) {
             errors.Add(Helpers.MissingRequiredField("ServiceCode"));
-            if (focus == "") { focus = "edit-service-code"; }
+            if (focus == String.Empty) { focus = "edit-service-code"; }
         }
 
         if (String.IsNullOrWhiteSpace(_service.Description)) {
             errors.Add(Helpers.MissingRequiredField("ServiceDescription"));
-            if (focus == "") { focus = "edit-service-description"; }
+            if (focus == String.Empty) { focus = "edit-service-description"; }
         }
 
         if (errors.Any()) {
@@ -329,7 +330,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/Services");
             } else {

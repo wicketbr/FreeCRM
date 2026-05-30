@@ -9,19 +9,20 @@
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="@_title" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         if (_tag.Deleted) {
             <h1 class="page-title">
                 <Language Tag="@_title" IncludeIcon="true" />
             </h1>
             <UndeleteMessage DeletedAt="_tag.DeletedAt" LastModifiedBy="@_tag.LastModifiedBy" OnUndelete="(() => _tag.Deleted = false)" />
-        }else{
+        } else {
             <div class="@Model.StickyMenuClass">
                 <h1 class="page-title">
                     <Language Tag="@_title" IncludeIcon="true" />
@@ -136,6 +137,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -143,7 +145,7 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newTag = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.Tag _tag = new DataObjects.Tag();
     protected bool _validatedUrl = false;
 
@@ -209,7 +211,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Model.Tags = Model.Tags.Where(x => x.TagId.ToString() != id).ToList();
 
@@ -267,11 +269,11 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_tag.Name)) {
             errors.Add(Helpers.MissingRequiredField("TagName"));
-            if (focus == "") { focus = "edit-tag-Name"; }
+            if (focus == String.Empty) { focus = "edit-tag-Name"; }
         }
 
         // If using built-in modules make sure at least one is selected.
@@ -304,7 +306,7 @@
             // {{ModuleItemEnd:Services}}
         }
 
-        if(missingModule) {
+        if (missingModule) {
             errors.Add(Helpers.Text("TagMustBeEnabledForAtLeastOneModule"));
         }
 
@@ -314,7 +316,7 @@
                 errors.AddRange(saveApp.Messages);
             }
 
-            if (focus == "" && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
+            if (focus == String.Empty && !String.IsNullOrWhiteSpace(saveApp.Focus)) {
                 focus = saveApp.Focus;
             }
         }
@@ -331,7 +333,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/Tags");
             } else {

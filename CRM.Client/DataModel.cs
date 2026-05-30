@@ -1,8 +1,5 @@
-﻿using BlazorBootstrap;
-using MudBlazor;
-using System.Reflection;
+﻿using MudBlazor;
 using System.Text.RegularExpressions;
-using System.Windows.Markup;
 
 namespace CRM.Client;
 
@@ -21,18 +18,18 @@ public enum MessageType
 
 public class Message
 {
-    public string Id { get; set; } = "";
+    public string Id { get; set; } = String.Empty;
     public bool AutoHide { get; set; }
     public DateTime Shown { get; set; } = DateTime.UtcNow;
-    public string Text { get; set; } = "";
-    public string TimeLabel { get; set; } = "";
+    public string Text { get; set; } = String.Empty;
+    public string TimeLabel { get; set; } = String.Empty;
     public MessageType MessageType { get; set; } = MessageType.Dark;
     public bool ReplaceLineBreaks { get; set; }
 }
 
 public class NewMessage
 {
-    public string Text { get; set; } = "";
+    public string Text { get; set; } = String.Empty;
     public MessageType MessageType { get; set; } = MessageType.Dark;
 }
 
@@ -56,11 +53,11 @@ public partial class BlazorDataModel
     private List<DataObjects.Tenant> _AllTenants = new List<DataObjects.Tenant>();
     private bool _AppOnline = true;
     private DataObjects.ApplicationSettingsUpdate _AppSettings = new DataObjects.ApplicationSettingsUpdate();
-    private string _ApplicationUrl = "";
+    private string _ApplicationUrl = String.Empty;
     private DataObjects.AuthenticationProviders _AuthenticationProviders = new DataObjects.AuthenticationProviders();
     private DataObjects.BlazorDataModelLoader _BlazorDataModelLoader = new DataObjects.BlazorDataModelLoader();
     private Dictionary<string, object> _BlazorPluginObjects = new Dictionary<string, object>();
-    private string _CultureCode = "en-US";
+    //private string _CultureCode = "en-US";
     private List<DataObjects.OptionPair> _CultureCodes = new List<DataObjects.OptionPair>();
     private DataObjects.Language _DefaultLanguage = new DataObjects.Language();
     private DataObjects.DeletedRecordCounts _DeletedRecordCounts = new DataObjects.DeletedRecordCounts();
@@ -70,7 +67,7 @@ public partial class BlazorDataModel
     // {{ModuleItemStart:EmailTemplates}}
     private List<DataObjects.EmailTemplate> _EmailTemplates = new List<DataObjects.EmailTemplate>();
     // {{ModuleItemEnd:EmailTemplates}}
-    private string _Fingerprint = "";
+    private string _Fingerprint = String.Empty;
     private List<string>? _GloballyDisabledModules = null;
     private List<string>? _GloballyEnabledModules = null;
     private List<DataObjects.FileStorage> _ImageFiles = new List<DataObjects.FileStorage>();
@@ -83,9 +80,9 @@ public partial class BlazorDataModel
     private bool _LoggedIn = false;
     private List<Message> _Messages = new List<Message>();
     private DateTime _ModelUpdated = DateTime.UtcNow;
-    private string? _NavigationId = "";
+    private string? _NavigationId = String.Empty;
     private List<Plugins.Plugin> _Plugins = new List<Plugins.Plugin>();
-    private string _QuickAction = "";
+    private string _QuickAction = String.Empty;
     private Delegate? _QuickActionOnComplete;
     // {{ModuleItemStart:Appointments}}
     private DataObjects.AppointmentNote _QuickAddAppointmentNote = new DataObjects.AppointmentNote();
@@ -106,7 +103,7 @@ public partial class BlazorDataModel
     private Guid _TenantId = Guid.Empty;
     private List<DataObjects.TenantList> _TenantList = new List<DataObjects.TenantList>();
     private List<DataObjects.Tenant> _Tenants = new List<DataObjects.Tenant>();
-    private string _Theme = "";
+    //private string _Theme = String.Empty;
     private List<DataObjects.udfLabel> _udfLabels = new List<DataObjects.udfLabel>();
     private bool _UseBackgroundService = false;
     private bool _UseCustomAuthenticationProviderFromAdminAccount = false;
@@ -114,8 +111,8 @@ public partial class BlazorDataModel
     private List<DataObjects.UserGroup> _UserGroups = new List<DataObjects.UserGroup>();
     private List<DataObjects.User> _Users = new List<DataObjects.User>();
     private bool _UseTenantCodeInUrl = false;
-    private string _Version = "";
-    private string _View = "";
+    private string _Version = String.Empty;
+    private string _View = String.Empty;
     private bool _ViewIsEditPage = false;
 
     /// <summary>
@@ -169,7 +166,7 @@ public partial class BlazorDataModel
                     MessageType = message.MessageType,
                     Shown = DateTime.UtcNow,
                     Text = message.Text,
-                    TimeLabel = "",
+                    TimeLabel = String.Empty,
                     ReplaceLineBreaks = ReplaceLineBreaks,
                 }
             };
@@ -180,7 +177,7 @@ public partial class BlazorDataModel
                 MessageType = message.MessageType,
                 Shown = DateTime.UtcNow,
                 Text = message.Text,
-                TimeLabel = "",
+                TimeLabel = String.Empty,
                 ReplaceLineBreaks = ReplaceLineBreaks,
             });
         }
@@ -442,16 +439,16 @@ public partial class BlazorDataModel
     /// <summary>
     /// The current culture code (defaults to 'en-US').
     /// </summary>
-    public string CultureCode {
-        get { return _CultureCode; }
-        set {
-            if (_CultureCode != value) {
-                _CultureCode = value;
-                _ModelUpdated = DateTime.UtcNow;
-                NotifyDataChanged();
-            }
-        }
-    }
+    //public string CultureCode {
+    //    get { return _CultureCode; }
+    //    set {
+    //        if (_CultureCode != value) {
+    //            _CultureCode = value;
+    //            _ModelUpdated = DateTime.UtcNow;
+    //            NotifyDataChanged();
+    //        }
+    //    }
+    //}
 
     /// <summary>
     /// A collection of all available culture codes.
@@ -677,7 +674,7 @@ public partial class BlazorDataModel
     /// <returns>The name of the group.</returns>
     public string DepartmentGroupName(Guid? DepartmentGroupId)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_DepartmentGroups.Any() && DepartmentGroupId.HasValue) {
             var departmentGroup = _DepartmentGroups.FirstOrDefault(x => x.DepartmentGroupId == DepartmentGroupId);
@@ -696,7 +693,7 @@ public partial class BlazorDataModel
     /// <returns>The name of the department.</returns>
     public string DepartmentName(Guid? DepartmentId)
     {
-        string output = "";
+        string output = String.Empty;
 
         if (_Departments.Any() && DepartmentId.HasValue) {
             var department = _Departments.FirstOrDefault(x => x.DepartmentId == DepartmentId);
@@ -793,7 +790,7 @@ public partial class BlazorDataModel
     public void ErrorMessages(List<string> messages, bool AutoHide = false, bool RemovePreviousMessages = true, bool ReplaceLineBreaks = false, string introMessage = "{{default}}")
     {
         if (messages.Any()) {
-            string message = "";
+            string message = String.Empty;
 
             if (!String.IsNullOrWhiteSpace(introMessage)) {
                 if (introMessage == "{{default}}") {
@@ -1436,7 +1433,7 @@ public partial class BlazorDataModel
             output = input;
 
             if (String.IsNullOrWhiteSpace(withText)) {
-                withText = "";
+                withText = String.Empty;
             }
 
             output = Regex.Replace(
@@ -1663,16 +1660,16 @@ public partial class BlazorDataModel
     /// <summary>
     /// The current interface theme ("dark", "light", or an empty string for auto).
     /// </summary>
-    public string Theme {
-        get { return _Theme; }
-        set {
-            if (_Theme != value) {
-                _Theme = value;
-                _ModelUpdated = DateTime.UtcNow;
-                NotifyDataChanged();
-            }
-        }
-    }
+    //public string Theme {
+    //    get { return _Theme; }
+    //    set {
+    //        if (_Theme != value) {
+    //            _Theme = value;
+    //            _ModelUpdated = DateTime.UtcNow;
+    //            NotifyDataChanged();
+    //        }
+    //    }
+    //}
 
     /// <summary>
     /// The method used to notify pages of data model updates.

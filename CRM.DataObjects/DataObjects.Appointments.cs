@@ -22,8 +22,8 @@ public partial class DataObjects
         public List<AppointmentNote> Notes { get; set; } = new List<AppointmentNote>();
         public List<AppointmentService> Services { get; set; } = new List<AppointmentService>();
         public DateTime Start { get; set; }
-        public string Title { get; set; } = "";
-        public string TitleDisplay { get; set; } = "";
+        public string Title { get; set; } = String.Empty;
+        public string TitleDisplay { get; set; } = String.Empty;
         public List<AppointmentUser> Users { get; set; } = new List<AppointmentUser>();
         public List<Guid>? Tags { get; set; }
         // {{ModuleItemStart:Invoices}}
@@ -74,7 +74,7 @@ public partial class DataObjects
     {
         public Guid UserId { get; set; }
         public string AttendanceCode { get; set; } = "invited";
-        public string DisplayName { get; set; } = "";
+        public string DisplayName { get; set; } = String.Empty;
         public decimal Fees { get; set; }
     }
 }

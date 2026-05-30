@@ -8,13 +8,14 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="@_title" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         if (AppModule.OverridePage) {
             <EditUserGroup_App Value="_userGroup" />
         } else {
@@ -76,15 +77,15 @@
                 <div class="mb-2">
                     <label for="edit-user-group-lookup"><Language Tag="AddUsersToGroup" /></label>
                     <AutoComplete Class="form-control"
-                        Disabled="false"
-                        GetAutoCompleteItems="UserLookup"
-                        HighlightFirstMatch="true"
-                        Id="edit-user-group-lookup"
-                        LookupDelay="300"
-                        MatchParentWidth="true"
-                        MinimumCharacters="1"
-                        OnSelected="AutoCompleteItemSelected"
-                        PlaceholderText="@UserLookupPlaceholderText" />
+                            Disabled="false"
+                            GetAutoCompleteItems="UserLookup"
+                            HighlightFirstMatch="true"
+                            Id="edit-user-group-lookup"
+                            LookupDelay="300"
+                            MatchParentWidth="true"
+                            MinimumCharacters="1"
+                            OnSelected="AutoCompleteItemSelected"
+                            PlaceholderText="@UserLookupPlaceholderText" />
                 </div>
 
                 <div class="mb-2">
@@ -106,7 +107,7 @@
 
                 @if (!_newUserGroup) {
                     <div class="mb-2">
-                        <hr />
+                    <hr />
                     <LastModifiedMessage DataObject="_userGroup" />
                 </div>
                 }
@@ -120,6 +121,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? groupid { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -127,7 +129,7 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newUserGroup = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
     protected bool _validatedUrl = false;
 
@@ -188,14 +190,13 @@
 
     protected async Task AutoCompleteItemSelected((string key, string label) item)
     {
-        //Model.AddMessage("Selected '" + item.Value + "'", MessageType.Warning);
         // Make sure the user isn't already in the list.
-        if(_userGroup.Users == null) {
+        if (_userGroup.Users == null) {
             _userGroup.Users = new List<DataObjects.UserListing>();
         }
 
         var existing = _userGroup.Users.FirstOrDefault(x => x.UserId.ToString() == item.key);
-        if(existing == null) {
+        if (existing == null) {
             _userGroup.Users.Add(new DataObjects.UserListing {
                 UserId = new Guid(item.key),    
                 FirstName = item.label,
@@ -214,7 +215,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Helpers.NavigateTo("Settings/UserGroups");
             } else {
@@ -265,7 +266,7 @@
 
     protected void RemoveUserFromGroup(Guid UserId)
     {
-        if(_userGroup.Users != null && _userGroup.Users.Any()) {
+        if (_userGroup.Users != null && _userGroup.Users.Any()) {
             _userGroup.Users = _userGroup.Users.Where(x => x.UserId != UserId).ToList();
         }
     }
@@ -275,11 +276,11 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_userGroup.Name)) {
             errors.Add(Helpers.MissingRequiredField("Name"));
-            if (focus == "") { focus = "edit-group-name"; }
+            if (focus == String.Empty) { focus = "edit-group-name"; }
         }
 
         if (errors.Any()) {
@@ -294,7 +295,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/UserGroups");
             } else {
@@ -338,11 +339,9 @@
         return output;
     }
 
-    protected string UserLookupPlaceholderText
-    {
+    protected string UserLookupPlaceholderText {
         get {
             return Helpers.Text("AutoCompleteUserLookupPlaceholder");
         }
     }
-
 }

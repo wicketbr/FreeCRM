@@ -43,7 +43,8 @@
     protected bool _loading = true;
     protected string _pageName = "home";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
     }
 
@@ -62,13 +63,15 @@
         }
     }
 
-    protected void OnDataModelUpdated() {
+    protected void OnDataModelUpdated()
+    {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
     }
 
-    protected async Task LoadData() {
+    protected async Task LoadData()
+    {
         // Load any app-specific data here.
         _loading = false;
         StateHasChanged();

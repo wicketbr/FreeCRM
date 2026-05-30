@@ -51,4 +51,8 @@
     <ProjectReference Include="..\CRM.DataObjects\CRM.DataObjects.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>

@@ -41,11 +41,13 @@
     protected string _title = "EditUserGroup";
     protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= StateHasChanged;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
         if (Model.Loaded && Model.LoggedIn) {
             if (!Model.User.Admin) {
                 Helpers.NavigateToRoot();
@@ -64,22 +66,8 @@
         Model.OnChange += StateHasChanged;
     }
 
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected override void OnParametersSet()
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected void RenderComponent()
-    // {
-    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
-    // }
-
-    protected async Task LoadData() {
+    protected async Task LoadData()
+    {
         if (String.IsNullOrWhiteSpace(groupid)) {
             _title = "NewUserGroup";
 

@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
@@ -123,6 +124,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -187,7 +189,7 @@
         _udfLabels = new List<DataObjects.udfLabel>();
 
         if (Model.udfLabels.Any()) {
-            foreach(var label in Model.udfLabels) {
+            foreach (var label in Model.udfLabels) {
                 _udfLabels.Add(new DataObjects.udfLabel {
                     Id = label.Id,
                     TenantId = label.TenantId,
@@ -217,7 +219,7 @@
         var saved = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/SaveUDFLabels", _udfLabels);
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.Result) {
                 // Reload the values.
                 await Helpers.LoadUdfLabels();
@@ -230,29 +232,25 @@
         }
     }
 
-    protected string TextIncludeInSearch
-    {
+    protected string TextIncludeInSearch {
         get {
             return Helpers.Text("IncludeInSearch");
         }
     }
 
-    protected string TextLabel
-    {
+    protected string TextLabel {
         get {
             return Helpers.Text("UDFLabelFor");
         }
     }
 
-    protected string TextShowColumn
-    {
+    protected string TextShowColumn {
         get {
             return Helpers.Text("ShowColumn");
         }
     }
 
-    protected string TextShowInFilter
-    {
+    protected string TextShowInFilter {
         get {
             return Helpers.Text("ShowInFilter");
         }

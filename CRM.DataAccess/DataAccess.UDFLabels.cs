@@ -87,7 +87,7 @@ public partial class DataAccess
                 Id = Guid.NewGuid(),
                 TenantId = TenantId,
                 Module = "Users",
-                Label = "",
+                Label = String.Empty,
                 ShowColumn = false,
                 ShowInFilter = false,
                 IncludeInSearch = false,
@@ -144,12 +144,12 @@ public partial class DataAccess
                     rec.LastModified = DateTime.UtcNow;
                 }
 
-                if(rec.Module != MaxStringLength(label.Module, 20)) {
+                if (rec.Module != MaxStringLength(label.Module, 20)) {
                     rec.Module = MaxStringLength(label.Module, 20);
                     modified = true;
                 }
 
-                if(rec.UDF != MaxStringLength(label.udf, 10)) {
+                if (rec.UDF != MaxStringLength(label.udf, 10)) {
                     rec.UDF = MaxStringLength(label.udf, 10);
                     modified = true;
                 }
@@ -216,12 +216,10 @@ public partial class DataAccess
         bool output = false;
 
         var label = labels.FirstOrDefault(x => x.Module == module && x.udf == "UDF" + item.ToString().PadLeft(2, '0'));
-        if(label != null && !String.IsNullOrEmpty(label.Label)) {
+        if (label != null && !String.IsNullOrEmpty(label.Label)) {
             output = label.ShowColumn;
         }
 
-        //var label = UDFLabel(module, item, labels);
-        //bool output = !String.IsNullOrWhiteSpace(label);
         return output;
     }
 

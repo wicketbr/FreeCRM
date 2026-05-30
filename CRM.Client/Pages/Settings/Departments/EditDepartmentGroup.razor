@@ -8,13 +8,14 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     if (_loading) {
         <h1 class="page-title">
             <Language Tag="@_title" IncludeIcon="true" />
         </h1>
         <LoadingMessage />
-    }else{
+    } else {
         <div class="@Model.StickyMenuClass">
             <h1 class="page-title">
                 <Language Tag="@_title" IncludeIcon="true" />
@@ -76,6 +77,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? departmentgroupid { get; set; }
     [Parameter] public string? TenantCode { get; set; }
@@ -83,13 +85,14 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newDepartmentGroup = false;
-    protected string _title = "";
+    protected string _title = String.Empty;
     protected DataObjects.DepartmentGroup _deptGroup = new DataObjects.DepartmentGroup();
     protected bool _validatedUrl = false;
 
     protected string _pageName = "editdepartmentgroup";
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= OnDataModelUpdated;
         Model.OnSignalRUpdate -= SignalRUpdate;
     }
@@ -141,7 +144,7 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Helpers.NavigateTo("Settings/DepartmentGroups");
             } else {
@@ -194,11 +197,11 @@
         Model.ClearMessages();
 
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_deptGroup.DepartmentGroupName)) {
             errors.Add(Helpers.MissingRequiredField("DepartmentGroupName"));
-            if (focus == "") { focus = "edit-departmentgroup-departmentGroupName"; }
+            if (focus == String.Empty) { focus = "edit-departmentgroup-departmentGroupName"; }
         }
 
         if (errors.Any()) {
@@ -213,7 +216,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Helpers.NavigateTo("Settings/DepartmentGroups");
             } else {

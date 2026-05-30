@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     <h1 class="page-title">
         <Language Tag="ManageProfile" IncludeIcon="true" />
@@ -52,8 +53,11 @@
              </div>
         }
 
-        if (Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo && Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
-      Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any()) {
+        if (
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo && 
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any()
+        ) {
             <div class="card mb-2">
                 <div class="card-header text-bg-primary text-white">
                     <Language Tag="ManageProfileInfo" IncludeIcon="true" />
@@ -134,6 +138,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -199,7 +204,7 @@
 
         var deleted = await Helpers.GetOrPost<DataObjects.BooleanResponse>("api/Data/DeleteUserPhoto/" + Model.User.UserId.ToString());
         Model.ClearMessages();
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 await Helpers.ReloadUser();
                 _user = Model.User;
@@ -242,22 +247,22 @@
     {
         Model.ClearMessages();
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (Model.AllowUsersToManageName) {
             if (String.IsNullOrWhiteSpace(_user.FirstName)) {
                 errors.Add(Helpers.MissingRequiredField("FirstName"));
-                if (focus == "") { focus = "edit-profile-firstName"; }
+                if (focus == String.Empty) { focus = "edit-profile-firstName"; }
             }
             if (String.IsNullOrWhiteSpace(_user.LastName)) {
                 errors.Add(Helpers.MissingRequiredField("LastName"));
-                if (focus == "") { focus = "edit-profile-lastName"; }
+                if (focus == String.Empty) { focus = "edit-profile-lastName"; }
             }
         }
 
-        if(Model.AllowUsersToManageEmail && String.IsNullOrWhiteSpace(_user.Email)) {
+        if (Model.AllowUsersToManageEmail && String.IsNullOrWhiteSpace(_user.Email)) {
             errors.Add(Helpers.MissingRequiredField("Email"));
-            if (focus == "") { focus = "edit-profile-email"; }
+            if (focus == String.Empty) { focus = "edit-profile-email"; }
         }
 
         if (errors.Any()) {
@@ -272,7 +277,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 Model.Message_Saved();
                 await Helpers.ReloadUser();
@@ -291,9 +296,8 @@
             await UploadedAvatarImage(fileStorage);
         };
 
-        string title = "";
+        string title = String.Empty;
         string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
-        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
         List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
 
         await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
@@ -343,12 +347,11 @@
         StateHasChanged();
     }
 
-    protected string UserAvatarUrl
-    {
+    protected string UserAvatarUrl {
         get {
-            string output = "";
+            string output = String.Empty;
 
-            if(_user.Photo.HasValue && _user.Photo != Guid.Empty) {
+            if (_user.Photo.HasValue && _user.Photo != Guid.Empty) {
                 output = Helpers.BaseUri + "File/View/" + ((Guid)_user.Photo).ToString();// + "?Random=" + Guid.NewGuid().ToString();
             }
 
@@ -356,8 +359,7 @@
         }
     }
 
-    protected bool UserHasAvatarPhoto
-    {
+    protected bool UserHasAvatarPhoto {
         get {
             return _user.Photo.HasValue && _user.Photo != Guid.Empty;
         }

@@ -6,6 +6,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.Loaded && Model.View == _pageName) {
     @if (_loading) {
         <h1 class="page-title">
@@ -717,6 +718,7 @@
         }
     }
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -752,7 +754,7 @@
 
     protected Settings_App AppModule = new Settings_App();
 
-    protected string _deletePreference = "";
+    protected string _deletePreference = String.Empty;
     protected bool _validatedUrl = false;
 
     protected string _pageName = "settings";
@@ -768,7 +770,7 @@
             Model.TenantCodeFromUrl = TenantCode;
         }
 
-        if(Model.Loaded && Model.LoggedIn){
+        if (Model.Loaded && Model.LoggedIn){
             if (!Model.User.Admin) {
                 Helpers.NavigateToRoot();
                 return;
@@ -800,8 +802,7 @@
         }
     }
 
-    protected bool AuthOptionLocal
-    {
+    protected bool AuthOptionLocal {
         get {
             return _loginOptions != null && _loginOptions.Contains("local");
         }
@@ -853,13 +854,13 @@
 
         Model.ClearMessages();
 
-        if(deleted != null) {
+        if (deleted != null) {
             if (deleted.Result) {
                 Model.Tenant.TenantSettings.Logo = null;
                 _tenant.TenantSettings.Logo = null;
 
                 var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
-                if(tenantItem != null) {
+                if (tenantItem != null) {
                     tenantItem.TenantSettings.Logo = null;
                 }
 
@@ -872,11 +873,10 @@
         }
     }
 
-    protected int TextareaHeightDefaultCustomThemeCss
-    {
+    protected int TextareaHeightDefaultCustomThemeCss {
         get {
             int output = Helpers.LinesInString(_tenant.TenantSettings.ThemeCss);
-            if(output < 5) {
+            if (output < 5) {
                 output = 5;
             }
             return output;
@@ -888,7 +888,7 @@
         _loading = true;
 
         var tenant = await Helpers.GetOrPost<DataObjects.Tenant>("api/Data/GetTenant/" + Model.TenantId.ToString());
-        if(tenant != null) {
+        if (tenant != null) {
             _tenant = tenant;
             _allowUsersToManageBasicProfileInfoElements = Helpers.ListToArray(_tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements);
             _loginOptions = Helpers.ListToArray(_tenant.TenantSettings.LoginOptions);
@@ -908,7 +908,7 @@
             var blockedOptions = _tenant.TenantSettings.ModuleHideElements;
             var enabledOptions = Model.GloballyEnabledModules != null ? Model.GloballyEnabledModules : new List<string>();
 
-            foreach(var item in Model.Modules) {
+            foreach (var item in Model.Modules) {
                 if (!blockedOptions.Contains(item) && !enabledOptions.Contains(item)) {
                     _availableOptInOptions.Add(item);
                 }
@@ -949,12 +949,11 @@
         }
     }
 
-    protected string LogoUrl
-    {
+    protected string LogoUrl {
         get {
-            string output = "";
+            string output = String.Empty;
 
-            if(_tenant.TenantSettings.Logo.HasValue && _tenant.TenantSettings.Logo != Guid.Empty) {
+            if (_tenant.TenantSettings.Logo.HasValue && _tenant.TenantSettings.Logo != Guid.Empty) {
                 output = Helpers.BaseUri + "File/View/" + ((Guid)_tenant.TenantSettings.Logo).ToString();
             }
 
@@ -1027,19 +1026,19 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 var currentTenant = Model.Tenants.FirstOrDefault(x => x.TenantId == saved.TenantId);
-                if(currentTenant != null) {
+                if (currentTenant != null) {
                     var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
-                    if(dup != null) {
+                    if (dup != null) {
                         currentTenant = saved;
                     }
                 }
 
-                if(Model.TenantId == saved.TenantId) {
+                if (Model.TenantId == saved.TenantId) {
                     var dup = Helpers.DuplicateObject<DataObjects.Tenant>(saved);
-                    if(dup != null) {
+                    if (dup != null) {
                         Model.Tenant = dup;
                     }
                 }
@@ -1056,7 +1055,7 @@
     protected int TextareaHeightCustomCode()
     {
         int output = Helpers.LinesInString(_tenant.TenantSettings.CustomAuthenticationCode);
-        if(output < 5) {
+        if (output < 5) {
             output = 5;
         }
         return output;
@@ -1068,7 +1067,7 @@
         int linesInPublicKey = Helpers.LinesInString(_tenant.TenantSettings.JwtRsaPublicKey);
 
         int output = linesInPrivateKey;
-        if(linesInPublicKey > output) {
+        if (linesInPublicKey > output) {
             output = linesInPublicKey;
         }
 
@@ -1077,12 +1076,6 @@
 
     protected void ToggleLogoUpdate()
     {
-        // var tenant = Helpers.DuplicateObject<DataObjects.Tenant>(Model.Tenant);
-        // if(tenant != null){
-        //     Model.Tenant = tenant;
-        // }
-
-        // StateHasChanged();
         Model.TriggerUpdate();
     }
 
@@ -1092,9 +1085,8 @@
             await UploadedLogo(fileStorage);
         };
 
-        string title = "";
+        string title = String.Empty;
         string uploadInstructions = Helpers.Text("ManageAvatarInstructions");
-        //string supportedFileTypes = Helpers.Text("SupportedFileTypes") + ": " + "GIF, JPG, PNG, SVG";
         List<string> supportedFileTypes = new List<string>() { ".GIF", ".JPG", ".PNG", ".SVG" };
 
         await Helpers.UploadFile(onUploadComplete, title, uploadInstructions, supportedFileTypes);
@@ -1138,7 +1130,7 @@
                                 Model.Tenant.TenantSettings.Logo = fileId;
 
                                 var tenantItem = Model.Tenants.FirstOrDefault(x => x.TenantId == Model.TenantId);
-                                if(tenantItem != null) {
+                                if (tenantItem != null) {
                                     tenantItem.TenantSettings.Logo = fileId;
                                 }
 

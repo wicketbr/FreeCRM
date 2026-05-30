@@ -1,6 +1,4 @@
-﻿using Microsoft.Graph.Models;
-
-namespace CRM;
+﻿namespace CRM;
 
 public partial interface IDataAccess
 {
@@ -153,7 +151,7 @@ public partial class DataAccess
         var recs = await query.ToListAsync();
 
         if (recs != null && recs.Any()) {
-            foreach(var rec in recs) {
+            foreach (var rec in recs) {
                 var invoiceItems = DeserializeObject<List<DataObjects.InvoiceItem>>(rec.Items);
 
                 var i = new DataObjects.Invoice {
@@ -204,42 +202,42 @@ public partial class DataAccess
 
         output.Columns = new List<DataObjects.FilterColumn> {
             new DataObjects.FilterColumn { 
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoiceItemDescription", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "Title",
                 DataType = "text",
                 Class = "auto-truncate",
             },
             new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoiceNumber"),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "InvoiceNumber",
                 DataType = "text",
             },
             new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoicePO"),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "PONumber",
                 DataType = "text",
             },
             new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoiceCreated", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "InvoiceCreated",
                 DataType = "DateTime"
             },
             new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoiceDue", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "InvoiceDueDate",
                 DataType = "Date"
@@ -250,9 +248,9 @@ public partial class DataAccess
 
         if (adminUser) {
             output.Columns.Add(new DataObjects.FilterColumn {
-                Align = "",
+                Align = String.Empty,
                 Label = GetLanguageItem("InvoiceSendDate", language),
-                TipText = "",
+                TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "InvoiceSendDate",
                 DataType = "Date"
@@ -262,9 +260,9 @@ public partial class DataAccess
         output.Columns.AddRange(GetFilterColumnsApp("Invoices", "InvoiceSendDate", language, CurrentUser));
 
         output.Columns.Add(new DataObjects.FilterColumn {
-            Align = "",
+            Align = String.Empty,
             Label = GetLanguageItem("InvoiceSent", language),
-            TipText = "",
+            TipText = String.Empty,
             Sortable = true,
             DataElementName = "InvoiceSent",
             DataType = "DateTime"
@@ -273,9 +271,9 @@ public partial class DataAccess
         output.Columns.AddRange(GetFilterColumnsApp("Invoices", "InvoiceSent", language, CurrentUser));
 
         output.Columns.Add(new DataObjects.FilterColumn {
-            Align = "",
+            Align = String.Empty,
             Label = GetLanguageItem("InvoiceTotal", language),
-            TipText = "",
+            TipText = String.Empty,
             Sortable = true,
             DataElementName = "Total",
             DataType = "currency"
@@ -285,7 +283,7 @@ public partial class DataAccess
 
         IQueryable<Invoice>? recs = null;
 
-        if(adminUser) {
+        if (adminUser) {
             recs = data.Invoices
                 // {{ModuleItemStart:Appointments}}
                 .Include(x => x.Appointment)
@@ -306,7 +304,7 @@ public partial class DataAccess
         }
 
         if (!String.IsNullOrWhiteSpace(output.ClosedStatus)) {
-            switch(output.ClosedStatus.ToUpper()) {
+            switch (output.ClosedStatus.ToUpper()) {
                 case "CLOSED":
                     recs = recs.Where(x => x.InvoiceClosed != null);
                     break;
@@ -451,7 +449,6 @@ public partial class DataAccess
                     } else {
                         recs = recs.Take(output.RecordsPerPage);
                     }
-
                 }
             }
 
@@ -488,8 +485,6 @@ public partial class DataAccess
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     Deleted = rec.Deleted,
                     DeletedAt = rec.DeletedAt,
-                    //LastModified = rec.LastModified,
-                    //LastModifiedBy = LastModifiedDisplayName(rec.LastModifiedBy),
                 };
 
                 GetDataApp(rec, u, CurrentUser);
@@ -503,9 +498,9 @@ public partial class DataAccess
             // Only include the following columns if there is data with values for those items.
             if (records.Any(x => x.AppointmentId != null)) {
                 output.Columns.Add(new DataObjects.FilterColumn {
-                    Align = "",
+                    Align = String.Empty,
                     Label = GetLanguageItem("Appointment", language),
-                    TipText = "",
+                    TipText = String.Empty,
                     Sortable = true,
                     DataElementName = "Appointment",
                     DataType = "string"
@@ -515,9 +510,9 @@ public partial class DataAccess
 
             if (adminUser && records.Any(x => x.UserId != null)) {
                 output.Columns.Add(new DataObjects.FilterColumn {
-                    Align = "",
+                    Align = String.Empty,
                     Label = GetLanguageItem("User", language),
-                    TipText = "",
+                    TipText = String.Empty,
                     Sortable = true,
                     DataElementName = "UserDisplay",
                     DataType = "string",
@@ -546,7 +541,7 @@ public partial class DataAccess
 
         var query = data.Invoices.Where(x => x.AppointmentId == AppointmentId);
 
-        if(CurrentUser == null || !CurrentUser.Admin) {
+        if (CurrentUser == null || !CurrentUser.Admin) {
             query = query.Where(x => x.Deleted != true);
         }
 

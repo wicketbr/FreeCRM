@@ -1,4 +1,7 @@
-﻿namespace CRM;
+﻿using Google.Protobuf.WellKnownTypes;
+using Newtonsoft.Json.Linq;
+
+namespace CRM;
 
 public static partial class Utilities
 {
@@ -30,7 +33,8 @@ public static partial class Utilities
     /// <returns>A nullable DateTime object.</returns>
     public static DateTime? AdjustDateTime(DateTime? value, decimal TimeZoneOffsetHours, DateTime? DefaultIfNoValue)
     {
-        DateTime? output = (DateTime?)null;
+        DateTime? output = null;
+
         if (value.HasValue) {
             DateTime givenValue = Convert.ToDateTime(value);
             if (TimeZoneOffsetHours != 0) {
@@ -41,6 +45,7 @@ public static partial class Utilities
             }
             output = givenValue;
         }
+
         if (!output.HasValue) {
             if (DefaultIfNoValue.HasValue) {
                 output = (DateTime)DefaultIfNoValue;
@@ -49,6 +54,7 @@ public static partial class Utilities
             }
 
         }
+
         return output;
     }
 
@@ -103,6 +109,7 @@ public static partial class Utilities
     public static string FormatAsDate(this string DateString)
     {
         string output = DateString;
+
         if (!String.IsNullOrWhiteSpace(output)) {
             try {
                 DateTime dateOut;
@@ -110,12 +117,14 @@ public static partial class Utilities
                 output = string.Format("{0:M/d/yyyy}", dateOut);
             } catch { }
         }
+        
         return output;
     }
 
     public static string FormatAsTime(this string DateString)
     {
         string output = DateString;
+        
         if (!String.IsNullOrWhiteSpace(output)) {
             try {
                 DateTime dateOut;
@@ -123,6 +132,7 @@ public static partial class Utilities
                 output = string.Format("{0:h:mmtt}", dateOut).ToLower();
             } catch { }
         }
+        
         return output;
     }
 
@@ -134,9 +144,11 @@ public static partial class Utilities
     public static string FormatDateTime(DateTime? value)
     {
         string output = String.Empty;
+        
         if (value.HasValue) {
             output = Convert.ToDateTime(value).ToShortDateString() + " " + Convert.ToDateTime(value).ToShortTimeString();
         }
+        
         return output;
     }
 
@@ -148,35 +160,13 @@ public static partial class Utilities
     public static string GetBinaryStringFromGuid(Guid guid)
     {
         StringBuilder sb = new StringBuilder();
+        
         foreach (byte b in guid.ToByteArray()) {
             sb.Append(string.Format(@"\{0}", b.ToString("X")));
         }
+        
         return sb.ToString();
     }
-
-    /// <summary>
-	/// Gets the full URL of the current page.
-	/// </summary>
-	/// <returns>The full URL of the current page with any querystring values as well.</returns>
-	//public static string GetFullUrl(Microsoft.AspNetCore.Http.HttpContext httpContext)
- //   {
- //       string output = "";
-
- //       if (httpContext != null) {
- //           try {
- //               output = string.Concat(
- //                   httpContext.Request.Scheme,
- //                   "://",
- //                   httpContext.Request.Host.ToUriComponent(),
- //                   httpContext.Request.PathBase.ToUriComponent(),
- //                   httpContext.Request.Path.ToUriComponent(),
- //                   httpContext.Request.QueryString.ToUriComponent()
- //               );
- //           } catch { }
- //       }
-
- //       return output;
- //   }
 
     private static readonly IDictionary<string, string> _mappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
         #region Big freaking list of mime types
@@ -815,19 +805,15 @@ public static partial class Utilities
         return System.Web.HttpUtility.HtmlEncode(HtmlToEncode);
     }
 
-    public static bool IsDate(this string Input)
+    public static bool IsDate(this string value)
     {
-        bool output = false;
-        DateTime time1;
-        try {
-            output = DateTime.TryParse((string)Input, out time1);
-        } catch { }
-        return output;
+        return DateTime.TryParse(value, out DateTime tempDate);
     }
 
     public static bool IsEmailAddress(this string EmailAddress)
     {
         bool output = false;
+        
         try {
             var addr = new System.Net.Mail.MailAddress(EmailAddress);
             output = addr.Address == EmailAddress;
@@ -835,38 +821,18 @@ public static partial class Utilities
                 output = addr.Host.Contains(".");
             }
         } catch { }
+        
         return output;
     }
 
-    public static bool IsGuid(this string Input)
+    public static bool IsGuid(this string value)
     {
-        bool output = false;
-        if (!String.IsNullOrWhiteSpace(Input)) {
-            Guid test = Guid.Empty;
-            try {
-                test = new Guid(Input);
-                if (test != Guid.Empty) { output = true; }
-            } catch { }
-        }
-        return output;
+        return Guid.TryParse(value, out _);
     }
 
-    public static bool IsNumeric(this string Input)
+    public static bool IsNumeric(this string value)
     {
-        bool output = false;
-        if (!String.IsNullOrWhiteSpace(Input)) {
-            try {
-                decimal decTest = Convert.ToDecimal(Input);
-                output = true;
-            } catch { }
-            if (!output) {
-                try {
-                    double longTest = Convert.ToInt64(Input);
-                    output = true;
-                } catch { }
-            }
-        }
-        return output;
+        return double.TryParse(value, out _);
     }
 
     /// <summary>
@@ -877,6 +843,7 @@ public static partial class Utilities
     public static string NumbersOnly(string Input)
     {
         string output = String.Empty;
+        
         try {
             Regex regexObj = new Regex(@"[^\d]");
             string resultString = regexObj.Replace(Input, "");
@@ -884,6 +851,7 @@ public static partial class Utilities
                 output = resultString;
             }
         } catch { }
+        
         return output;
     }
 
@@ -891,6 +859,7 @@ public static partial class Utilities
     {
         int startIndex = 0;
         string replaceString = originalString + String.Empty;
+
         while (true) {
             if (CaseSensitive) {
                 startIndex = replaceString.IndexOf(oldValue, startIndex, System.StringComparison.InvariantCulture);
@@ -901,6 +870,7 @@ public static partial class Utilities
             replaceString = replaceString.Substring(0, startIndex) + newValue + replaceString.Substring(startIndex + oldValue.Length);
             startIndex += newValue.Length;
         }
+
         return replaceString;
     }
 

@@ -96,7 +96,7 @@ public partial class DataAccess
             ImageFormat = QuestPDF.Infrastructure.ImageFormat.Jpeg,
         });
 
-        if(images != null && images.Any()) {
+        if (images != null && images.Any()) {
             output = images.ToList();
         }
 
@@ -130,13 +130,13 @@ public partial class DataAccess
 
 public class InvoiceAddress
 {
-    public string CompanyName { get; set; } = "";
-    public string Street { get; set; } = "";
-    public string City { get; set; } = "";
-    public string State { get; set; } = "";
-    public string PostalCode { get; set; } = "";
-    public string Email { get; set; } = "";
-    public string Phone { get; set; } = "";
+    public string CompanyName { get; set; } = String.Empty;
+    public string Street { get; set; } = String.Empty;
+    public string City { get; set; } = String.Empty;
+    public string State { get; set; } = String.Empty;
+    public string PostalCode { get; set; } = String.Empty;
+    public string Email { get; set; } = String.Empty;
+    public string Phone { get; set; } = String.Empty;
 }
 
 public class InvoiceAddressComponent : QuestPDF.Infrastructure.IComponent
@@ -338,8 +338,8 @@ public class InvoiceModel
 {
     public string? Author { get; set; }
 
-    public string InvoiceNumber { get; set; } = "";
-    public string PONumber { get; set; } = "";
+    public string InvoiceNumber { get; set; } = String.Empty;
+    public string PONumber { get; set; } = String.Empty;
     public DateTime IssueDate { get; set; }
     public DateTime DueDate { get; set; }
 
@@ -347,29 +347,15 @@ public class InvoiceModel
     public InvoiceAddress CustomerAddress { get; set; } = new InvoiceAddress();
 
     public byte[]? Logo { get; set; }
-    public string LogoExtension { get; set; } = "";
+    public string LogoExtension { get; set; } = String.Empty;
 
     public List<InvoiceOrderItem> Items { get; set; } = new List<InvoiceOrderItem>();
-    public string Comments { get; set; } = "";
+    public string Comments { get; set; } = String.Empty;
 }
 
 public class InvoiceOrderItem
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = String.Empty;
     public decimal Price { get; set; }
     public int Quantity { get; set; }
 }
-
-//public static class SvgExtensions
-//{
-//    public static void Svg(this QuestPDF.Infrastructure.IContainer container, Svg.Skia.SKSvg svg)
-//    {
-//        container
-//            .AlignCenter()
-//            .AlignMiddle()
-//            .ScaleToFit()
-//            .Width(svg.Picture.CullRect.Width)
-//            .Height(svg.Picture.CullRect.Height)
-//            .Canvas((canvas, space) => canvas.DrawPicture(svg.Picture));
-//    }
-//}

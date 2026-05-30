@@ -1,6 +1,4 @@
-﻿using System.Net.NetworkInformation;
-
-namespace CRM.Client;
+﻿namespace CRM.Client;
 
 public static partial class Helpers
 {
@@ -162,5 +160,4 @@ public static partial class Helpers
     {
         // Model.DeletedRecordCounts.MyValue = deletedRecords.MyValue.Count();
     }
-
 }

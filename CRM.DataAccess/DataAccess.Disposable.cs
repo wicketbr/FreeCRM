@@ -9,7 +9,7 @@ public partial class DataAccess
             if (disposing) {
                 if (data != null) {
                     data.Dispose();
-                    _connectionString = "";
+                    _connectionString = String.Empty;
                 }
             }
 

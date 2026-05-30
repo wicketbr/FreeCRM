@@ -43,7 +43,6 @@ namespace CRM.Server.Controllers
                                     ";User=" + csConfig.MySQL_User +
                                     ";Password=" + csConfig.MySQL_Password + ";";
                             }
-
                             break;
 
                         case "POSTGRESQL":
@@ -57,7 +56,6 @@ namespace CRM.Server.Controllers
                                     ";Username=" + csConfig.PostgreSql_Username +
                                     ";Password=" + csConfig.PostgreSql_Password + ";";
                             }
-
                             break;
 
                         case "SQLSERVER":
@@ -114,17 +112,6 @@ namespace CRM.Server.Controllers
 
                         json = System.Text.Json.JsonSerializer.Serialize(jsonObject, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
                     }
-
-                    //var jsonSettings = new JsonSerializerSettings();
-                    //jsonSettings.Converters.Add(new ExpandoObjectConverter());
-                    //jsonSettings.Converters.Add(new StringEnumConverter());
-                    //var config = JsonConvert.DeserializeObject<ExpandoObject>(json, jsonSettings);
-                    //if (config != null) {
-                    //    dynamic o = (dynamic)config;
-                    //    o.ConnectionStrings.AppData = cs;
-                    //    o.DatabaseType = csConfig.DatabaseType;
-                    //}
-                    //json = JsonConvert.SerializeObject(config, Formatting.Indented, jsonSettings);
 
                     System.IO.File.WriteAllText(appSettingsPath, json);
 

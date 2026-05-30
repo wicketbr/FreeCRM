@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject BlazorDataModel Model
 @inject Radzen.DialogService DialogService
+
 @if (Model.Loaded) {
     @if (_loading) {
         <LoadingMessage />
@@ -58,13 +59,14 @@
         }
     }
 }
+
 @code {
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected bool _newAppointment = false;
 
     protected DataObjects.FileStorage file = new DataObjects.FileStorage();
-    protected string _filename = "";
+    protected string _filename = String.Empty;
     protected bool _visible = false;
 
     [Parameter]
@@ -111,7 +113,7 @@
 
     protected void Delete()
     {
-        if(OnDelete != null) {
+        if (OnDelete != null) {
             OnDelete.DynamicInvoke(file);
         }
 
@@ -122,7 +124,7 @@
     protected async Task LoadData()
     {
         var results = await Helpers.GetOrPost<DataObjects.FileStorage>("api/Data/GetFileStorage/" + FileId.ToString());
-        if(results != null) {
+        if (results != null) {
             if (results.ActionResponse.Result) {
                 file = results;
                 _visible = true;

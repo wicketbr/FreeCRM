@@ -44,7 +44,7 @@
     /// <summary>
     /// OPTIONAL: An Id for the editor. If empty a ramdom Id will be generated.
     /// </summary>
-    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public string Id { get; set; } = String.Empty;
 
     /// <summary>
     /// REQUIRED: The language for the editor (defaults to 'plaintext'.)
@@ -59,7 +59,7 @@
     /// <summary>
     /// OPTIONAL: The placeholder text to display when the editor is empty.
     /// </summary>
-    [Parameter] public string PlaceholderText { get; set; } = "";
+    [Parameter] public string PlaceholderText { get; set; } = String.Empty;
 
     /// <summary>
     /// OPTIONAL: Set to true to make the editor read-only.
@@ -74,7 +74,7 @@
     /// <summary>
     /// REQUIRED: The value to display in the editor.
     /// </summary>
-    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string Value { get; set; } = String.Empty;
 
     /// <summary>
     /// OPTIONAL: The value to diff against.
@@ -103,9 +103,9 @@
     protected async Task InitDiffEditor()
     {
         await _diffEditor.SetModel(new DiffEditorModel {
-                Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
-                Modified = await Global.CreateModel(jsRuntime, Value, Language),
-            });
+            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
+            Modified = await Global.CreateModel(jsRuntime, Value, Language),
+        });
     }
 
     protected override void OnInitialized()

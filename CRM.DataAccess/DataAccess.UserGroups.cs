@@ -57,7 +57,7 @@ public partial class DataAccess
             Guid tenantId = rec.TenantId;
             var tenantSettings = GetTenantSettings(tenantId);
 
-            if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+            if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
                 var deleteAppRecords = await DeleteRecordsApp(rec, CurrentUser);
                 if (!deleteAppRecords.Result) {
                     output.Messages.AddRange(deleteAppRecords.Messages);
@@ -74,13 +74,13 @@ public partial class DataAccess
             }
 
             try {
-                if(ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
+                if (ForceDeleteImmediately || tenantSettings.DeletePreference == DataObjects.DeletePreference.Immediate) {
                     data.UserGroups.Remove(rec);
                 } else {
                     rec.Deleted = true;
                     rec.DeletedAt = DateTime.UtcNow;
                     rec.LastModified = DateTime.UtcNow;
-                    if(CurrentUser != null) {
+                    if (CurrentUser != null) {
                         rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
                     }
                 }
@@ -115,7 +115,7 @@ public partial class DataAccess
 
         UserGroup? rec = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             rec = await data.UserGroups
             .Include(x => x.UserInGroups).ThenInclude(x => x.User)
             .FirstOrDefaultAsync(x => x.GroupId == GroupId);
@@ -127,7 +127,7 @@ public partial class DataAccess
 
         if (rec != null) {
             var settings = DeserializeObject<DataObjects.UserGroupSettings>(rec.Settings);
-            if(settings == null) {
+            if (settings == null) {
                 settings = new DataObjects.UserGroupSettings();
             }
 
@@ -148,10 +148,10 @@ public partial class DataAccess
 
             GetDataApp(rec, output, CurrentUser);
 
-            if(IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
+            if (IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
                 output.Users = new List<DataObjects.UserListing>();
 
-                foreach(var user in rec.UserInGroups) {
+                foreach (var user in rec.UserInGroups) {
                     output.Users.Add(new DataObjects.UserListing { 
                         UserId = user.UserId,
                         FirstName = user.User.FirstName,
@@ -177,7 +177,7 @@ public partial class DataAccess
 
         List<UserGroup>? recs = null;
 
-        if(AdminUser(CurrentUser)) {
+        if (AdminUser(CurrentUser)) {
             recs = await data.UserGroups.Where(x => x.TenantId == TenantId)
             .Include(x => x.UserInGroups).ThenInclude(x => x.User)
             .OrderBy(x => x.Name).ToListAsync();
@@ -214,7 +214,7 @@ public partial class DataAccess
                 if (IncludeUsers && rec.UserInGroups != null && rec.UserInGroups.Any()) {
                     group.Users = new List<DataObjects.UserListing>();
 
-                    foreach(var user in rec.UserInGroups) {
+                    foreach (var user in rec.UserInGroups) {
                         group.Users.Add(new DataObjects.UserListing {
                             UserId = user.UserId,
                             FirstName = user.User.FirstName,
@@ -255,7 +255,6 @@ public partial class DataAccess
             var users = await GetUsers(TenantId);
             if (users != null && users.Any()) {
                 if (IncludeUsers) {
-                    //groupUsers = new List<Guid>();
                     groupUsers = new List<DataObjects.UserListing>();
                 }
 
@@ -299,8 +298,8 @@ public partial class DataAccess
 
         bool newRecord = false;
         var rec = await data.UserGroups.FirstOrDefaultAsync(x => x.GroupId == output.GroupId);
-        if(rec == null) {
-            if(output.GroupId == Guid.Empty) {
+        if (rec == null) {
+            if (output.GroupId == Guid.Empty) {
                 newRecord = true;
                 output.GroupId = Guid.NewGuid();
                 rec = new UserGroup { 
@@ -329,7 +328,7 @@ public partial class DataAccess
 
             rec.LastModified = now;
 
-            if(CurrentUser != null) {
+            if (CurrentUser != null) {
                 rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
 
                 if (CurrentUser.Admin) {
@@ -349,7 +348,7 @@ public partial class DataAccess
             // Save any users for this group.
             // First, find all users to keep.
             List<Guid> usersInGroup = new List<Guid>();
-            if(output.Users != null && output.Users.Any()) {
+            if (output.Users != null && output.Users.Any()) {
                 usersInGroup = output.Users.Select(x => x.UserId).ToList();
             }
 
@@ -358,9 +357,9 @@ public partial class DataAccess
             await data.SaveChangesAsync();
 
             // Make sure all users have a valid record.
-            foreach(var userId in usersInGroup) {
+            foreach (var userId in usersInGroup) {
                 var userInGroup = await data.UserInGroups.FirstOrDefaultAsync(x => x.GroupId == output.GroupId && x.UserId == userId);
-                if(userInGroup == null) {
+                if (userInGroup == null) {
                     await data.UserInGroups.AddAsync(new UserInGroup { 
                         UserInGroupId = Guid.NewGuid(),
                         GroupId = output.GroupId,
@@ -380,7 +379,7 @@ public partial class DataAccess
                 UserId = CurrentUserId(CurrentUser),
             });
 
-        }catch(Exception ex) {
+        } catch (Exception ex) {
             output.ActionResponse.Messages.Add("Error Saving Group " + output.GroupId.ToString());
             output.ActionResponse.Messages.AddRange(RecurseException(ex));
         }

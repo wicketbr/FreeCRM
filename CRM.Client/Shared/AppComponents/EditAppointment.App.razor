@@ -91,7 +91,8 @@
     [Parameter] public EventCallback<DataObjects.Appointment> ValueChanged { get; set; }
     // {{ModuleItemEnd:Appointments}}
 
-    public void Dispose() { 
+    public void Dispose()
+    { 
         Model.OnChange -= StateHasChanged;
     }
 
@@ -101,22 +102,8 @@
         Model.OnChange += StateHasChanged;
     }
 
-    // protected override void OnAfterRender(bool firstRender)
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected override void OnParametersSet()
-    // {
-    //     RenderComponent();
-    // }
-
-    // protected void RenderComponent()
-    // {
-    //     // Do any work here that needs to be done after the component is rendered or parameters are set.
-    // }
-
-    public DataObjects.ModuleAction Save(DataObjects.Appointment appointment) {
+    public DataObjects.ModuleAction Save(DataObjects.Appointment appointment)
+    {
         var output = new DataObjects.ModuleAction { Result = true };
 
         // Perform and pre-save checks here. Return false if there is an error and include any error messages.
@@ -125,7 +112,8 @@
         return output;
     }
 
-    protected void ValueHasChanged() {
+    protected void ValueHasChanged()
+    {
         ValueChanged.InvokeAsync(Value);
         StateHasChanged();
     }

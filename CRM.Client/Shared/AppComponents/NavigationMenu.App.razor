@@ -9,7 +9,8 @@
 
     [Parameter] public bool Loading { get; set; }
 
-    public void Dispose() {
+    public void Dispose()
+    {
         Model.OnChange -= StateHasChanged;
     }
 

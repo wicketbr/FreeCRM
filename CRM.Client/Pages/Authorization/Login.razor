@@ -7,6 +7,7 @@
 @inject HttpClient Http
 @inject ILocalStorageService LocalStorage
 @inject BlazorDataModel Model
+
 @if (Model.View == _pageName) {
     <div class="login-page">
         <div class="login-padding"></div>
@@ -125,7 +126,7 @@
 
                         @if (AllowLoginTypePlugin) {
                             var plugins = Model.Plugins.Where(x => x.Type.ToLower() == "auth" && (x.LimitToTenants.Count == 0 || x.LimitToTenants.Contains(Model.TenantId))).ToList();
-                            foreach(var plugin in plugins) {
+                            foreach (var plugin in plugins) {
                                 string buttonClass = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonClass", plugin.Properties);
                                 string buttonIcon = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonIcon", plugin.Properties);
                                 string buttonText = String.Empty + Helpers.GetDictionaryProperty<string>("ButtonText", plugin.Properties);
@@ -422,6 +423,7 @@
         <div class="login-padding"></div>
     </div>
 }
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
@@ -429,15 +431,15 @@
     protected ElementReference loginPassword;
 
     protected bool _afterLoadedCalled = false;
-    protected string confirmPassword = "";
-    protected string email = "";
-    protected string loginIntro = "";
-    protected string password = "";
+    protected string confirmPassword = String.Empty;
+    protected string email = String.Empty;
+    protected string loginIntro = String.Empty;
+    protected string password = String.Empty;
     protected Plugin _plugin = new Plugin();
     protected List<PluginPromptValue> _promptValues = new List<PluginPromptValue>();
     protected bool processing = false;
     protected DataObjects.User _user = new DataObjects.User();
-    protected string view = "";
+    protected string view = String.Empty;
     protected DataObjects.LoginTenantListing _tenantListing = new DataObjects.LoginTenantListing();
     protected bool _validatedUrl = false;
 
@@ -455,7 +457,7 @@
         }
 
         // See if the user is already logged in.
-        if(Model.LoggedIn) {
+        if (Model.LoggedIn) {
             Helpers.NavigateToRoot();
             return;
         }
@@ -496,7 +498,7 @@
         switch (loginIntro.ToLower()) {
             case "loginintro":
             case "login intro":
-                loginIntro = "";
+                loginIntro = String.Empty;
                 break;
         }
 
@@ -534,7 +536,7 @@
             await ShowLoginProviders();
         }
 
-        if (view == "" || view == "selectloginprovider") {
+        if (view == String.Empty || view == "selectloginprovider") {
             if (AvailableLoginOptions.Count() == 1 && AllowLoginTypeLocal) {
                 await ShowLocalLogin();
             }
@@ -543,8 +545,7 @@
         StateHasChanged();
     }
 
-    protected bool AllowLoginTypeCustom
-    {
+    protected bool AllowLoginTypeCustom {
         get {
             bool output = Model.UseCustomAuthenticationProviderFromAdminAccount;
 
@@ -557,8 +558,7 @@
         }
     }
 
-    protected bool AllowLoginTypeApple
-    {
+    protected bool AllowLoginTypeApple {
         get {
             bool output = false;
 
@@ -572,8 +572,7 @@
         }
     }
 
-    protected bool AllowLoginTypeFacebook
-    {
+    protected bool AllowLoginTypeFacebook {
         get {
             bool output = false;
 
@@ -588,8 +587,7 @@
         }
     }
 
-    protected bool AllowLoginTypeGoogle
-    {
+    protected bool AllowLoginTypeGoogle {
         get {
             bool output = false;
 
@@ -603,12 +601,11 @@
         }
     }
 
-    protected bool AllowLoginTypeLocal
-    {
+    protected bool AllowLoginTypeLocal {
         get {
             bool output = false;
 
-            if(Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Any()) {
+            if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Any()) {
                 output = Model.Tenant.TenantSettings.LoginOptions.Contains("local");
             }
 
@@ -616,8 +613,7 @@
         }
     }
 
-    protected bool AllowLoginTypeMicrosoftAccount
-    {
+    protected bool AllowLoginTypeMicrosoftAccount {
         get {
             bool output = false;
 
@@ -631,8 +627,7 @@
         }
     }
 
-    protected bool AllowLoginTypeOpenId
-    {
+    protected bool AllowLoginTypeOpenId{
         get {
             bool output = false;
 
@@ -658,8 +653,7 @@
         }
     }
 
-    public List<string> AvailableLoginOptions
-    {
+    public List<string> AvailableLoginOptions {
         get {
             List<string> output = new List<string>();
 
@@ -683,13 +677,12 @@
 
     public async Task CheckForEnterKey(KeyboardEventArgs e)
     {
-        if(e.Code == "Enter" || e.Code == "NumpadEnter") {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter") {
             await ProcessLogin();
         }
     }
 
-    protected string CustomLoginButtonClass
-    {
+    protected string CustomLoginButtonClass {
         get {
             string output = Model.AdminCustomLoginProvider.ButtonClass;
 
@@ -706,8 +699,7 @@
         }
     }
 
-    protected string CustomLoginIcon
-    {
+    protected string CustomLoginIcon {
         get {
             string output = Model.AdminCustomLoginProvider.Icon;
 
@@ -732,8 +724,7 @@
         }
     }
 
-    protected string CustomLoginText
-    {
+    protected string CustomLoginText {
         get {
             string output = Model.AdminCustomLoginProvider.Name;
 
@@ -860,7 +851,7 @@
 
     protected async Task ForgotPassword()
     {
-        confirmPassword = "";
+        confirmPassword = String.Empty;
         _user = new DataObjects.User();
         _user.TenantId = Model.TenantId;
         _user.UserId = Guid.Empty;
@@ -875,20 +866,20 @@
     {
         Model.ClearMessages();
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_user.Email)) {
             errors.Add(Helpers.MissingRequiredField("Email"));
-            if (focus == "") { focus = "forgotpassword-email"; }
+            if (focus == String.Empty) { focus = "forgotpassword-email"; }
         }
         if (String.IsNullOrWhiteSpace(_user.Password)) {
             errors.Add(Helpers.MissingRequiredField("Password"));
-            if (focus == "") { focus = "forgotpassword-password"; }
+            if (focus == String.Empty) { focus = "forgotpassword-password"; }
         }
 
         if (errors.Any()) {
             Model.ErrorMessages(errors);
-            if (focus != "") {
+            if (focus != String.Empty) {
                 await Helpers.DelayedFocus(focus);
             }
             return;
@@ -941,8 +932,7 @@
         }
     }
 
-    protected bool LoginDisabled
-    {
+    protected bool LoginDisabled {
         get {
             bool output = String.IsNullOrWhiteSpace(email) || String.IsNullOrWhiteSpace(password);
             return output;
@@ -969,7 +959,7 @@
         var auth = new DataObjects.Authenticate {
             Username = email,
             Password = password,
-            TenantCode = "",
+            TenantCode = String.Empty,
             TenantId = Model.TenantId,
         };
 
@@ -978,7 +968,7 @@
 
         try {
             var user = await Helpers.GetOrPost<DataObjects.User>("api/Data/Authenticate", auth);
-            if(user != null) {
+            if (user != null) {
                 if (user.ActionResponse.Result) {
                     if (!String.IsNullOrWhiteSpace(user.AuthToken)) {
                         await Helpers.CookieWrite("user-token", user.AuthToken);
@@ -1013,8 +1003,8 @@
                 errors.Add("Invalid Login");
             }
 
-            email = "";
-            password = "";
+            email = String.Empty;
+            password = String.Empty;
 
             await ShowLocalLogin();
         }
@@ -1024,8 +1014,7 @@
         }
     }
 
-    protected bool ResetPasswordDisabled
-    {
+    protected bool ResetPasswordDisabled {
         get {
             bool output = false;
 
@@ -1041,24 +1030,24 @@
     {
         var tenant = _tenantListing.Tenants.FirstOrDefault(x => x.TenantId == TenantId);
 
-        if(tenant != null) {
+        if (tenant != null) {
             Model.TenantId = TenantId;
             Model.Tenant = tenant;
 
             DataObjects.Language? language = null;
-            if (!String.IsNullOrWhiteSpace(Model.CultureCode)) {
-                language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId && x.Culture.ToLower() == Model.CultureCode.ToLower());
+            if (!String.IsNullOrWhiteSpace(Model.User.UserPreferences.CultureCode)) {
+                language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId && x.Culture.ToLower() == Helpers.StringLower(Model.User.UserPreferences.CultureCode));
             }
 
-            if(language == null) {
+            if (language == null) {
                 language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId && x.Culture.ToLower() == "en-us");
             }
 
-            if(language == null) {
+            if (language == null) {
                 language = Model.Languages.FirstOrDefault(x => x.TenantId == TenantId);
             }
 
-            if(language != null) {
+            if (language != null) {
                 Model.Language = language;
             }
 
@@ -1093,23 +1082,22 @@
     {
         SetView("selectloginprovider");
 
-        string focus = "";
+        string focus = String.Empty;
 
-        if (AllowLoginTypeLocal && focus == "") { focus = "login-button-local"; }
-        if (AllowLoginTypeApple && focus == ""){ focus = "login-button-apple";  }
-        if (AllowLoginTypeFacebook && focus == "") { focus = "login-button-facebook"; }
-        if (AllowLoginTypeGoogle && focus == "") { focus = "login-button-google"; }
-        if (AllowLoginTypeMicrosoftAccount && focus == "") { focus = "login-button-microsoftaccount"; }
-        if (AllowLoginTypeOpenId && focus == "") { focus = "login-button-openid"; }
-        if (AllowLoginTypeCustom && focus == "") { focus = "login-button-custom"; }
+        if (AllowLoginTypeLocal && focus == String.Empty) { focus = "login-button-local"; }
+        if (AllowLoginTypeApple && focus == String.Empty){ focus = "login-button-apple";  }
+        if (AllowLoginTypeFacebook && focus == String.Empty) { focus = "login-button-facebook"; }
+        if (AllowLoginTypeGoogle && focus == String.Empty) { focus = "login-button-google"; }
+        if (AllowLoginTypeMicrosoftAccount && focus == String.Empty) { focus = "login-button-microsoftaccount"; }
+        if (AllowLoginTypeOpenId && focus == String.Empty) { focus = "login-button-openid"; }
+        if (AllowLoginTypeCustom && focus == String.Empty) { focus = "login-button-custom"; }
 
-        if(focus != "") {
+        if (focus != String.Empty) {
             await Helpers.DelayedFocus(focus);
         }
     }
 
-    protected bool ShowPasswordReset
-    {
+    protected bool ShowPasswordReset {
         get {
             bool output = false;
 
@@ -1123,8 +1111,7 @@
         }
     }
 
-    protected bool ShowSignup
-    {
+    protected bool ShowSignup {
         get {
             bool output = false;
 
@@ -1142,40 +1129,40 @@
     {
         Model.ClearMessages();
         List<string> errors = new List<string>();
-        string focus = "";
+        string focus = String.Empty;
 
         if (String.IsNullOrWhiteSpace(_user.FirstName)) {
             errors.Add(Helpers.MissingRequiredField("FirstName"));
-            if (focus == "") { focus = "signup-firstName"; }
+            if (focus == String.Empty) { focus = "signup-firstName"; }
         }
         if (String.IsNullOrWhiteSpace(_user.LastName)) {
             errors.Add(Helpers.MissingRequiredField("LastName"));
-            if(focus == ""){ focus = "signup-lastName"; }
+            if (focus == String.Empty){ focus = "signup-lastName"; }
         }
         if (String.IsNullOrWhiteSpace(_user.Email)) {
             errors.Add(Helpers.MissingRequiredField("Email"));
-            if(focus == ""){ focus = "signup-email"; }
+            if (focus == String.Empty){ focus = "signup-email"; }
         }
         if (String.IsNullOrWhiteSpace(_user.Password)) {
             errors.Add(Helpers.MissingRequiredField("Password"));
-            if (focus == "") { focus = "signup-password"; }
+            if (focus == String.Empty) { focus = "signup-password"; }
         }
         if (String.IsNullOrWhiteSpace(confirmPassword)) {
             errors.Add(Helpers.MissingRequiredField("ConfirmPassword"));
-            if (focus == "") { focus = "signup-confirmPassword"; }
+            if (focus == String.Empty) { focus = "signup-confirmPassword"; }
         }
-        if(!String.IsNullOrWhiteSpace(_user.Password) && !String.IsNullOrEmpty(confirmPassword)) {
-            if(_user.Password != confirmPassword) {
+        if (!String.IsNullOrWhiteSpace(_user.Password) && !String.IsNullOrEmpty(confirmPassword)) {
+            if (_user.Password != confirmPassword) {
                 errors.Add(Helpers.Text("NewPasswordAndConfirmDontMatch"));
-                _user.Password = "";
-                confirmPassword = "";
-                if (focus == "") { focus = "signup-password"; }
+                _user.Password = String.Empty;
+                confirmPassword = String.Empty;
+                if (focus == String.Empty) { focus = "signup-password"; }
             }
         }
 
         if (errors.Any()) {
             Model.ErrorMessages(errors);
-            if(focus != "") {
+            if (focus != String.Empty) {
                 await Helpers.DelayedFocus(focus);
             }
             return;
@@ -1187,7 +1174,7 @@
 
         Model.ClearMessages();
 
-        if(saved != null) {
+        if (saved != null) {
             if (saved.ActionResponse.Result) {
                 _user = saved;
                 SetView("signupvalidate");
@@ -1200,19 +1187,18 @@
         }
     }
 
-    protected bool SignupSaveDisabled
-    {
+    protected bool SignupSaveDisabled {
         get {
             bool output = false;
 
-            if( String.IsNullOrWhiteSpace(_user.FirstName) ||
+            if (String.IsNullOrWhiteSpace(_user.FirstName) ||
                 String.IsNullOrWhiteSpace(_user.LastName) ||
                 String.IsNullOrWhiteSpace(_user.Email) ||
                 String.IsNullOrWhiteSpace(_user.Password) ) {
                 output = true;
             }
 
-            if(_user.Password != confirmPassword) {
+            if (_user.Password != confirmPassword) {
                 output = true;
             }
 
@@ -1223,7 +1209,7 @@
 
     protected async Task SignUp()
     {
-        confirmPassword = "";
+        confirmPassword = String.Empty;
         _user = new DataObjects.User();
         _user.TenantId = Model.TenantId;
         _user.UserId = Guid.Empty;
@@ -1247,7 +1233,7 @@
 
         Model.ClearMessages();
 
-        if(validated != null) {
+        if (validated != null) {
             if (validated.ActionResponse.Result) {
                 await ShowLocalLogin();
                 Model.AddMessage(Helpers.Text("ValidationCompleteReturnToLogin"), MessageType.Success, false);

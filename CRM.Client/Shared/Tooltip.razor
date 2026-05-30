@@ -1,9 +1,11 @@
 ﻿@implements IDisposable
+
 @if (!String.IsNullOrWhiteSpace(TipText)) {
     <i @ref="_element" @onclick="ShowTooltip" class="tooltip-item">@((MarkupString)_icon)</i>
 }
+
 @code {
-    protected string _icon = "";
+    protected string _icon = String.Empty;
     protected ElementReference _element;
 
     [Parameter]
@@ -15,7 +17,9 @@
     [Parameter]
     public TooltipOptions? Options { get; set; }
 
-    public void Dispose() { }
+    public void Dispose()
+    {
+    }
 
     protected override void OnInitialized()
     {
