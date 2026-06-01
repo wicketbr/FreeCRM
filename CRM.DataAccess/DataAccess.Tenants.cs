@@ -542,11 +542,13 @@ public partial class DataAccess
             saveSettings = true;
         }
 
+        // {{ModuleItemStart:Logo}}
         // See if a tenant logo file has been uploaded.
         var file = data.FileStorages.FirstOrDefault(x => x.TenantId == TenantId && x.SourceFileId == "logo");
         if (file != null) {
             output.Logo = file.FileId;
         }
+        // {{ModuleItemEnd:Logo}}
 
         if (loadedSettings && saveSettings) {
             // Only save the settings if they were actually loaded and something was missing that we added.

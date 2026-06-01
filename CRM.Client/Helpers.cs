@@ -4302,6 +4302,7 @@ public static partial class Helpers
         Model.UserGroups = items != null && items.Any() ? items : new List<DataObjects.UserGroup>();
     }
 
+    // {{ModuleItemStart:Logo}}
     /// <summary>
     /// The URL to the tenant's logo image, if set. Otherwise, returns an empty string.
     /// </summary>
@@ -4316,6 +4317,7 @@ public static partial class Helpers
             return output;
         }
     }
+    // {{ModuleItemEnd:Logo}}
 
     /// <summary>
     /// Trims a string to a maximum length.

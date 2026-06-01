@@ -7,14 +7,18 @@
 <h1>Monaco Editor</h1>
 
 <div class="mb-2">
-    <label for="my-monaco-editor">Monaco Editor</label>
-    <MonacoEditor 
-            Id="my-monaco-editor"
-            Language="@MonacoEditor.MonacoLanguage.html"
-            PlaceholderText="Enter Your HTML Here"
-            ReadOnly="@_monacoReadOnly"
-            ValueToDiff="@_monacoContentToDiff"
-            @bind-Value="_monacoContent" />
+    <fieldset>
+        <legend class="pointer" @onclick="@(() => _monacoEditor.Focus())">Monaco Editor</legend>
+        <div>
+            <MonacoEditor @ref="_monacoEditor"
+                    Id="my-monaco-editor"
+                    Language="@MonacoEditor.MonacoLanguage.html"
+                    PlaceholderText="Enter Your HTML Here"
+                    ReadOnly="@_monacoReadOnly"
+                    ValueToDiff="@_monacoContentToDiff"
+                    @bind-Value="_monacoContent" />
+        </div>
+    </fieldset>
 </div>
 
 <div class="mb-2 form-check form-switch">
@@ -22,8 +26,8 @@
     <label for="monaco-read-only" class="form-check-label">Read-Only Editor</label>
 </div>
 
-<div><b>Content:</b></div>
-<div><textarea class="form-control" style="height:200px;">@_monacoContent</textarea></div>
+<div><label for="monaco-editor-content">Content:</label></div>
+<div><textarea id="monaco-editor-content" class="form-control" style="height:200px;">@_monacoContent</textarea></div>
 
 @if (Model.Loaded && Model.LoggedIn && Model.View == _pageName) {
 }
@@ -38,6 +42,8 @@
     protected string _monacoContent = String.Empty;
     protected string _monacoContentToDiff = String.Empty;
     protected bool _monacoReadOnly = false;
+
+    MonacoEditor _monacoEditor = null!;
 
     public void Dispose()
     {

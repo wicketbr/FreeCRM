@@ -2,11 +2,13 @@
 @inject BlazorDataModel Model
 
 @if (Model.Loaded && Model.View == _pageName && (Model.LoggedIn || !RequireLogin)) {
+    // {{ModuleItemStart:Logo}}
     if (Model.Tenant.TenantSettings.LogoIncludedOnHomePage && !String.IsNullOrWhiteSpace(LogoUrl)) {
         <div class="home-page-logo-container">
             <img src="@LogoUrl" class="logo-homepage" />
         </div>
     }
+    // {{ModuleItemEnd:Logo}}
 
     if (_loading) {
         <LoadingMessage />
@@ -77,6 +79,7 @@
         StateHasChanged();
     }
 
+    // {{ModuleItemStart:Logo}}
     protected string LogoUrl {
         get {
             if (Model.Tenant.TenantSettings.Logo.HasValue && Model.Tenant.TenantSettings.Logo != Guid.Empty) {
@@ -86,4 +89,5 @@
             }
         }
     }
+    // {{ModuleItemEnd:Logo}}
 }

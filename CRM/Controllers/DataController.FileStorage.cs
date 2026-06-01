@@ -74,6 +74,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Logo}}
     [HttpPost]
     [Authorize(Policy = Policies.Admin)]
     [Route("~/api/Data/SaveTenantLogo")]
@@ -93,6 +94,7 @@ public partial class DataController
 
         return Ok(output);
     }
+    // {{ModuleItemEnd:Logo}}
 
     [HttpPost]
     [Authorize]

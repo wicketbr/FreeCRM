@@ -14,6 +14,21 @@
     <div>@_timerOutput</div>
 }
 
+@{
+    var colors = new List<string> {
+        "#DC143C",
+        "#C71585",
+        "#CF4500",
+        "#3672A4",
+        "#696969",
+        "#008000",
+    };
+
+    foreach(var color in colors){
+        <div style="color:@color;">@color</div>
+    }
+}
+
 @code {
     [Parameter] public string? TenantCode { get; set; }
 

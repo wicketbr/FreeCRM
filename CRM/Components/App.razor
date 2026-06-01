@@ -77,6 +77,7 @@
     <Modules_App Module="body" />
 
     <script type="text/javascript">
+        let configuredMonacoCustomTheme = false;
         let cookiePrefix = "@cookiePrefix";
         let dotNetHelper;
         let fingerprint;
@@ -352,12 +353,14 @@
 
             let setTheme = "";
             let setClass = "";
-            let setMonacoTheme = "vs";
+            //let setMonacoTheme = "vs";
+            let setMonacoTheme = "hc-light";
 
             if (preferred == "dark") {
                 setTheme = "dark";
                 setClass = "dark";
-                setMonacoTheme = "vs-dark";
+                //setMonacoTheme = "vs-dark";
+                setMonacoTheme = "hc-black";
             } else if (preferred == "light") {
                 setTheme = "";
                 setClass = "light";
@@ -382,6 +385,101 @@
             }
 
             if (typeof(monaco) == 'object'){
+                if (!configuredMonacoCustomTheme) {
+                    configuredMonacoCustomTheme = true;
+
+                    monaco.editor.defineTheme('hc-light', {
+                        base: 'vs', // Base on standard light https://github.com/Microsoft/vscode/blob/913e891c34f8b4fe2c0767ec9f8bfd3b9dbe30d9/src/vs/editor/standalone/common/themes.ts#L13
+                        inherit: true,
+                        rules: [
+                            { token: '', foreground: '000000', background: 'fffffe' },
+                            { token: 'invalid', foreground: 'cd3131' },
+                            { token: 'emphasis', fontStyle: 'italic' },
+                            { token: 'strong', fontStyle: 'bold' },
+
+                            { token: 'variable', foreground: '1A1A1A' },
+                            { token: 'variable.predefined', foreground: '4864AA' },
+                            { token: 'constant', foreground: 'dd0000' },
+                            { token: 'comment', foreground: '008000' },
+                            { token: 'number', foreground: '6A0089' },
+                            { token: 'number.hex', foreground: '3030c0' },
+                            { token: 'regexp', foreground: '6A0089' },
+                            { token: 'annotation', foreground: '767676' },
+                            { token: 'type', foreground: '006666' },
+
+                            { token: 'delimiter', foreground: '000000' },
+                            { token: 'delimiter.html', foreground: '383838' },
+                            { token: 'delimiter.xml', foreground: '0000CC' },
+
+                            { token: 'tag', foreground: '6A0089' },
+                            { token: 'tag.id.jade', foreground: '4F76AC' },
+                            { token: 'tag.class.jade', foreground: '4F76AC' },
+                            { token: 'meta.scss', foreground: '6A0089' },
+                            { token: 'metatag', foreground: 'e00000' },
+                            { token: 'metatag.content.html', foreground: 'CC0000' },
+                            { token: 'metatag.html', foreground: '767676' },
+                            { token: 'metatag.xml', foreground: '767676' },
+                            { token: 'metatag.php', fontStyle: 'bold' },
+
+                            { token: 'key', foreground: '863B00' },
+                            { token: 'string.key.json', foreground: 'B30000' },
+                            { token: 'string.value.json', foreground: '0451A5' },
+
+                            { token: 'attribute.name', foreground: 'CC0000' },
+                            { token: 'attribute.value', foreground: '0451A5' },
+                            { token: 'attribute.value.number', foreground: '6A0089' },
+                            { token: 'attribute.value.unit', foreground: '6A0089' },
+                            { token: 'attribute.value.html', foreground: '0000CC' },
+                            { token: 'attribute.value.xml', foreground: '0000CC' },
+
+                            { token: 'string', foreground: 'B30000' },
+                            { token: 'string.html', foreground: '0000CC' },
+                            { token: 'string.sql', foreground: 'CC0000' },
+                            { token: 'string.yaml', foreground: '0451A5' },
+
+                            { token: 'keyword', foreground: '0000CC' },
+                            { token: 'keyword.json', foreground: '0451A5' },
+                            { token: 'keyword.flow', foreground: 'AF00DB' },
+                            { token: 'keyword.flow.scss', foreground: '0000CC' },
+
+                            { token: 'operator.scss', foreground: '666666' },
+                            { token: 'operator.sql', foreground: '333333' },
+                            { token: 'operator.swift', foreground: '666666' },
+                            { token: 'predefined.sql', foreground: 'C71AC6' },
+
+                            { token: 'delimiter.curly', foreground: 'CC0000' },
+                            { token: 'delimiter.square', foreground: '006600' },
+                            { token: 'delimiter.parenthesis', foreground: '0000CC' },
+                            { token: 'delimiter.bracket', foreground: '006600' },
+                        ],
+                        colors: {
+                            // Main UI structural elements
+                            'editor.background': '#FFFFFF',
+                            'editor.foreground': '#000000',
+                            'editorLineNumber.foreground': '#000000',
+                            'editorLineNumber.activeForeground': '#0033CC',
+    
+                            // Accessibility focus and selections
+                            'editor.lineHighlightBackground': '#EAECEF',
+                            'editor.selectionBackground': '#B3D7FF',
+                            'editor.inactiveSelectionBackground': '#E2E8F0',
+                            'editorWhitespace.foreground': '#999999',
+                            'editorWidget.background': '#FFFFFF',
+                            'editorWidget.border': '#0033CC',
+    
+                            // Core focus indicators required for WCAG keyboard navigation
+                            'editor.focusBorder': '#0033CC',
+
+                            'editorBracketHighlight.foreground1': '#DC143C',
+                            'editorBracketHighlight.foreground2': '#C71585',
+                            'editorBracketHighlight.foreground3': '#CF4500',
+                            'editorBracketHighlight.foreground4': '#3672A4',
+                            'editorBracketHighlight.foreground5': '#696969',
+                            'editorBracketHighlight.foreground6': '#008000',
+                        }
+                    });
+                }
+
                 monaco.editor.setTheme(setMonacoTheme);
             }
         }

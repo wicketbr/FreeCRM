@@ -154,7 +154,11 @@
                         </div>
                     }
                 
+                    <HtmlEditor2 @ref="_htmlEditor" />
+
+                    @*
                     <HtmlEditor @ref="_htmlEditor" OnModeChanged="HtmlEditorModeChanged" />
+                    *@
                 </fieldset>
             </div>
 
@@ -185,7 +189,7 @@
     protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
     protected bool _validatedUrl = false;
 
-    HtmlEditor _htmlEditor = null!;
+    HtmlEditor2 _htmlEditor = null!;
 
     protected string _pageName = "editemailtemplate";
 
@@ -262,11 +266,11 @@
         await _htmlEditor.SetFocus();
     }
 
-    protected void HtmlEditorModeChanged(string mode)
-    {
-        _allowSave = mode != "source";
-        StateHasChanged();
-    }
+    // protected void HtmlEditorModeChanged(string mode)
+    // {
+    //     _allowSave = mode != "source";
+    //     StateHasChanged();
+    // }
 
     protected async Task InsertField(ChangeEventArgs e)
     {

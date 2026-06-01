@@ -8,13 +8,14 @@
         <nav class="navbar fixed-top navbar-expand-lg navbar-expand-md border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" href="@(Helpers.BuildUrl())">
-                    @if (!String.IsNullOrWhiteSpace(Helpers.LogoUrl) && Model.Tenant.TenantSettings.LogoIncludedOnNavbar) {
-                        <img src="@Helpers.LogoUrl" class="logo-navbar" title="@Helpers.Text("AppTitle")" />
-                    } else {
-                        @if (!String.IsNullOrWhiteSpace(Model.Tenant.TenantSettings.AppIcon)) {
-                            <i>@((MarkupString)Model.Tenant.TenantSettings.AppIcon)</i>
+                    @{
+                        string headerTitle = "<span>" + Helpers.Text("AppTitle").Replace("\"", "''") + "</span>";
+                        // {{ModuleItemStart:Logo}}
+                        if (!String.IsNullOrWhiteSpace(Helpers.LogoUrl) && Model.Tenant.TenantSettings.LogoIncludedOnNavbar) {
+                            headerTitle = "<img src=\"" + Helpers.LogoUrl + "\" class=\"logo-navbar\" title=\"" + Helpers.Text("AppTitle") + "\" />";
                         }
-                        <span>@Helpers.Text("AppTitle")</span>
+                        // {{ModuleItemEnd:Logo}}
+                        @((MarkupString)headerTitle)
                     }
                 </a>
                 <button id="menu-bar-toggler" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navBarToggler" aria-controls="navbarSupportedContent"

@@ -14,6 +14,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Logo}}
     [HttpGet]
     [Authorize(Policy = Policies.Admin)]
     [Route("~/api/Data/DeleteTenantLogo")]
@@ -22,6 +23,7 @@ public partial class DataController
         var output = await da.DeleteTenantLogo(CurrentUser.TenantId);
         return Ok(output);
     }
+    // {{ModuleItemEnd:Logo}}
 
     [HttpGet]
     [Authorize]
@@ -45,6 +47,7 @@ public partial class DataController
         return Ok(output);
     }
 
+    // {{ModuleItemStart:Logo}}
     [HttpGet]
     [Authorize]
     [Route("~/api/Data/GetTenantLogo")]
@@ -53,6 +56,7 @@ public partial class DataController
         var output = await da.GetTenantLogoId(CurrentUser.TenantId);
         return Ok(output);
     }
+    // {{ModuleItemEnd:Logo}}
 
     [HttpGet]
     [Authorize(Policy = Policies.AppAdmin)]

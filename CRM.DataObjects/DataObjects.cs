@@ -513,9 +513,11 @@ public partial class DataObjects
         [Sensitive]
         public int LdapLookupPort { get; set; }
         public List<string> LoginOptions { get; set; } = new List<string>();
+        // {{ModuleItemStart:Logo}}
         public Guid? Logo { get; set; }
         public bool LogoIncludedOnHomePage { get; set; }
         public bool LogoIncludedOnNavbar { get; set; }
+        // {{ModuleItemEnd:Logo}}
         public int MaxToastMessages { get; set; } = -1;
         public List<string> ModuleHideElements { get; set; } = new List<string>();
         public List<string> ModuleOptInElements { get; set; } = new List<string>();

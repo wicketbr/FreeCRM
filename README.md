@@ -48,6 +48,7 @@ kept or removed are:
 - EmailTemplates
 - Invoices
 - Locations
+- Logo
 - Payments
 - SamplePages
 - SamplePlugins

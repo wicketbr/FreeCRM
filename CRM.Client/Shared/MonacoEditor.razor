@@ -26,7 +26,14 @@
 
 @code {
     /// <summary>
-    /// OPTIONAL: An optiona class for the editor (defaults to 'default-editor' which has a min-height of 100px.)
+    /// The aria-label to show for the hidden input element.
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; } = "Monaco Code Editor";
+
+
+    /// <summary>
+    /// OPTIONAL: An optional class for the editor (defaults to 'default-editor' which has a min-height of 100px.)
     // </summary>
     [Parameter] public string Class { get; set; } = "default-editor";
 
@@ -95,46 +102,55 @@
     protected string _id = Guid.NewGuid().ToString().Replace("-", "").ToLower();
     protected bool _readOnly = false;
 
+    protected IJSObjectReference? jsModule;
+
     public void Dispose()
     {
         _timer.Dispose();
     }
 
-    protected async Task InitDiffEditor()
-    {
-        await _diffEditor.SetModel(new DiffEditorModel {
-            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
-            Modified = await Global.CreateModel(jsRuntime, Value, Language),
-        });
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Shared/MonacoEditor.Razor.js?v=" + Guid.NewGuid().ToString().Replace("-", ""));
+
+            Helpers.SetTimeout(async() => {
+                await jsModule.InvokeVoidAsync("SetAriaLabel", EditorId, AriaLabel);
+            }, 300);
+        }
     }
 
-    protected override void OnInitialized()
-    {
+    protected override void OnInitialized() {
         _timer = new System.Timers.Timer();
         _timer.Interval = Timeout;
         _timer.Elapsed += TimerElapsed;
         _timer.AutoReset = false;
     }
 
-    protected override async Task OnParametersSetAsync()
-    {
+    protected override async Task OnParametersSetAsync() {
         if (_readOnly != ReadOnly) {
             _readOnly = ReadOnly;
 
             if (String.IsNullOrWhiteSpace(ValueToDiff)) {
                 if (_editor != null) {
                     await _editor.UpdateOptions(new BlazorMonaco.Editor.EditorUpdateOptions {
-                            ReadOnly = _readOnly,
-                        });
+                        ReadOnly = _readOnly,
+                    });
                 }
             } else {
                 if (_diffEditor != null) {
                     await _diffEditor.UpdateOptions(new BlazorMonaco.Editor.DiffEditorOptions {
-                            ReadOnly = _readOnly,
-                        });
+                        ReadOnly = _readOnly,
+                    });
                 }
             }
         }
+    }
+
+    protected async Task InitDiffEditor()    {
+        await _diffEditor.SetModel(new DiffEditorModel {
+            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
+            Modified = await Global.CreateModel(jsRuntime, Value, Language),
+        });
     }
 
     protected string CSS {
@@ -328,9 +344,21 @@
     protected BlazorMonaco.Editor.StandaloneEditorConstructionOptions StandaloneEditorConstructionOptions {
         get {
             if (ConstructorOptions != null) {
+                ConstructorOptions.AccessibilityPageSize = 10;
+                ConstructorOptions.AccessibilitySupport = "auto";
+                ConstructorOptions.AriaRequired = true;
+                
+                if (String.IsNullOrWhiteSpace(ConstructorOptions.AriaLabel)) {
+                    ConstructorOptions.AriaLabel = AriaLabel;
+                }
+
                 return ConstructorOptions;
             } else {
                 return new BlazorMonaco.Editor.StandaloneEditorConstructionOptions {
+                    AccessibilityPageSize = 10,
+                    AccessibilitySupport = "auto",
+                    AriaLabel = AriaLabel,
+                    AriaRequired = true,
                     AutomaticLayout = true,
                     ColorDecorators = true,
                     ColorDecoratorsActivatedOn = "clickAndHover",
@@ -343,7 +371,7 @@
                     MouseWheelZoom = true,
                     Placeholder = PlaceholderText,
                     ReadOnly = _readOnly,
-                    RenderWhitespace = "all",
+                    RenderWhitespace = "selection",
                     ScrollBeyondLastLine = false,
                     Value = !String.IsNullOrWhiteSpace(Value) ? Value : String.Empty,
                     WordWrap = "on",
@@ -356,9 +384,21 @@
     protected BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions StandaloneEditorConstructionOptionsDiff {
         get {
             if (ConstructorOptionsForDiffEditor != null) {
+                ConstructorOptionsForDiffEditor.AccessibilityPageSize = 10;
+                ConstructorOptionsForDiffEditor.AccessibilitySupport = "auto";
+                ConstructorOptionsForDiffEditor.AriaRequired = true;
+                
+                if (String.IsNullOrWhiteSpace(ConstructorOptionsForDiffEditor.AriaLabel)) {
+                    ConstructorOptionsForDiffEditor.AriaLabel = AriaLabel;
+                }
+
                 return ConstructorOptionsForDiffEditor;
             } else {
                 return new BlazorMonaco.Editor.StandaloneDiffEditorConstructionOptions {
+                    AccessibilityPageSize = 10,
+                    AccessibilitySupport = "auto",
+                    AriaLabel = AriaLabel,
+                    AriaRequired = true,
                     AutomaticLayout = true,
                     ColorDecorators = true,
                     ColorDecoratorsActivatedOn = "clickAndHover",
@@ -371,7 +411,7 @@
                     OriginalEditable = false,
                     ReadOnly = _readOnly,
                     RenderSideBySide = true,
-                    RenderWhitespace = "all",
+                    RenderWhitespace = "selection",
                     ScrollBeyondLastLine = false,
                     UseInlineViewWhenSpaceIsLimited = true,
                     WordWrap = "on",

@@ -146,6 +146,7 @@
                     }
                 </div>
 
+                <!-- {{ModuleItemStart:Logo}} -->
                 <div class="card mt-4">
                     <div class="card-header bg-primary text-bg-primary"><Language Tag="Logo" /></div>
                     <div class="card-body">
@@ -179,6 +180,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- {{ModuleItemEnd:Logo}} -->
 
                 <div class="card mt-4">
                     <div class="card-header bg-danger text-bg-danger"><Language Tag="DeletePreferences" /></div>
@@ -845,6 +847,7 @@
         _tenant.TenantSettings.ThemeCss = css;
     }
 
+    // {{ModuleItemStart:Logo}}
     protected async Task DeleteTenantLogo()
     {
         Model.ClearMessages();
@@ -872,6 +875,7 @@
             Model.UnknownError();
         }
     }
+    // {{ModuleItemEnd:Logo}}
 
     protected int TextareaHeightDefaultCustomThemeCss {
         get {
@@ -949,6 +953,7 @@
         }
     }
 
+    // {{ModuleItemStart:Logo}}
     protected string LogoUrl {
         get {
             string output = String.Empty;
@@ -960,6 +965,7 @@
             return output;
         }
     }
+    // {{ModuleItemEnd:Logo}}
 
     protected async Task SaveSettings()
     {
@@ -1079,6 +1085,7 @@
         Model.TriggerUpdate();
     }
 
+    // {{ModuleItemStart:Logo}}
     protected async Task UploadLogo()
     {
         Delegate onUploadComplete = async (DataObjects.FileStorage fileStorage) => {
@@ -1151,4 +1158,5 @@
 
         StateHasChanged();
     }
+    // {{ModuleItemEnd:Logo}}
 }
