@@ -3,15 +3,19 @@
 public partial interface IDataAccess
 {
     Task<DataObjects.BooleanResponse> DeleteTenant(Guid TenantId);
+    // {{ModuleItemStart:Logo}}
     Task<DataObjects.BooleanResponse> DeleteTenantLogo(Guid TenantId);
+    // {{ModuleItemEnd:Logo}}
     DataObjects.Tenant? GetTenant(Guid TenantId, DataObjects.User? CurrentUser = null);
     Task<DataObjects.Tenant> GetTenantFull(Guid TenantId, DataObjects.User? CurrentUser = null);
     Task<DataObjects.Tenant> GetTenantFromCode(string tenantCode, DataObjects.User? CurrentUser = null);
     Guid GetTenantIdFromCode(string tenantCode);
     DataObjects.Language GetTenantLanguage(Guid TenantId, string Culture = "en-US");
     Task<List<DataObjects.TenantList>> GetTenantList();
+    // {{ModuleItemStart:Logo}}
     Task<DataObjects.FileStorage> GetTenantLogo(Guid TenantId);
     Task<DataObjects.SimpleResponse> GetTenantLogoId(Guid TenantId);
+    // {{ModuleItemEnd:Logo}}
     Task<List<DataObjects.Tenant>> GetTenants();
     Task<DataObjects.LoginTenantListing> GetTenantsForLogin();
     DataObjects.TenantSettings GetTenantSettings(Guid TenantId);
@@ -138,6 +142,7 @@ public partial class DataAccess
         return output;
     }
 
+    // {{ModuleItemStart:Logo}}
     public async Task<DataObjects.BooleanResponse> DeleteTenantLogo(Guid TenantId)
     {
         var output = new DataObjects.BooleanResponse();
@@ -159,6 +164,7 @@ public partial class DataAccess
 
         return output;
     }
+    // {{ModuleItemEnd:Logo}}
 
     public DataObjects.Tenant? GetTenant(Guid TenantId, DataObjects.User? CurrentUser = null)
     {
@@ -310,6 +316,7 @@ public partial class DataAccess
         return output;
     }
 
+    // {{ModuleItemStart:Logo}}
     public async Task<DataObjects.FileStorage> GetTenantLogo(Guid TenantId)
     {
         DataObjects.FileStorage output = new DataObjects.FileStorage();
@@ -353,6 +360,7 @@ public partial class DataAccess
 
         return output;
     }
+    // {{ModuleItemEnd:Logo}}
 
     public async Task<List<DataObjects.Tenant>> GetTenants()
     {

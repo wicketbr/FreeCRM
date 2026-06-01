@@ -272,6 +272,14 @@ public partial class DataAccess
             { "UserDefinedFieldsOptions", "Options:" },
             { "UserDefinedFieldsShowConflictNote", "NOTE: While it is possible to use both Show in Filter and Include in Search for an item, this is not recommended as it is a duplication of searching. If the item is shown as a filter you can quickly find those items by clicking the appropriate filter option. Adding unneccesary fields to the Include in Search can affect performance." },
 
+            // {{ModuleItemStart:Logo}}
+            // Logo
+            { "Logo", "Logo" },
+            { "LogoIncludedOnHomePage", "Include the Logo on the home page." },
+            { "LogoIncludedOnNavbar", "Include the Logo on the top navigation menu." },
+            { "LogoInfo", "Ideally, your logo should be in the SVG format for best scaling. If you do not have an SVG version then a transparent PNG would be the next-best option." },
+            // {{ModuleItemEnd:Logo}}
+
             // User Groups
             { "AddNewUserGroup", "Add a New User Group" },
             { "FeatureOptInUsergroups", "Use User Groups for Users" },
@@ -548,10 +556,6 @@ public partial class DataAccess
             { "LoginWithMicrosoftAccount", "Log in with a Microsoft Account" },
             { "LoginWithOpenId", "Log in with OpenId" },
             { "Log-in", "Log In" },
-            { "Logo", "Logo" },
-            { "LogoIncludedOnHomePage", "Include the Logo on the home page." },
-            { "LogoIncludedOnNavbar", "Include the Logo on the top navigation menu." },
-            { "LogoInfo", "Ideally, your logo should be in the SVG format for best scaling. If you do not have an SVG version then a transparent PNG would be the next-best option." },
             { "Logout", "Logout" },
             { "Log-out", "Log Out" },
             { "MailServer", "Mail Server" },

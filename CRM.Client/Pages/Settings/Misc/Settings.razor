@@ -1080,12 +1080,11 @@
         return output;
     }
 
-    protected void ToggleLogoUpdate()
-    {
+    // {{ModuleItemStart:Logo}}
+    protected void ToggleLogoUpdate()   {
         Model.TriggerUpdate();
     }
 
-    // {{ModuleItemStart:Logo}}
     protected async Task UploadLogo()
     {
         Delegate onUploadComplete = async (DataObjects.FileStorage fileStorage) => {

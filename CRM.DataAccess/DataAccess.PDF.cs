@@ -19,7 +19,10 @@ public partial class DataAccess
 
         var tenant = GetTenant(invoice.TenantId, CurrentUser);
 
+        // {{ModuleItemStart:Logo}}
         var logo = await GetTenantLogo(invoice.TenantId);
+        // {{ModuleItemEnd:Logo}}
+
 
         List<InvoiceOrderItem> items = new List<InvoiceOrderItem>();
         if (invoice.InvoiceItems.Any()) {
@@ -47,8 +50,10 @@ public partial class DataAccess
                 CompanyName = tenant != null ? tenant.Name : String.Empty,
                 Email = DefaultReplyToAddressForTenant(invoice.TenantId),
             },
+            // {{ModuleItemStart:Logo}}
             Logo = logo != null ? logo.Value : null,
             LogoExtension = logo != null ? StringValue(logo.Extension) : String.Empty,
+            // {{ModuleItemEnd:Logo}}
             Items = items,
         };
 
@@ -239,6 +244,7 @@ public class InvoiceDocument : QuestPDF.Infrastructure.IDocument
                 }
             });
 
+            // {{ModuleItemStart:Logo}}
             if (Model.Logo != null) {
                 string extension = !String.IsNullOrWhiteSpace(Model.LogoExtension) ? Model.LogoExtension : "";
 
@@ -255,6 +261,7 @@ public class InvoiceDocument : QuestPDF.Infrastructure.IDocument
                         break;
                 }
             }
+            // {{ModuleItemEnd:Logo}}
         });
     }
 
@@ -345,10 +352,10 @@ public class InvoiceModel
 
     public InvoiceAddress SellerAddress { get; set; } = new InvoiceAddress();
     public InvoiceAddress CustomerAddress { get; set; } = new InvoiceAddress();
-
+    // {{ModuleItemStart:Logo}}
     public byte[]? Logo { get; set; }
     public string LogoExtension { get; set; } = String.Empty;
-
+    // {{ModuleItemEnd:Logo}}
     public List<InvoiceOrderItem> Items { get; set; } = new List<InvoiceOrderItem>();
     public string Comments { get; set; } = String.Empty;
 }
