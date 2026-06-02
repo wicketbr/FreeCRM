@@ -5945,6 +5945,22 @@ public static partial class Helpers
         null, millisecondsDelay, System.Threading.Timeout.Infinite);
     }
 
+    // {{ModuleItemStart:About}}
+    public static async void ShowAbout(string Title = "")
+    {
+        await HideMenus();
+
+        await DialogService.OpenAsync<CRM.Client.Pages.About>(Title, null, new DialogOptions() {
+            AutoFocusFirstElement = false,
+            Draggable = false,
+            ShowClose = false,
+            CloseDialogOnEsc = true,
+            CloseDialogOnOverlayClick = true,
+            ShowTitle = false,
+        });
+    }
+    // {{ModuleItemEnd:About}}
+
     // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Sorts a list of tag by their names.

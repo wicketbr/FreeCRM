@@ -1042,13 +1042,13 @@ h1.block {
     height:calc(100vh - 85px);
 }
 
-.date-only-picker:not(.full-width) input {
-    width: 145px;
-    min-width: 145px;
-    max-width: 145px;
+input.date-only-picker:not(.full-width) {
+    width: 155px;
+    min-width: 155px;
+    max-width: 155px;
 }
 
-.time-only-picker:not(.full-width) input {
+input.time-only-picker:not(.full-width) {
     width: 125px;
     min-width: 125px;
 }

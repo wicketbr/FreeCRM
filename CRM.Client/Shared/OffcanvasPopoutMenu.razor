@@ -229,7 +229,7 @@
 
                 // {{ModuleItemStart:About}}
                 if (!Model.Tenant.TenantSettings.HideAbout) {
-                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("About"))">
+                    <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.ShowAbout())">
                         <Language Tag="About" IncludeIcon="true" />
                     </div>
                 }

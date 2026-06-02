@@ -865,6 +865,13 @@ public partial class DataAccess
         output.ActionResponse = GetNewActionResponse();
         output.Records = null;
 
+        if (String.IsNullOrWhiteSpace(output.Sort)) {
+            output.Sort = "lastLogin";
+            output.SortOrder = "DESC";
+        }
+
+        string sortColumn = StringValue(output.Sort).ToUpper();
+
         var language = GetTenantLanguage(output.TenantId, StringValue(output.CultureCode));
 
         output.Columns = new List<DataObjects.FilterColumn> {
@@ -874,7 +881,7 @@ public partial class DataAccess
                 TipText = String.Empty,
                 Sortable = false,
                 DataElementName = "photo",
-                DataType = "photo"
+                DataType = "photo",
             },
             new DataObjects.FilterColumn{
                 Align = String.Empty,
@@ -882,7 +889,7 @@ public partial class DataAccess
                 TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "firstName",
-                DataType = "string"
+                DataType = "string",
             },
             new DataObjects.FilterColumn{
                 Align = String.Empty,
@@ -890,7 +897,7 @@ public partial class DataAccess
                 TipText = String.Empty,
                 Sortable = true,
                 DataElementName = "lastName",
-                DataType = "string"
+                DataType = "string",
             },
             new DataObjects.FilterColumn{
                 Align = String.Empty,
@@ -930,7 +937,7 @@ public partial class DataAccess
                 Sortable = true,
                 DataElementName = "employeeId",
                 DataType = "string",
-                Class = "auto-truncate d-none d-xl-table-cell",
+                Class = sortColumn == "EMPLOYEEID" ? "auto-truncate" : "auto-truncate d-none d-xl-table-cell",
             });
         }
 
@@ -944,7 +951,7 @@ public partial class DataAccess
                 Sortable = true,
                 DataElementName = "departmentName",
                 DataType = "string",
-                Class = "auto-truncate d-none d-xl-table-cell",
+                Class = sortColumn == "DEPARTMENTNAME" ? "auto-truncate" : "auto-truncate d-none d-xl-table-cell",
             });
         }
 
@@ -981,7 +988,7 @@ public partial class DataAccess
             Sortable = true,
             DataElementName = "lastLogin",
             DataType = "datetime",
-            Class = "d-none d-xl-table-cell",
+            Class = sortColumn == "LASTLOGIN" ? "" : "d-none d-xl-table-cell",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "LastLogin", language, CurrentUser));
@@ -993,7 +1000,7 @@ public partial class DataAccess
             Sortable = false,
             DataElementName = "failedLoginAttempts",
             DataType = "number",
-            Class = "d-none d-xl-table-cell",
+            Class = sortColumn == "FAILEDLOGINATTEMPTS" ? "" : "d-none d-xl-table-cell",
         });
 
         output.Columns.AddRange(GetFilterColumnsApp("Users", "FailedLoginAttempts", language, CurrentUser));
@@ -1119,11 +1126,6 @@ public partial class DataAccess
             }
         }
 
-        if (String.IsNullOrWhiteSpace(output.Sort)) {
-            output.Sort = "lastLogin";
-            output.SortOrder = "DESC";
-        }
-
         if (String.IsNullOrWhiteSpace(output.SortOrder)) {
             switch (output.Sort.ToUpper()) {
                 case "LASTLOGIN":
@@ -1141,7 +1143,7 @@ public partial class DataAccess
             Ascending = false;
         }
 
-        switch (StringValue(output.Sort).ToUpper()) {
+        switch (sortColumn) {
             case "FIRSTNAME":
                 if (Ascending) {
                     recs = recs.OrderBy(x => x.FirstName).ThenBy(x => x.LastName);
