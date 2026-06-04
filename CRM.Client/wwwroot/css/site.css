@@ -1042,15 +1042,21 @@ h1.block {
     height:calc(100vh - 85px);
 }
 
-input.date-only-picker:not(.full-width) {
+input.date-picker:not(.full-width) {
     width: 155px;
     min-width: 155px;
     max-width: 155px;
 }
 
-input.time-only-picker:not(.full-width) {
+input.time-picker:not(.full-width) {
     width: 125px;
     min-width: 125px;
+}
+
+input.date-time-picker:not(.full-width) {
+    width: 255px;
+    min-width: 255px;
+    max-width: 255px;
 }
 
 h2.quick-action {
@@ -1414,22 +1420,25 @@ fieldset legend {
     padding-left:.3em;
 }
 
-.stats-listing .row {
+.flexlist .flexrow {
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: baseline;
 }
 
-.stats-listing .row .label {
+.flexlist .flexrow .label {
     flex-grow:0;
     flex-shrink: 0;
     flex-basis:content;
     font-weight:bold;
+}
+
+.flexlist .flexrow .label.right {
     text-align:right;
 }
 
-.stats-listing .row .value {
+.flexlist .flexrow .value {
     flex-grow:1;
 }
 
