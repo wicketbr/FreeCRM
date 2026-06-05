@@ -1489,7 +1489,7 @@ public partial class DataAccess
 
         var recs = await data.Users
             .Where(x => x.TenantId == TenantId && x.Username.ToLower() != "admin" && x.Deleted != true)
-            .Select(x => new { x.UserId, x.FirstName, x.LastName, x.Email, x.Username, x.Enabled, x.Admin, x.Deleted, x.DeletedAt, x.Location })
+            //.Select(x => new { x.UserId, x.FirstName, x.LastName, x.Email, x.Username, x.Enabled, x.Admin, x.Deleted, x.DeletedAt, x.Location })
             .OrderBy(x => x.FirstName).ThenBy(x => x.LastName).ToListAsync();
 
         if (recs != null && recs.Any()) {

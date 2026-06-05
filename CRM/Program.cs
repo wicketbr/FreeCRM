@@ -1,3 +1,4 @@
+using Blazored.SessionStorage;
 using CRM.Components;
 using CRM.Server.Hubs;
 using Microsoft.AspNetCore.Components;
@@ -55,6 +56,8 @@ namespace CRM
 
             builder.Services.AddRazorPages();
             builder.Services.AddHttpContextAccessor();
+
+            builder.Services.AddBlazoredSessionStorage();
 
             #region Plugin Configuration and DI Creation
 

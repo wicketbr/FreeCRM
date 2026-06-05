@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using CRM.Server.Hubs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CRM.Server.Controllers;
 
@@ -22,6 +24,19 @@ public partial class DataController
         //}
 
         return output;
+    }
+
+    private void ControllerInit_App
+    (
+        IDataAccess daInjection,
+        HttpContext? httpContext,
+        ICustomAuthentication? auth,
+        IHubContext<crmHub, IsrHub>? hubContext,
+        IConfigurationHelper configHelper,
+        Plugins.IPlugins diPlugins
+    )
+    {
+        // Called in the base DataController instantation to do any app-specific updates.
     }
 
     [HttpGet]

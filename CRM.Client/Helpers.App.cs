@@ -12,6 +12,21 @@ public static partial class Helpers
         }
     }
 
+    public static bool AllowAnonymousAccessApp(string pagename)
+    {
+        bool output = false;
+
+        // Do any checks for custom page names in your app that should allow anonymous access.
+        switch (StringLower(pagename)) {
+            case "this":
+            case "orthis":
+                output = true;
+                break;
+        }
+
+        return output;
+    }
+
     public static bool AppMethod()
     {
         return true;

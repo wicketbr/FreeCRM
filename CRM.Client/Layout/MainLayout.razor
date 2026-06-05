@@ -227,7 +227,7 @@
             await jsRuntime.InvokeVoidAsync("SetDotNetHelper", dotNetHelper);
 
             // See if a Theme is stored.
-            var theme = await LocalStorage.GetItemAsync<string>("Theme");
+            var theme = Model.User.UserPreferences.Theme;
             if (String.IsNullOrWhiteSpace(theme)) {
                 theme = "light";
             }
@@ -863,6 +863,11 @@
                         if (!String.IsNullOrWhiteSpace(Model.View)) {
                             // If we have a pagename set by the model view, then use that instead of the parsed URL.
                             pagename = Model.View;
+                        }
+
+                        if (!allowAnonymousAccess) {
+                            // Check for app-specific settings.
+                            allowAnonymousAccess = Helpers.AllowAnonymousAccessApp(pagename);
                         }
 
                         if (!allowAnonymousAccess) {

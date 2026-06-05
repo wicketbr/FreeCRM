@@ -1,4 +1,5 @@
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.JSInterop;
 using MudBlazor.Services;
@@ -15,6 +16,7 @@ namespace CRM.Client
 
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddBlazoredLocalStorage();
+            builder.Services.AddBlazoredSessionStorage();
             builder.Services.AddSingleton<BlazorDataModel>();
             builder.Services.AddBlazorBootstrap();
             builder.Services.AddMudServices();

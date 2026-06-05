@@ -21,13 +21,14 @@ public partial class DataController : ControllerBase
     private string _fingerprint = String.Empty;
     private string _returnCodeAccessDenied = "{{AccessDenied}}";
 
-    public DataController(IDataAccess daInjection,
+    public DataController(
+        IDataAccess daInjection,
         IHttpContextAccessor httpContextAccessor,
         ICustomAuthentication auth,
         IHubContext<crmHub, IsrHub> hubContext,
         IConfigurationHelper configHelper,
-        Plugins.IPlugins diPlugins)
-    {
+        Plugins.IPlugins diPlugins
+    ){
         da = daInjection;
         authenticationProviders = auth;
         configurationHelper = configHelper;
@@ -50,6 +51,8 @@ public partial class DataController : ControllerBase
         if (httpContextAccessor != null && httpContextAccessor.HttpContext != null) {
             context = httpContextAccessor.HttpContext;
         }
+
+        ControllerInit_App(da, context, authenticationProviders, _signalR, configurationHelper, plugins);
 
         // See if a TenantId is included in the header or querystring.
         string tenantId = HeaderValue("TenantId");

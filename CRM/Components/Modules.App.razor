@@ -19,10 +19,18 @@
         @* <link rel="stylesheet" href="@(applicationUrl + "_content/Path/To/CSS.css?v=" + appVersion)" /> *@
         break;
 
-    case "body":
-        // Add any custom elements to the body tag here.
+    case "bodytop":
+        // Add any custom elements to the top of the body tag here.
         @* <script src="some.js"></script> *@
         @* <script src="@(applicationUrl + "_content/Path/To/Javascript.js?v=" + appVersion)"></script> *@
+        break;
+
+    case "bodymiddle":
+        // Add any custom elements to the middle of the body tag here.
+        break;
+
+    case "bodybottom":
+        // Add any custom elements to the bottom of the body tag here.
         break;
 
     case "javascript":
