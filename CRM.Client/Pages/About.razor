@@ -20,7 +20,7 @@
         </div>
     }
 
-    <About_App />
+    <About_App InDialog="InDialog" />
 
     if (Helpers.HaveBlazorPlugins(_pageName, "Bottom")) {
         <div class="mb-2">
@@ -30,6 +30,7 @@
 }
 
 @code {
+    [Parameter] public bool InDialog { get; set; }
     [Parameter] public string? TenantCode { get; set; }
     protected bool _validatedUrl = false;
 
@@ -48,7 +49,11 @@
 
         if (Model.Loaded && !_validatedUrl) {
             _validatedUrl = true;
-            await Helpers.ValidateUrl(TenantCode);
+            
+            if (!InDialog) {
+                // If the about is shown in a dialog there won't be a tenant code in the URL.
+                await Helpers.ValidateUrl(TenantCode);
+            }
         }
     }
 

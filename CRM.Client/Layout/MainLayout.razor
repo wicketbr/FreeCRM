@@ -183,6 +183,8 @@
         // cached data can be retrieved or saved for Blazor plugins.
         _compilationService.SetGetOrPostDelegate(Helpers.GetOrPostBlazorCachedPluginBinary);
 
+        await Helpers.MainLayoutOnInitializedAsyncApp();
+
         timer = new System.Threading.Timer(async (object? stateInfo) => {
             await ThemeWatcher();
             MessageWatcher();

@@ -2,6 +2,12 @@
 
 public partial class Program
 {
+    public static List<string> AddServerReferencesApp(List<string> serverReferences)
+    {
+        // Add any app-specific references here.
+        return serverReferences;
+    }
+
     public static WebApplicationBuilder AppModifyBuilderEnd(WebApplicationBuilder builder)
     {
         var output = builder;

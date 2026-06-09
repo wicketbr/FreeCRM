@@ -21,6 +21,8 @@
 }
 
 @code {
+    [Parameter] public bool InDialog { get; set; }
+
     public void Dispose()
     { 
         Model.OnChange -= StateHasChanged;

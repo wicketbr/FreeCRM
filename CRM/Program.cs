@@ -83,7 +83,7 @@ namespace CRM
             try { serverReferences.Add(typeof(Plugins.Plugin).Assembly.Location); } catch { }
             try { serverReferences.Add(typeof(IPlugin).Assembly.Location); } catch { }
             try { serverReferences.Add(typeof(RenderFragment).Assembly.Location); } catch { }
-            plugins.ServerReferences = serverReferences;
+            plugins.ServerReferences = AddServerReferencesApp(serverReferences);
 
             // Get the using statements from the appsettings.json file.
             // These will be used to ensure all required namespaces for this app are used when executing dynamic code in plugins.

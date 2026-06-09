@@ -107,6 +107,9 @@ public partial class DataAccess
         rec.TenantId = TenantId;
         rec.UserId = UserId;
         rec.Username = EmailAddress;
+
+        SaveDataApp(rec, output);
+
         try {
             data.Users.Add(rec);
             await data.SaveChangesAsync();

@@ -5950,7 +5950,10 @@ public static partial class Helpers
     {
         await HideMenus();
 
-        await DialogService.OpenAsync<CRM.Client.Pages.About>(Title, null, new DialogOptions() {
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
+        parameters.Add("InDialog", true);
+
+        await DialogService.OpenAsync<CRM.Client.Pages.About>(Title, parameters, new DialogOptions() {
             AutoFocusFirstElement = false,
             Draggable = false,
             ShowClose = false,

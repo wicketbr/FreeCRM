@@ -106,6 +106,15 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Method is called from the MainLayout page to do any app-specific initialization.
+    /// </summary>
+    /// <returns></returns>
+    public static async Task MainLayoutOnInitializedAsyncApp()
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+    }
+
     public static List<DataObjects.MenuItem> MenuItemsApp {
         get {
             // Add any app-specific top-level menu items here.
