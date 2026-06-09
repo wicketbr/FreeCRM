@@ -76,7 +76,7 @@ public partial class DataAccess
 
             // Active Directory
             { "ActiveDirectoryNames", "Active Directory Names" },
-            { "ActiveDirectoryNamesInfo", "Bracket-separated names of AD groups to match for this department (eg: {Enrollment IT]{Admissions}, etc.)" },
+            { "ActiveDirectoryNamesInfo", "Bracket-separated names of AD groups to match for this department (eg: [IT]{Human Resources}, etc.)" },
 
             // {{ModuleItemStart:Appointments}}
             // Appointments
