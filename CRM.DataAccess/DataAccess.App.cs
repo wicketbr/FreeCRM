@@ -23,7 +23,7 @@ public partial class DataAccess
     private string _copyright = "Company Name";
 
     // The date this version of your application was released.
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/9/2026"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/10/2026"));
 
     // If true, a new token will be sent to the client to keep the token automatically renewed.
     private bool _tokenAutoRenew = true;
