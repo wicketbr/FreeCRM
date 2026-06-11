@@ -3,42 +3,49 @@
 An open-source CRM solution built in C# Blazor WebAssembly using .NET 10. You can use this project as-is,
 or customize it to fit your needs. Or, just grab code that you need to use in your project.
 
+## Utilities
+
+The previous utilities "Remove Modules from FreeCRM.exe", "Rename FreeCRM.exe", and
+"Upgrade FreeCRM.exe" have now been combined into a new single "Util.exe" utility,
+referred to below as Util. This Util console application has an intuitive main menu
+with options, as well as a built-in help to show all available commands.
+Command in the utility are not case-sensitive.
+
 ## Step 1 - Rename the Solution
 
-If you want to rename things, you can use the "Rename FreeCRM.exe" console application.
-This will rename the project files, create new GUIDs for each project in the solution,
+Using rename with the Util will rename the project files,
+create new GUIDs for each project in the solution,
 and rename namespaces to match your project name.
 
-The rename tool now supports adding the rename value as a command-line argument. For example:
+The tool supports adding the rename value as a command-line argument. For example:
 
-`"Rename FreeCRM.exe" MyNewProjectName`
+`Util --rename:MyNewProjectName`
 
 ## Step 2 - Remove Unwanted Modules
 
 If you want to remove one or more of the optional components from the application
-(Appointments, EmailTemplates, Invoices, Locations, Payments, SamplePages, Services, or Tags)
-you can use the "Remove Modules from FreeCRM.exe" console application.
+you can use the Util to do so.
 This utility may still leave remnants of the removed modules in the code.
 If you find any items that are not removed that you believe should be,
 please open an issue on GitHub. Please include the name of the file and the line number
 where the item is located.
 
-The removal tool now supports two command-line options. They are:
+The removal tool supports two command-line options. They are:
 
-`remove:Module1,Module2,etc.`
+`Util --remove:Module1,Module2,etc.`
 
 This removes any named modules.
 
-`keep:Module1,Module2,etc.`
+`Util --keep:Module1,Module2,etc.`
 
 This removes any modules not named. For example, to remove all optional modules except
 the Tags module, you would use:
 
-`keep:Tags`
+`Util --keep:Tags`
 
 You can also remove all optional modules without having to list them all by using:
 
-`remove:all`
+`Util --remove:all`
 
 Do not use any spaces in the command line options. The names of the modules that can be
 kept or removed are:
@@ -124,19 +131,19 @@ if you have installed the Application Initialization feature for IIS.
 
 If you are running an older version of an application based on the FreeCRM
 framework and you have already migrated to use .app. files for all of your
-app-specific code, then you can use the new "Upgrade FreeCRM.exe" console
+app-specific code, then you can use the Util console
 application to upgrade your existing application. To do so download a fresh
-copy of the FreeCRM files, run the "Rename FreeCRM.exe" utility to rename
+copy of the FreeCRM files, run the "rename" option in the utility to rename
 the application using the exact same namespace as your existing application.
-Then, use the "Remove Modules from FreeCRM.exe" utility to remove any modules
-that you won't be using in your application. Finally, run this new
-"Upgrade FreeCRM.exe" utility which will attempt to migrate your existing
+Then, use the "remove" option in the utility to remove any modules
+that you won't be using in your application. Finally, run the
+"upgrade" option in the utility which will attempt to migrate your existing
 code into the new version.
 
 This tool can take a single command-line argument of the path to your
 existing application. For example:
 
-`"Upgrade FreeCRM.exe" C:\MyExistingApp`
+`Util --upgrade:"C:\MyExistingApp"`
 
 There are edge cases that cannot be updated with this tool, such as having
 additional project in your solution. The tool will copy those projects,
@@ -144,3 +151,9 @@ but any references in other projects must be added manually.
 
 The tool will produce a report that will help with any additional steps
 that will be required for the migration.
+
+The commands in the Util console application can be chained together to perform
+all steps in one call. For example, to rename your app, remove some modules, and
+perform the upgrade you could use:
+
+`--Rename:MyNewProjectName --Keep:about,tags --Upgrade:"C:\Path\To\Current\Version"`

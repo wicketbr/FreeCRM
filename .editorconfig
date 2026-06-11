@@ -268,3 +268,18 @@ dotnet_style_namespace_match_folder = true:suggestion
 
 [*.razor]
 csharp_new_line_before_open_brace = none
+
+[*.cs]
+# Enforcement (added) - surfaces formatting violations as warnings; does NOT change whitespace behavior.
+dotnet_diagnostic.IDE0055.severity = warning
+
+# ============ Exempt generated / vendored code (config-only, ships with repo) ============
+# Scaffolded or third-party folders in FreeCRM-derived projects. 'generated_code = true' makes BOTH
+# the formatter and the analyzers skip them, so house style is never enforced on code you don't own.
+# On a real FreeCRM pass this cut the change set from 61 files to 36 (only hand-written code remained).
+# Add your project's own generated folders the same way.
+[**/DynamicBlazorSupport/**.cs]
+generated_code = true
+
+[**/EFModels/**.cs]
+generated_code = true
