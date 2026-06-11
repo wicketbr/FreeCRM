@@ -6,6 +6,7 @@
     <File Path="LICENSE" />
     <File Path="README.md" />
     <File Path="Util.exe" />
+    <File Path="UtilMacOS" />
   </Folder>
   <Project Path="CRM.Client/CRM.Client.csproj" />
   <Project Path="CRM.DataAccess/CRM.DataAccess.csproj" Id="daf00842-3dab-4880-b902-61775be8dbcc" />
