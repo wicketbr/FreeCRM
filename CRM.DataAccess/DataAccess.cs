@@ -14,7 +14,6 @@ public partial class DataAccess: IDisposable, IDataAccess
     private Microsoft.AspNetCore.Http.HttpRequest? _httpRequest;
     private Microsoft.AspNetCore.Http.HttpResponse? _httpResponse;
     private bool _inMemoryDatabase = false;
-    private string _localModeUrl = String.Empty;
     private bool _open;
     private IServiceProvider? _serviceProvider;
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
@@ -23,7 +22,6 @@ public partial class DataAccess: IDisposable, IDataAccess
     public DataAccess(
         string ConnectionString = "",
         string DatabaseType = "",
-        string LocalModeUrl = "",
         IServiceProvider? serviceProvider = null,
         string CookiePrefix = "",
         bool UseBackgroundService = false
@@ -31,7 +29,6 @@ public partial class DataAccess: IDisposable, IDataAccess
         _cookiePrefix = CookiePrefix;
         _connectionString = ConnectionString;
         _databaseType = DatabaseType;
-        _localModeUrl = LocalModeUrl;
         _serviceProvider = serviceProvider;
         _useBackgroundService = UseBackgroundService;
 

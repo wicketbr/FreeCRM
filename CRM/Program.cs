@@ -115,10 +115,9 @@ namespace CRM
                 }
             }
 
-            string _localModeUrl = String.Empty + builder.Configuration.GetValue<string>("LocalModeUrl");
             string _connectionString = String.Empty + builder.Configuration.GetConnectionString("AppData");
             string _databaseType = String.Empty + builder.Configuration.GetValue<string>("DatabaseType");
-            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, _localModeUrl, x.GetRequiredService<IServiceProvider>(), cookiePrefix, backgroundServiceEnabled));
+            builder.Services.AddTransient<IDataAccess>(x => ActivatorUtilities.CreateInstance<DataAccess>(x, _connectionString, _databaseType, x.GetRequiredService<IServiceProvider>(), cookiePrefix, backgroundServiceEnabled));
 
             if (backgroundServiceEnabled) {
                 // Create a logger for the background process and add the hosted service for the background processor.
@@ -148,6 +147,11 @@ namespace CRM
             // Create DI for supported configuration items.
             var analyticsCode = builder.Configuration.GetValue<string>("AnalyticsCode");
 
+            string applicationUrl = String.Empty + builder.Configuration.GetValue<string>("ApplicationUrl");
+            if (!String.IsNullOrWhiteSpace(applicationUrl) && !applicationUrl.EndsWith("/")) {
+                applicationUrl += "/";
+            }
+
             var basePath = builder.Configuration.GetValue<string>("BasePath");
             if (!String.IsNullOrWhiteSpace(basePath) && !basePath.EndsWith("/")) {
                 basePath += "/";
@@ -173,8 +177,9 @@ namespace CRM
                 }
             }
 
-            var configurationHelperLoader = ConfigurationHelpersLoadApp(new ConfigurationHelperLoader {
+           var configurationHelperLoader = ConfigurationHelpersLoadApp(new ConfigurationHelperLoader {
                 AnalyticsCode = analyticsCode,
+                ApplicationUrl = applicationUrl,
                 CookiePrefix = cookiePrefix,
                 BasePath = basePath,
                 ConnectionStrings = new ConfigurationHelperConnectionStrings {

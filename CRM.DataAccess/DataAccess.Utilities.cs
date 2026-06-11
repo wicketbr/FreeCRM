@@ -114,8 +114,9 @@ public partial class DataAccess
 
     public string ApplicationURL { 
         get {
-            if (!String.IsNullOrWhiteSpace(_localModeUrl)) {
-                return _localModeUrl;
+            // Prefer getting this value from the new item in the ConfigurationHelper
+            if (ConfigurationHelper != null && !String.IsNullOrWhiteSpace(ConfigurationHelper.ApplicationUrl)) {
+                return ConfigurationHelper.ApplicationUrl;
             }
 
             string output = StringValue(CacheStore.GetCachedItem<string>(Guid.Empty, "ApplicationURL"));

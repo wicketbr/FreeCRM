@@ -271,7 +271,7 @@ csharp_new_line_before_open_brace = none
 
 [*.cs]
 # Enforcement (added) - surfaces formatting violations as warnings; does NOT change whitespace behavior.
-dotnet_diagnostic.IDE0055.severity = warning
+#dotnet_diagnostic.IDE0055.severity = warning
 
 # ============ Exempt generated / vendored code (config-only, ships with repo) ============
 # Scaffolded or third-party folders in FreeCRM-derived projects. 'generated_code = true' makes BOTH

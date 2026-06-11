@@ -15,6 +15,12 @@ public partial class ConfigurationHelper : IConfigurationHelper
         }
     }
 
+    public string? ApplicationUrl {
+        get {
+            return _loader.ApplicationUrl;
+        }
+    }
+
     public string? BasePath {
         get {
             return _loader.BasePath;
@@ -55,6 +61,7 @@ public partial class ConfigurationHelper : IConfigurationHelper
 public partial interface IConfigurationHelper
 {
     public string? AnalyticsCode { get; }
+    public string? ApplicationUrl { get; }
     public string? BasePath { get; }
     ConfigurationHelperConnectionStrings ConnectionStrings { get; }
     public string? CookiePrefix { get; }
@@ -66,6 +73,7 @@ public partial interface IConfigurationHelper
 public partial class ConfigurationHelperLoader
 {
     public string? AnalyticsCode { get; set; }
+    public string? ApplicationUrl { get; set; }
     public string? BasePath { get; set; }
     public ConfigurationHelperConnectionStrings ConnectionStrings { get; set; } = new ConfigurationHelperConnectionStrings();
     public string? CookiePrefix { get; set; }
