@@ -1,5 +1,6 @@
 ﻿using BlazorBootstrap;
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 // {{ModuleItemStart:EmailTemplates}}
 using CRM.Client.Pages.Settings.Email;
 // {{ModuleItemEnd:EmailTemplates}}
@@ -36,6 +37,7 @@ public static partial class Helpers
     private static bool _initialized = false;
     private static IJSRuntime jsRuntime = null!;
     private static ILocalStorageService LocalStorage = null!;
+    private static ISessionStorageService SessionStorage = null!;
     private static BlazorDataModel Model = null!;
     private static TooltipService Tooltips = null!;
     private static NavigationManager NavManager = null!;
@@ -60,6 +62,7 @@ public static partial class Helpers
         BlazorDataModel model,
         HttpClient httpClient,
         ILocalStorageService localStorage,
+        ISessionStorageService sessionStorage,
         Radzen.DialogService dialogService,
         Radzen.TooltipService tooltipService,
         NavigationManager navigationManager
@@ -68,6 +71,7 @@ public static partial class Helpers
         Http = httpClient;
         jsRuntime = jSRuntime;
         LocalStorage = localStorage;
+        SessionStorage = sessionStorage;
         Model = model;
         Tooltips = tooltipService;
         NavManager = navigationManager;
@@ -444,6 +448,17 @@ public static partial class Helpers
     {
         if (LocalStorage != null) {
             await LocalStorage.RemoveItemAsync(key);
+        }
+    }
+
+    /// <summary>
+    /// Clears the value for a session storage item.
+    /// </summary>
+    /// <param name="key">The key of the item.</param>
+    public static async Task ClearSessionStorageItem(string key)
+    {
+        if (SessionStorage != null) {
+            await SessionStorage.RemoveItemAsync(key);
         }
     }
 
@@ -3211,6 +3226,29 @@ public static partial class Helpers
         return output;
     }
 
+    /// <summary>
+    /// Gets a session storage item.
+    /// </summary>
+    /// <typeparam name="T">The type of the item.</typeparam>
+    /// <param name="key">the key of the item.</param>
+    /// <returns>A nullable object of type T.</returns>
+    public static async Task<T?> GetSessionStorageItem<T>(string key)
+    {
+        T? output = default(T);
+
+        if (SessionStorage != null) {
+            try {
+                var result = await SessionStorage.GetItemAsync<T>(key);
+                if (result != null) {
+                    output = result;
+                }
+            } catch { }
+        }
+
+        return output;
+    }
+
+
     // {{ModuleItemStart:Tags}}
     /// <summary>
     /// Gets a Tag by its unique id.
@@ -5918,6 +5956,18 @@ public static partial class Helpers
         }
 
         return o;
+    }
+
+    /// <summary>
+    /// Sets a value for an item in the Session Storage.
+    /// </summary>
+    /// <param name="key">The key of the item.</param>
+    /// <param name="value">The value to store.</param>
+    public static async Task SetSessionStorageItem(string key, object value)
+    {
+        if (SessionStorage != null) {
+            await SessionStorage.SetItemAsync(key, value);
+        }
     }
 
     /// <summary>

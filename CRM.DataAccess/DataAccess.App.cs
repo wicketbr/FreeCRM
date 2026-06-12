@@ -1,4 +1,6 @@
-﻿namespace CRM;
+﻿using Plugins;
+
+namespace CRM;
 
 // Use this file as a place to put any application-specific data access methods.
 
@@ -23,7 +25,7 @@ public partial class DataAccess
     private string _copyright = "Company Name";
 
     // The date this version of your application was released.
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/11/2026"));
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/12/2026"));
 
     // If true, a new token will be sent to the client to keep the token automatically renewed.
     private bool _tokenAutoRenew = true;
@@ -228,6 +230,20 @@ public partial class DataAccess
         }
 
         output.Result = output.Messages.Count == 0;
+
+        return output;
+    }
+
+    private object[]? ExecutePluginApp(PluginExecuteRequest request, DataObjects.User? CurrentUser = null)
+    {
+        object[]? output = null;
+
+        switch (request.Plugin.Type.ToLower()) {
+            // Handle any app-specific plugin Object Arguments transformations.
+
+            default:
+                break;
+        }
 
         return output;
     }

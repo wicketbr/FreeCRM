@@ -12,7 +12,7 @@ public partial class DataAccess
     {
         DataObjects.ApplicationSettings output = new DataObjects.ApplicationSettings {
             ActionResponse = GetNewActionResponse(true),
-            ApplicationURL = ApplicationURL,
+            ApplicationURL = GetSetting<string>("ApplicationURL", DataObjects.SettingType.Text),
             DefaultTenantCode = DefaultTenantCode,
             EncryptionKey = ConvertByteArrayToString(GetEncryptionKey),
             MailServerConfig = MailServerConfig,
@@ -32,7 +32,7 @@ public partial class DataAccess
 
         var originalJson = SerializeObject(AppSettings);
         DataObjects.ApplicationSettingsUpdate originalValues = new DataObjects.ApplicationSettingsUpdate {
-            ApplicationURL = ApplicationURL,
+            ApplicationURL = GetSetting<string>("ApplicationURL", DataObjects.SettingType.Text),
             DefaultTenantCode = DefaultTenantCode,
             MaintenanceMode = MaintenanceMode,
             UseTenantCodeInUrl = UseTenantCodeInUrl,

@@ -1,10 +1,12 @@
 ﻿@using Blazored.LocalStorage
+@using Blazored.SessionStorage
 @using Microsoft.AspNetCore.SignalR.Client
 @using FluentValidation
 @implements IAsyncDisposable
 @inherits LayoutComponentBase
 @inject IJSRuntime jsRuntime
 @inject ILocalStorageService LocalStorage
+@inject ISessionStorageService SessionStorage
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject BlazorDataModel Model
@@ -160,7 +162,7 @@
         NavManager.LocationChanged += LocationChanged;
 
         if (!Helpers.Initialized) {
-            Helpers.Init(jsRuntime, Model, Http, LocalStorage, DialogService, TooltipService, NavManager);
+            Helpers.Init(jsRuntime, Model, Http, LocalStorage, SessionStorage, DialogService, TooltipService, NavManager);
 
             List<string>? globallyDisabledModules = await Helpers.GetOrPost<List<string>>("api/Data/GetGloballyDisabledModules");
             Model.GloballyDisabledModules = globallyDisabledModules;

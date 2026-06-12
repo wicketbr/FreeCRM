@@ -1,0 +1,298 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@using Plugins
+
+@{
+    // Use this to override features from the PluginPrompts component.
+    if (OverrideComponent) {
+        // Build out your entire plugin prompt handler.
+    } else {
+        if (RenderPromptType != null) {
+            string requiredClass = Prompt.Required ? "required" : "";
+            string elementClass = requiredClass;
+            string elementValue = String.Empty;
+            List<string> values = new List<string>();
+
+            if (PromptValues != null && PromptValues.Count > 0) {
+                var promptValue = PromptValues.FirstOrDefault(x => x.Name.ToLower() == Prompt.Name.ToLower());
+
+                if (promptValue != null && promptValue.Values != null && promptValue.Values.Length > 0) {
+                    values = promptValue.Values.ToList();
+                    elementValue = values[0];
+                }
+            }
+
+            switch (RenderPromptType) {
+                // case PluginPromptType.Button:
+                //     // Render custom buttom prompt here
+                //     string buttonText = Helpers.PluginPromptOptionValue(Prompt, "ButtonText");
+                //     string buttonClass = Helpers.PluginPromptOptionValue(Prompt, "ButtonClass");
+                //     string buttonIcon = Helpers.PluginPromptOptionValue(Prompt, "ButtonIcon");
+
+                //     if (String.IsNullOrWhiteSpace(buttonText)) {
+                //         buttonText += Prompt.Name;
+                //     }
+
+                //     if (String.IsNullOrWhiteSpace(buttonClass)) {
+                //         buttonClass = "btn btn-primary";
+                //     }
+
+                //     string icon = String.Empty;
+
+                //     if (!String.IsNullOrWhiteSpace(buttonIcon)) {
+                //         // See if a named icon was passed in.
+                //         icon = Helpers.Icon(buttonIcon);
+
+                //         if (String.IsNullOrWhiteSpace(icon)) {
+                //             icon = buttonIcon;
+                //         }
+                //     }
+
+                //     if (!String.IsNullOrWhiteSpace(icon) && !icon.Contains("<")) {
+                //         icon = "<i class=\"" + icon + "\"></i>";
+                //     }
+
+                //     string buttonContents = String.Empty;
+
+                //     if (!String.IsNullOrWhiteSpace(icon) && !String.IsNullOrWhiteSpace(buttonText)) {
+                //         buttonContents = icon + " " + buttonText;
+                //     } else if (!String.IsNullOrWhiteSpace(icon)) {
+                //         buttonContents = icon;
+                //     } else {
+                //         buttonContents = buttonText;
+                //     }
+
+                //     <div class="prompt prompt-button @DivClass">
+                //         <div class="prompt-content">
+                //             @if (!String.IsNullOrWhiteSpace(Prompt.Description)) {
+                //                 <div class="prompt-description">@((MarkupString)Prompt.Description)</div>
+                //             }
+                //             <button type="button" class="@buttonClass" @onclick="@(() => AppPromptUpdated.DynamicInvoke(Prompt, null, "ButtonClicked"))">
+                //                 @((MarkupString)buttonContents)
+                //             </button>
+                //         </div>
+                //     </div>
+                //     break;
+
+                // case PluginPromptType.Checkbox:
+                //     <div class="prompt prompt-checkbox @DivClass">
+                //         <div class="prompt-content">
+                //             @if (Prompt.Required && HighlightMissingRequiredFields && elementValue.ToLower() != "true") {
+                //                 elementClass += " " + Helpers.MissingValueClass;
+                //             }
+
+                //             @if (!String.IsNullOrWhiteSpace(Prompt.Description)) {
+                //                 <div class="prompt-description">CUSTOM CHECKBOX HANDLER @((MarkupString)Prompt.Description)</div>
+                //             }
+                //             <div class="@elementClass">
+                //                 <input type="checkbox"
+                //                         id="@ElementId"
+                //                         checked="@(elementValue.ToLower() == "true")"
+                //                         onchange="@((ChangeEventArgs e) => ValueChanged(e))" />
+                //                 <label for="@ElementId">@Prompt.Name</label>
+                //                 @if (Prompt.Required) {
+                //                     <i class="required-flag"></i>
+                //                 }
+                //             </div>
+                //         </div>
+                //     </div>
+                //     break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+@code {
+    /// <summary>
+    /// An optional action.
+    /// </summary>
+    [Parameter] public string? Action { get; set; }
+
+    /// <summary>
+    /// The delegate passed from the parent component that will get invoked when the PromptValues are updated.
+    /// </summary>
+    [Parameter] public Delegate? AppPromptUpdated { get; set; }
+
+    /// <summary>
+    /// The ButtonClickHandler passed from the parent component when OverrideComponent is true.
+    /// </summary>
+    [Parameter] public EventCallback<PluginExecuteResult> ButtonClickHandler { get; set; }
+
+    /// <summary>
+    /// The Class passed from the parent component.
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// The DivClass passed from the parent component when OverrideComponent is false.
+    /// </summary>
+    [Parameter] public string? DivClass { get; set; }
+
+    /// <summary>
+    /// The HighlightMissingRequiredFields passed from the parent component.
+    /// </summary>
+    [Parameter] public bool HighlightMissingRequiredFields { get; set; }
+
+    /// <summary>
+    /// The Plugin passed from the parent component.
+    /// </summary>
+    [Parameter] public Plugin Plugin { get; set; } = new Plugin();
+
+    /// <summary>
+    /// The Prompt passed from the parent component.
+    /// </summary>
+    [Parameter] public PluginPrompt Prompt { get; set; } = new PluginPrompt();
+
+    /// <summary>
+    /// The PromptValues passed from the parent component.
+    /// </summary>
+    [Parameter] public List<PluginPromptValue> PromptValues { get; set; } = new List<PluginPromptValue>();
+
+    /// <summary>
+    /// The OnValuesChange passed from the parent component.
+    /// </summary>
+    [Parameter] public Delegate? OnValuesChange { get; set; }
+
+    /// <summary>
+    /// Set this to true to use this component to override the entire built-in component.
+    /// </summary>
+    [Parameter] public bool OverrideComponent { get; set; } = false;
+
+    /// <summary>
+    /// The type of prompt to render when this component is being invoked to render a prompt when OverrideComponent is false.
+    /// </summary>
+    [Parameter] public PluginPromptType? RenderPromptType { get; set; }
+
+    public void Dispose()
+    { 
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+    }
+
+    protected string ElementId {
+        get {
+            string index = String.Empty;
+
+            foreach (var prompt in Plugin.Prompts.Index()) {
+                if (prompt.Item.Name == Prompt.Name) {
+                    index = (prompt.Index + 1).ToString();
+                }
+            }
+
+            if (String.IsNullOrEmpty(index)) {
+                index = Guid.NewGuid().ToString().Replace("-", "").ToLower();
+            }
+
+            return "plugin-" + Plugin.Id.ToString() + "-prompt-" + index;
+        }
+    }
+
+    public bool OverridePluginPromptType(PluginPromptType promptType)
+    {
+        bool output = false;
+
+        switch (promptType) {
+            case PluginPromptType.Button:
+                output = false;
+                break;
+ 
+            case PluginPromptType.Checkbox:
+                output = false;
+                break;
+        }
+
+        return output;
+    }
+
+    protected void ValueChanged(ChangeEventArgs e, int index = 0)
+    {
+        if (PromptValues == null || !PromptValues.Any()) {
+            return;
+        }
+
+        string valueAsString = String.Empty;
+        string[] values = new string[] { };
+
+        if (e != null && e.Value != null) {
+            try {
+                valueAsString += e.Value.ToString();
+            } catch { }
+
+            switch (Prompt.Type) {
+                // For items that store multiple values, get the value as a string array.
+                case PluginPromptType.Multiselect:
+                    try {
+                        values = (string[])e.Value;
+                    } catch {}
+                    break;
+            }
+        }
+
+        if (Prompt.Type == PluginPromptType.Checkbox) {
+            if (valueAsString.ToLower() == "true") {
+                valueAsString = "True";
+            } else {
+                valueAsString = "False";
+            }
+        }
+
+        var promptValue = PromptValues.FirstOrDefault(x => x.Name.ToLower() == Prompt.Name.ToLower());
+        if (promptValue != null) {
+            var currentValues = new List<string>();
+            if (promptValue.Values != null && promptValue.Values.Length > 0) {
+                currentValues = promptValue.Values.ToList();
+            }
+
+            switch (Prompt.Type) {
+                case PluginPromptType.CheckboxList:
+                    // If the item is checked, make sure it's included in the values. Otherwise, remove it.
+                    if (Prompt.Options != null) {
+                        string checkboxValue = String.Empty;
+
+                        if (Prompt.Options.Count > index) {
+                            checkboxValue += Prompt.Options[index].Value;
+                        }
+
+                        if (valueAsString.ToLower() == "true") {
+                            if (!currentValues.Contains(checkboxValue)) {
+                                currentValues.Add(checkboxValue);
+                            }
+                        } else {
+                            if (currentValues.Contains(checkboxValue)) {
+                                currentValues.Remove(checkboxValue);
+                            }
+                        }
+                        var updatedValues = currentValues.Where(x => !String.IsNullOrWhiteSpace(x)).ToArray();
+
+                        // Keep the values in the order in which they appear in the prompt.
+                        var newValues = new List<string>();
+                        foreach (var option in Prompt.Options) {
+                            if (updatedValues.Contains(option.Value)) {
+                                newValues.Add(option.Value);
+                            }
+                        }
+                        promptValue.Values = newValues.ToArray();
+                    }
+                    break;
+
+                case PluginPromptType.Multiselect:
+                    promptValue.Values = values;
+                    break;
+
+                default:
+                    promptValue.Values = new string[] { valueAsString };
+                    break;
+            }
+        }
+
+        if (AppPromptUpdated != null) {
+            AppPromptUpdated.DynamicInvoke(Prompt, PromptValues, String.Empty);
+        }
+    }
+}
