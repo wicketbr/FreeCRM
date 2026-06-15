@@ -1,0 +1,77 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+
+@{
+    // This component is used to display application-specific settings on the Tags and Edit Tag page.
+    switch (Helpers.StringLower(Area)) {
+        case "aboveavatar":
+            break;
+
+        case "aboveprofile":
+            break;
+
+        case "avatartop":
+            break;
+
+        case "avatarbottom":
+            break;
+
+        case "belowprofile":
+            break;
+
+        case "profilebottom":
+            break;
+
+        case "profiletop":
+            break;
+    }
+}
+
+@code {
+    /// <summary>
+    /// When used on the page indicates the area where this component will render.
+    /// </summary>
+    [Parameter] public string Area { get; set; } = String.Empty;
+
+    /// <summary>
+    /// Set this to true to use this page to override the entire built-in page.
+    /// </summary>
+    [Parameter] public bool OverridePage { get; set; } = false;
+
+    /// <summary>
+    /// The User object from the Profile page.
+    /// </summary>
+    [Parameter] public DataObjects.User Value { get; set; } = new DataObjects.User();
+
+    /// <summary>
+    /// The internal method allowing for 2-way binding with the @bind-Value option instead of @bind.
+    /// </summary>
+    [Parameter] public EventCallback<DataObjects.User> ValueChanged { get; set; }
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+    }
+
+    public DataObjects.ModuleAction Save(DataObjects.User user)
+    {
+        var output = new DataObjects.ModuleAction { Result = true };
+
+        // Perform and pre-save checks here. Return false if there is an error and include any error messages.
+        // Optionally set the focus to a specific field by setting output.FocusField to the field element id.
+
+        return output;
+    }
+
+    protected void ValueHasChanged()
+    {
+        ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+}
