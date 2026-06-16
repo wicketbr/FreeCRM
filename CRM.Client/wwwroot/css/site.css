@@ -637,6 +637,10 @@ div.m-r .required-flag {
     color:darkred;
 }
 
+div.m-r span {
+    color: #000;
+}
+
 .m-r option {
     background-color: #fff;
     color: #000;
@@ -963,7 +967,7 @@ table.udf-labels tbody tr td.top {
     --rz-dialog-title-padding-block: 1rem 0;
     --rz-dialog-title-padding-inline: .75rem 0;
     --rz-dialog-content-padding: .75rem;
-    --rz-dialog-zindex: 1080;
+    --rz-dialog-zindex: 1080 !important;
     
     --rz-dropdown-item-selected-background-color:#000;
     --rz-dropdown-item-selected-color:#fff;

@@ -40,6 +40,11 @@
     [Parameter] public bool OverridePage { get; set; } = false;
 
     /// <summary>
+    /// If any of the items shown on this page require that the parent Profile page shows the Save button set this to true.
+    /// </summary>
+    [Parameter] public bool ShowSaveButton { get; set; } = false;
+
+    /// <summary>
     /// The User object from the Profile page.
     /// </summary>
     [Parameter] public DataObjects.User Value { get; set; } = new DataObjects.User();

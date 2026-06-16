@@ -4358,6 +4358,23 @@ public static partial class Helpers
     // {{ModuleItemEnd:Logo}}
 
     /// <summary>
+    /// Shows the Manage Profile page in a dialog.
+    /// </summary>
+    public static async Task ManageProfile()
+    {
+        await HideMenus();
+
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>() {
+            { "InDialog", true },
+        };
+
+        await DialogService.OpenAsync<CRM.Client.Pages.Profile>(Text("ManageProfile"), parameters, new DialogOptions() {
+            AutoFocusFirstElement = false,
+            Width = "98%",
+        });
+    }
+
+    /// <summary>
     /// Trims a string to a maximum length.
     /// </summary>
     /// <param name="input">The string to trim.</param>
@@ -6678,15 +6695,12 @@ public static partial class Helpers
     /// </summary>
     /// <param name="GroupId">The unique id of the User Group.</param>
     /// <returns>The name of the User Group.</returns>
-    public static async Task<string> UserGroupName(Guid? GroupId)
+    public static string UserGroupName(Guid? GroupId)
     {
+        // Make sure any page calling this method has made sure that the Model.UserGroups has been loaded.
         string output = String.Empty;
 
         if (GroupId.HasValue) {
-            if (!Model.UserGroups.Any()) {
-                await LoadUserGroups();
-            }
-
             var userGroup = Model.UserGroups.FirstOrDefault(x => x.GroupId == GroupId);
             if (userGroup != null) {
                 output += userGroup.Name;

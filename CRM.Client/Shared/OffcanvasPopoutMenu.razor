@@ -211,7 +211,7 @@
                 if (Model.LoggedIn) {
                     <hr />
                     @if (AllowManageProfile) {
-                        <div class="mb-1 pointer hover-highlight" @onclick="@(() => Helpers.NavigateTo("Profile"))">
+                        <div class="mb-1 pointer hover-highlight" @onclick="Helpers.ManageProfile">
                             <Language Tag="ManageProfile" IncludeIcon="true" />
                         </div>
                     }

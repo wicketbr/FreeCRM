@@ -8,9 +8,11 @@
 @inject BlazorDataModel Model
 
 @if (Model.Loaded && Model.View == _pageName) {
-    <h1 class="page-title">
-        <Language Tag="ManageProfile" IncludeIcon="true" />
-    </h1>
+    if (!InDialog) {
+        <h1 class="page-title">
+            <Language Tag="ManageProfile" IncludeIcon="true" />
+        </h1>
+    }
 
     @if (_loading) {
         <LoadingMessage />
@@ -18,16 +20,25 @@
         if (AppModule.OverridePage) {
             <Profile_App Value="_user" />
         } else {
-            if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
-                <div class="mb-2">
-                    <BlazorPlugins
-                            Module="@_pageName"
-                            Button="true"
-                            TValue="DataObjects.User"
-                            Value="_user"
-                            ValueChanged="@(v => _user = v)" />
-                </div>
-            }
+            <div class="btn-group mb-2" role="group">
+                @if (ShowProfileInfo || AppModule.ShowSaveButton) {
+                    <button type="button" class="btn btn-sm btn-success" @onclick="Save">
+                        <Language Tag="Save" IncludeIcon="true" />
+                    </button>
+                }
+
+                @if (Helpers.HaveBlazorToolbarButtons(_pageName)) {
+                    <div class="mb-2">
+                        <BlazorPlugins
+                                Module="@_pageName"
+                                Button="true"
+                                TValue="DataObjects.User"
+                                Value="_user"
+                                ValueChanged="@(v => _user = v)" />
+                    </div>
+                }
+            </div>
+
 
             if (Helpers.HaveBlazorPlugins(_pageName, "Top")) {
                 <div class="mb-2">
@@ -74,17 +85,10 @@
 
             <Profile_App @bind-value="_user" Area="AboveProfile" />
 
-            if (
-                    Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo &&
-                    Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
-                    Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any()
-            ) {
+            if (ShowProfileInfo) {
                 <div class="card mb-2">
                     <div class="card-header text-bg-primary text-white">
                         <Language Tag="ManageProfileInfo" IncludeIcon="true" />
-                        <button type="button" class="btn btn-sm btn-success" @onclick="Save">
-                            <Language Tag="Save" IncludeIcon="true" />
-                        </button>
                     </div>
                     <div class="card-body">
                         @if (Model.AllowUsersToManageName || Model.AllowUsersToManageEmail) {
@@ -173,6 +177,7 @@
 }
 
 @code {
+    [Parameter] public bool InDialog { get; set; }
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _loadedData = false;
@@ -199,7 +204,10 @@
         if (Model.Loaded && Model.LoggedIn) {
             if (!_validatedUrl) {
                 _validatedUrl = true;
-                await Helpers.ValidateUrl(TenantCode);
+
+                if (!String.IsNullOrWhiteSpace(TenantCode)) {
+                    await Helpers.ValidateUrl(TenantCode);
+                }
             }
 
             if (!_loadedData) {
@@ -328,11 +336,26 @@
                 Model.Message_Saved();
                 await Helpers.ReloadUser();
                 _user = Model.User;
+
+                if (InDialog) {
+                    Helpers.ModalClose();
+                }
             } else {
                 Model.ErrorMessages(saved.ActionResponse.Messages);
             }
         } else {
             Model.UnknownError();
+        }
+    }
+
+    protected bool ShowProfileInfo {
+        get {
+            bool output = 
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo &&
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements != null &&
+                Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfoElements.Any();
+
+            return output;
         }
     }
 
