@@ -54,6 +54,14 @@ public static partial class Helpers
     }
     // {{ModuleItemEnd:Tags}}
 
+    /// <summary>
+    /// Called from the Helpers.ForceModelUpdates method to force any app-specific model updates.
+    /// </summary>
+    private static void ForceModelUpdatesApp()
+    {
+
+    }
+
     private static List<string> GetDeletedRecordTypesApp()
     {
         var output = new List<string>();

@@ -7,16 +7,16 @@ WAVE browser plugin tool.
 
 ### WAVE Warning: Redundant title text
 
-The PagedRecordset component has some text that can be hidden if it
-gets too long.
+The PagedRecordset component has some text that can be hidden
+if it gets too long.
 That text uses a title html element that is the same as
 the text shown on the page. However, the visual text may be
-truncated and appended with an elipses. In those cases, hovering
-the mouse over the text shows the full title. However, WAVE
-reports a warning of duplicate title text. This has to stay in
-place as even though the text and the title text are the same,
-the visual text is not always the same as the title text
-depending on browser size and length of the text.
+truncated and appended with an elipses.
+In those cases, hovering the mouse over the text shows the full title.
+However, WAVE reports a warning of duplicate title text.
+This has to stay in place as even though the text and the title
+text are the same, the visual text is not always the same as the
+title text depending on browser size and length of the text.
 This is because the CSS for those elements sets the inside
 div as "overflow:hidden" with "text-overflow: ellipsis".
 

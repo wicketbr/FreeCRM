@@ -1508,6 +1508,8 @@ public static partial class Helpers
         }
 
         Model.Language = lang;
+
+        ForceModelUpdatesApp();
     }
 
     // {{ModuleItemStart:Locations}}
