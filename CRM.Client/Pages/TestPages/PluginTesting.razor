@@ -131,17 +131,15 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
+    protected bool _executing = false;
     protected bool _loadedData = false;
     protected bool _loading = false;
     protected List<string> _missingRequiredPluginValues = new List<string>();
     protected string _pageName = "plugins";
-
-    protected bool _executing = false;
     protected Plugin _plugin = new Plugin();
+    PluginPrompts _pluginPrompts = null!;
     protected PluginExecuteResult? _result = null;
     protected bool _showPrompts = false;
-
-    PluginPrompts _pluginPrompts = null!;
 
     public void Dispose()
     {
@@ -170,13 +168,6 @@
     {
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task ExecutePlugin(Plugin plugin)
@@ -212,6 +203,13 @@
 
         _executing = false;
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void PluginButtonClicked(PluginExecuteResult result)

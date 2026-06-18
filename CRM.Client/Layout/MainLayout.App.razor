@@ -13,10 +13,10 @@
 }
 
 @code {
+    [Parameter] public RenderFragment? BodyContent { get; set; }
+
     // Set this to true to use this layout instead of the default MainLayout.App.razor layout.
     [Parameter] public bool Enabled { get; set; } = false;
-
-    [Parameter] public RenderFragment? BodyContent { get; set; }
 
     [Parameter] public bool Loading { get; set; }
 

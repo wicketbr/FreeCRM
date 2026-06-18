@@ -89,10 +89,9 @@
 
     protected bool _loadedData = false;
     protected bool _loading = true;
+    protected string _pageName = "tenants";
     protected List<DataObjects.Tenant>? _tenants = null;
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "tenants";
 
     public void Dispose()
     {
@@ -129,13 +128,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected void AddTenant()
     {
         Helpers.NavigateTo("Settings/AddTenant");
@@ -157,6 +149,13 @@
             StateHasChanged();
         } else {
             Model.UnknownError();
+        }
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
         }
     }
 }

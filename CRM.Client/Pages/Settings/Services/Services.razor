@@ -95,11 +95,10 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    protected bool _loadedData = false;
     protected bool _loading = true;
-    protected bool _validatedUrl = false;
-
+    protected bool _loadedData = false;
     protected string _pageName = "services";
+    protected bool _validatedUrl = false;
 
     public void Dispose()
     {
@@ -145,13 +144,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected void EditService(Guid ServiceId)
     {
         Helpers.NavigateTo("Settings/EditService/" + ServiceId.ToString());
@@ -165,6 +157,13 @@
         _loading = false;
 
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

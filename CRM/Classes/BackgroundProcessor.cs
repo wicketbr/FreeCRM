@@ -19,7 +19,8 @@ public class BackgroundProcessor : BackgroundService
     private IServiceProvider _serviceProvider;
     private bool _startOnLoad = false;
 
-    public BackgroundProcessor(
+    public BackgroundProcessor
+    (
         ILogger<BackgroundProcessor> logger,
         IServiceProvider ServiceProvider,
         int ProcessingIntervalSeconds,

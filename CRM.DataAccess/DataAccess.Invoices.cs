@@ -76,8 +76,13 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.Invoice> GetInvoice(Guid InvoiceId, DataObjects.User? CurrentUser = null, bool IncludeImages = false, bool IncludePDF = false)
-    {
+    public async Task<DataObjects.Invoice> GetInvoice
+    (
+        Guid InvoiceId,
+        DataObjects.User? CurrentUser = null,
+        bool IncludeImages = false,
+        bool IncludePDF = false
+    ){
         var output = new DataObjects.Invoice();
 
         Invoice? rec = null;
@@ -535,8 +540,12 @@ public partial class DataAccess
     }
 
     // {{ModuleItemStart:Appointments}}
-    public async Task<List<DataObjects.Invoice>> GetInvoicesForAppointment(Guid AppointmentId, bool UnpaidOnly = false, DataObjects.User? CurrentUser = null)
-    {
+    public async Task<List<DataObjects.Invoice>> GetInvoicesForAppointment
+    (
+        Guid AppointmentId,
+        bool UnpaidOnly = false,
+        DataObjects.User? CurrentUser = null
+    ){
         var output = new List<DataObjects.Invoice>();
 
         var query = data.Invoices.Where(x => x.AppointmentId == AppointmentId);

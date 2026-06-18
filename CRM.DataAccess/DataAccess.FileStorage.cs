@@ -148,8 +148,13 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<List<DataObjects.FileStorage>> GetFileStorageItems(Guid ItemId, bool ImagesOnly, bool ResizeAsThumbnail, DataObjects.User? CurrentUser = null)
-    {
+    public async Task<List<DataObjects.FileStorage>> GetFileStorageItems
+    (
+        Guid ItemId,
+        bool ImagesOnly,
+        bool ResizeAsThumbnail,
+        DataObjects.User? CurrentUser = null
+    ){
         List<DataObjects.FileStorage> output = new List<DataObjects.FileStorage>();
 
         List<FileStorage>? recs = null;

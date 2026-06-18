@@ -10,8 +10,12 @@ public partial interface IDataAccess
 
 public partial class DataAccess
 {
-    public async Task<DataObjects.BooleanResponse> DeleteLocation(Guid LocationId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteLocation
+    (
+        Guid LocationId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.Locations.FirstOrDefaultAsync(x => x.LocationId == LocationId);

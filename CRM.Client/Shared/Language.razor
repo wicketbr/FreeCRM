@@ -19,11 +19,6 @@
     [Parameter] public bool MarkUndefinedStrings { get; set; } = true;
 
     /// <summary>
-    /// The required name of the language tag.
-    /// </summary>
-    [Parameter] public string Tag { get; set; } = String.Empty;
-
-    /// <summary>
     /// Option to replace any spaces in the text with &nbsp; characters.
     /// </summary>
     [Parameter] public bool? ReplaceSpaces { get; set; }
@@ -34,28 +29,33 @@
     [Parameter] public bool? Required { get; set; }
 
     /// <summary>
+    /// The required name of the language tag.
+    /// </summary>
+    [Parameter] public string Tag { get; set; } = String.Empty;
+
+    /// <summary>
     /// Option to transform the case of the text using a TextCase enum of Normal, Lowercase, Uppercase, Sentence, or Title.
     /// </summary>
     [Parameter] public TextCase? TransformCase { get; set; }
 
+    protected string _class = String.Empty;
+
     protected string Icon = String.Empty;
     protected string LanguageTag = String.Empty;
-
-    protected string _class = String.Empty;
 
     public void Dispose()
     { 
         Model.OnChange -= StateHasChanged;
     }
 
-    protected override void OnInitialized()
-    {
-        Model.OnChange += StateHasChanged;
-    }
-
     protected override void OnAfterRender(bool firstRender)
     {
         RenderText();
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
     }
 
     protected override void OnParametersSet()

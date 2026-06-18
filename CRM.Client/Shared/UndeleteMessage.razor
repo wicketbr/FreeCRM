@@ -30,11 +30,6 @@
 
 @code {
     /// <summary>
-    /// Required callback event to invoke when the Undelete Record button is clicked.
-    /// </summary>
-    [Parameter] public EventCallback OnUndelete { get; set; }
-
-    /// <summary>
     /// Optional DeletedAt datetime? value.
     /// </summary>
     [Parameter] public DateTime? DeletedAt { get; set; }
@@ -43,6 +38,11 @@
     /// Optional DeletedBy value.
     /// </summary>
     [Parameter] public string? LastModifiedBy { get; set; }
+
+    /// <summary>
+    /// Required callback event to invoke when the Undelete Record button is clicked.
+    /// </summary>
+    [Parameter] public EventCallback OnUndelete { get; set; }
 
     protected DateTime? WillDeleteAt;
 

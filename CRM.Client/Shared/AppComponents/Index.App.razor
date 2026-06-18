@@ -65,13 +65,6 @@
         }
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected async Task LoadData()
     {
         // Load any app-specific data here.
@@ -90,4 +83,11 @@
         }
     }
     // {{ModuleItemEnd:Logo}}
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
 }

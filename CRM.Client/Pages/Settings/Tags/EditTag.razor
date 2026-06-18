@@ -142,14 +142,13 @@
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
 
-    protected bool _loading = true;
     protected bool _loadedData = false;
+    protected bool _loading = true;
     protected bool _newTag = false;
+    protected string _pageName = "edittag";
     protected string _title = String.Empty;
     protected DataObjects.Tag _tag = new DataObjects.Tag();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "edittag";
 
     protected EditTag_App AppModule = new EditTag_App();
 
@@ -188,13 +187,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected void Back()
@@ -262,6 +254,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-tag-Name");
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()

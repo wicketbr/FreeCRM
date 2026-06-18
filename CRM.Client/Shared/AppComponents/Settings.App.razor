@@ -46,14 +46,14 @@
 
 @code {
     /// <summary>
-    /// If left as False, this component will not be rendered.
-    /// </summary>
-    [Parameter] public bool Enabled { get; set; } = false;
-
-    /// <summary>
     /// Used to show app settings in the various tabs of the Settings page.
     /// </summary>
     [Parameter] public string? Area { get; set; }
+
+    /// <summary>
+    /// If left as False, this component will not be rendered.
+    /// </summary>
+    [Parameter] public bool Enabled { get; set; } = false;
 
     /// <summary>
     /// Set to true to show the App Settings tab in the Settings page.

@@ -40,15 +40,15 @@
         Model.View = _pageName;
     }
 
+    protected void Back()
+    {
+        Helpers.NavigateToLogin();
+    }
+
     protected void OnDataModelUpdated()
     {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
-    }
-
-    protected void Back()
-    {
-        Helpers.NavigateToLogin();
     }
 }

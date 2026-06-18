@@ -136,14 +136,13 @@
     [Parameter] public string? id { get; set; }
     [Parameter] public string? TenantCode { get; set; }
 
-    protected bool _loading = true;
     protected bool _loadedData = false;
+    protected bool _loading = true;
     protected bool _newService = false;
+    protected string _pageName = "editservice";
     protected string _title = String.Empty;
     protected DataObjects.Service _service = new DataObjects.Service();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "editservice";
 
     public void Dispose()
     {
@@ -187,13 +186,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task AddTag(ChangeEventArgs e)
@@ -292,6 +284,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-service-code");
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void RemoveTag(string TagId)

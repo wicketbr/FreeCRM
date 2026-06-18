@@ -68,6 +68,13 @@
         return;
     }
 
-    bool loggedOut = data.ExecuteDynamicCSharpCode<bool>(customCode,
-        new object[] { data, serverUrl }, null, "CustomAuthenticationProvider", "Authentication", "Logout");
+    bool loggedOut = data.ExecuteDynamicCSharpCode<bool>
+    (
+        customCode,
+        new object[] { data, serverUrl },
+        null,
+        "CustomAuthenticationProvider",
+        "Authentication",
+        "Logout"
+    );
 }

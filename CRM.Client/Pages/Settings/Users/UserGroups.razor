@@ -104,9 +104,8 @@
 
     protected bool _loadedData = false;
     protected bool _loading = true;
-    protected bool _validatedUrl = false;
-
     protected string _pageName = "usergroups";
+    protected bool _validatedUrl = false;
 
     protected UserGroups_App AppModule = new UserGroups_App();
 
@@ -153,13 +152,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected void EditUserGroup(Guid GroupId)
     {
         Helpers.NavigateTo("Settings/EditUserGroup/" + GroupId.ToString());
@@ -173,6 +165,13 @@
         _loading = false;
 
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

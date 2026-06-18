@@ -94,8 +94,8 @@ public partial class DataAccess
             }
             await data.SaveChangesAsync();
         }
-        // Now, return the value based on the type of setting
 
+        // Now, return the value based on the type of setting
         string value = StringValue(rec.SettingText);
 
         switch (StringValue(rec.SettingType).ToLower()) {
@@ -341,8 +341,13 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.Setting> SaveSetting(DataObjects.Setting setting, Guid? TenantId = null, Guid? UserId = null, DataObjects.User? CurrentUser = null)
-    {
+    public async Task<DataObjects.Setting> SaveSetting
+    (
+        DataObjects.Setting setting,
+        Guid? TenantId = null,
+        Guid? UserId = null,
+        DataObjects.User? CurrentUser = null
+    ){
         DataObjects.Setting output = setting;
         output.ActionResponse = GetNewActionResponse();
 
@@ -420,8 +425,16 @@ public partial class DataAccess
         return output;
     }
 
-    public DataObjects.BooleanResponse SaveSetting(string SettingName, DataObjects.SettingType SettingType, dynamic? Value, Guid? TenantId = null, Guid? UserId = null, string? Description = "", DataObjects.User? CurrentUser = null)
-    {
+    public DataObjects.BooleanResponse SaveSetting
+    (
+        string SettingName,
+        DataObjects.SettingType SettingType,
+        dynamic? Value,
+        Guid? TenantId = null,
+        Guid? UserId = null,
+        string? Description = "",
+        DataObjects.User? CurrentUser = null
+    ){
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
         output.Messages = new List<string>();
 

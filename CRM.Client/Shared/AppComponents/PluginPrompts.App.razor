@@ -137,6 +137,16 @@
     [Parameter] public bool HighlightMissingRequiredFields { get; set; }
 
     /// <summary>
+    /// The OnValuesChange passed from the parent component.
+    /// </summary>
+    [Parameter] public Delegate? OnValuesChange { get; set; }
+
+    /// <summary>
+    /// Set this to true to use this component to override the entire built-in component.
+    /// </summary>
+    [Parameter] public bool OverrideComponent { get; set; } = false;
+
+    /// <summary>
     /// The Plugin passed from the parent component.
     /// </summary>
     [Parameter] public Plugin Plugin { get; set; } = new Plugin();
@@ -150,16 +160,6 @@
     /// The PromptValues passed from the parent component.
     /// </summary>
     [Parameter] public List<PluginPromptValue> PromptValues { get; set; } = new List<PluginPromptValue>();
-
-    /// <summary>
-    /// The OnValuesChange passed from the parent component.
-    /// </summary>
-    [Parameter] public Delegate? OnValuesChange { get; set; }
-
-    /// <summary>
-    /// Set this to true to use this component to override the entire built-in component.
-    /// </summary>
-    [Parameter] public bool OverrideComponent { get; set; } = false;
 
     /// <summary>
     /// The type of prompt to render when this component is being invoked to render a prompt when OverrideComponent is false.

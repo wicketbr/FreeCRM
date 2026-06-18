@@ -5875,7 +5875,7 @@ public static partial class Helpers
     (
         Delegate OnComplete,
         string Title = "",
-        DataObjects.TagModule? Module = null,
+        string? Module = null,
         List<Guid>? ExistingTags = null,
         bool ShowCurrentTags = true,
         bool PreventDeselctingSelectedTags = false

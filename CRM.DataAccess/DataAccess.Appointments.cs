@@ -23,8 +23,12 @@ public partial interface IDataAccess
 
 public partial class DataAccess
 {
-    public async Task<DataObjects.BooleanResponse> DeleteAppointment(Guid AppointmentId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteAppointment
+    (
+        Guid AppointmentId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.Appointments.FirstOrDefaultAsync(x => x.AppointmentId == AppointmentId);
@@ -101,8 +105,12 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.BooleanResponse> DeleteAppointmentNote(Guid AppointmentNoteId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteAppointmentNote
+    (
+        Guid AppointmentNoteId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.AppointmentNotes.FirstOrDefaultAsync(x => x.AppointmentNoteId == AppointmentNoteId);
@@ -161,8 +169,12 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.BooleanResponse> DeleteAppointmentService(Guid AppointmentServiceId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteAppointmentService
+    (
+        Guid AppointmentServiceId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.AppointmentServices.FirstOrDefaultAsync(x => x.AppointmentServiceId == AppointmentServiceId);
@@ -715,8 +727,11 @@ public partial class DataAccess
         return output;
     }
 
-    protected async Task<List<DataObjects.AppointmentService>> SaveAppointmentServices(DataObjects.Appointment appointment, DataObjects.User? CurrentUser = null)
-    {
+    protected async Task<List<DataObjects.AppointmentService>> SaveAppointmentServices
+    (
+        DataObjects.Appointment appointment,
+        DataObjects.User? CurrentUser = null
+    ){
         List<DataObjects.AppointmentService> output = new List<DataObjects.AppointmentService>();
 
         // First, remove any records that should no longer be included.

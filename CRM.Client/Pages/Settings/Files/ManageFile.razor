@@ -61,22 +61,17 @@
 }
 
 @code {
+    [Parameter] public Guid FileId { get; set; }
+    [Parameter] public Delegate? OnComplete { get; set; }
+    [Parameter] public Delegate? OnDelete { get; set; }
+
+    protected string _filename = String.Empty;
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected bool _newAppointment = false;
-
-    protected DataObjects.FileStorage file = new DataObjects.FileStorage();
-    protected string _filename = String.Empty;
     protected bool _visible = false;
 
-    [Parameter]
-    public Guid FileId { get; set; }
-
-    [Parameter]
-    public Delegate? OnComplete { get; set; }
-
-    [Parameter]
-    public Delegate? OnDelete { get; set; }
+    protected DataObjects.FileStorage file = new DataObjects.FileStorage();
 
     public void Dispose()
     {

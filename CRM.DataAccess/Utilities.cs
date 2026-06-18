@@ -71,15 +71,18 @@ public static partial class Utilities
 
     public static List<string>? ConcatenateListsOfStrings(List<string>? messages, List<string>? newMessages)
     {
-        List<string>? output = messages;
+        List<string>? output = null;
 
-        if (newMessages != null && newMessages.Count() > 0) {
+        if (messages != null && messages.Any()) {
+            output = new List<string>();
+            output.AddRange(messages);
+        }
+
+        if (newMessages != null && newMessages.Any()) {
             if (output == null) {
                 output = new List<string>();
             }
-            foreach (var msg in newMessages) {
-                output.Add(msg);
-            }
+            output.AddRange(newMessages);
         }
 
         return output;

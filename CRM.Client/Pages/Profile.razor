@@ -183,10 +183,9 @@
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected bool _loadingUser = false;
+    protected string _pageName = "profile";
     protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "profile";
 
     protected Profile_App AppModule = new Profile_App();
 
@@ -217,27 +216,10 @@
         }
     }
 
-    protected async Task LoadData()
-    {
-        if (!_loadingUser) {
-            if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
-                _loadingUser = true;
-                await LoadUser();
-            }
-        }
-    }
-
     protected override void OnInitialized()
     {
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task DeleteAvatarPhoto()
@@ -256,6 +238,16 @@
             }
         } else {
             Model.UnknownError();
+        }
+    }
+
+    protected async Task LoadData()
+    {
+        if (!_loadingUser) {
+            if (Model.Tenant.TenantSettings.AllowUsersToManageAvatars || Model.Tenant.TenantSettings.AllowUsersToManageBasicProfileInfo) {
+                _loadingUser = true;
+                await LoadUser();
+            }
         }
     }
 
@@ -283,6 +275,13 @@
 
         if (Model.AllowUsersToManageName) {
             await Helpers.DelayedFocus("edit-profile-firstName");
+        }
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
         }
     }
 

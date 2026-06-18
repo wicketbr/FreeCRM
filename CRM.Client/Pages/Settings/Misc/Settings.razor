@@ -726,6 +726,7 @@
 
     protected string[] _allowUsersToManageBasicProfileInfoElements = new string[] { };
     protected List<string> _availableOptInOptions = new List<string>();
+    protected string _deletePreference = String.Empty;
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected string[] _loginOptions = new string[] { };
@@ -752,14 +753,11 @@
     protected bool _optInUDF = false;
     protected bool _optInUserGroups = false;
     protected bool _optInWorkSchedule = false;
+    protected string _pageName = "settings";
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
-
-    protected Settings_App AppModule = new Settings_App();
-
-    protected string _deletePreference = String.Empty;
     protected bool _validatedUrl = false;
 
-    protected string _pageName = "settings";
+    protected Settings_App AppModule = new Settings_App();
 
     public void Dispose()
     {
@@ -795,13 +793,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
 
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected bool AuthOptionLocal {
@@ -966,6 +957,13 @@
         }
     }
     // {{ModuleItemEnd:Logo}}
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
 
     protected async Task SaveSettings()
     {

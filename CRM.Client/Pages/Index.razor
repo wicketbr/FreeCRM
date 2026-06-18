@@ -74,16 +74,16 @@
         }
     }
 
+    protected override void OnInitialized()
+    {
+        Model.View = _pageName;
+        Model.OnChange += OnDataModelUpdated;
+    }
+
     protected void OnDataModelUpdated()
     {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
-    }
-
-    protected override void OnInitialized()
-    {
-        Model.View = _pageName;
-        Model.OnChange += OnDataModelUpdated;
     }
 }

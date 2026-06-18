@@ -69,12 +69,13 @@
 }
 
 @code {
-    [Parameter] public string? Module { get; set; }
     [Parameter] public string? Class { get; set; } = String.Empty;
-    [Parameter] public string? Id { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
     [Parameter] public object? Data { get; set; }
+    [Parameter] public string? Id { get; set; } = Guid.NewGuid().ToString().Replace("-", "");
+    [Parameter] public string? Module { get; set; }
 
     private int _count = 0;
+
     private IJSObjectReference? jsModule;
 
     public void Dispose()

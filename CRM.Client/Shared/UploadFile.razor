@@ -52,12 +52,11 @@
     [Parameter] public List<string>? SupportedFileTypes { get; set; }
     [Parameter] public string? UploadInstructions { get; set; }
 
-    private static string UploaderDefaultDragClass = "drag-and-drop-upload";
-    private string UploaderDragClass = UploaderDefaultDragClass;
-
+    protected MudBlazor.MudFileUpload<UploadType>? _uploadComponent;
     protected bool _uploading = false;
 
-    protected MudBlazor.MudFileUpload<UploadType>? _uploadComponent;
+    private static string UploaderDefaultDragClass = "drag-and-drop-upload";
+    private string UploaderDragClass = UploaderDefaultDragClass;
 
     public void Dispose()
     {

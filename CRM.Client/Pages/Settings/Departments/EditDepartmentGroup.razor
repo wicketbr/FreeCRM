@@ -82,14 +82,13 @@
     [Parameter] public string? departmentgroupid { get; set; }
     [Parameter] public string? TenantCode { get; set; }
 
+    protected DataObjects.DepartmentGroup _deptGroup = new DataObjects.DepartmentGroup();
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newDepartmentGroup = false;
-    protected string _title = String.Empty;
-    protected DataObjects.DepartmentGroup _deptGroup = new DataObjects.DepartmentGroup();
-    protected bool _validatedUrl = false;
-
     protected string _pageName = "editdepartmentgroup";
+    protected string _title = String.Empty;
+    protected bool _validatedUrl = false;
 
     public void Dispose()
     { 
@@ -126,13 +125,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task Delete()
@@ -190,6 +182,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-departmentgroup-departmentGroupName");
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()

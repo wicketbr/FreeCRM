@@ -2,11 +2,17 @@
 
 public partial class DataObjects
 {
-    public enum TagModule
+    public partial class TagModule
     {
-        Appointment,
-        EmailTemplate,
-        Service
+        // {{ModuleItemStart:Appointments}}
+        public const string Appointment = "Appointment";
+        // {{ModuleItemEnd:Appointments}}
+        // {{ModuleItemStart:EmailTemplates}}
+        public const string EmailTemplate = "EmailTemplate";
+        // {{ModuleItemEnd:EmailTemplates}}
+        // {{ModuleItemStart:Services}}
+        public const string Service = "Service";
+        // {{ModuleItemEnd:Services}}
     }
 
     public partial class Tag : ActionResponseObject

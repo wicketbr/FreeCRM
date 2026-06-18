@@ -34,8 +34,7 @@ public partial class DataController
         IHubContext<crmHub, IsrHub>? hubContext,
         IConfigurationHelper configHelper,
         Plugins.IPlugins diPlugins
-    )
-    {
+    ){
         // Called in the base DataController instantation to do any app-specific updates.
     }
 

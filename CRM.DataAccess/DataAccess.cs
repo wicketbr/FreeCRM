@@ -19,7 +19,8 @@ public partial class DataAccess: IDisposable, IDataAccess
     private string _uniqueId = Guid.NewGuid().ToString().Replace("-", "").ToLower();
     private bool _useBackgroundService = false;
 
-    public DataAccess(
+    public DataAccess
+    (
         string ConnectionString = "",
         string DatabaseType = "",
         IServiceProvider? serviceProvider = null,
@@ -39,6 +40,11 @@ public partial class DataAccess: IDisposable, IDataAccess
         DataAccessAppInit();
 
         var optionsBuilder = new DbContextOptionsBuilder<EFDataModel>();
+
+        // Default to SQLServer if no type was specified.
+        if (String.IsNullOrWhiteSpace(_databaseType)) {
+            _databaseType = "SQLServer";
+        }
 
         if (StringValue(_databaseType).ToLower() == "inmemory") {
             // A connection string is not required or used for the InMemory option,
@@ -68,6 +74,7 @@ public partial class DataAccess: IDisposable, IDataAccess
                     break;
 
                 case "sqlserver":
+                default:
                     optionsBuilder.UseSqlServer(_connectionString, options => options.EnableRetryOnFailure());
                     break;
             }

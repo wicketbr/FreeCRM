@@ -195,12 +195,10 @@
 }
 
 @code {
-    protected string databaseType = String.Empty;
-    protected string view = "loading";
-
-    protected List<string> errors = new List<string>();
-
     protected DataObjects.ConnectionStringConfig csConfig = new DataObjects.ConnectionStringConfig();
+    protected string databaseType = String.Empty;
+    protected List<string> errors = new List<string>();
+    protected string view = "loading";
 
     public void Dispose()
     {

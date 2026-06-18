@@ -123,12 +123,14 @@
 <RadzenComponents />
 
 @code {
-    private bool hubConfigured = false;
-    private HubConnection? hubConnection;
+    protected double _iterations = 0;
+    protected bool _precompiledBlazorPlugins = false;
 
     protected bool DeletedRecordCountsLoaded = false;
+    protected DotNetObjectReference<MainLayout>? dotNetHelper;
     protected bool FirstRun = true;
-    protected double _iterations = 0;
+    private bool hubConfigured = false;
+    private HubConnection? hubConnection;
     protected string LastUserPreferencesJson = String.Empty;
     protected bool Loading = true;
     protected bool StartupValidated = false;
@@ -137,10 +139,6 @@
     protected bool Validating = false;
     protected DataObjects.VersionInfo versionInfo = new DataObjects.VersionInfo();
     protected bool versionInfoLoaded = false;
-
-    protected bool _precompiledBlazorPlugins = false;
-
-    protected DotNetObjectReference<MainLayout>? dotNetHelper;
 
     protected MainLayout_App AppLayout = new MainLayout_App();
 
@@ -291,14 +289,6 @@
         }
     }
 
-    [JSInvokable]
-    public void DotNetHelperHandler(params string[] arguments)
-    {
-        if (arguments != null) {
-            Model.DotNetHelperHandler(arguments.ToList());
-        }
-    }
-
     protected bool BypassMaintenanceMode {
         get {
             if (Model.User.AppAdmin) {
@@ -378,6 +368,14 @@
     {
         if (hubConnection is not null) {
             await hubConnection.DisposeAsync();
+        }
+    }
+
+    [JSInvokable]
+    public void DotNetHelperHandler(params string[] arguments)
+    {
+        if (arguments != null) {
+            Model.DotNetHelperHandler(arguments.ToList());
         }
     }
 

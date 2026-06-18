@@ -10,14 +10,14 @@
 
 @code {
     [Parameter] public bool Button { get; set; }
-    [Parameter] public string? Position { get; set; }
     [Parameter] public string Module { get; set; } = String.Empty;
     [Parameter] public EventCallback<string> OnInitializedCallback { get; set; }
+    [Parameter] public string? Position { get; set; }
     [Parameter] public TValue? Value { get; set; }
     [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
 
-    List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
     protected string _id = String.Empty;
+    List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
 
     public void Dispose()
     {

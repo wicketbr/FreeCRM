@@ -131,11 +131,10 @@
     protected int _index = 0;
     protected bool _loadedData = false;
     protected bool _loading = true;
+    protected string _pageName = "udf";
     protected bool _showHelp = false;
     protected List<DataObjects.udfLabel> _udfLabels = new List<DataObjects.udfLabel>();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "udf";
 
     public void Dispose()
     {
@@ -172,13 +171,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected async Task LoadData()
     {
         // Always reload the data in the data model.
@@ -209,6 +201,13 @@
         _loading = false;
 
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()

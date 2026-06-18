@@ -17,8 +17,12 @@ public partial interface IDataAccess
 
 public partial class DataAccess
 {
-    public async Task<DataObjects.BooleanResponse> DeleteDepartment(Guid DepartmentId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteDepartment
+    (
+        Guid DepartmentId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
         var rec = await data.Departments.FirstOrDefaultAsync(x => x.DepartmentId == DepartmentId);
@@ -88,8 +92,12 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.BooleanResponse> DeleteDepartmentGroup(Guid DepartmentGroupId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteDepartmentGroup
+    (
+        Guid DepartmentGroupId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         DataObjects.BooleanResponse output = new DataObjects.BooleanResponse();
 
         var rec = await data.DepartmentGroups.FirstOrDefaultAsync(x => x.DepartmentGroupId == DepartmentGroupId);

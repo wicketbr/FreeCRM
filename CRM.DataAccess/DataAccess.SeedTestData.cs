@@ -272,7 +272,7 @@ public partial class DataAccess
             }
         }
 
-// {{ModuleItemStart:Appointments}}
+        // {{ModuleItemStart:Appointments}}
         // If this is the local database and we are in debug mode, then make sure
         // that the test events are in the current month.
 #if DEBUG
@@ -292,7 +292,7 @@ public partial class DataAccess
             }
         }
 #endif
-// {{ModuleItemEnd:Appointments}}
+        // {{ModuleItemEnd:Appointments}}
         data.SaveChanges();
     }
 

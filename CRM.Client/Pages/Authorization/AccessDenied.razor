@@ -25,7 +25,6 @@
     [Parameter] public string? TenantCode { get; set; }
 
     private string _info = String.Empty;
-
     protected string _pageName = "accessdenied";
 
     public void Dispose()
@@ -55,15 +54,15 @@
         }
     }
 
+    protected void Back()
+    {
+        Helpers.NavigateToLogin();
+    }
+
     protected void OnDataModelUpdated()
     {
         if (Model.View == _pageName) {
             StateHasChanged();
         }
-    }
-
-    protected void Back()
-    {
-        Helpers.NavigateToLogin();
     }
 }

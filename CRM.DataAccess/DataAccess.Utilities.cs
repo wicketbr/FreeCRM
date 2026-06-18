@@ -1527,9 +1527,11 @@ public partial class DataAccess
             Result = result,
             Messages = new List<string>()
         };
+
         if (!String.IsNullOrEmpty(message)) {
             output.Messages.Add(message);
         }
+
         return output;
     }
 

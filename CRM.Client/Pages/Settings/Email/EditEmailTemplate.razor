@@ -181,17 +181,15 @@
     [Parameter] public string? TenantCode { get; set; }
 
     protected bool _allowSave = true;
-    protected bool _loading = true;
+    protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
+    HtmlEditor2 _htmlEditor = null!;
     protected bool _loadedData = false;
+    protected bool _loading = true;
     protected bool _newItem = false;
+    protected string _pageName = "editemailtemplate";
     protected string _title = String.Empty;
     protected DataObjects.EmailTemplate _template = new DataObjects.EmailTemplate();
-    protected DataObjects.EmailTemplateDetails _details = new DataObjects.EmailTemplateDetails();
     protected bool _validatedUrl = false;
-
-    HtmlEditor2 _htmlEditor = null!;
-
-    protected string _pageName = "editemailtemplate";
 
     public void Dispose()
     {
@@ -232,13 +230,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task Delete()
@@ -346,6 +337,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-emailtemplate-name");
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()

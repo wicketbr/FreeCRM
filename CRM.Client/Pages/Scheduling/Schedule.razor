@@ -75,20 +75,16 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    RadzenScheduler<DataObjects.Appointment> scheduler = null!;
-
+    protected List<string> _datesLoaded = new List<string>();
     protected bool _loadedData = false;
     protected bool _loading = true;
-
-    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
-
-    protected List<string> _datesLoaded = new List<string>();
-
-    IList<DataObjects.Appointment> ShowAppointments = new List<DataObjects.Appointment>();
-    List<DataObjects.Appointment> AllAppointments = new List<DataObjects.Appointment>();
+    protected string _pageName = "schedule";
     protected bool _validatedUrl = false;
 
-    protected string _pageName = "schedule";
+    List<DataObjects.Appointment> AllAppointments = new List<DataObjects.Appointment>();
+    Dictionary<DateTime, string> events = new Dictionary<DateTime, string>();
+    RadzenScheduler<DataObjects.Appointment> scheduler = null!;
+    IList<DataObjects.Appointment> ShowAppointments = new List<DataObjects.Appointment>();
 
     public void Dispose()
     { 
@@ -142,13 +138,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task AddAppoinment()
@@ -329,6 +318,13 @@
             _loading = false;
 
             await UpdateSchedulerView();
+        }
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
         }
     }
 

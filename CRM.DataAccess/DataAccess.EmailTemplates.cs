@@ -12,8 +12,12 @@ public partial interface IDataAccess
 
 public partial class DataAccess
 {
-    public async Task<DataObjects.BooleanResponse> DeleteEmailTemplate(Guid EmailTemplateId, DataObjects.User? CurrentUser = null, bool ForceDeleteImmediately = false)
-    {
+    public async Task<DataObjects.BooleanResponse> DeleteEmailTemplate
+    (
+        Guid EmailTemplateId,
+        DataObjects.User? CurrentUser = null,
+        bool ForceDeleteImmediately = false
+    ){
         var output = new DataObjects.BooleanResponse();
 
         var rec = await data.EmailTemplates.FirstOrDefaultAsync(x => x.EmailTemplateId == EmailTemplateId);

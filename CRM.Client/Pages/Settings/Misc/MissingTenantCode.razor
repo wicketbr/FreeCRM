@@ -25,11 +25,10 @@
 }
 
 @code {
-    protected string _pageTitle = String.Empty;
     protected string _info = String.Empty;
-    protected bool _loading = true;
-
     protected string _pageName = "missingtenantcode";
+    protected string _pageTitle = String.Empty;
+    protected bool _loading = true;
 
     public void Dispose()
     {
@@ -65,17 +64,17 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected async Task GetTenantCodes()
     {
         if (!Model.TenantList.Any()) {
             await Helpers.LoadTenantList();
+        }
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
         }
     }
 }

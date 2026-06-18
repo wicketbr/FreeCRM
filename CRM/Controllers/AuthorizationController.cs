@@ -13,8 +13,12 @@ public class AuthorizationController : ControllerBase
     private string _requestedUrl = String.Empty;
     private string _fingerprint = String.Empty;
 
-    public AuthorizationController(IDataAccess daInjection, IHttpContextAccessor httpContextAccessor, IPlugins daPlugins)
-    {
+    public AuthorizationController
+    (
+        IDataAccess daInjection,
+        IHttpContextAccessor httpContextAccessor,
+        IPlugins daPlugins
+    ){
         da = daInjection;
         plugins = daPlugins;
 

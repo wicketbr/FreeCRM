@@ -21,7 +21,7 @@ public partial class DataObjects
         NumberDouble,
         NumberInt,
         Object,
-        Text
+        Text,
     }
 
     public enum UserLookupType
@@ -29,7 +29,7 @@ public partial class DataObjects
         Email,
         EmployeeId,
         Guid,
-        Username
+        Username,
     }
 
     public partial class ActionResponseObject

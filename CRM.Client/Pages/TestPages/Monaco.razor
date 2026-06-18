@@ -37,13 +37,11 @@
 
     protected bool _loadedData = false;
     protected bool _loading = false;
-    protected string _pageName = "monaco";
-
     protected string _monacoContent = String.Empty;
     protected string _monacoContentToDiff = String.Empty;
-    protected bool _monacoReadOnly = false;
-
     MonacoEditor _monacoEditor = null!;
+    protected bool _monacoReadOnly = false;
+    protected string _pageName = "monaco";
 
     public void Dispose()
     {

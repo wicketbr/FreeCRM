@@ -39,11 +39,10 @@
 
     protected bool _loadedData = false;
     protected bool _loading = true;
+    protected string _pageName = "payments";
     protected List<DataObjects.Payment> _payments = new List<DataObjects.Payment>();
     protected string _token = String.Empty;
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "payments";
 
     public void Dispose()
     { 
@@ -77,13 +76,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected void EditItem(Guid ItemId)
     {
         Helpers.NavigateTo("Settings/EditPayment/" + ItemId.ToString());
@@ -96,6 +88,13 @@
 
         _loading = false;
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

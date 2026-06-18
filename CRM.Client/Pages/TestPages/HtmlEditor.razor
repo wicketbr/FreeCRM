@@ -36,10 +36,9 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
+    protected HtmlEditor2 _editor = null!;
     protected string _html = String.Empty;
     protected string _pageName = "htmleditor";
-
-    protected HtmlEditor2 _editor = null!;
     protected bool _simpleView = false;
     protected string? _theme = String.Empty;
 
@@ -69,6 +68,17 @@
         Model.OnChange += OnDataModelUpdated;
     }
 
+    protected HtmlEditor2.Configuration _config {
+        get {
+            return new HtmlEditor2.Configuration {
+                BeautifyOutput = true,
+                DarkMode = Helpers.StringLower(Model.User.UserPreferences.Theme) == "dark",
+                SimpleView = _simpleView,
+                UseMonacoForSourceView = true,
+            };
+        }
+    }
+
     protected void OnDataModelUpdated()
     {
         if (Model.View == _pageName) {
@@ -78,17 +88,6 @@
                 _theme = Model.User.UserPreferences.Theme;
                 _editor.UpdateConfig(_config);
             }
-        }
-    }
-
-    protected HtmlEditor2.Configuration _config {
-        get {
-            return new HtmlEditor2.Configuration {
-                BeautifyOutput = true,
-                DarkMode = Helpers.StringLower(Model.User.UserPreferences.Theme) == "dark",
-                SimpleView = _simpleView,
-                UseMonacoForSourceView = true,
-            };
         }
     }
 

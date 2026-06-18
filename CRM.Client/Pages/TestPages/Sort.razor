@@ -65,6 +65,24 @@
         Model.View = _pageName;
     }
 
+    protected void ListSorted((int oldIndex, int newIndex) indices)
+    {
+        // deconstruct the tuple
+        var (oldIndex, newIndex) = indices;
+
+        var items = Model.Tenant.Users;
+        var itemToMove = items[oldIndex];
+        items.RemoveAt(oldIndex);
+
+        if (newIndex < items.Count) {
+            items.Insert(newIndex, itemToMove);
+        } else {
+            items.Add(itemToMove);
+        }
+
+        StateHasChanged();
+    }
+
     protected void OnDataModelUpdated()
     {
         if (Model.View == _pageName) {
@@ -82,23 +100,5 @@
 
             return output.ToString();
         }
-    }
-
-    protected void ListSorted((int oldIndex, int newIndex) indices)
-    {
-        // deconstruct the tuple
-        var (oldIndex, newIndex) = indices;
-
-        var items = Model.Tenant.Users;
-        var itemToMove = items[oldIndex];
-        items.RemoveAt(oldIndex);
-
-        if (newIndex < items.Count) {
-            items.Insert(newIndex, itemToMove);
-        } else {
-            items.Add(itemToMove);
-        }
-
-        StateHasChanged();
     }
 }

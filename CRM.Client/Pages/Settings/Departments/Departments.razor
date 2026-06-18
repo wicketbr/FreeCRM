@@ -93,9 +93,8 @@
 
     protected bool _loadedData = false;
     protected bool _loading = true;
-    protected bool _validatedUrl = false;
-
     protected string _pageName = "departments";
+    protected bool _validatedUrl = false;
 
     public void Dispose()
     { 
@@ -134,13 +133,6 @@
         Model.View = _pageName;
     }
 
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
-    }
-
     protected void EditDepartment(Guid DepartmentId)
     {
         Helpers.NavigateTo("Settings/EditDepartment/" + DepartmentId.ToString());
@@ -155,6 +147,13 @@
         _loading = false;
 
         StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void SignalRUpdate(DataObjects.SignalRUpdate update)

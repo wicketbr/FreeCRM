@@ -90,6 +90,7 @@ public partial class DataAccess
                 break;
 
             case "sqlserver":
+            default:
                 output = migrations.GetMigrationsSqlServer();
                 break;
         }

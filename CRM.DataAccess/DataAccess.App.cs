@@ -7,38 +7,19 @@ namespace CRM;
 public partial interface IDataAccess
 {
     Task<DataObjects.BooleanResponse> ProcessBackgroundTasksApp(Guid TenantId, long Iteration);
-    DataObjects.BooleanResponse YourMethod();
 }
 
 public partial class DataAccess
 {
-    // The number of bad login attempts before an account is locked out.
-    private int _accountLockoutMaxAttempts = 5;
-
-    // The number of minutes an account is locked out after reaching the maximum number of bad login attempts.
-    private int _accountLockoutMinutes = 10;
-
-    // The name of the application.
-    private string _appName = "freeCRM";
-
-    // The copyright name used in the application.
-    private string _copyright = "Company Name";
-
-    // The date this version of your application was released.
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/17/2026"));
-
-    // If true, a new token will be sent to the client to keep the token automatically renewed.
-    private bool _tokenAutoRenew = true;
-
-    // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
-    private int _tokenDays = 7;
-
-    // Indicates if the app uses data migrations. If false, you will manage your own database schema updates.
-    private bool _useMigrations = false;
-
-    // The version of your application.
-    private string _version = "2.0.0";
-
+    private int _accountLockoutMaxAttempts = 5; // The number of bad login attempts before an account is locked out.
+    private int _accountLockoutMinutes = 10; // The number of minutes an account is locked out after reaching the maximum number of bad login attempts.
+    private string _appName = "freeCRM"; // The name of the application.
+    private string _copyright = "Company Name"; // The copyright name used in the application.
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/18/2026")); // The date this version of your application was released.
+    private bool _tokenAutoRenew = true; // If true, a new token will be sent to the client to keep the token automatically renewed.
+    private int _tokenDays = 7; // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
+    private bool _useMigrations = false; // Indicates if the app uses data migrations. If false, you will manage your own database schema updates.
+    private string _version = "2.0.0"; // The version of your application.
 
     /// <summary>
     /// Use this area to add your custom language tags for your app, or to override built-in language tags (eg: AppTitle).
@@ -240,7 +221,6 @@ public partial class DataAccess
 
         switch (request.Plugin.Type.ToLower()) {
             // Handle any app-specific plugin Object Arguments transformations.
-
             default:
                 break;
         }
@@ -276,8 +256,11 @@ public partial class DataAccess
     /// </summary>
     /// <param name="CurrentUser">The User object for the current user, if loaded.</param>
     /// <returns></returns>
-    private async Task<DataObjects.BlazorDataModelLoader> GetBlazorDataModelApp(DataObjects.BlazorDataModelLoader blazorDataModelLoader, DataObjects.User? CurrentUser = null)
-    {
+    private async Task<DataObjects.BlazorDataModelLoader> GetBlazorDataModelApp
+    (
+        DataObjects.BlazorDataModelLoader blazorDataModelLoader,
+        DataObjects.User? CurrentUser = null
+    ){
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
         var output = blazorDataModelLoader;
 
@@ -289,8 +272,11 @@ public partial class DataAccess
     /// <summary>
     /// This method is called to add any app-specific deleted record counts to the output.
     /// </summary>
-    private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp(Guid TenantId, DataObjects.DeletedRecordCounts deletedRecordCounts)
-    {
+    private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp
+    (
+        Guid TenantId,
+        DataObjects.DeletedRecordCounts deletedRecordCounts
+    ){
         await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
 
         var output = deletedRecordCounts;
@@ -308,8 +294,13 @@ public partial class DataAccess
     /// <param name="Position">The position in the column orders (see calling code for details.)</param>
     /// <param name="CurrentUser">The current user object, if one exists</param>
     /// <returns>A list of FilterColumn objects</returns>
-    private List<DataObjects.FilterColumn> GetFilterColumnsApp(string Type, string Position, DataObjects.Language Language, DataObjects.User? CurrentUser = null)
-    {
+    private List<DataObjects.FilterColumn> GetFilterColumnsApp
+    (
+        string Type,
+        string Position,
+        DataObjects.Language Language,
+        DataObjects.User? CurrentUser = null
+    ){
         var output = new List<DataObjects.FilterColumn>();
         // Add any app-specific filter columns here.
         // Example:
@@ -822,10 +813,5 @@ public partial class DataAccess
         output.Result = true; // Remove this line once you implement your logic.
 
         return output;
-    }
-
-    public DataObjects.BooleanResponse YourMethod()
-    {
-        return new DataObjects.BooleanResponse { Result = true, Messages = new List<string> { "Your Messages" } };
     }
 }

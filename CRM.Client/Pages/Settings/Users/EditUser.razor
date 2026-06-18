@@ -294,13 +294,12 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newUser = false;
+    protected string _pageName = "edituser";
     protected string _title = String.Empty;
     protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
 
     protected EditUser_App AppModule = new EditUser_App();
-
-    protected string _pageName = "edituser";
 
     public void Dispose()
     {
@@ -356,13 +355,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected void Back()
@@ -473,6 +465,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-user-firstName-" + _user.UserId.ToString());
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task ResetUserPassword(bool allAccounts = false)

@@ -83,12 +83,6 @@
 
 @code {
     /// <summary>
-    /// Appointments, EmailTemplates, or Services
-    /// </summary>
-    [Parameter]
-    public DataObjects.TagModule? Module { get; set; }
-
-    /// <summary>
     /// When this option is set to true all tags will be shown in a single list with the option to check and uncheck each tag.
     /// </summary>
     [Parameter]
@@ -101,6 +95,12 @@
     public bool ListInterfaceHideLabel { get; set; } = false;
 
     /// <summary>
+    /// Appointments, EmailTemplates, or Services
+    /// </summary>
+    [Parameter]
+    public string? Module { get; set; }
+
+    /// <summary>
     /// Method to invoke after tags are selected which will receive the list of selected Guids.
     /// </summary>
     [Parameter]
@@ -111,6 +111,12 @@
     /// </summary>
     [Parameter]
     public Delegate? OnValueChanged { get; set; }
+
+    /// <summary>
+    /// Option to prevent deselecting the currently-selected tags.
+    /// </summary>
+    [Parameter]
+    public bool? PreventDeselctingSelectedTags { get; set; }
 
     /// <summary>
     /// Optional input containing the selected tags.
@@ -129,12 +135,6 @@
     /// </summary>
     [Parameter]
     public bool ShowDialogButtons { get; set; } = true;
-
-    /// <summary>
-    /// Option to prevent deselecting the currently-selected tags.
-    /// </summary>
-    [Parameter]
-    public bool? PreventDeselctingSelectedTags { get; set; }
 
     protected List<Guid> _initialTags = new List<Guid>();
     protected bool _loading = true;
@@ -257,6 +257,19 @@
         DialogService.Close();
     }
 
+    protected List<DataObjects.Tag> InitialTagList {
+        get {
+            var output = new List<DataObjects.Tag>();
+
+            if (_showCurrentTags) {
+                output = Model.Tags.Where(x => _initialTags.Contains(x.TagId))
+                   .OrderBy(x => x.Name)
+                   .ToList();
+            }
+
+            return output;
+        }
+    }
     protected void OK()
     {
         _selectedTags = _selectedTags.OrderBy(x => TagName(x)).ToList();
@@ -297,20 +310,6 @@
 
         if (OnValueChanged != null) {
             OnValueChanged.DynamicInvoke(_selectedTags);
-        }
-    }
-
-    protected List<DataObjects.Tag> InitialTagList {
-        get {
-            var output = new List<DataObjects.Tag>();
-
-            if (_showCurrentTags) {
-                output = Model.Tags.Where(x => _initialTags.Contains(x.TagId))
-                   .OrderBy(x => x.Name)
-                   .ToList();
-            }
-
-            return output;
         }
     }
 }

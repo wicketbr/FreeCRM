@@ -28,8 +28,12 @@ public partial class DataAccess
         return output;
     }
 
-    public async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo(Guid TenantId, string Lookup, DataObjects.UserLookupType Type)
-    {
+    public async Task<DataObjects.ActiveDirectoryUserInfo?> GetActiveDirectoryInfo
+    (
+        Guid TenantId,
+        string Lookup,
+        DataObjects.UserLookupType Type
+    ){
         // Get the LDAP settings from the tenant
         var settings = GetTenantSettings(TenantId);
         var ldapLookupRoot = settings.LdapLookupRoot;

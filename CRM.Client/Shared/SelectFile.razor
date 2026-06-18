@@ -60,14 +60,14 @@
 
 @code {
     /// <summary>
-    /// The delegate that will receive the Guid of the selected file.
-    /// </summary>
-    [Parameter] public Action<Guid>? OnFileSelected { get; set; }
-
-    /// <summary>
     /// Option to show only image files.
     /// </summary>
     [Parameter] public bool? ImagesOnly { get; set; }
+
+    /// <summary>
+    /// The delegate that will receive the Guid of the selected file.
+    /// </summary>
+    [Parameter] public Action<Guid>? OnFileSelected { get; set; }
 
     /// <summary>
     /// Option to show the cancel button.

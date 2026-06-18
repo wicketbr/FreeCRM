@@ -427,23 +427,22 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
-    protected ElementReference loginEmail;
-    protected ElementReference loginPassword;
-
     protected bool _afterLoadedCalled = false;
-    protected string confirmPassword = String.Empty;
-    protected string email = String.Empty;
-    protected string loginIntro = String.Empty;
-    protected string password = String.Empty;
+    protected string _pageName = "login";
     protected Plugin _plugin = new Plugin();
     protected List<PluginPromptValue> _promptValues = new List<PluginPromptValue>();
-    protected bool processing = false;
-    protected DataObjects.User _user = new DataObjects.User();
-    protected string view = String.Empty;
     protected DataObjects.LoginTenantListing _tenantListing = new DataObjects.LoginTenantListing();
+    protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
 
-    protected string _pageName = "login";
+    protected string confirmPassword = String.Empty;
+    protected string email = String.Empty;
+    protected ElementReference loginEmail;
+    protected string loginIntro = String.Empty;
+    protected ElementReference loginPassword;
+    protected string password = String.Empty;
+    protected bool processing = false;
+    protected string view = String.Empty;
 
     public void Dispose()
     {
@@ -545,19 +544,6 @@
         StateHasChanged();
     }
 
-    protected bool AllowLoginTypeCustom {
-        get {
-            bool output = Model.UseCustomAuthenticationProviderFromAdminAccount;
-
-            // If not using the admin option check this tenant.
-            if (!output && Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("custom")) {
-                output = true;
-            }
-
-            return output;
-        }
-    }
-
     protected bool AllowLoginTypeApple {
         get {
             bool output = false;
@@ -566,6 +552,19 @@
                 if (Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("apple")) {
                     output = true;
                 }
+            }
+
+            return output;
+        }
+    }
+
+    protected bool AllowLoginTypeCustom {
+        get {
+            bool output = Model.UseCustomAuthenticationProviderFromAdminAccount;
+
+            // If not using the admin option check this tenant.
+            if (!output && Model.Tenant.TenantSettings.LoginOptions != null && Model.Tenant.TenantSettings.LoginOptions.Contains("custom")) {
+                output = true;
             }
 
             return output;

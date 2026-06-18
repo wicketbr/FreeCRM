@@ -22,8 +22,6 @@
 </div>
 
 @code {
-    protected object? _value;
-
     /// <summary>
     /// An optional class for the input.
     /// </summary>
@@ -74,6 +72,8 @@
     /// The type of input to display.
     /// </summary>
     [Parameter] public FreeBlazor.GetInput.InputType? UserInputType { get; set; }
+
+    protected object? _value;
 
     public void Dispose()
     {

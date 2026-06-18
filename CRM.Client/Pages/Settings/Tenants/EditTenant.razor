@@ -341,8 +341,8 @@ namespace CustomAuthenticationProvider {
 }
 
 @code {
-    [Parameter] public string? tenantid { get; set; }
     [Parameter] public string? TenantCode { get; set; }
+    [Parameter] public string? tenantid { get; set; }
 
     protected bool _allowDelete = false;
     protected bool _loadedData = false;
@@ -351,13 +351,12 @@ namespace CustomAuthenticationProvider {
     protected string[] _loginOptions = new string[] { };
     protected string[] _moduleHideElements = new string[] { };
     protected bool _newTenant = false;
+    protected string _pageName = "edittenant";
     protected string _title = String.Empty;
     protected DataObjects.Tenant _tenant = new DataObjects.Tenant();
     protected bool _validatedUrl = false;
 
     protected EditTenant_App AppModule = new EditTenant_App();
-
-    protected string _pageName = "edittenant";
 
     public void Dispose()
     {
@@ -392,13 +391,6 @@ namespace CustomAuthenticationProvider {
     {
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected bool AuthOptionApple {
@@ -550,6 +542,13 @@ namespace CustomAuthenticationProvider {
         _loadingTenant = false;
 
         this.StateHasChanged();
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Save()

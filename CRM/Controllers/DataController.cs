@@ -21,7 +21,8 @@ public partial class DataController : ControllerBase
     private string _fingerprint = String.Empty;
     private string _returnCodeAccessDenied = "{{AccessDenied}}";
 
-    public DataController(
+    public DataController
+    (
         IDataAccess daInjection,
         IHttpContextAccessor httpContextAccessor,
         ICustomAuthentication auth,

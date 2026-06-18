@@ -129,11 +129,10 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newUserGroup = false;
+    protected string _pageName = "editusergroup";
     protected string _title = String.Empty;
     protected DataObjects.UserGroup _userGroup = new DataObjects.UserGroup();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "editusergroup";
 
     protected EditUserGroup_App AppModule = new EditUserGroup_App();
 
@@ -179,13 +178,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task AutoCompleteItemSelected((string key, string label) item)
@@ -262,6 +254,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus("edit-group-name");
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected void RemoveUserFromGroup(Guid UserId)

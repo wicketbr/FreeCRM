@@ -596,21 +596,18 @@
     [Parameter] public Delegate? OnComplete { get; set; }
     [Parameter] public Delegate? OnDelete { get; set; }
 
+    protected DataObjects.Appointment _appointment = new DataObjects.Appointment();
+    protected DateTime? _endDate;
+    protected string _hourFormat = Convert.ToDateTime("1/1/2000 13:00:00").ToString("t").ToUpper().Contains("PM") ? "12" : "24";
     protected bool _loadedData = false;
     protected bool _loading = true;
     protected bool _newAppointment = false;
+    protected DateTime? _startDate;
     protected bool _updatingAttendance = false;
     protected string _userAttendance = String.Empty;
     protected bool _userIsScheduled = false;
     protected bool _visible = false;
     protected bool _wasDeleted = false;
-
-    protected DateTime? _startDate;
-    protected DateTime? _endDate;
-
-    protected string _hourFormat = Convert.ToDateTime("1/1/2000 13:00:00").ToString("t").ToUpper().Contains("PM") ? "12" : "24";
-
-    protected DataObjects.Appointment _appointment = new DataObjects.Appointment();
 
     protected EditAppointment_App AppModule = new EditAppointment_App();
 

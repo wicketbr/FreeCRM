@@ -241,18 +241,16 @@
 @code {
     [Parameter] public string? TenantCode { get; set; }
 
+    protected DataObjects.MailServerConfigMicrosoftGraph _graph = new DataObjects.MailServerConfigMicrosoftGraph();
     protected string _lastKey = String.Empty;
     protected bool _loadedData = false;
     protected bool _loading = false;
+    protected string _pageName = "appsettings";
     protected DataObjects.ApplicationSettings _settings = new DataObjects.ApplicationSettings();
-
-    protected DataObjects.MailServerConfigMicrosoftGraph _graph = new DataObjects.MailServerConfigMicrosoftGraph();
     protected DataObjects.MailServerConfigSMTP _smtp = new DataObjects.MailServerConfigSMTP();
     protected bool _validatedUrl = false;
 
     protected AppSettings_App AppModule = new AppSettings_App();
-
-    protected string _pageName = "appsettings";
 
     public void Dispose()
     {
@@ -287,13 +285,6 @@
     {
         Model.OnChange += OnDataModelUpdated;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected async Task Decrypt(string field)
@@ -395,6 +386,13 @@
             StateHasChanged();
         } else {
             Model.UnknownError();
+        }
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
         }
     }
 

@@ -31,7 +31,6 @@
     [Parameter]
     public string AriaLabel { get; set; } = "Monaco Code Editor";
 
-
     /// <summary>
     /// OPTIONAL: An optional class for the editor (defaults to 'default-editor' which has a min-height of 100px.)
     // </summary>
@@ -93,14 +92,12 @@
     /// </summary>
     [Parameter] public EventCallback<string> ValueChanged { get; set; }
 
-    protected BlazorMonaco.Editor.StandaloneCodeEditor _editor = null!;
     protected BlazorMonaco.Editor.StandaloneDiffEditor _diffEditor = null!;
-
-    protected BlazorMonaco.Position _editorPosition = new BlazorMonaco.Position();
-    protected System.Timers.Timer _timer = new System.Timers.Timer();
-
     protected string _id = Guid.NewGuid().ToString().Replace("-", "").ToLower();
+    protected BlazorMonaco.Editor.StandaloneCodeEditor _editor = null!;
+    protected BlazorMonaco.Position _editorPosition = new BlazorMonaco.Position();
     protected bool _readOnly = false;
+    protected System.Timers.Timer _timer = new System.Timers.Timer();
 
     protected IJSObjectReference? jsModule;
 
@@ -144,13 +141,6 @@
                 }
             }
         }
-    }
-
-    protected async Task InitDiffEditor()    {
-        await _diffEditor.SetModel(new DiffEditorModel {
-            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
-            Modified = await Global.CreateModel(jsRuntime, Value, Language),
-        });
     }
 
     protected string CSS {
@@ -256,6 +246,14 @@
         return output;
     }
 
+    protected async Task InitDiffEditor()
+    {
+        await _diffEditor.SetModel(new DiffEditorModel {
+            Original = await Global.CreateModel(jsRuntime, ValueToDiff, Language),
+            Modified = await Global.CreateModel(jsRuntime, Value, Language),
+        });
+    }
+
     /// <summary>
     /// Insert a value into the editor at the current cursor position.
     /// </summary>
@@ -327,17 +325,6 @@
         } else {
             await _diffEditor.ModifiedEditor.SetValue(value);
         }
-        ValueHasChanged();
-    }
-
-    protected async void TimerElapsed(Object? source, System.Timers.ElapsedEventArgs e)
-    {
-        if (String.IsNullOrEmpty(ValueToDiff)) {
-            Value = await _editor.GetValue();
-        } else {
-            Value = await _diffEditor.ModifiedEditor.GetValue();
-        }
-
         ValueHasChanged();
     }
 
@@ -419,6 +406,17 @@
                 };
             }
         }
+    }
+
+    protected async void TimerElapsed(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        if (String.IsNullOrEmpty(ValueToDiff)) {
+            Value = await _editor.GetValue();
+        } else {
+            Value = await _diffEditor.ModifiedEditor.GetValue();
+        }
+
+        ValueHasChanged();
     }
 
     protected void ValueHasChanged()

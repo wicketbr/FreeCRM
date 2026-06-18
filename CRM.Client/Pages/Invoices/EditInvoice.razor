@@ -229,11 +229,10 @@
     protected bool _loading = true;
     protected bool _loadedData = false;
     protected bool _newInvoice = false;
+    protected string _pageName = "editinvoice";
     protected bool _showInfo = false;
     protected DataObjects.User _user = new DataObjects.User();
     protected bool _validatedUrl = false;
-
-    protected string _pageName = "editinvoice";
 
     public void Dispose()
     {
@@ -270,13 +269,6 @@
         Model.OnChange += OnDataModelUpdated;
         Model.OnSignalRUpdate += SignalRUpdate;
         Model.View = _pageName;
-    }
-
-    protected void OnDataModelUpdated()
-    {
-        if (Model.View == _pageName) {
-            StateHasChanged();
-        }
     }
 
     protected void AddItem()
@@ -433,6 +425,13 @@
         this.StateHasChanged();
 
         await Helpers.DelayedFocus(focus);
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
     }
 
     protected async Task Preview()

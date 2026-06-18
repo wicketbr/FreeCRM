@@ -5,17 +5,17 @@
 }
 
 @code {
-    protected string _icon = String.Empty;
-    protected ElementReference _element;
-
     [Parameter]
     public string? Icon { get; set; }
 
     [Parameter]
-    public string? TipText { get; set; }
+    public TooltipOptions? Options { get; set; }
 
     [Parameter]
-    public TooltipOptions? Options { get; set; }
+    public string? TipText { get; set; }
+
+    protected string _icon = String.Empty;
+    protected ElementReference _element;
 
     public void Dispose()
     {
