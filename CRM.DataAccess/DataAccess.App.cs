@@ -15,7 +15,7 @@ public partial class DataAccess
     private int _accountLockoutMinutes = 10; // The number of minutes an account is locked out after reaching the maximum number of bad login attempts.
     private string _appName = "freeCRM"; // The name of the application.
     private string _copyright = "Company Name"; // The copyright name used in the application.
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/18/2026")); // The date this version of your application was released.
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("6/23/2026")); // The date this version of your application was released.
     private bool _tokenAutoRenew = true; // If true, a new token will be sent to the client to keep the token automatically renewed.
     private int _tokenDays = 7; // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
     private bool _useMigrations = false; // Indicates if the app uses data migrations. If false, you will manage your own database schema updates.

@@ -150,7 +150,7 @@
 
         NavManager.LocationChanged -= LocationChanged;
 
-        DialogService.OnClose -= ClearModelMessages;
+        DialogService.OnClose -= DialogClosed;
     }
 
     protected override async Task OnInitializedAsync()
@@ -177,7 +177,7 @@
             await ValidateLogin();
         }
 
-        DialogService.OnClose += ClearModelMessages;
+        DialogService.OnClose += DialogClosed;
 
         // Pass the GetOrPost delegate to the Compilation Service so
         // cached data can be retrieved or saved for Blazor plugins.
@@ -359,9 +359,11 @@
         }
     }
 
-    protected void ClearModelMessages(dynamic args)
+    public void DialogClosed(dynamic args)
     {
         Model.ClearMessages();
+
+        Helpers.DialogClosedApp();
     }
 
     public async ValueTask DisposeAsync()
@@ -418,6 +420,8 @@
         Model.ViewIsEditPage = false;
 
         bool reloadDeleteCounts = Model.User.Admin && Model.Tenant.TenantSettings.DeletePreference == DataObjects.DeletePreference.MarkAsDeleted;
+
+        Helpers.LocationChangedApp();
 
         base.InvokeAsync(async () => {
             await Helpers.HideMenus();

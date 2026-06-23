@@ -55,6 +55,14 @@ public static partial class Helpers
     // {{ModuleItemEnd:Tags}}
 
     /// <summary>
+    /// Called from the MainLayout DialogClose method
+    /// </summary>
+    public static void DialogClosedApp()
+    {
+
+    }
+
+    /// <summary>
     /// Called from the Helpers.ForceModelUpdates method to force any app-specific model updates.
     /// </summary>
     private static void ForceModelUpdatesApp()
@@ -112,6 +120,14 @@ public static partial class Helpers
         }
 
         return output;
+    }
+
+    /// <summary>
+    /// Method is called from the MainLayout page in the LocationChanged method.
+    /// </summary>
+    public static void LocationChangedApp()
+    {
+
     }
 
     /// <summary>
