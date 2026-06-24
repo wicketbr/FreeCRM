@@ -43,9 +43,9 @@ public partial class DataAccess
                 Email = StringValue(user.Email),
                 Phone = StringValue(user.Phone),
             },
-            DueDate = invoice.InvoiceDueDate.HasValue ? (DateTime)invoice.InvoiceDueDate : DateTime.Now,
+            DueDate = invoice.InvoiceDueDate.HasValue ? (DateTime)invoice.InvoiceDueDate : DateTime.UtcNow,
             InvoiceNumber = StringValue(invoice.InvoiceNumber),
-            IssueDate = invoice.InvoiceCreated.HasValue ? (DateTime)invoice.InvoiceCreated : DateTime.Now,
+            IssueDate = invoice.InvoiceCreated.HasValue ? (DateTime)invoice.InvoiceCreated : DateTime.UtcNow,
             SellerAddress = new InvoiceAddress {
                 CompanyName = tenant != null ? tenant.Name : String.Empty,
                 Email = DefaultReplyToAddressForTenant(invoice.TenantId),

@@ -1237,7 +1237,7 @@ public partial class DataAccess
         if (appointmentNoteRecords != null && appointmentNoteRecords.Any()) {
             foreach (var item in appointmentNoteRecords) {
                 appointmentNotes.Add(new DataObjects.DeletedRecordItem { 
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.Note),
                     ItemId = item.AppointmentNoteId,
@@ -1253,7 +1253,7 @@ public partial class DataAccess
         if (appointmentRecords != null && appointmentRecords.Any()) {
             foreach (var item in appointmentRecords) {
                 appointments.Add(new DataObjects.DeletedRecordItem { 
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = FormatAppointmentTitle(item.Title, item.Start, item.End, item.AllDay),
                     ItemId = item.AppointmentId,
@@ -1270,7 +1270,7 @@ public partial class DataAccess
         if (appointmentServiceRecords != null && appointmentServiceRecords.Any()) {
             foreach (var item in appointmentServiceRecords) {
                 appointmentServices.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     // {{ModuleItemStart:Services}}
                     Display = StringValue(item.Service.Description),
@@ -1289,7 +1289,7 @@ public partial class DataAccess
         if (departmentGroupRecords != null && departmentGroupRecords.Any()) {
             foreach (var item in departmentGroupRecords) {
                 departmentGroups.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.DepartmentGroupName),
                     ItemId = item.DepartmentGroupId,
@@ -1305,7 +1305,7 @@ public partial class DataAccess
         if (departmentRecords != null && departmentRecords.Any()) {
             foreach (var item in departmentRecords) {
                 departments.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.DepartmentName),
                     ItemId = item.DepartmentId,
@@ -1322,7 +1322,7 @@ public partial class DataAccess
         if (emailTemplateRecords != null && emailTemplateRecords.Any()) {
             foreach (var item in emailTemplateRecords) {
                 emailTemplates.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = item.Name,
                     ItemId = item.EmailTemplateId,
@@ -1339,7 +1339,7 @@ public partial class DataAccess
         if (fileStorageRecord != null && fileStorageRecord.Any()) {
             foreach (var item in fileStorageRecord) {
                 fileStorage.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.FileName),
                     ItemId = item.FileId,
@@ -1356,7 +1356,7 @@ public partial class DataAccess
         if (locationRecords != null && locationRecords.Any()) {
             foreach (var item in locationRecords) {
                 locations.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.Name),
                     ItemId = item.LocationId,
@@ -1374,7 +1374,7 @@ public partial class DataAccess
         if (serviceRecords != null && serviceRecords.Any()) {
             foreach (var item in serviceRecords) {
                 services.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.Description),
                     ItemId = item.ServiceId,
@@ -1392,7 +1392,7 @@ public partial class DataAccess
         if (tagRecords != null && tagRecords.Any()) {
             foreach (var item in tagRecords) {
                 tags.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = item.Name,
                     ItemId = item.TagId,
@@ -1409,7 +1409,7 @@ public partial class DataAccess
         if (userGroupRecords != null && userGroupRecords.Any()) {
             foreach (var item in userGroupRecords) {
                 userGroups.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.Name),
                     ItemId = item.GroupId,
@@ -1425,7 +1425,7 @@ public partial class DataAccess
         if (userRecords != null && userRecords.Any()) {
             foreach (var item in userRecords) {
                 users.Add(new DataObjects.DeletedRecordItem {
-                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.Now,
+                    DeletedAt = item.DeletedAt.HasValue ? (DateTime)item.DeletedAt : DateTime.UtcNow,
                     DeletedBy = LastModifiedDisplayName(item.LastModifiedBy),
                     Display = StringValue(item.FirstName + " " + item.LastName + (!String.IsNullOrWhiteSpace(item.Email) ? " (" + item.Email + ")": "")),
                     ItemId = item.UserId,
