@@ -154,7 +154,7 @@
                                         type="button" role="tab" aria-controls="home" aria-selected="true">
                                     <Language Tag="AppointmentAttendees" />
                                     @if (_appointment.Users.Count > 0) {
-                                        <span class="badge-count badge text-bg-secondary rounded-pill">
+                                        <span class="badge-count badge text-bg-danger rounded-pill">
                                             @_appointment.Users.Count
                                         </span>
                                     }
@@ -167,7 +167,7 @@
                                         type="button" role="tab" aria-controls="home" aria-selected="true">
                                     <Language Tag="Notes" />
                                     @if (_appointment.Notes.Count > 0) {
-                                        <span class="badge-count badge text-bg-secondary rounded-pill">
+                                        <span class="badge-count badge text-bg-danger rounded-pill">
                                             @_appointment.Notes.Count
                                         </span>
                                     }
@@ -181,7 +181,7 @@
                                         type="button" role="tab" aria-controls="home" aria-selected="true">
                                     <Language Tag="Services" />
                                     @if (_appointment.Services.Count > 0) {
-                                        <span class="badge-count badge text-bg-secondary rounded-pill">
+                                        <span class="badge-count badge text-bg-danger rounded-pill">
                                             @_appointment.Services.Count
                                         </span>
                                     }
@@ -196,7 +196,7 @@
                                         type="button" role="tab" aria-controls="home" aria-selected="true">
                                     <Language Tag="Tags" />
                                     @if (_appointment.Tags != null && _appointment.Tags.Count > 0) {
-                                        <span class="badge-count badge text-bg-secondary rounded-pill">
+                                        <span class="badge-count badge text-bg-danger rounded-pill">
                                             @_appointment.Tags.Count
                                         </span>
                                     }

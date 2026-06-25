@@ -6504,7 +6504,17 @@ public static partial class Helpers
             };
         }
 
-        Tooltips.Open(element, html, options);
+        if (html.Contains("<")) {
+            // The Radzen tooltip component no longer supports html, so you must pass a render fragment instead.
+
+            RenderFragment renderFragment = builder => {
+                builder.AddMarkupContent(0, html);
+            };
+
+            Tooltips.Open(element, ds => renderFragment, options);
+        } else {
+            Tooltips.Open(element, html, options);
+        }
     }
 
     /// <summary>

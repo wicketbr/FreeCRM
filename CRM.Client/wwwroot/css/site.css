@@ -1088,6 +1088,10 @@ h2.quick-action {
     text-align:right;
 }
 
+.deleted-record .deleted-info .note {
+    font-size:1em;
+}
+
 .tooltip-item {
     cursor: pointer;
 }
@@ -1374,7 +1378,9 @@ label.unbold {
 .badge-count {
     position:relative;
     top:-8px;
-    font-size:0.6em;
+    left:1px;
+    font-size:0.7em;
+    padding:.15em .5em;
 }
 
 fieldset legend {
