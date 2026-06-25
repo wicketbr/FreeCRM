@@ -69,9 +69,13 @@ public partial class DataAccess: IDisposable, IDataAccess
                     optionsBuilder.UseNpgsql(_connectionString, options => options.EnableRetryOnFailure());
                     break;
 
-                case "sqlite":
-                    optionsBuilder.UseSqlite(_connectionString);
-                    break;
+                // Removed the Microsoft.EntityFrameworkCore.Sqlite nuget package and support for
+                // SQLite for now as the Microsoft library has a dependency still on the deprecated
+                // SQLitePCLRaw.lib.e_sqlite3 package which has known vulnerabilities.
+                // 
+                //case "sqlite":
+                //    optionsBuilder.UseSqlite(_connectionString);
+                //    break;
 
                 case "sqlserver":
                 default:
