@@ -45,12 +45,14 @@ public class BackgroundProcessor : BackgroundService
         queueTimer.Elapsed += ProcessQueueTimer;
         queueTimer.AutoReset = true;
 
-        if (_startOnLoad && _processingIntervalSeconds > 30) {
+        if (_startOnLoad || _processingIntervalSeconds < 30) {
             // To prevent the DataAccess library from being invoked before
             // the app has finished starting, we will delay the first execution
             // of the background processor to 30 seconds.
             // This way, the minimum startup interval for the background processor
-            // is 30 seconds, even for StartOnLoad.
+            // is 30 seconds, even for StartOnLoad = true.
+            // Even if StartOnLoad is not true if the timer interval
+            // is less than 30 seconds, we will still delay the first execution.
             queueTimer.Interval = TimeSpan.FromSeconds(30).TotalMilliseconds;
         }
 
@@ -125,7 +127,9 @@ public class BackgroundProcessor : BackgroundService
             processorTimer.Start();
         }
 
+        // Reset the queue timer interval to the configured processing interval.
         queueTimer.Interval = TimeSpan.FromSeconds(_processingIntervalSeconds).TotalMilliseconds;
+        
         if (!queueTimer.Enabled) {
             queueTimer.Start();
         }
