@@ -743,6 +743,14 @@ public partial class DataAccess
     }
 
     /// <summary>
+    /// Called from the main SeedTestData method to seed any app-specific test data.
+    /// </summary>
+    private void SeedTestDataApp()
+    {
+
+    }
+
+    /// <summary>
     /// Called by the main method to get filtered users to apply any app-specific sorting.
     /// </summary>
     /// <param name="recs">The current records.</param>

@@ -7,8 +7,8 @@ namespace CRM;
 public class BackgroundProcessor : BackgroundService
 {
     private List<Plugins.Plugin> _availablePlugins = new List<Plugins.Plugin>();
-    //private IDataAccess da;
     private long _iterations = 0;
+    private bool _loadedPlugins = false;
     private readonly ILogger<BackgroundProcessor> _logger;
     private List<Plugins.Plugin> _plugins = new List<Plugins.Plugin>();
     private List<Guid> _processingAppTasks = new List<Guid>();
@@ -36,12 +36,6 @@ public class BackgroundProcessor : BackgroundService
     {
         _logger.LogInformation("Background Processor is starting.");
 
-        var da = _serviceProvider.GetRequiredService<IDataAccess>();
-        var allPlugins = da.GetPlugins();
-        if (allPlugins.Any(x => x.Type.ToLower() == "backgroundprocess")) {
-            _availablePlugins = allPlugins.Where(x => x.Type.ToLower() == "backgroundprocess").ToList();
-        }
-
         // Configure the work timer.
         processorTimer = new System.Timers.Timer(TimeSpan.FromMilliseconds(1));
         processorTimer.Elapsed += ProcessTasks;
@@ -51,17 +45,31 @@ public class BackgroundProcessor : BackgroundService
         queueTimer.Elapsed += ProcessQueueTimer;
         queueTimer.AutoReset = true;
 
-        if (_startOnLoad) {
-            await GetTasksToProcess();
-        } else {
-            queueTimer.Start();
+        if (_startOnLoad && _processingIntervalSeconds > 30) {
+            // To prevent the DataAccess library from being invoked before
+            // the app has finished starting, we will delay the first execution
+            // of the background processor to 30 seconds.
+            // This way, the minimum startup interval for the background processor
+            // is 30 seconds, even for StartOnLoad.
+            queueTimer.Interval = TimeSpan.FromSeconds(30).TotalMilliseconds;
         }
+
+        queueTimer.Start();
     }
 
     private async Task GetTasksToProcess()
     {
         var now = DateTime.UtcNow;
         var da = _serviceProvider.GetRequiredService<IDataAccess>();
+
+        if (!_loadedPlugins) {
+            _loadedPlugins = true;
+            var allPlugins = da.GetPlugins();
+            if (allPlugins.Any(x => x.Type.ToLower() == "backgroundprocess")) {
+                _availablePlugins = allPlugins.Where(x => x.Type.ToLower() == "backgroundprocess").ToList();
+            }
+        }
+
         var tenants = await da.GetTenants();
         _iterations++;
 
@@ -117,6 +125,7 @@ public class BackgroundProcessor : BackgroundService
             processorTimer.Start();
         }
 
+        queueTimer.Interval = TimeSpan.FromSeconds(_processingIntervalSeconds).TotalMilliseconds;
         if (!queueTimer.Enabled) {
             queueTimer.Start();
         }

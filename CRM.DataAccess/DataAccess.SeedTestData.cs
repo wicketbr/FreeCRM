@@ -294,6 +294,8 @@ public partial class DataAccess
 #endif
         // {{ModuleItemEnd:Appointments}}
         data.SaveChanges();
+
+        SeedTestDataApp();
     }
 
     private DateTime SeedTestData_AdjustDate(DateTime date)
