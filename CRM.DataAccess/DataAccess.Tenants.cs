@@ -547,6 +547,41 @@ public partial class DataAccess
             output.JwtRsaPrivateKey = rsaKeys.PrivateKey;
             output.JwtRsaPublicKey = rsaKeys.PublicKey;
 
+            if (_inMemoryDatabase && TenantId == _guid2) {
+                // Because the InMemory database would build a fresh database
+                // at every startup, one issue for testing is that the RSA keys
+                // are re-created at every startup. This means the auth token
+                // will be invalid at every login, making testing difficult.
+                // So, for InMemory database use a hard-coded set of RSA keys.
+                output.JwtRsaPrivateKey =
+                @"""
+                -----BEGIN RSA PRIVATE KEY-----
+                MIICWwIBAAKBgQDvs60560JokQEKSikg/JrmpVRXPefDBjc+Nbb9uQtMjouzW0sh
+                NQaein4DPqxQKpNbIslkBgm5FQ0yXBSDfK81ezA0sL52JTYpvlm9963ASqRl01XO
+                SbEtkEdgyNJ375STz7hO305zTuE8WNY5qtbpDageVa1b3lCrO6tXpFE62QIDAQAB
+                AoGAY7MtWwjif1HIx/ner4zB9StRMFRcYL7mHWcELPZZn8cujjRrxG0kyq66CSl5
+                TILY9bA7afIk+ympaofoNGSZDuyNMoHrkOHGOEk5o2MU8c4iTUgpV1vqCnKE5TOC
+                tq2UaAiYQH+eQ6gDRT/azvbSE8g04zBhetpyBSvsGunVnM0CQQD0AnU9tuhIvqDx
+                nvLKzv1YawWr/SA5DdFyydSCCqsCdi/BY17D8juLkDzZjx/GB4bHIq9CCXe/U1oK
+                sutwH5+bAkEA+3sHcVHQUiZHi0zv0FCa5CLSrWl+ut9GBXkxZsvpgsnfNvc1/7Rt
+                uSo8vyXnfmC1xY1k4nEZqX63IqoqbVhImwJAQuRBm69+siKAIHzAdlSUIx8DqQh1
+                Qu7E0kD+HsAp7TzVDqDdI75OEI5z//g6b6E0k3awsNvDlhGVh4VRAaXJrQJAU5oL
+                2F1Fbvnw0Ntr4gnZ5Du7ZBDtI3y0T3+Br9XcNDGeNiyq0+4MiAEFntogAkBuTVV7
+                E1hcGp/Yi/qcDivKPwJAVqUhUBS/JzkGYLRrZ8L8j9ewD8Ek7eUK+dByBpYJwtyC
+                kUBg5ahvk9vuW84zkhItnswaSZWS9hRzkQyK54/vbg==
+                -----END RSA PRIVATE KEY-----
+                """;
+
+                output.JwtRsaPublicKey =
+                @"""
+                -----BEGIN RSA PUBLIC KEY-----
+                MIGJAoGBAO+zrTnrQmiRAQpKKSD8mualVFc958MGNz41tv25C0yOi7NbSyE1Bp6K
+                fgM+rFAqk1siyWQGCbkVDTJcFIN8rzV7MDSwvnYlNim+Wb33rcBKpGXTVc5JsS2Q
+                R2DI0nfvlJPPuE7fTnNO4TxY1jmq1ukNqB5VrVveUKs7q1ekUTrZAgMBAAE=
+                -----END RSA PUBLIC KEY-----
+                """;
+            }
+
             saveSettings = true;
         }
 
