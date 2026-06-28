@@ -35,7 +35,8 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.9" />
     <PackageReference Include="MudBlazor" Version="9.5.0" />
     <PackageReference Include="Radzen.Blazor" Version="11.0.4" />
-
+	<PackageReference Include="AngleSharp" Version="1.5.1" />
+	<PackageReference Include="AngleSharp.Css" Version="0.17.0" />
 	<PackageReference Include="FluentValidation" Version="12.1.1" />
 	<!--<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />-->
 	<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />

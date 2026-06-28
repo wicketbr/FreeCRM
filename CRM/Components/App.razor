@@ -24,6 +24,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <ImportMap />
     <meta name="app:server" content="@System.Environment.MachineName" />
     <meta name="app:version" content="@data.Version" />
     <meta name="app:released" content="@data.Released" />
@@ -47,13 +48,16 @@
         @((MarkupString)analyticsCodeHtml)
     }
     <Modules_App Module="head" />
-    <ImportMap />
     <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>
 
 <body id="body-element" data-bs-theme="" class="loading">
     <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
     <Modules_App Module="bodytop" />
+    <!-- {{ModuleItemStart:Workflows}} -->
+    <script src="@(applicationUrl + "js/mermaid/9.4.3/mermaid.min.js")"></script>
+    <script src="@(applicationUrl + "js/panzoom/panzoom.js")"></script>
+    <!-- {{ModuleItemEnd:Workflows}} -->
     <script src="https://cdn.jsdelivr.net/npm/@@thumbmarkjs/thumbmarkjs/dist/thumbmark.umd.js"></script>
     <script src="@(applicationUrl + "_content/Blazor.Bootstrap/blazor.bootstrap.js?v=" + appVersion)"></script>
     <script src="@(applicationUrl + "_content/MudBlazor/MudBlazor.min.js?v=" + appVersion)"></script>
@@ -207,7 +211,6 @@
                     setTimeout(() => DelayedSelectInternal(element, safety), 20);
                 }
             }
-
         }
 
         async function DownloadFileFromStream(fileName, contentStreamReference) {
@@ -326,6 +329,47 @@
                 }
             }
         }
+
+        // {{ModuleItemStart:Workflows}}
+        function RenderWorkflowDiagram(elementId, data, zoom) {
+            if (typeof(mermaid) != 'undefined') {
+                var el = document.getElementById(elementId);
+
+                if (el != undefined && el != null) {
+                    let insertSvg = function (svgCode, bindFunctions) {
+                        el.innerHTML = svgCode;
+                    };
+
+                    let graph = mermaid.mermaidAPI.render('workflow-graph', data, insertSvg);
+
+                    HideElementByClass("btn-move-target");
+                    HideElementByClass("reprocess-icon");
+
+                    SetupDotNetHelperButtonHandlers();
+
+                    RenderWorkflowDiagramZoom(elementId, zoom);
+                }
+            } else {
+                console.log("Mermaid is not installed, unable to render workflow diagram.");
+            }
+        }
+
+        function RenderWorkflowDiagramZoom(elementId, zoom){
+            let elem = document.querySelector("#" + elementId + " [role='graphics-document document']")
+
+            if (elem != undefined && elem != null) {
+                panzoom = Panzoom(elem, {
+                    canvas: true,
+                    maxScale: 4,
+                    minScale: .3,
+                    animate: false,
+                    panOnlyWhenZoomed: false
+                });
+
+                panzoom.zoom(zoom, {animate: true });
+            }
+        }
+        // {{ModuleItemEnd:Workflows}}
 
         function SetDotNetHelper(value) {
             dotNetHelper = value;
@@ -476,6 +520,30 @@
             }
         }
 
+        function SetupDotNetHelperButtonHandlers(){
+            let elements = document.getElementsByClassName("dotnet-helper-button");
+            if (elements != undefined && elements != null) {
+                for(let i = 0; i < elements.length ; i++) {
+                    let index = i;
+                    let el = elements[index];
+
+                    let rel = el.getAttribute("rel");
+                    if (rel != undefined && rel != null && rel != "") {
+                        let parts = rel.split("--");
+
+                        // Clone the element to get rid of any previous event listeners.
+                        const cleanElement = el.cloneNode(true);
+                        el.parentNode.replaceChild(cleanElement, el);
+
+                        //el.removeEventListener("click", null);
+                        cleanElement.addEventListener("click", function() {
+                            dotNetHelper.invokeMethod("DotNetHelperHandler", parts);
+                        });
+                    }
+                }
+            }
+        }
+
         function ShowElementByClass(className, display = "block") {
             let elements = document.getElementsByClassName(className);
             if (elements != undefined && elements != null) {
@@ -517,6 +585,20 @@
                 }
             }
         }
+
+        // {{ModuleItemStart:Workflows}}
+        function UpdateWorkflowButton(id, buttonClass, icon, text) {
+            // workflowprocess--be1c63da-51e1-4994-8281-4dc806efe5ec
+            //var el = document.getElementById(id);
+            var el = document.querySelector('[rel="workflowprocess--' + id + '"]');
+
+            if (el != undefined && el != null) {
+                el.className = 'dotnet-helper-button btn btn-xs btn-' + buttonClass;
+                el.innerHTML = '<i class="' + icon + '"></i>';
+                el.title = text;
+            }
+        }
+        // {{ModuleItemEnd:Workflows}}
     </script>
 
     <Modules_App Module="javascript" />

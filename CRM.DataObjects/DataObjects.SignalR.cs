@@ -41,6 +41,10 @@ public partial class DataObjects
         public const string User = "User";
         public const string UserGroup = "UserGroup";
         public const string UserPreferences = "UserPreferences";
+        // {{ModuleItemStart:Workflows}}
+        public const string Workflow = "Workflow";
+        public const string WorkflowProcessing = "WorkflowProcessing";
+        // {{ModuleItemEnd:Workflows}}
     }
 
     public partial class SignalRUpdate

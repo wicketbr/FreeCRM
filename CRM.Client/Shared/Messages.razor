@@ -1,0 +1,68 @@
+﻿@implements IDisposable
+@using Plugins
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+
+@if (MessageItems != null && MessageItems.Any()) {
+    <div class="@DivClass">
+        @if (MessageItems.Count == 1) {
+            if (Error) {
+                <div class="mb-2"><Language Tag="ErrorOccurred" /></div>
+            }
+            <div>@((MarkupString)MessageItems[0])</div>
+        } else {
+            if (Error) {
+                <div class="mb-2"><Language Tag="ErrorsOccurred" /></div>
+            }
+            <ul>
+                @foreach (var msg in MessageItems) {
+                    <li>@((MarkupString)msg)</li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Indicates if the messages are an error. If so, the 'alert alert-danger' class will be used.
+    /// </summary>
+    [Parameter] public bool Error { get; set; }
+
+    /// <summary>
+    /// The messages to be shown.
+    /// </summary>
+    [Parameter] public List<string>? MessageItems { get; set; }
+
+    /// <summary>
+    /// Used to override the div class. If Error is true, this will be ignored and 'alert alert-danger' will be used.
+    /// If Error is false and no class is specified then 'alert alert-info' will be used.
+    /// </summary>
+    [Parameter] public string? WrapperClass { get; set; }
+
+    public void Dispose() { }
+
+    // protected override void OnInitialized()
+    // {
+    // }
+
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    // }
+
+    protected string? DivClass {
+        get {
+            var output = WrapperClass;
+
+            if (Error) {
+                output = "alert alert-danger";
+            }
+
+            if (String.IsNullOrWhiteSpace(output)) {
+                output = "alert alert-info";
+            }
+
+            return output;
+        }
+    }
+}

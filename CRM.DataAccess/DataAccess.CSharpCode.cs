@@ -118,7 +118,6 @@ public partial class DataAccess
             }
         } catch (Exception ex) {
             // When an error is encountered the output object will be null, so create and return a new object.
-            //return new DataObjects.DynamicWorkflowResponse { Message = ex.Message };
             Console.WriteLine("Exception: " + RecurseExceptionAsString(ex));
         }
 

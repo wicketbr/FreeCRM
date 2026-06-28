@@ -63,6 +63,7 @@ public partial class BlazorDataModel
     private DataObjects.DeletedRecordCounts _DeletedRecordCounts = new DataObjects.DeletedRecordCounts();
     private List<DataObjects.DepartmentGroup> _DepartmentGroups = new List<DataObjects.DepartmentGroup>();
     private List<DataObjects.Department> _Departments = new List<DataObjects.Department>();
+    private bool _DialogOpen = false;
     private List<string> _DotNetHelperMessages = new List<string>();
     // {{ModuleItemStart:EmailTemplates}}
     private List<DataObjects.EmailTemplate> _EmailTemplates = new List<DataObjects.EmailTemplate>();
@@ -490,6 +491,20 @@ public partial class BlazorDataModel
             }
 
             return output;
+        }
+    }
+
+    /// <summary>
+    /// Indicates if a dialog is open.
+    /// </summary>
+    public bool DialogOpen {
+        get { return _DialogOpen; }
+        set {
+            if (_DialogOpen != value) {
+                _DialogOpen = value;
+                _ModelUpdated = DateTime.UtcNow;
+                NotifyDataChanged();
+            }
         }
     }
 
@@ -1345,6 +1360,31 @@ public partial class BlazorDataModel
             }
         }
     }
+
+    private List<Plugins.Plugin> PluginsByType(string? type)
+    {
+        var output = new List<Plugins.Plugin>();
+
+        if (!String.IsNullOrWhiteSpace(type)) {
+            var plugins = _Plugins.Where(x => x.Type.ToLower() == type.ToLower()).ToList();
+            if (plugins != null && plugins.Count > 0) {
+                output = plugins.OrderBy(x => x.Name).ThenBy(x => x.Author).ToList();
+            }
+        }
+
+        return output;
+    }
+
+    // {{ModuleItemStart:Workflows}}
+    /// <summary>
+    /// Gets Workflow plugins
+    /// </summary>
+    public List<Plugins.Plugin> Plugins_Workflows {
+        get {
+            return PluginsByType("Workflow");
+        }
+    }
+    // {{ModuleItemEnd:Workflows}}
 
     /// <summary>
     /// Used to indicate which quick action is being used in the offcanvas area.

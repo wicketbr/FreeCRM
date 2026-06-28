@@ -26,12 +26,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace CRM.Client;
 
 public static partial class Helpers
 {
+    private static string _dialogTop = "30px";
     private static Radzen.DialogService DialogService = null!;
     private static HttpClient Http = null!;
     private static bool _initialized = false;
@@ -625,12 +627,27 @@ public static partial class Helpers
     /// Copies the value to the clipboard.
     /// </summary>
     /// <param name="value">The value to copy to the clipboard.</param>
-    public static async Task CopyToClipboard(string value)
+    public static async Task CopyToClipboard(string value, bool showCopiedToClipboardMessage = false)
     {
         if (jsRuntime != null) {
             await jsRuntime.InvokeVoidAsync("CopyToClipboard", value);
+
+            if (showCopiedToClipboardMessage) {
+                Model.AddMessage(Text("CopiedToClipboard"), MessageType.Success, true, true);
+            }
         }
     }
+
+    // {{ModuleItemStart:Workflows}}
+    /// <summary>
+    /// Copies a workflow item to the browser's local storage.
+    /// </summary>
+    /// <param name="workflow">The workflow to copy.</param>
+    public static async Task CopyWorkflow(DataObjects.Workflow workflow)
+    {
+        await SetLocalStorageItem("CopiedWorkflow", workflow);
+    }
+    // {{ModuleItemEnd:Workflows}}
 
     /// <summary>
     /// Converts a string with CSV values to a list of strings.
@@ -1119,6 +1136,69 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Builds a button used by the DotNetHelperHandler function.
+    /// </summary>
+    /// <param name="id">The id for the button element.</param>
+    /// <param name="text">The text to show on the button.</param>
+    /// <param name="callbackParameters">The callback parameters.</param>
+    /// <param name="buttonClass">The class to add to the button (defaults to "btn btn-primary").</param>
+    /// <param name="buttonIcon">An optional icon to add to the button. Can be a named icon, just some css for the class, or a complete html element.</param>
+    /// <param name="buttonTitle">An optional title to show on mouseover for the button element.</param>
+    /// <returns>The html of the button to be rendered on the page which will invoke the DotNetHelperHandler callback function.</returns>
+    public static string DotNetHelperCallbackButton
+    (
+        string id,
+        string text,
+        List<string> callbackParameters,
+        string buttonClass = "btn btn-primary",
+        string buttonIcon = "",
+        string buttonTitle = ""
+    ){
+        var output = new System.Text.StringBuilder();
+
+        var buttonText = text.Replace("'", "").Replace("\"", "");
+
+        output.Append("<button id='" + id + "' type='button' class='dotnet-helper-button " + buttonClass + "'");
+
+        if (!String.IsNullOrWhiteSpace(buttonTitle)) {
+            output.Append(" title='" + buttonTitle + "'");
+        }
+
+        output.Append(" rel='" + String.Join("--", callbackParameters) + "'>");
+
+        if (!String.IsNullOrWhiteSpace(buttonIcon)) {
+            // First, see if this is a named icon.
+            var icon = Icon(buttonIcon);
+
+            if (String.IsNullOrWhiteSpace(icon)) {
+                // If the item contains HTML just use the item.
+                if (buttonIcon.Contains("<")) {
+                    icon = buttonIcon;
+                } else {
+                    icon = "<i class='" + buttonIcon + "'></i>";
+                }
+            } else {
+                icon = "<i class='" + icon + "'></i>";
+            }
+
+            if (!String.IsNullOrWhiteSpace(buttonText)) {
+                output.Append(icon + " " + buttonText);
+            } else {
+                output.Append(icon);
+            }
+        } else if (!String.IsNullOrWhiteSpace(buttonText)) {
+            output.Append(buttonText);
+        }
+
+        output.Append("</button>");
+
+        string returnString = output.ToString();
+        return returnString;
+
+        //return output.ToString();
+    }
+
+    /// <summary>
     /// Downloads a file to the browser.
     /// </summary>
     /// <param name="FileId">The unqiue id of the file.</param>
@@ -1314,6 +1394,41 @@ public static partial class Helpers
             Top = top,
         });
     }
+
+    // {{ModuleItemStart:Workflows}}
+    /// <summary>
+    /// Opens a workflow dialog for editing.
+    /// </summary>
+    /// <param name="workflow">The workflow to edit.</param>
+    /// <param name="OnEditComplete">The delegate that will receive the updated workflow.</param>
+    /// <param name="readOnly">Indicates if this is a read-only view of the workflow item.</param>
+    public static async Task EditWorkflow(DataObjects.Workflow workflow, Delegate? OnEditComplete, bool readOnly = false)
+    {
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
+        if (OnEditComplete != null) {
+            parameters.Add("OnEditComplete", OnEditComplete);
+        }
+        parameters.Add("WorkflowItem", workflow);
+        parameters.Add("ReadOnly", readOnly);
+
+        string title = workflow.WorkflowId == Guid.Empty
+            ? Text("AddWorkflow")
+            : Text("EditWorkflow");
+
+        if (readOnly) {
+            title = Text("Workflow");
+        }
+
+        Model.DialogOpen = true;
+
+        await DialogService.OpenAsync<WorkflowEditor>(title, parameters, new Radzen.DialogOptions() {
+            AutoFocusFirstElement = false,
+            Width = "98%",
+            Height = "calc(100vh - 100px)",
+            Top = _dialogTop,
+        });
+    }
+    // {{ModuleItemEnd:Workflows}}
 
     // {{ModuleItemStart:EmailTemplates}}
     /// <summary>
@@ -1784,6 +1899,29 @@ public static partial class Helpers
         return output;
     }
 
+    public static string FormatJson(string? json)
+    {
+        string output = String.Empty;
+
+        if (!String.IsNullOrWhiteSpace(json)) {
+            using (JsonDocument document = JsonDocument.Parse(json)) {
+                var options = new JsonSerializerOptions { WriteIndented = true };
+
+                string formattedJson = JsonSerializer.Serialize(document, options);
+
+                if (!String.IsNullOrWhiteSpace(formattedJson)) {
+                    output = formattedJson;
+                }
+            }
+        }
+
+        if (String.IsNullOrWhiteSpace(output) && !String.IsNullOrWhiteSpace(json)) {
+            output = json;
+        }
+
+        return output.Trim();
+    }
+
     /// <summary>
     /// Formats a DateTime in the short time format.
     /// </summary>
@@ -1961,6 +2099,18 @@ public static partial class Helpers
 
         return output;
     }
+
+    // {{ModuleItemStart:Workflows}}
+    /// <summary>
+    /// Gets the copied workflow from the browser's local storage.
+    /// </summary>
+    /// <returns>A nullable Workflow object.</returns>
+    public static async Task<DataObjects.Workflow?> GetCopiedWorkflow()
+    {
+        var output = await GetLocalStorageItem<DataObjects.Workflow>("CopiedWorkflow");
+        return output;
+    }
+    // {{ModuleItemEnd:Workflows}}
 
     /// <summary>
     /// Uses the CSVHelper library to convert a collection of objects to CSV.
@@ -3550,6 +3700,17 @@ public static partial class Helpers
             Model.Plugins.Any(x => x.Name.ToLower().StartsWith("button_" + pageName.ToLower() + "_"));
         
         return output;
+    }
+
+    /// <summary>
+    /// Hides element(s) by class name using jsInterop.
+    /// </summary>
+    /// <param name="className">The class name of the element(s).</param>
+    public static async Task HideElementByClass(string? className)
+    {
+        if (!String.IsNullOrWhiteSpace(className)) {
+            await jsRuntime.InvokeVoidAsync("HideElementByClass", className);
+        }
     }
 
     /// <summary>
@@ -5206,6 +5367,11 @@ public static partial class Helpers
         }
     }
 
+    public static string NewCleanGuid()
+    {
+        return Guid.NewGuid().ToString().Replace("-", "").ToLower();
+    }
+
     /// <summary>
     /// Gets the current date and time in UTC.
     /// </summary>
@@ -5717,6 +5883,26 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Removes any empty items from a list of strings and returns a new list with items trimmed as well.
+    /// </summary>
+    /// <param name="list">A nullable list of strings.</param>
+    /// <returns>A list of strings with any empty items removed and trimmed whitespace on items.</returns>
+    public static List<string> RemoveEmptyListItems(List<string>? list)
+    {
+        var output = new List<string>();
+
+        if (list != null && list.Any()) {
+            foreach (var item in list) {
+                if (!String.IsNullOrWhiteSpace(item)) {
+                    output.Add(item.Trim());
+                }
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
     /// Replaces spaces in a string with non-breaking html characters.
     /// </summary>
     /// <param name="input">The string to replace spaces in.</param>
@@ -6014,6 +6200,11 @@ public static partial class Helpers
         null, millisecondsDelay, System.Threading.Timeout.Infinite);
     }
 
+    public static async Task SetupDotNetHelperButtonHandlers()
+    {
+        await jsRuntime.InvokeVoidAsync("SetupDotNetHelperButtonHandlers");
+    }
+
     // {{ModuleItemStart:About}}
     public static async void ShowAbout(string Title = "")
     {
@@ -6032,6 +6223,18 @@ public static partial class Helpers
         });
     }
     // {{ModuleItemEnd:About}}
+
+    /// <summary>
+    /// Shows element(s) by class name using jsInterop.
+    /// </summary>
+    /// <param name="className">The class name of the element(s).</param>
+    /// <param name="display">Optional override of the default "block" display type.</param>
+    public static async Task ShowElementByClass(string? className, string display = "block")
+    {
+        if (!String.IsNullOrWhiteSpace(className)) {
+            await jsRuntime.InvokeVoidAsync("ShowElementByClass", className, display);
+        }
+    }
 
     // {{ModuleItemStart:Tags}}
     /// <summary>
@@ -6566,6 +6769,23 @@ public static partial class Helpers
         }
     }
 
+    // {{ModuleItemStart:Workflows}}
+    /// <summary>
+    /// Used to dynamically update the workflow icon in a paged recordset for recent data.
+    /// </summary>
+    /// <param name="elementId">The javascript element id.</param>
+    /// <param name="buttonClass">The new class for the button.</param>
+    /// <param name="buttonIcon">The new icon for the button.</param>
+    /// <param name="buttonTitle">The new title text for the button.</param>
+    /// <returns></returns>
+    public static async Task UpdateWorkflowButton(string elementId, string buttonClass, string buttonIcon, string buttonTitle)
+    {
+        if (jsRuntime != null) {
+            await jsRuntime.InvokeVoidAsync("UpdateWorkflowButton", elementId, buttonClass, buttonIcon, buttonTitle);
+        }
+    }
+    // {{ModuleItemEnd:Workflows}}
+
     /// <summary>
     /// Shows a dialog allowing users to upload one or more files.
     /// </summary>
@@ -6997,4 +7217,44 @@ public static partial class Helpers
             }
         }
     }
+
+    // {{ModuleItemStart:Workflows}}
+    public static async Task WorkflowViewer
+    (
+        Guid ParentItemId,
+        Guid DataItemId,
+        string WorkflowType,
+        List<DataObjects.Workflow> Workflows,
+        List<DataObjects.Workflow> WorkflowOrphans,
+        List<DataObjects.Workflow>? WorkflowData = null,
+        string? QueryStringValues = ""
+    )
+    {
+        Dictionary<string, object?> parameters = new Dictionary<string, object?>();
+        parameters.Add("InDialog", true);
+        parameters.Add("ParentItemId", ParentItemId);
+        parameters.Add("DataItemId", DataItemId);
+        parameters.Add("WorkflowType", WorkflowType);
+        parameters.Add("Workflows", Workflows);
+        parameters.Add("WorkflowOrphans", WorkflowOrphans);
+
+        if (WorkflowData != null) {
+            parameters.Add("WorkflowData", WorkflowData);
+        }
+
+        if (!String.IsNullOrWhiteSpace(QueryStringValues)) {
+            parameters.Add("QueryStringValues", QueryStringValues);
+        }
+
+        Model.ClearMessages();
+
+        await DialogService.OpenAsync<WorkflowViewer>(Text("WorkflowProcessStatus"), parameters, new Radzen.DialogOptions() {
+            AutoFocusFirstElement = false,
+            CloseDialogOnOverlayClick = true,
+            Width = "98%",
+            //Height = "calc(100vh - 100px)",
+            Top = _dialogTop,
+        });
+    }
+    // {{ModuleItemEnd:Workflows}}
 }

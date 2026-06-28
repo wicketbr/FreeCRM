@@ -1,0 +1,1059 @@
+﻿@implements IDisposable
+@using Plugins
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+
+<div class="mb-2 fixed-dialog-buttons">
+    <button type="button" class="btn btn-dark" @onclick="Close">
+        <Language Tag="Close" IncludeIcon="true" />
+    </button>
+
+    @if (!ReadOnly) {
+        <button type="button" class="btn btn-success" @onclick="Save">
+            <Language Tag="Save" IncludeIcon="true" />
+        </button>
+
+        if (_copiedWorkflow != null && _copiedWorkflow.WorkflowId != WorkflowItem.WorkflowId){
+            <button type="button" class="btn btn-primary" @onclick="PasteCopiedWorkflow">
+                <Language Tag="WorkflowPaste" IncludeIcon="true" />
+            </button>
+        }
+    }
+</div>
+
+@if (_loading) {
+    <LoadingMessage />
+} else {
+    var workflowType = Helpers.StringLower(WorkflowItem.Type);
+
+    <RequiredIndicator />
+
+    <div class="mb-2">
+        <div class="form-check form-switch">
+            <input type="checkbox" role="switch" class="form-check-input" id="workflow-Enabled" @bind="WorkflowItem.Enabled" disabled="@(ReadOnly)" />
+            <label for="workflow-Enabled" class="form-check-label"><Language Tag="Enabled" /></label>
+        </div>
+    </div>
+
+    <div class="mb-2">
+        <label for="workflow-Name">
+            <Language Tag="WorkflowName" Required="true" />
+        </label>
+        <input type="text" 
+                class="@Helpers.MissingValue(WorkflowItem.Name, "form-control")" 
+                id="workflow-Name" 
+                disabled="@(ReadOnly)"
+                @bind="WorkflowItem.Name" 
+                @bind:event="oninput" />
+    </div>
+
+    <div class="mb-2">
+        <label for="workflow-Type">
+            <Language Tag="WorkflowType" Required="true" />
+        </label>
+        <select class="@Helpers.MissingValue(WorkflowItem.Type, "form-select")" 
+                id="workflow-Type"
+                disabled="@(ReadOnly)"
+                @bind="WorkflowItem.Type">
+            <option value=""></option>
+            @foreach (var item in WorkflowEngine.GetWorkflowTypes()) {
+                if (Helpers.StringLower(item.Value) == workflowType) {
+                    <option value="@item.Value" selected>@item.Label</option>
+                } else {
+                    <option value="@item.Value">@item.Label</option>
+                }
+            }
+        </select>
+    </div>
+
+    @switch (workflowType) {
+        case "csharp":
+            <div class="mb-2">
+                <fieldset>
+                    <legend>
+                        <Language Tag="CSharpAdditionalAssemblies" />
+
+                        <Popover_App Text="@Helpers.Text("CSharpAdditionalAssembliesNotes")" IncludeButton="false" />
+
+                        @if (!ReadOnly) {
+                            <button type="button"
+                                        class="btn btn-xs btn-success ms-1"
+                                        @onclick="@(() => ruleCSharp.AdditionalAssemblies.Add(""))">
+                                <Language Tag="Add" IncludeIcon="true" />
+                            </button>
+                        }
+                    </legend>
+
+                    <StringList @bind-Value="ruleCSharp.AdditionalAssemblies" OnValueChanged="StateHasChanged" />
+                </fieldset>
+            </div>
+
+            <div class="mb-2">
+                <label for="workflow-CSharp-InvokerFunction">
+                    <Language Tag="CSharpInvokerFunction" />
+                </label>
+                <input type="text"
+                        class="form-control"
+                        id="workflow-CSharp-InvokerFunction"
+                        @bind="ruleCSharp.InvokerFunction" />
+            </div>
+
+            <div class="mb-2">
+                <div class="mb-2">
+                    <fieldset>
+                        <legend class="mb-2">
+                            <Language Tag="CSharpCode" />
+                            <Popover_App Text="@Helpers.Text("CSharpCodeNotes")" IncludeButton="false" />
+
+                            <button type="button" class="btn btn-xs btn-primary ms-1" @onclick="SampleCSharpCode">
+                                <Language Tag="SampleCode" IncludeIcon="true" />
+                            </button>
+
+                            <button type="button" class="btn btn-xs btn-success" @onclick="TestCSharpCode">
+                                <Language Tag="TestCode" IncludeIcon="true" />
+                            </button>
+
+                            @if (!String.IsNullOrWhiteSpace(_codeResults)) {
+                                <button type="button"
+                                        class="btn btn-xs btn-dark"
+                                        @onclick="@(() => { _codeResults = ""; StateHasChanged(); })">
+                                    <Language Tag="Clear" IncludeIcon="true" />
+                                </button>
+                            }
+                        </legend>
+
+                        @if (!String.IsNullOrWhiteSpace(_codeResults)) {
+                            <div class="alert @(_codeResult ? "alert-success" : "alert-danger")">
+                                @((MarkupString)_codeResults)
+                            </div>
+                        }
+                    </fieldset>
+                </div>
+
+
+                <BlazorMonaco.Editor.StandaloneCodeEditor @ref="_standaloneCodeEditor_CSharp"
+                        Id="workflow-CSharp-Code"
+                        CssClass="code-editor"
+                        OnDidChangeModelContent="UpdatedEditor_CSharp"
+                        ConstructionOptions="@((BlazorMonaco.Editor.StandaloneCodeEditor editor) => 
+                            { 
+                                return new BlazorMonaco.Editor.StandaloneEditorConstructionOptions {
+                                    AutomaticLayout = true,
+                                    Language = "csharp",
+                                    Value = ruleCSharp.Code,
+                                    AutoClosingBrackets = "always",
+                                    AutoClosingComments = "always",
+                                    AutoClosingQuotes = "always",
+                                    DragAndDrop = true,
+                                    FormatOnPaste = true,
+                                    FormatOnType = true,
+                                };
+                            }
+                        )" />
+            </div>
+
+            break;
+
+        case "email":
+        case "emailapproval":
+            var recipients =
+                Helpers.RemoveEmptyListItems(ruleEmail.To).Count +
+                Helpers.RemoveEmptyListItems(ruleEmail.Cc).Count +
+                Helpers.RemoveEmptyListItems(ruleEmail.Bcc).Count;
+
+            <div class="mb-2">
+                <label for="workflow-Email-From">
+                    <Language Tag="From" Required="true" />
+                </label>
+                <input type="text"
+                        class="@Helpers.MissingValue(ruleEmail.From, "form-control")"
+                        id="workflow-Email-From"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleEmail.From"
+                        @bind:event="oninput" />
+            </div>
+
+            <div class="@(recipients == 0 && !ReadOnly ? "m-r" : "")">
+                @if (recipients == 0 && !ReadOnly) {
+                    <div class="alert alert-danger">
+                        <div class="mb-2">
+                            <Language Tag="EmailNoRecipients" />
+                        </div>
+                        <Language Tag="EmailNoRecipientsInfo" />
+                    </div>
+                }
+
+                <div class="mb-2">
+                    <fieldset>
+                        <legend>
+                            @if (!ReadOnly) {
+                                <button type="button" class="btn btn-xs btn-success me-1 mb-1" @onclick="@(() => ruleEmail.To.Add(""))">
+                                    <Language Tag="Add" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            <Language Tag="EmailTo" />
+                        </legend>
+
+                        <StringList @bind-Value="ruleEmail.To" OnValueChanged="StateHasChanged" />
+                    </fieldset>
+                </div>
+
+                <div class="mb-2">
+                    <fieldset>
+                        <legend>
+                            @if (!ReadOnly) {
+                                <button type="button" class="btn btn-xs btn-success me-1 mb-1" @onclick="@(() => ruleEmail.Cc.Add(""))">
+                                    <Language Tag="Add" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            <Language Tag="EmailCc" />
+                        </legend>
+
+                        <StringList @bind-Value="ruleEmail.Cc" OnValueChanged="StateHasChanged" />
+                    </fieldset>
+                </div>
+
+                <div class="mb-2">
+                    <fieldset>
+                        <legend>
+                            @if (!ReadOnly) {
+                                <button type="button" class="btn btn-xs btn-success me-1 mb-1" @onclick="@(() => ruleEmail.Bcc.Add(""))">
+                                    <Language Tag="Add" IncludeIcon="true" />
+                                </button>
+                            }
+
+                            <Language Tag="EmailBcc" />
+                        </legend>
+
+                        <StringList @bind-Value="ruleEmail.Bcc" OnValueChanged="StateHasChanged" />
+                    </fieldset>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <label for="workflow-Email-Subject">
+                    <Language Tag="EmailSubject" Required="true" />
+                </label>
+                <input type="text"
+                        class="@Helpers.MissingValue(ruleEmail.Subject, "form-control")"
+                        id="workflow-Email-Subject"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleEmail.Subject"
+                        @bind:event="oninput" />
+            </div>
+
+            <div class="mb-2">
+                <fieldset>
+                    <legend @onclick="@(() => emailBodyEditor.SetFocus())">
+                        <Language Tag="EmailBody" Required="true" />
+                    </legend>
+
+                    @if (ReadOnly) {
+                        <div>@((MarkupString)ruleEmail.Body)</div>
+                    } else {
+                        <HtmlEditor2 @ref="emailBodyEditor"
+                                Value="@ruleEmail.Body"
+                                Config="new HtmlEditor2.Configuration { Required = true }"
+                                OnUpdate="@((string html) => ruleEmail.Body = html)" />
+                    }
+                </fieldset>
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox" 
+                            role="switch" 
+                            class="form-check-input" 
+                            id="workflow-Email-IncludeAttachments" 
+                            disabled="@(ReadOnly)"
+                            @bind="ruleEmail.IncludeAttachments" />
+                    <label for="workflow-Email-IncludeAttachments" class="form-check-label">
+                        <Language Tag="IncludeAttachments" />
+                    </label>
+                </div>
+            </div>
+
+            <div class="mb-2 form-check form-switch">
+                <input type="checkbox" 
+                        role="switch" 
+                        class="form-check-input" 
+                        id="workflow-Email-AppendRenderedItemToBody" 
+                        disabled="@(ReadOnly)"
+                        @bind="ruleEmail.AppendRenderedItemToBody" />
+                <label for="workflow-Email-AppendRenderedItemToBody" class="form-check-label">
+                    <Language Tag="AppendRenderedItemToBody" />
+                </label>
+                <span class="note"> - <Language Tag="AppendRenderedItemToBodyInfo" /></span>
+            </div>
+
+            <div class="mb-2">
+                <div class="form-check form-switch">
+                    <input type="checkbox" 
+                            role="switch" 
+                            class="form-check-input" 
+                            id="workflow-Email-IncludeItemAsAttachment"
+                            disabled="@(ReadOnly)"
+                            @bind="ruleEmail.IncludeItemAsAttachment" />
+                    <label for="workflow-Email-IncludeItemAsAttachment" class="form-check-label">
+                        <Language Tag="IncludeItemAsAttachment" />
+                    </label>
+                </div>
+
+                @if (ruleEmail.IncludeItemAsAttachment) {
+                    if (String.IsNullOrWhiteSpace(ruleEmail.AttachmentOptions.AttachmentFormat)) {
+                        ruleEmail.AttachmentOptions.AttachmentFormat = "pdf";
+                    }
+
+                    <div class="indented">
+                        <div class="mb-2">
+                            <label for="workflow-Email-AttachmentFormat">
+                                <Language Tag="AppendRenderedItemToBodyAttachmentFormat" />
+                            </label>
+                            <select class="form-select"
+                                    id="workflow-Email-AttachmentFormat"
+                                    @bind="ruleEmail.AttachmentOptions.AttachmentFormat"
+                                    disabled="@(ReadOnly)">
+                                <option value="pdf"><Language Tag="AppendRenderedItemToBodyAttachmentFormatPdf" /></option>
+                                <option value="html"><Language Tag="AppendRenderedItemToBodyAttachmentFormatHtml" /></option>
+                            </select>
+                        </div>
+
+                        @if (Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormat) == "pdf") {
+                            <div class="mb-2">
+                                <label for="workflow-Email-AttachmentFormatPdfDocumentSize">
+                                    <Language Tag="AppendRenderedItemToBodyAttachmentFormatPdfDocumentSize" />
+                                </label>
+                                <select class="form-select"
+                                        id="workflow-Email-AttachmentFormatPdfDocumentSize"
+                                        @bind="ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize"
+                                        disabled="@(ReadOnly)">
+                                    <option value="a0" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a0")">A0</option>
+                                    <option value="a1" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a1")">A1</option>
+                                    <option value="a2" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a2")">A2</option>
+                                    <option value="a3" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a3")">A3</option>
+                                    <option value="a4" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a4")">A4</option>
+                                    <option value="a5" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a5")">A5</option>
+                                    <option value="a6" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "a6")">A6</option>
+                                    <option value="ledger" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "ledger")"><Language Tag="AppendRenderedItemToBodyAttachmentFormatPdfDocumentSizeLedger" /></option>
+                                    <option value="legal" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "legal")"><Language Tag="AppendRenderedItemToBodyAttachmentFormatPdfDocumentSizeLegal" /></option>
+                                    <option value="" selected="@(String.IsNullOrWhiteSpace(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize))"><Language Tag="AppendRenderedItemToBodyAttachmentFormatPdfDocumentSizeLetter" /></option>
+                                    <option value="tabloid" selected="@(Helpers.StringLower(ruleEmail.AttachmentOptions.AttachmentFormatPdfDocumentSize) == "tabloid")"><Language Tag="AppendRenderedItemToBodyAttachmentFormatPdfDocumentSizeTabloid" /></option>
+                                </select>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            if (workflowType == "emailapproval"){
+                <div class="mb-2">
+                    <label for="workflow-EmailApproval-ApprovalOption">
+                        <Language Tag="WorkflowApprovalOption" Required="true" />
+                    </label>
+                    <select class="@Helpers.MissingValue(ruleEmailApproval.ApprovalOption, "form-select")"
+                            id="workflow-EmailApproval-ApprovalOption"
+                            @bind="ruleEmailApproval.ApprovalOption">
+                        <option value=""></option>
+                        <option value="approve"><Language Tag="WorkflowApprovalOptionApprove" /></option>
+                        <option value="sign"><Language Tag="WorkflowApprovalOptionSign" /></option>
+                    </select>
+                </div>
+
+                <div class="mb-2">
+                    <label for="workflow-EmailApproval-Retries">
+                        <Language Tag="WorkflowApprovalRetries" Required="true" />
+                    </label>
+                    <span class="note"><Language Tag="WorkflowApprovalRetriesNotes" /></span>
+                    <input type="number"
+                            class="@Helpers.MissingValue(ruleEmailApproval.Retries, "form-control")"
+                            id="workflow-EmailApproval-Retries"
+                            @bind="ruleEmailApproval.Retries">
+                </div>
+
+                <div class="mb-2">
+                    <label for="workflow-EmailApproval-RetryInterval">
+                        <Language Tag="WorkflowApprovalRetryInterval" Required="true" />
+                    </label>
+                    <span class="note"><Language Tag="WorkflowApprovalRetryIntervalNotes" /></span>
+                    <input type="number"
+                            class="@Helpers.MissingValue(ruleEmailApproval.RetryInterval, "form-control")"
+                            id="workflow-EmailApproval-RetryInterval"
+                            @bind="ruleEmailApproval.RetryInterval">
+                </div>
+            }
+            break;
+
+        case "filter":
+            var wordCount = ruleFilter.SearchWords.Where(x => !String.IsNullOrWhiteSpace(x)).Count();
+
+            <div class="@(wordCount == 0 ? "mb-2 m-r" : "mb-2")">
+                <fieldset>
+                    <legend>
+                        <Language Tag="SearchWords" Required="true" />
+
+                        @if (!ReadOnly) {
+                            <button type="button" class="btn btn-xs btn-success" @onclick="@(() => ruleFilter.SearchWords.Add(""))">
+                                <Language Tag="Add" IncludeIcon="true" />
+                            </button>
+                        }
+                    </legend>
+
+                    <StringList @bind-Value="ruleFilter.SearchWords" OnValueChanged="StateHasChanged" />
+                </fieldset>
+            </div>
+
+            <div class="mb-2">
+                <label for="workflow-Filter-Action">
+                    <Language Tag="Action" Required="true" />
+                </label>
+                <select class="@Helpers.MissingValue(ruleFilter.Action, "form-select")" 
+                        id="workflow-Filter-Action"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleFilter.Action">
+                    <option value=""></option>
+                    <option value="delete"><Language Tag="FilterActionDelete" /></option>
+                    <option value="unsubmit"><Language Tag="FilterActionUnsubmit" /></option>
+                </select>
+            </div>
+
+            break;
+
+        case "customvariable":
+            var searchFieldsCount = ruleCustomVariable.SearchFields.Where(x => !String.IsNullOrWhiteSpace(x)).Count();
+            var searchWordsCount = ruleCustomVariable.SearchWords.Where(x => !String.IsNullOrWhiteSpace(x)).Count();
+
+            <div class="mb-2">
+                <label for="workflow-CustomVariable-Name">
+                    <Language Tag="CustomVariableName" Required="true" />
+                </label>
+                <input type="text"
+                        class="@Helpers.MissingValue(ruleCustomVariable.Name, "form-control")"
+                        id="workflow-CustomVariable-Name"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleCustomVariable.Name"
+                        @bind:event="oninput" />
+            </div>
+
+            <div class="@(searchFieldsCount == 0 ? "mb-2 m-r" : "mb-2")">
+                <fieldset>
+                    <legend>
+                        <Language Tag="SearchFields" Required="true" />
+                        <span class="note"> - <Language Tag="SearchFieldsInfo" /></span>
+
+                        @if (!ReadOnly) {
+                            <button type="button"
+                                        class="btn btn-xs btn-success"
+                                        @onclick="@(() => ruleCustomVariable.SearchFields.Add(""))">
+                                <Language Tag="Add" IncludeIcon="true" />
+                            </button>
+                        }
+                    </legend>
+
+                    <StringList @bind-Value="ruleCustomVariable.SearchFields" OnValueChanged="StateHasChanged" />
+                </fieldset>
+            </div>
+
+            <div class="@(searchWordsCount == 0 ? "mb-2 m-r" : "mb-2")">
+                <fieldset>
+                    <legend>
+                        <Language Tag="SearchWords" Required="true" />
+                        <span class="note"> - <Language Tag="SearchWordsInfo" /></span>
+
+                        @if (!ReadOnly) {
+                            <button type="button"
+                                    class="btn btn-xs btn-success"
+                                    @onclick="@(() => ruleCustomVariable.SearchWords.Add(""))">
+                                <Language Tag="Add" IncludeIcon="true" />
+                            </button>
+                        }
+                    </legend>
+
+                    <StringList @bind-Value="ruleCustomVariable.SearchWords" OnValueChanged="StateHasChanged" />
+                </fieldset>
+            </div>
+
+            <div class="mb-2">
+                <label for="workflow-CustomVariable-AddText">
+                    <Language Tag="AddText" Required="true" />
+                </label>
+
+                @if (ReadOnly) {
+                    <div>@((MarkupString)ruleCustomVariable.AddText)</div>
+                } else {
+                    <AutoGrowText 
+                            Class="@Helpers.MissingValue(ruleCustomVariable.AddText, "form-control")"
+                            Id="workflow-CustomVariable-AddText"
+                            @bind-Value="ruleCustomVariable.AddText" />
+                }
+            </div>
+            break;
+
+        case "clearcustomvariable":
+            <div class="mb-2">
+                <label for="workflow-CustomVariable-Name">
+                    <Language Tag="CustomVariableName" Required="true" />
+                </label>
+                <input type="text"
+                        class="@Helpers.MissingValue(ruleClearCustomVariable.Name, "form-control")"
+                        id="workflow-CustomVariable-Name"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleClearCustomVariable.Name"
+                        @bind:event="oninput" />
+            </div>
+            break;
+
+        case "delete":
+            break;
+
+        case "externalapp":
+            <div class="mb-2">
+                <label for="workflow-ExternalApp-PathToExe">
+                    <Language Tag="ExternalApp" Required="true" />
+                </label>
+                <span class="note"> - <Language Tag="ExternalAppInfo" /></span>
+                <input type="text"
+                        class="@Helpers.MissingValue(ruleExternalApp.PathToExe, "form-control")"
+                        id="workflow-ExternalApp-PathToExe"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleExternalApp.PathToExe"
+                        @bind:event="oninput" />
+            </div>
+
+            <div class="mb-2">
+                <label for="workflow-ExternalApp-Arguments">
+                    <Language Tag="ExternalAppParameters" />
+                </label>
+                <span class="note"> - <Language Tag="ExternalAppParametersInfo" /></span>
+                <input type="text"
+                        class="form-control"
+                        id="workflow-ExternalApp-Arguments"
+                        disabled="@(ReadOnly)"
+                        @bind="ruleExternalApp.Arguments" />
+            </div>
+            break;
+    }
+
+    @if (workflowType.StartsWith("plugin:")) {
+        // If the task is a plugin, see if it has any prompts that need to be gathered.
+        var pluginId = Guid.Empty;
+        try {
+            pluginId = new Guid(WorkflowItem.Type.Substring(7));
+        } catch { }
+
+        var plugin = Model.Plugins_Workflows.FirstOrDefault(x => x.Id == pluginId);
+
+        if (plugin != null) {
+            _plugin = plugin;
+
+            <div class="mb-2">
+                <button type="button" class="btn btn-sm btn-success" @onclick="TestPlugin">
+                    <Language Tag="TestPlugin" IncludeIcon="true" />
+                </button>
+
+                @if (!String.IsNullOrWhiteSpace(_pluginResults)) {
+                    <button type="button"
+                            class="btn btn-sm btn-dark"
+                            @onclick="@(() => { _pluginResults = ""; StateHasChanged(); })">
+                        <Language Tag="Clear" IncludeIcon="true" />
+                    </button>
+                }
+            </div>
+
+            @if (!String.IsNullOrWhiteSpace(_pluginResults)){
+                <div class="alert @(_pluginResult ? "alert-success" : "alert-danger")">
+                    @((MarkupString)_pluginResults)
+                </div>
+            }
+
+            if (_plugin.Prompts != null && _plugin.Prompts.Count > 0) {
+                <PluginPrompts
+                        Class="mb-2"
+                        HighlightMissingRequiredFields="true"
+                        Plugin="_plugin"
+                        OnValuesChange="PromptValuesChanged" />
+            }
+
+        } else {
+            var pluginNotFound = Helpers.Text("PluginNotFound", false, new List<string> { pluginId.ToString() });
+
+            <div class="alert alert-danger">
+                <div class="mb-2">
+                    <Language Tag="InvalidPlugin" />
+                </div>
+                <div>@((MarkupString)pluginNotFound)</div>
+            </div>
+        }
+    }
+}
+@code {
+    [Parameter] public Delegate? OnEditComplete { get; set; }
+
+    [Parameter] public bool ReadOnly { get; set; }
+
+    [Parameter] public DataObjects.Workflow WorkflowItem { get; set; } = new DataObjects.Workflow();
+
+    protected bool _codeResult = false;
+    protected string _codeResults = String.Empty;
+    protected DataObjects.Workflow? _copiedWorkflow = null;
+    protected bool _loading = true;
+    protected List<string> _missingRequiredPluginValues = new List<string>();
+    protected Plugin _plugin = new Plugin();
+    protected bool _pluginResult = false;
+    protected string _pluginResults = String.Empty;
+    PluginPrompts _pluginPrompts = null!;
+
+    DataObjects.WorkflowClearCustomVariable ruleClearCustomVariable = new DataObjects.WorkflowClearCustomVariable();
+
+    DataObjects.WorkflowCSharp ruleCSharp = new DataObjects.WorkflowCSharp();
+    DataObjects.WorkflowCustomVariable ruleCustomVariable = new DataObjects.WorkflowCustomVariable();
+    DataObjects.WorkflowEmail ruleEmail = new DataObjects.WorkflowEmail();
+    DataObjects.WorkflowEmailApproval ruleEmailApproval = new DataObjects.WorkflowEmailApproval();
+    DataObjects.WorkflowExternalApp ruleExternalApp = new DataObjects.WorkflowExternalApp();
+    DataObjects.WorkflowFilter ruleFilter = new DataObjects.WorkflowFilter();
+
+    HtmlEditor2 emailBodyEditor = null!;
+
+    private BlazorMonaco.Editor.StandaloneCodeEditor _standaloneCodeEditor_CSharp = null!;
+
+    protected System.Timers.Timer _timer_CSharpChanged = new System.Timers.Timer();
+
+    public void Dispose() {
+        _timer_CSharpChanged.Dispose();
+    }
+
+    protected override void OnInitialized()
+    {
+        _timer_CSharpChanged = new System.Timers.Timer();
+        _timer_CSharpChanged.Interval = 1000;
+        _timer_CSharpChanged.Elapsed += UpdateTimerCSharpChanged;
+        _timer_CSharpChanged.AutoReset = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            _copiedWorkflow = await Helpers.GetCopiedWorkflow();
+            _loading = false;
+
+            UpdateRuleObjects();
+
+            await Helpers.DelayedFocus("workflow-Name");
+        }
+    }
+
+
+
+    protected void Close()
+    {
+        Model.DialogOpen = false;
+        DialogService.Close();
+    }
+
+    protected async Task PasteCopiedWorkflow(){
+        // always update the copied workflow
+        _copiedWorkflow = await Helpers.GetCopiedWorkflow();
+
+        if (_copiedWorkflow != null){
+            WorkflowItem.Name = _copiedWorkflow.Name;
+            WorkflowItem.Type = _copiedWorkflow.Type;
+            WorkflowItem.Rule = _copiedWorkflow.Rule;
+            WorkflowItem.Enabled = _copiedWorkflow.Enabled;
+        }
+
+        UpdateRuleObjects();
+    }
+
+    protected void PromptValuesChanged(List<PluginPromptValue> values)
+    {
+        _plugin.Values = values;
+
+        if (_pluginPrompts != null) {
+            _missingRequiredPluginValues = _pluginPrompts.MissingRequiredValues;
+        }
+
+        StateHasChanged();
+    }
+
+    protected async Task SampleCSharpCode(){
+        ruleCSharp.Code = 
+""""
+using nForm;
+using System;
+
+namespace MyCode;
+
+public class MyClass {
+  public async Task<(bool Result, List<string>? Messages, IEnumerable<object>? Objects)> Execute
+  (
+    DataAccess da,
+    Plugins.Plugin plugin,
+    DataObjects.User? currentUser,
+    DataObjects.WorkflowProcessing processing,
+    DataObjects.WorkflowCSharp csharp,
+    object[] objects
+  ){
+    // Your Code Here
+    var messages = new List<string>();
+
+    messages.Add("Workflow Plugin: " + plugin.Name);
+
+    if (da != null) {
+        messages.Add("DataAccess version " + da.Version);
+    } else {
+        messages.Add("Missing the required DataAccess library object.");
+    }
+
+    // This type of workflow just needs to return a result of True or False, the updated objects, and the updated WorkflowProcessing.
+    return (Result: true, Messages: messages, Objects: [objects, processing]);
+  }
+}
+"""";
+
+        await _standaloneCodeEditor_CSharp.SetValue(ruleCSharp.Code);
+    }
+
+    protected async Task Save()
+    {
+        Model.ClearMessages();
+        var errors = new List<string>();
+        string focus = String.Empty;
+
+        if (String.IsNullOrWhiteSpace(WorkflowItem.Name)) {
+            errors.Add(Helpers.MissingRequiredField("WorkflowName"));
+            focus = "workflow-Name";
+        }
+
+        if (String.IsNullOrWhiteSpace(WorkflowItem.Type)) {
+            errors.Add(Helpers.MissingRequiredField("WorkflowType"));
+            if (String.IsNullOrWhiteSpace(focus)) {
+                focus = "workflow-Type";
+            }
+        }
+
+        // Check individual rule requirements.
+        switch (Helpers.StringLower(WorkflowItem.Type))
+        {
+            case "csharp":
+                if (String.IsNullOrWhiteSpace(ruleCSharp.Code)) {
+                    errors.Add(Helpers.MissingRequiredField("CSharpCode"));
+                }
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleCSharp);
+                break;
+
+            case "email":
+                ruleEmail.To = Helpers.RemoveEmptyListItems(ruleEmail.To);
+                ruleEmail.Cc = Helpers.RemoveEmptyListItems(ruleEmail.Cc);
+                ruleEmail.Bcc = Helpers.RemoveEmptyListItems(ruleEmail.Bcc);
+
+                if (String.IsNullOrWhiteSpace(ruleEmail.From)){
+                    errors.Add(Helpers.MissingRequiredField("From"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-Email-From";
+                    }
+                }
+
+                if ((ruleEmail.To.Count + ruleEmail.Cc.Count + ruleEmail.Bcc.Count) == 0){
+                    errors.Add(Helpers.Text("EmailNoRecipientsInfo"));
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleEmail.Subject)) {
+                    errors.Add(Helpers.MissingRequiredField("EmailSubject"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-Email-Subject";
+                    }
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleEmail.Body)) {
+                    errors.Add(Helpers.MissingRequiredField("EmailBody"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "emailBody";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleEmail);
+                break;
+
+            case "emailapproval":
+                // First, copy the properties from the ruleEmail bound fields.
+                ruleEmailApproval.From = ruleEmail.From;
+                ruleEmailApproval.To = Helpers.RemoveEmptyListItems(ruleEmail.To);
+                ruleEmailApproval.Cc = Helpers.RemoveEmptyListItems(ruleEmail.Cc);
+                ruleEmailApproval.Bcc = Helpers.RemoveEmptyListItems(ruleEmail.Bcc);
+                ruleEmailApproval.Subject = ruleEmail.Subject;
+                ruleEmailApproval.Body = ruleEmail.Body;
+                ruleEmailApproval.IncludeAttachments = ruleEmail.IncludeAttachments;
+                ruleEmailApproval.IncludeItemAsAttachment = ruleEmail.IncludeItemAsAttachment;
+
+                if (String.IsNullOrWhiteSpace(ruleEmailApproval.From)){
+                    errors.Add(Helpers.MissingRequiredField("From"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-Email-From";
+                    }
+                }
+
+                if ((ruleEmailApproval.To.Count + ruleEmailApproval.Cc.Count + ruleEmailApproval.Bcc.Count) == 0) {
+                    errors.Add(Helpers.Text("EmailNoRecipientsInfo"));
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleEmailApproval.Subject)) {
+                    errors.Add(Helpers.MissingRequiredField("EmailSubject"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-Email-Subject";
+                    }
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleEmailApproval.Body)) {
+                    errors.Add(Helpers.MissingRequiredField("EmailBody"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "emailBody";
+                    }
+                }
+
+                // Now, the the specific properties for the approval.
+                if (String.IsNullOrWhiteSpace(ruleEmailApproval.ApprovalOption)) {
+                    errors.Add(Helpers.MissingRequiredField("WorkflowApprovalOption"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-EmailApproval-ApprovalOption";
+                    }
+                }
+
+                if (ruleEmailApproval.Retries < 1){
+                    errors.Add(Helpers.MissingRequiredField("WorkflowApprovalRetries"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-EmailApproval-Retries";
+                    }
+                }
+
+                if (ruleEmailApproval.RetryInterval < 1) {
+                    errors.Add(Helpers.MissingRequiredField("WorkflowApprovalRetryInterval"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-EmailApproval-RetryInterval";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleEmailApproval);
+                break;
+
+            case "filter":
+                if (ruleFilter.SearchWords.Where(x => !String.IsNullOrWhiteSpace(x)).Count() == 0) {
+                    errors.Add(Helpers.MissingRequiredField("SearchWords"));
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleFilter.Action)) {
+                    errors.Add(Helpers.MissingRequiredField("Action"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-Filter-Action";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleFilter);
+                break;
+
+            case "customvariable":
+                if (String.IsNullOrWhiteSpace(ruleCustomVariable.Name)) {
+                    errors.Add(Helpers.MissingRequiredField("CustomVariableName"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-CustomVariable-Name";
+                    }
+                }
+
+                if (ruleCustomVariable.SearchFields.Where(x => !String.IsNullOrWhiteSpace(x)).Count() == 0) {
+                    errors.Add(Helpers.MissingRequiredField("SearchFields"));
+                }
+
+                if (ruleCustomVariable.SearchWords.Where(x => !String.IsNullOrWhiteSpace(x)).Count() == 0) {
+                    errors.Add(Helpers.MissingRequiredField("SearchWords"));
+                }
+
+                if (String.IsNullOrWhiteSpace(ruleCustomVariable.AddText)) {
+                    errors.Add(Helpers.MissingRequiredField("AddText"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-CustomVariable-AddText";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleCustomVariable);
+                break;
+
+            case "clearcustomvariable":
+                if (String.IsNullOrWhiteSpace(ruleClearCustomVariable.Name)) {
+                    errors.Add(Helpers.MissingRequiredField("CustomVariableName"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-CustomVariable-Name";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleClearCustomVariable);
+                break;
+
+            case "delete":
+                break;
+
+            case "externalapp":
+                if (String.IsNullOrWhiteSpace(ruleExternalApp.PathToExe)) {
+                    errors.Add(Helpers.MissingRequiredField("ExternalApp"));
+                    if (String.IsNullOrWhiteSpace(focus)) {
+                        focus = "workflow-ExternalApp-PathToExe";
+                    }
+                }
+
+                WorkflowItem.Rule = Helpers.SerializeObject(ruleExternalApp);
+                break;
+        }
+
+        if (errors.Count > 0) {
+            Model.ErrorMessages(errors);
+            if (!String.IsNullOrWhiteSpace(focus)) {
+                switch (focus) {
+                    case "emailBody":
+                        await emailBodyEditor.SetFocus();
+                        break;
+
+                    default:
+                        await Helpers.DelayedFocus(focus);
+                        break;
+                }
+            }
+            return;
+        }
+
+        if (OnEditComplete != null){
+            OnEditComplete.DynamicInvoke(WorkflowItem);
+        }
+
+        Close();
+    }
+
+    protected async Task TestCSharpCode(){
+        _codeResult = false;
+        _codeResults = "";
+        var code = await _standaloneCodeEditor_CSharp.GetValue();
+
+        var plugin = Helpers.ConvertCodeToPlugin(code);
+
+        if (plugin != null){
+            plugin.Type = "Workflow";
+            var result = await Helpers.ExecutePlugin(plugin, [Model.User, new DataObjects.WorkflowProcessing()]);
+
+            _codeResult = result.Result;
+
+            _codeResults = Helpers.PluginResultToString(result, true);
+
+            if (result.Objects != null && result.Objects.Count > 0){
+                try {
+                    var user = Helpers.DeserializeJsonDocumentObject<DataObjects.User>(result.Objects[0]);
+                    if (user != null){
+                        await Helpers.ConsoleLog("User", user);
+                    }
+                }
+                catch { }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    protected async Task TestPlugin(){
+        _pluginResult = false;
+        _pluginResults = "";
+
+        if (_plugin != null){
+            // Make a copy of the plugin to execute.
+            var pluginCopy = Helpers.DuplicateObject<Plugin>(_plugin);
+
+            if (pluginCopy != null){
+                var result = await Helpers.ExecutePlugin(pluginCopy, [Model.User, new DataObjects.WorkflowProcessing()]);
+
+                _pluginResult = result.Result;
+                _pluginResults = Helpers.PluginResultToString(result);
+
+                if (result.Objects != null && result.Objects.Count > 0){
+                    try {
+                        var user = Helpers.DeserializeJsonDocumentObject<DataObjects.User>(result.Objects[0]);
+                        if (user != null){
+                            await Helpers.ConsoleLog("User", user);
+                        }
+                    }
+                catch { }
+            }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    protected void UpdateRuleObjects(){
+        var rClearCustomVariable = Helpers.DeserializeObject<DataObjects.WorkflowClearCustomVariable>(WorkflowItem.Rule);
+        var rCSharp = Helpers.DeserializeObject<DataObjects.WorkflowCSharp>(WorkflowItem.Rule);
+        var rCustomVariable = Helpers.DeserializeObject<DataObjects.WorkflowCustomVariable>(WorkflowItem.Rule);
+        var rEmail = Helpers.DeserializeObject<DataObjects.WorkflowEmail>(WorkflowItem.Rule);
+        var rEmailApproval = Helpers.DeserializeObject<DataObjects.WorkflowEmailApproval>(WorkflowItem.Rule);
+        var rExternalApp = Helpers.DeserializeObject<DataObjects.WorkflowExternalApp>(WorkflowItem.Rule);
+        var rFilter = Helpers.DeserializeObject<DataObjects.WorkflowFilter>(WorkflowItem.Rule);
+
+        if (rClearCustomVariable != null) {
+            ruleClearCustomVariable = rClearCustomVariable;
+        }
+
+        if (rCSharp != null) {
+            ruleCSharp = rCSharp;
+        }
+
+        if (rCustomVariable != null) {
+            ruleCustomVariable = rCustomVariable;
+        }
+
+        if (rEmail != null) {
+            ruleEmail = rEmail;
+        }
+
+        if (rEmailApproval != null) {
+            ruleEmailApproval = rEmailApproval;
+        }
+
+        if (rExternalApp != null) {
+            ruleExternalApp = rExternalApp;
+        }
+
+        if (rFilter != null) {
+            ruleFilter = rFilter;
+        }
+
+        var workflowType = Helpers.StringLower(WorkflowItem.Type);
+
+        // perform any special updates
+        switch (workflowType) {
+            case "csharp":
+                if (_standaloneCodeEditor_CSharp != null ) {
+                    _standaloneCodeEditor_CSharp.SetValue(ruleCSharp.Code);
+                }
+                break;
+
+            case "email":
+            case "emailapproval":
+                if (emailBodyEditor != null){
+                    emailBodyEditor.SetHTML(ruleEmail.Body);
+                }
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    protected void UpdatedEditor_CSharp(BlazorMonaco.Editor.ModelContentChangedEvent e)
+    {
+        _timer_CSharpChanged.Stop();
+        _timer_CSharpChanged.Start();
+    }
+
+    protected void UpdateTimerCSharpChanged(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        var task = Task.Run(async () =>
+        {
+            ruleCSharp.Code = await _standaloneCodeEditor_CSharp.GetValue();
+            StateHasChanged();
+        });
+    }
+}

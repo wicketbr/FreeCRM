@@ -1,0 +1,476 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@inject Radzen.DialogService DialogService
+
+@if (_errors.Any()) {
+    if (InDialog) {
+        <div class="mb-2">
+            <button type="button" class="btn btn-dark" @onclick="Close">
+                <Language Tag="Close" IncludeIcon="true" />
+            </button>
+        </div>
+    }
+
+    <Messages MessageItems="_errors" Error="true" />
+} else {
+    switch (_action) {
+        case "reprocess":
+            if (_workflow != null) {
+                bool wasScheduled = _workflow.WorkScheduled.HasValue;
+
+                <div class="alert @(wasScheduled ? "alert-warning" : "alert-danger")">
+                    <h2>
+                        @if (wasScheduled) {
+                            <Language Tag="ReProcessWorkflowItem" />    
+                        } else {
+                            <Language Tag="ProcessWorkflowItem" />
+                        }
+                    </h2>
+
+                    <h3>
+                        @if (wasScheduled) {
+                            <Language Tag="ReProcessWorkflowItemScheduledWarning" />
+                        } else {
+                            <Language Tag="ReProcessWorkflowItemNeverScheduledWarning" />
+                        }
+                    </h3>
+
+                    <div class="flexlist mb-2">
+                        <div class="flexrow">
+                            <div class="label right">
+                                <div><Language Tag="WorkflowId" /></div>
+                                <div><Language Tag="Workflow" /></div>
+                                <div><Language Tag="WorkflowScheduled" /></div>
+                                <div><Language Tag="WorkflowStarted" /></div>
+                                <div><Language Tag="WorkflowCompleted" /></div>
+                            </div>
+
+                            <div class="value ms-2">
+                                <div>@_workflow.WorkflowId</div>
+                                <div>@_workflow.Name</div>
+                                <div>@((MarkupString)Helpers.FormatDateTime(_workflow.WorkScheduled))</div>
+                                <div>@((MarkupString)Helpers.FormatDateTime(_workflow.WorkStarted))</div>
+                                <div>@((MarkupString)Helpers.FormatDateTime(_workflow.WorkCompleted))</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="workflow-QuerystringValues">
+                            <Language Tag="QuerystringValues" />
+                        </label>
+                        <input type="text"
+                            id="workflow-QuerystringValues"
+                            class="form-control"
+                            @bind="QueryStringValues" />
+                    </div>
+
+                    @if (!String.IsNullOrWhiteSpace(_workflow.Rule)) {
+                        <div class="mb-2">
+                            <div><strong><Language Tag="Rule" /></strong>:</div>
+                            <div class="task-rule border rounded p-2">
+                                <pre>@Helpers.FormatJson(_workflow.Rule)</pre>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-dark" @onclick="ReprocessWorkflowCancel">
+                            <Language Tag="Cancel" IncludeIcon="true" />
+                        </button>
+
+                        <button type="button"
+                                class="btn @(wasScheduled ? "btn-warning" : "btn-danger")"
+                                @onclick="ReprocessWorkflowGo">
+                            @if (wasScheduled) {
+                                <Language Tag="ReProcess" />
+                            } else {
+                                <Language Tag="Process" />
+                            }
+                        </button>
+                    </div>
+
+                </div>
+            }
+            break;
+
+        case "reprocessing":
+            <Language Tag="ProcessingWait" />
+            break;
+
+        case "closing":
+            break;
+
+        default:
+            <div class="mb-2 fixed-dialog-buttons">
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="@(InDialog ? "btn-group" : "btn-group btn-group-sm")" role="group">
+                        @if (InDialog) {
+                            <button type="button" class="btn btn-dark" @onclick="Close">
+                                <Language Tag="Close" IncludeIcon="true" />
+                            </button>
+                        }
+
+                        <button class="btn btn-dark"
+                                id="btn-zoom-in"
+                                @onclick="@(() => WorkflowEngine.WorkflowsZoomIn(_elementId))"
+                                disabled="@(Model.User.UserPreferences.WorkflowsZoom == 4)">
+                            <Language Tag="ZoomIn" IncludeIcon="true" />
+                        </button>
+                        <button class="btn btn-dark"
+                                id="btn-zoom-out"
+                                @onclick="@(() => WorkflowEngine.WorkflowsZoomOut(_elementId))"
+                                disabled="@(Model.User.UserPreferences.WorkflowsZoom == 0.3)">
+                            <Language Tag="ZoomOut" IncludeIcon="true" />
+                        </button>
+                        <button class="btn btn-dark"
+                                id="btn-zoom-reset"
+                                @onclick="@(() => WorkflowEngine.WorkflowsZoomReset(_elementId))"
+                                disabled="@(Model.User.UserPreferences.WorkflowsZoom == 1)">
+                            <Language Tag="ZoomReset" IncludeIcon="true" />
+                        </button>
+                    </div>
+
+                    <div class="@(InDialog ? "btn-group" : "btn-group btn-group-sm") ms-2" role="group">
+                        <div class="@(InDialog ? "btn-group" : "btn-group btn-group-sm")">
+                            <div class="input-group-append">
+                                <span class="input-group-text">
+                                    <input type="range"
+                                           aria-label="@Helpers.Text("WorkflowZoomLevel")"
+                                           id="zoom-range-input"
+                                           class="custom-range"
+                                           min="0.3"
+                                           max="4"
+                                           step="0.1"
+                                           @bind="Model.User.UserPreferences.WorkflowsZoom"
+                                           @bind:event="oninput"
+                                           @bind:after="@(() => WorkflowEngine.WorkflowsUpdatedZoom(_elementId))">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            break;
+    }
+}
+
+<div style="@(String.IsNullOrWhiteSpace(_action) ? "" : "display:none;")">
+    <div id="@_elementId" class="mermaid editor wf-canvas" style="@ElementStyle"></div>
+</div>
+
+@code {
+    [Parameter]
+    public string QueryStringValues { get; set; } = String.Empty;
+
+    [Parameter]
+    public string Diagram { get; set; } = String.Empty;
+
+    [Parameter]
+    public bool EditMode { get; set; }
+
+    [Parameter]
+    public Guid ParentItemId { get; set; }
+
+    [Parameter]
+    public Guid DataItemId { get; set; }
+
+    [Parameter]
+    public List<DataObjects.Workflow> WorkflowOrphans { get; set; } = new List<DataObjects.Workflow>();
+
+    [Parameter]
+    public List<DataObjects.Workflow> Workflows { get; set; } = new List<DataObjects.Workflow>();
+
+    [Parameter]
+    public List<DataObjects.Workflow>? WorkflowData { get; set; }
+
+    [Parameter]
+    public string WorkflowType { get; set; } = String.Empty;
+
+    [Parameter]
+    public bool InDialog { get; set; }
+
+    protected string _action = String.Empty;
+    protected string _diagram = String.Empty;
+    protected string _elementId = String.Empty;
+    protected List<string> _errors = new List<string>();
+    protected bool _loadedData = false;
+    protected DataObjects.Workflow? _workflow;
+
+    public void Dispose()
+    {
+        Model.OnChange -= StateHasChanged;
+        Model.OnDotNetHelperHandler -= OnDotNetHelperHandler;
+        Model.OnSignalRUpdate -= SignalRUpdate;
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += StateHasChanged;
+        Model.OnDotNetHelperHandler += OnDotNetHelperHandler;
+        Model.OnSignalRUpdate += SignalRUpdate;
+        _elementId = "workflows-" + Guid.NewGuid().ToString().Replace("-", "").ToLower();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_diagram != Diagram) {
+            _diagram = Diagram;
+
+            await RenderWorkflowDiagram();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // if (firstRender) {
+        // }
+
+        if (Model.Loaded && Model.LoggedIn && !_loadedData) {
+            _loadedData = true;
+
+            if (!String.IsNullOrWhiteSpace(_diagram)) {
+                await RenderWorkflowDiagram();
+            } else {
+                await RenderWorkflowDiagramFromData();
+            }
+        }
+    }
+
+    protected void Close()
+    {
+        _action = "closing";
+        StateHasChanged();
+        Model.DialogOpen = false;
+        DialogService.Close();
+    }
+
+    protected string ElementStyle {
+        get {
+            //string output = "overflow:hidden; user-select: none; touch-action: none;";
+            string output = "overflow:hidden; user-select: none; touch-action: none;";
+
+            if (!EditMode) {
+                output += " cursor:move;";
+            }
+
+            return output;
+        }
+    }
+
+    protected async void OnDotNetHelperHandler(List<string> messages)
+    {
+        if (messages.Any()) {
+            var action = messages[0];
+
+            string workflowItem = String.Empty;
+
+            if (messages.Count > 1) {
+                workflowItem += messages[1];
+            }
+
+            switch (Helpers.StringLower(action)) {
+                case "reprocessworkflow":
+                    await ReprocessWorkflow(workflowItem);
+                    break;
+
+                case "workflows":
+                    switch (Helpers.StringLower(workflowItem)) {
+                        case "copyobject":
+                            string workflowId = String.Empty;
+                            if (messages.Count > 2) {
+                                workflowId = messages[2];
+                            }
+
+                            string objectIndex = String.Empty;
+                            if (messages.Count > 3) {
+                                objectIndex = messages[3];
+                            }
+
+                            string objectAsString = String.Empty;
+
+                            if (WorkflowData != null && !String.IsNullOrWhiteSpace(workflowId) && !String.IsNullOrWhiteSpace(objectIndex)) {
+                                var workflowProcess = WorkflowData.FirstOrDefault(x => x.WorkflowId.ToString() == workflowId);
+                                if (workflowProcess != null && workflowProcess.State != null && workflowProcess.State.Objects != null) {
+                                    if (Helpers.IsInt(objectIndex)) {
+                                        var index = Convert.ToInt32(objectIndex);
+
+                                        if (workflowProcess.State.Objects.Count > index) {
+                                            var o = workflowProcess.State.Objects.ElementAt(index);
+
+
+
+                                            try {
+                                                objectAsString += o.Value.ToString();
+                                            } catch { }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!String.IsNullOrEmpty(objectAsString)) {
+                                await Helpers.CopyToClipboard(Helpers.FormatJson(objectAsString), true);
+                            } else {
+                                Model.ErrorMessage(Helpers.Text("UnableToCopyObjectToClipboard"), false, true);
+                            }
+                            break;
+                    }
+                    break;
+            }
+        }
+    }
+
+    protected async Task RenderWorkflowDiagram()
+    {
+        if (!String.IsNullOrWhiteSpace(_diagram)) {
+            await WorkflowEngine.RenderWorkflowDiagram(_elementId, _diagram, Model.User.UserPreferences.WorkflowsZoom);
+
+            StateHasChanged();
+        }
+    }
+
+    protected async Task RenderWorkflowDiagramFromData()
+    {
+        _diagram = WorkflowEngine.RenderWorkflows(
+            WorkflowData,
+            Workflows,
+            WorkflowOrphans,
+            DataObjects.WorkflowRenderMode.Data,
+            true,
+            true,
+            Model.User
+        );
+
+        await RenderWorkflowDiagram();
+    }
+
+    protected async Task ReprocessWorkflow(string? id)
+    {
+        if (WorkflowData != null && !String.IsNullOrWhiteSpace(id)) {
+            _workflow = WorkflowData.FirstOrDefault(x => x.WorkflowId.ToString() == id);
+
+            if (_workflow != null) {
+                _action = "reprocess";
+                StateHasChanged();
+            }
+        }
+    }
+
+    protected void ReprocessWorkflowCancel()
+    {
+        _action = String.Empty;
+        StateHasChanged();
+    }
+
+    protected async Task ReprocessWorkflowGo()
+    {
+        if (_workflow != null) {
+            _action = "reprocessing";
+            StateHasChanged();
+
+            Model.ClearMessages();
+
+            var request = new DataObjects.ReProcessWorkflows { 
+                TenantId = Model.TenantId,
+                ParentItemId = ParentItemId,
+                DataItemId = DataItemId,
+                QueryStringValues = QueryStringValues,
+                WorkflowId = _workflow.WorkflowId,
+                WorkflowType = WorkflowType,
+            };
+
+            var result = await Helpers.GetOrPost<DataObjects.WorkflowProcessing>("api/Data/ReprocessWorkflow", request);
+
+            if (result != null) {
+                if (result.ActionResponse.Result) {
+                    _diagram = String.Empty;
+                    _action = String.Empty;
+                    StateHasChanged();
+
+                    await RenderWorkflowDiagramFromData();
+                } else if (result.ActionResponse.Messages.Any()) {
+                    Model.ErrorMessages(result.ActionResponse.Messages);
+                } else {
+                    Model.UnknownError();
+                }
+            } else {
+                Model.UnknownError();
+            }
+        }
+    }
+
+    protected async void SignalRUpdate(DataObjects.SignalRUpdate update)
+    {
+        if (InDialog && update.UpdateType == DataObjects.SignalRUpdateType.WorkflowProcessing) {
+            bool renderUpdates = false;
+
+            switch (update.Message.ToLower()) {
+                case "deleted":
+                    if (Workflows.Any(x => x.WorkflowId == update.ItemId) || (WorkflowData != null && WorkflowData.Any(x => x.WorkflowId == update.ItemId))) {
+                        Workflows = Workflows.Where(x => x.WorkflowId != update.ItemId).ToList();
+
+                        if (WorkflowData != null) {
+                            WorkflowData = WorkflowData.Where(x => x.WorkflowId != update.ItemId).ToList();
+                        }
+
+                        renderUpdates = true;
+                    }
+                    break;
+
+                case "saved":
+                    if (WorkflowData == null) {
+                        WorkflowData = new List<DataObjects.Workflow>();
+                    }
+
+                    var wfItem = Helpers.DeserializeObject<DataObjects.WorkflowProcessing>(update.ObjectAsString);
+                    if (wfItem != null && Workflows.Any(x => x.WorkflowId == wfItem.WorkflowId)) {
+                        var wf = WorkflowData.FirstOrDefault(x => x.WorkflowId == wfItem.WorkflowId);
+                        if (wf != null) {
+                            wf.State = wfItem.State;
+                            wf.Result = wfItem.Result;
+                            wf.Success = wfItem.Success;
+                            wf.WorkCompleted = wfItem.WorkCompleted;
+                            wf.WorkScheduled = wfItem.WorkScheduled;
+                            wf.WorkStarted = wfItem.WorkStarted;
+                        } else {
+                            WorkflowData.Add(new DataObjects.Workflow {
+                                ActionResponse = wfItem.ActionResponse,
+                                Added = wfItem.Added,
+                                AddedBy = wfItem.AddedBy,
+                                Deleted = wfItem.Deleted,
+                                DeletedAt = wfItem.DeletedAt,
+                                Enabled = wfItem.Enabled,
+                                ParentItemId = wfItem.ParentItemId,
+                                LastModified = wfItem.LastModified,
+                                LastModifiedBy = wfItem.LastModifiedBy,
+                                Name = wfItem.Name,
+                                OnComplete = wfItem.OnComplete,
+                                OnFailure = wfItem.OnFailure,
+                                OnSuccess = wfItem.OnSuccess,
+                                ParentAction = wfItem.ParentAction,
+                                ParentWorkflowId = wfItem.ParentWorkflowId,
+                                Result = wfItem.Result,
+                                Rule = wfItem.Rule,
+                                State = wfItem.State,
+                                Success = wfItem.Success,
+                                TenantId = wfItem.TenantId,
+                                Type = wfItem.Type,
+                                WorkCompleted = wfItem.WorkCompleted,
+                                WorkflowId = wfItem.WorkflowId,
+                                WorkScheduled = wfItem.WorkScheduled,
+                                WorkStarted = wfItem.WorkStarted,
+                                WorkflowType = wfItem.WorkflowType,
+                            });
+                        }
+
+                        renderUpdates = true;
+                    }
+                    break;
+            }
+
+            if (renderUpdates) {
+                await RenderWorkflowDiagramFromData();
+            }
+        }
+    }
+}

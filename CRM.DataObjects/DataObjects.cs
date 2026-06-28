@@ -72,6 +72,12 @@ public partial class DataObjects
         public bool ShowTenantListingWhenMissingTenantCode { get; set; }
     }
 
+    public class AttachmentOptions
+    {
+        public string? AttachmentFormat { get; set; }
+        public string? AttachmentFormatPdfDocumentSize { get; set; }
+    }
+
     public partial class Authenticate
     {
         public string? Username { get; set; }
@@ -441,6 +447,13 @@ public partial class DataObjects
         public string? LastModifiedBy { get; set; }
     }
 
+    public class SimpleList
+    {
+        public Guid Id { get; set; }
+        public string Value { get; set; } = "";
+        public string Label { get; set; } = "";
+    }
+
     public partial class SimplePost
     {
         public string? SingleItem { get; set; }
@@ -646,6 +659,9 @@ public partial class DataObjects
         public string? LastView { get; set; }
         public bool StickyMenus { get; set; }
         public string? Theme { get; set; }
+        // {{ModuleItemStart:Workflows}}
+        public double WorkflowsZoom { get; set; } = 1.0;
+        // {{ModuleItemEnd:Workflows}}
     }
 
     public partial class UserTenant

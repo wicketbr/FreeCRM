@@ -169,6 +169,12 @@
             Model.GloballyEnabledModules = globallyEnabledModules;
         }
 
+        // {{ModuleItemStart:Workflows}}
+        if (!WorkflowEngine.Initialized) {
+            WorkflowEngine.Init(jsRuntime, Model);
+        }
+        // {{ModuleItemEnd:Workflows}}
+
         if (String.IsNullOrWhiteSpace(Model.Fingerprint)) {
             await Helpers.GetFingerprint();
         }
@@ -755,6 +761,14 @@
                         StateHasChanged();
                     }
                     break;
+
+                // {{ModuleItemStart:Workflows}}
+                case DataObjects.SignalRUpdateType.Workflow:
+                    break;
+
+                case DataObjects.SignalRUpdateType.WorkflowProcessing:
+                    break;
+                // {{ModuleItemEnd:Workflows}}
 
                 default:
                     await Helpers.ProcessSignalRUpdateApp(update);
