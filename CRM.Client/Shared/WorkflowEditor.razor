@@ -73,7 +73,7 @@
                     <legend>
                         <Language Tag="CSharpAdditionalAssemblies" />
 
-                        <Popover_App Text="@Helpers.Text("CSharpAdditionalAssembliesNotes")" IncludeButton="false" />
+                        <Popover Text="@Helpers.Text("CSharpAdditionalAssembliesNotes")" IncludeButton="false" />
 
                         @if (!ReadOnly) {
                             <button type="button"
@@ -103,7 +103,7 @@
                     <fieldset>
                         <legend class="mb-2">
                             <Language Tag="CSharpCode" />
-                            <Popover_App Text="@Helpers.Text("CSharpCodeNotes")" IncludeButton="false" />
+                            <Popover Text="@Helpers.Text("CSharpCodeNotes")" IncludeButton="false" />
 
                             <button type="button" class="btn btn-xs btn-primary ms-1" @onclick="SampleCSharpCode">
                                 <Language Tag="SampleCode" IncludeIcon="true" />
@@ -162,15 +162,19 @@
                 Helpers.RemoveEmptyListItems(ruleEmail.Bcc).Count;
 
             <div class="mb-2">
-                <label for="workflow-Email-From">
-                    <Language Tag="From" Required="true" />
-                </label>
-                <input type="text"
-                        class="@Helpers.MissingValue(ruleEmail.From, "form-control")"
-                        id="workflow-Email-From"
-                        disabled="@(ReadOnly)"
-                        @bind="ruleEmail.From"
-                        @bind:event="oninput" />
+                @if (!String.IsNullOrWhiteSpace(Model.BlazorDataModelLoader.FixedReplyEmailAddress)) {
+                    <strong><Language Tag="From" /></strong><span>: </span><span>@Model.BlazorDataModelLoader.FixedReplyEmailAddress</span>
+                } else {
+                    <label for="workflow-Email-From">
+                        <Language Tag="From" Required="true" />
+                    </label>
+                    <input type="text"
+                            class="@Helpers.MissingValue(ruleEmail.From, "form-control")"
+                            id="workflow-Email-From"
+                            disabled="@(ReadOnly)"
+                            @bind="ruleEmail.From"
+                            @bind:event="oninput" />
+                }
             </div>
 
             <div class="@(recipients == 0 && !ReadOnly ? "m-r" : "")">
@@ -679,7 +683,7 @@
     protected async Task SampleCSharpCode(){
         ruleCSharp.Code = 
 """"
-using nForm;
+using CRM;
 using System;
 
 namespace MyCode;
@@ -747,10 +751,12 @@ public class MyClass {
                 ruleEmail.Cc = Helpers.RemoveEmptyListItems(ruleEmail.Cc);
                 ruleEmail.Bcc = Helpers.RemoveEmptyListItems(ruleEmail.Bcc);
 
-                if (String.IsNullOrWhiteSpace(ruleEmail.From)){
-                    errors.Add(Helpers.MissingRequiredField("From"));
-                    if (String.IsNullOrWhiteSpace(focus)) {
-                        focus = "workflow-Email-From";
+                if (String.IsNullOrWhiteSpace(Model.BlazorDataModelLoader.FixedReplyEmailAddress)) {
+                    if (String.IsNullOrWhiteSpace(ruleEmail.From)){
+                        errors.Add(Helpers.MissingRequiredField("From"));
+                        if (String.IsNullOrWhiteSpace(focus)) {
+                            focus = "workflow-Email-From";
+                        }
                     }
                 }
 
@@ -786,10 +792,12 @@ public class MyClass {
                 ruleEmailApproval.IncludeAttachments = ruleEmail.IncludeAttachments;
                 ruleEmailApproval.IncludeItemAsAttachment = ruleEmail.IncludeItemAsAttachment;
 
-                if (String.IsNullOrWhiteSpace(ruleEmailApproval.From)){
-                    errors.Add(Helpers.MissingRequiredField("From"));
-                    if (String.IsNullOrWhiteSpace(focus)) {
-                        focus = "workflow-Email-From";
+                if (String.IsNullOrWhiteSpace(Model.BlazorDataModelLoader.FixedReplyEmailAddress)) {
+                    if (String.IsNullOrWhiteSpace(ruleEmailApproval.From)){
+                        errors.Add(Helpers.MissingRequiredField("From"));
+                        if (String.IsNullOrWhiteSpace(focus)) {
+                            focus = "workflow-Email-From";
+                        }
                     }
                 }
 

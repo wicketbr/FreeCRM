@@ -48,7 +48,6 @@
     {
         if (firstRender) {
             Model.TenantCodeFromUrl = TenantCode;
-            Model.OnChange += OnDataModelUpdated;
         }
 
         if (Model.Loaded) {
@@ -78,8 +77,6 @@
 
     protected void OnDataModelUpdated()
     {
-        Console.WriteLine("OnDataModelUpdated - Test Page");
-
         if (Model.View == _pageName) {
             StateHasChanged();
         }

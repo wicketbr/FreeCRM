@@ -140,7 +140,7 @@ public static class WorkflowEngine
         var output = new List<DataObjects.SimpleList> {
             new DataObjects.SimpleList {
                 Value = "Email",
-                Label = Helpers.Text("SubmitTaskTypeEmail"),
+                Label = Helpers.Text("WorkflowTypeEmail"),
             },
             new DataObjects.SimpleList {
                 Value = "EmailApproval",
@@ -152,23 +152,23 @@ public static class WorkflowEngine
             },
             new DataObjects.SimpleList {
                 Value = "Filter",
-                Label = Helpers.Text("SubmitTaskTypeFilter"),
+                Label = Helpers.Text("WorkflowTypeFilter"),
             },
             new DataObjects.SimpleList {
                 Value = "CustomVariable",
-                Label = Helpers.Text("SubmitTaskTypeCustomVariable"),
+                Label = Helpers.Text("WorkflowTypeCustomVariable"),
             },
             new DataObjects.SimpleList {
                 Value = "ClearCustomVariable",
-                Label = Helpers.Text("SubmitTaskTypeClearCustomVariable"),
+                Label = Helpers.Text("WorkflowTypeClearCustomVariable"),
             },
             new DataObjects.SimpleList {
                 Value = "Delete",
-                Label = Helpers.Text("SubmitTaskTypeDelete"),
+                Label = Helpers.Text("WorkflowTypeDelete"),
             },
             new DataObjects.SimpleList {
                 Value = "ExternalApp",
-                Label = Helpers.Text("SubmitTaskTypeExternalApp"),
+                Label = Helpers.Text("WorkflowTypeExternalApp"),
             },
         };
 

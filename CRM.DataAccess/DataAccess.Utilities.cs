@@ -39,6 +39,7 @@ public partial interface IDataAccess
     T? DeserializeObject<T>(string? SerializedObject);
     T? DeserializeObjectFromXmlOrJson<T>(string? SerializedObject);
     T? DuplicateObject<T>(object? o);
+    string? FixedReplyEmailAddress { get; }
     string FormatStringAsGuid(string input);
     string GenerateRandomCode(int Length);
     DataObjects.AuthenticationProviders GetAuthenticationProviders();
@@ -936,6 +937,22 @@ public partial class DataAccess
         return output;
     }
 
+    public string? FixedReplyEmailAddress {
+        get {
+            string? output = null;
+
+            var appSettings = GetApplicationSettings();
+
+            if (!String.IsNullOrWhiteSpace(appSettings.DefaultReplyToAddress)) {
+                if (!appSettings.MailServerConfig.AllowSendingFromIndividualEmailAddresses) {
+                    output = appSettings.DefaultReplyToAddress;
+                }
+            }
+
+            return output;
+        }
+    }
+
     private string FormatAppointmentTitle(string title, DateTime start, DateTime end, bool allDay)
     {
         string output = String.Empty;
@@ -1030,11 +1047,13 @@ public partial class DataAccess
         output.ApplicationUrl = ApplicationURL;
         output.AppSettings = AppSettings;
         output.AuthenticationProviders = _authenticationProviders;
-        output.DefaultLanguage = GetDefaultLanguage();
         output.CultureCode = "en-US";
         output.CultureCodes = GetLanguageCultureCodes();
+        output.DefaultLanguage = GetDefaultLanguage();
+        output.FixedReplyEmailAddress = FixedReplyEmailAddress;
         output.Languages = new List<DataObjects.Language>();
         output.LoggedIn = false;
+        output.PathToChromiumBrowser = ConfigurationHelper != null ? StringValue(ConfigurationHelper.PathToChromiumBrowser) : String.Empty;
         output.Plugins = GetPluginsWithoutCode();
         output.Released = Released;
         output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;
@@ -1102,11 +1121,13 @@ public partial class DataAccess
             output.ApplicationUrl = ApplicationURL;
             output.AppSettings = AppSettings;
             output.AuthenticationProviders = _authenticationProviders;
-            output.DefaultLanguage = GetDefaultLanguage();
             output.CultureCode = "en-US";
             output.CultureCodes = GetLanguageCultureCodes();
+            output.DefaultLanguage = GetDefaultLanguage();
+            output.FixedReplyEmailAddress = FixedReplyEmailAddress;
             output.Languages = languages;
             output.LoggedIn = true;
+            output.PathToChromiumBrowser = ConfigurationHelper != null ? StringValue(ConfigurationHelper.PathToChromiumBrowser) : String.Empty;
             output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
             output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;
@@ -1146,11 +1167,13 @@ public partial class DataAccess
             output.ApplicationUrl = ApplicationURL;
             output.AppSettings = AppSettings;
             output.AuthenticationProviders = _authenticationProviders;
-            output.DefaultLanguage = GetDefaultLanguage();
             output.CultureCode = "en-US";
             output.CultureCodes = GetLanguageCultureCodes();
+            output.DefaultLanguage = GetDefaultLanguage();
+            output.FixedReplyEmailAddress = FixedReplyEmailAddress;
             output.Languages = tenantLanguages;
             output.LoggedIn = false;
+            output.PathToChromiumBrowser = ConfigurationHelper != null ? StringValue(ConfigurationHelper.PathToChromiumBrowser) : String.Empty;
             output.Plugins = GetPluginsWithoutCode();
             output.Released = Released;
             output.ServerReferences = ConfigurationHelper != null && ConfigurationHelper.ServerReferences != null ? ConfigurationHelper.ServerReferences : null;

@@ -187,7 +187,8 @@ namespace CRM
                 },
                 GloballyDisabledModules = disabled,
                 GloballyEnabledModules = enabled,
-                ServerReferences = serverReferences,
+               PathToChromiumBrowser = String.Empty + builder.Configuration.GetValue<string>("PathToChromiumBrowser"),
+               ServerReferences = serverReferences,
             }, builder);
 
             builder.Services.AddTransient<IConfigurationHelper>(x => ActivatorUtilities.CreateInstance<ConfigurationHelper>(x, configurationHelperLoader));

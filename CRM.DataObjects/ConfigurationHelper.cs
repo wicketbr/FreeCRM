@@ -51,6 +51,12 @@ public partial class ConfigurationHelper : IConfigurationHelper
         }
     }
 
+    public string? PathToChromiumBrowser {
+        get {
+            return _loader.PathToChromiumBrowser;
+        }
+    }
+
     public List<string>? ServerReferences {
         get {
             return _loader.ServerReferences;
@@ -67,6 +73,7 @@ public partial interface IConfigurationHelper
     public string? CookiePrefix { get; }
     List<string>? GloballyDisabledModules { get; }
     List<string>? GloballyEnabledModules { get; }
+    public string? PathToChromiumBrowser { get; }
     public List<string>? ServerReferences { get; }
 }
 
@@ -79,6 +86,7 @@ public partial class ConfigurationHelperLoader
     public string? CookiePrefix { get; set; }
     public List<string>? GloballyDisabledModules { get; set; }
     public List<string>? GloballyEnabledModules { get; set; }
+    public string? PathToChromiumBrowser { get; set; }
     public List<string>? ServerReferences { get; set; }
 }
 

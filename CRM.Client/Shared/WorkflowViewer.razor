@@ -179,10 +179,19 @@
     public List<DataObjects.Workflow> WorkflowOrphans { get; set; } = new List<DataObjects.Workflow>();
 
     [Parameter]
+    public EventCallback<List<DataObjects.Workflow>> WorkflowOrphansChanged { get; set; }
+
+    [Parameter]
     public List<DataObjects.Workflow> Workflows { get; set; } = new List<DataObjects.Workflow>();
 
     [Parameter]
+    public EventCallback<List<DataObjects.Workflow>> WorkflowsChanged { get; set; }
+
+    [Parameter]
     public List<DataObjects.Workflow>? WorkflowData { get; set; }
+
+    [Parameter]
+    public EventCallback<List<DataObjects.Workflow>?> WorkflowDataChanged { get; set; }
 
     [Parameter]
     public string WorkflowType { get; set; } = String.Empty;
@@ -195,6 +204,7 @@
     protected string _elementId = String.Empty;
     protected List<string> _errors = new List<string>();
     protected bool _loadedData = false;
+    protected string _moveWorkflow = String.Empty;
     protected DataObjects.Workflow? _workflow;
 
     public void Dispose()
@@ -263,19 +273,161 @@
         if (messages.Any()) {
             var action = messages[0];
 
-            string workflowItem = String.Empty;
+            string workflowAction = String.Empty;
 
             if (messages.Count > 1) {
-                workflowItem += messages[1];
+                workflowAction += messages[1];
             }
 
             switch (Helpers.StringLower(action)) {
                 case "reprocessworkflow":
-                    await ReprocessWorkflow(workflowItem);
+                    await ReprocessWorkflow(workflowAction);
                     break;
 
                 case "workflows":
-                    switch (Helpers.StringLower(workflowItem)) {
+                    switch (Helpers.StringLower(workflowAction)) {
+                        case "button":
+                            string buttonAction = String.Empty;
+
+                            if (messages.Count > 2){
+                                buttonAction += messages[2];
+                            }
+
+                            string element4 = String.Empty;
+                            if (messages.Count > 3){
+                                element4 += messages[3];
+                            }
+
+                            string element5 = String.Empty;
+                            if (messages.Count > 4){
+                                element5 += messages[4];
+                            }
+
+                            switch (Helpers.StringLower(buttonAction)) {
+                                case "addchild":
+                                    var workflowParent = WorkflowEngine.GetWorkflow(element5, Workflows, WorkflowOrphans);
+                                    if (workflowParent != null) {
+                                        // Add a new child to this for the correct type.
+                                        // When this gets saved the backend data access library will update the parent item as well.
+                                        await Helpers.EditWorkflow(new DataObjects.Workflow {
+                                            WorkflowId = Guid.NewGuid(),
+                                            TenantId = Model.TenantId,
+                                            ParentItemId = ParentItemId,
+                                            ParentWorkflowId = workflowParent.WorkflowId,
+                                            ParentAction = element4,
+                                            Enabled = true,
+                                            WorkflowType = "form",
+                                        }, WorkflowEditComplete);
+                                    }
+                                    break;
+
+                                case "copy":
+                                    var copyWorkflow = WorkflowEngine.GetWorkflow(element4, Workflows, WorkflowOrphans);
+                                    if (copyWorkflow != null){
+                                        await Helpers.CopyWorkflow(copyWorkflow);
+                                    }
+                                    break;
+
+                                case "delete":
+                                    // Hide the delete button and show the secondary confirm and delete buttons for this item.
+                                    // First, hide all other confirm buttons and make sure all delete buttons are shown, this resets everything.
+                                    await WorkflowEngine.ResetWorkflowDeleteConfirmationButtons();
+
+                                    // Next, hide just this delete button.
+                                    await Helpers.HideElementById(element4 + "-delete");
+
+                                    // Show these confirmation buttons.
+                                    await Helpers.ShowElementById(element4 + "-delete-cancel", "inline-block");
+                                    await Helpers.ShowElementById(element4 + "-delete-confirm", "inline-block");
+                                    break;
+
+                                case "delete-cancel":
+                                    await WorkflowEngine.ResetWorkflowDeleteConfirmationButtons();
+                                    break;
+
+                                case "delete-confirm":
+                                    await WorkflowEngine.ResetWorkflowDeleteConfirmationButtons();
+                                    WorkflowEngine.DeleteWorkflow(element4, Workflows, WorkflowOrphans);
+                                    await WorkflowDelegateUpdate();
+                                    await RenderWorkflowDiagramFromData();
+                                    break;
+
+                                case "edit":
+                                    var workflowEdit = WorkflowEngine.GetWorkflow(element4, Workflows, WorkflowOrphans);
+                                    if (workflowEdit != null){
+                                        await Helpers.EditWorkflow(workflowEdit, WorkflowEditComplete);
+                                    }
+                                    break;
+
+                                case "move":
+                                    // The the id of the item being moved.
+                                    if (_moveWorkflow == element4){
+                                        _moveWorkflow = String.Empty;
+                                        await Helpers.HideElementByClass("btn-move-target");
+                                    }else {
+                                        _moveWorkflow = element4;
+                                        await Helpers.ShowElementByClass("btn-move-target");
+
+                                        await Helpers.HideElementById(_moveWorkflow + "-move-success");
+                                        await Helpers.HideElementById(_moveWorkflow + "-move-complete");
+                                        await Helpers.HideElementById(_moveWorkflow + "-move-failure");
+
+                                        // You can't move an item to a child, so make sure to hide all child item move buttons.
+                                        await WorkflowsHideMoveButtonsOnChildren(element4);
+                                    }
+                                    break;
+
+                                case "move-here":
+                                    WorkflowEngine.MoveWorkflow(_moveWorkflow, element4, element5, Workflows, WorkflowOrphans);
+                                    await Helpers.HideElementByClass("btn-move-target");
+                                    await WorkflowDelegateUpdate();
+                                    await RenderWorkflowDiagramFromData();
+                                    break;
+
+                                case "paste":
+                                    var copiedWorkflow = await Helpers.GetCopiedWorkflow();
+
+                                    if (copiedWorkflow != null && copiedWorkflow.WorkflowId != Guid.Empty && copiedWorkflow.WorkflowId.ToString() != element4) {
+                                        var updateWorkflowItem = WorkflowEngine.GetWorkflow(element4, Workflows, WorkflowOrphans);
+                                        if (updateWorkflowItem != null){
+                                            // Update the properties that can be copied and pasted.
+                                            updateWorkflowItem.Name = copiedWorkflow.Name;
+                                            updateWorkflowItem.Type = copiedWorkflow.Type;
+                                            updateWorkflowItem.Rule = copiedWorkflow.Rule;
+                                            updateWorkflowItem.Enabled = copiedWorkflow.Enabled;
+
+                                            await WorkflowDelegateUpdate();
+                                            await RenderWorkflowDiagramFromData();
+                                        }
+                                    }
+
+                                    break;
+
+                                case "reprocess":
+                                    // Only used from the data view.
+                                    break;
+
+                                case "start":
+                                    await Helpers.EditWorkflow(new DataObjects.Workflow {
+                                        WorkflowId = Guid.NewGuid(),
+                                        TenantId = Model.TenantId,
+                                        ParentItemId = ParentItemId,
+                                        ParentWorkflowId = null,
+                                        Enabled = true,
+                                        WorkflowType = "form",
+                                    }, WorkflowEditComplete);
+                                    break;
+
+                                case "view":
+                                    var workflowView = WorkflowEngine.GetWorkflow(element4, Workflows, WorkflowOrphans);
+                                    if (workflowView != null) {
+                                        await Helpers.EditWorkflow(workflowView, null, true);
+                                    }
+                                    break;
+                            }
+
+                            break;
+
                         case "copyobject":
                             string workflowId = String.Empty;
                             if (messages.Count > 2) {
@@ -335,9 +487,9 @@
             WorkflowData,
             Workflows,
             WorkflowOrphans,
-            DataObjects.WorkflowRenderMode.Data,
-            true,
-            true,
+            EditMode ? DataObjects.WorkflowRenderMode.Editor : DataObjects.WorkflowRenderMode.Data,
+            !EditMode,
+            !EditMode,
             Model.User
         );
 
@@ -401,75 +553,152 @@
 
     protected async void SignalRUpdate(DataObjects.SignalRUpdate update)
     {
-        if (InDialog && update.UpdateType == DataObjects.SignalRUpdateType.WorkflowProcessing) {
-            bool renderUpdates = false;
+        switch (update.UpdateType) {
+            case DataObjects.SignalRUpdateType.Workflow:
+                // The workflows get reloaded by the main SignalR handler in the MainLayout, but we need to redraw them now.
+                var workflow = Helpers.DeserializeObject<DataObjects.Workflow>(update.ObjectAsString);
+                if (workflow != null && workflow.Type == "form" && workflow.ParentItemId == ParentItemId) {
+                    await RenderWorkflowDiagramFromData();
+                }
+                break;
 
-            switch (update.Message.ToLower()) {
-                case "deleted":
-                    if (Workflows.Any(x => x.WorkflowId == update.ItemId) || (WorkflowData != null && WorkflowData.Any(x => x.WorkflowId == update.ItemId))) {
-                        Workflows = Workflows.Where(x => x.WorkflowId != update.ItemId).ToList();
+            case DataObjects.SignalRUpdateType.WorkflowProcessing:
+                if (InDialog) {
+                    bool renderUpdates = false;
 
-                        if (WorkflowData != null) {
-                            WorkflowData = WorkflowData.Where(x => x.WorkflowId != update.ItemId).ToList();
-                        }
+                    switch (update.Message.ToLower()) {
+                        case "deleted":
+                            if (Workflows.Any(x => x.WorkflowId == update.ItemId) || (WorkflowData != null && WorkflowData.Any(x => x.WorkflowId == update.ItemId))) {
+                                Workflows = Workflows.Where(x => x.WorkflowId != update.ItemId).ToList();
 
-                        renderUpdates = true;
+                                if (WorkflowData != null) {
+                                    WorkflowData = WorkflowData.Where(x => x.WorkflowId != update.ItemId).ToList();
+                                }
+
+                                renderUpdates = true;
+                            }
+                            break;
+
+                        case "saved":
+                            if (WorkflowData == null) {
+                                WorkflowData = new List<DataObjects.Workflow>();
+                            }
+
+                            var wfItem = Helpers.DeserializeObject<DataObjects.WorkflowProcessing>(update.ObjectAsString);
+                            if (wfItem != null && Workflows.Any(x => x.WorkflowId == wfItem.WorkflowId)) {
+                                var wf = WorkflowData.FirstOrDefault(x => x.WorkflowId == wfItem.WorkflowId);
+                                if (wf != null) {
+                                    wf.State = wfItem.State;
+                                    wf.Result = wfItem.Result;
+                                    wf.Success = wfItem.Success;
+                                    wf.WorkCompleted = wfItem.WorkCompleted;
+                                    wf.WorkScheduled = wfItem.WorkScheduled;
+                                    wf.WorkStarted = wfItem.WorkStarted;
+                                } else {
+                                    WorkflowData.Add(new DataObjects.Workflow {
+                                        ActionResponse = wfItem.ActionResponse,
+                                        Added = wfItem.Added,
+                                        AddedBy = wfItem.AddedBy,
+                                        Deleted = wfItem.Deleted,
+                                        DeletedAt = wfItem.DeletedAt,
+                                        Enabled = wfItem.Enabled,
+                                        ParentItemId = wfItem.ParentItemId,
+                                        LastModified = wfItem.LastModified,
+                                        LastModifiedBy = wfItem.LastModifiedBy,
+                                        Name = wfItem.Name,
+                                        OnComplete = wfItem.OnComplete,
+                                        OnFailure = wfItem.OnFailure,
+                                        OnSuccess = wfItem.OnSuccess,
+                                        ParentAction = wfItem.ParentAction,
+                                        ParentWorkflowId = wfItem.ParentWorkflowId,
+                                        Result = wfItem.Result,
+                                        Rule = wfItem.Rule,
+                                        State = wfItem.State,
+                                        Success = wfItem.Success,
+                                        TenantId = wfItem.TenantId,
+                                        Type = wfItem.Type,
+                                        WorkCompleted = wfItem.WorkCompleted,
+                                        WorkflowId = wfItem.WorkflowId,
+                                        WorkScheduled = wfItem.WorkScheduled,
+                                        WorkStarted = wfItem.WorkStarted,
+                                        WorkflowType = wfItem.WorkflowType,
+                                    });
+                                }
+
+                                renderUpdates = true;
+                            }
+                            break;
                     }
+
+                    if (renderUpdates) {
+                        await RenderWorkflowDiagramFromData();
+                    }
+                }
+                break;
+        }
+    }
+
+    protected async Task WorkflowDelegateUpdate()
+    {
+        if (WorkflowsChanged.HasDelegate) {
+            await WorkflowsChanged.InvokeAsync(Workflows);
+        }
+
+        if (WorkflowOrphansChanged.HasDelegate) {
+            await WorkflowOrphansChanged.InvokeAsync(WorkflowOrphans);
+        }
+    }
+
+    protected async Task WorkflowEditComplete(DataObjects.Workflow workflow){
+        Workflows = Workflows.Where(x => x.WorkflowId != workflow.WorkflowId).ToList();
+        Workflows.Add(workflow);
+
+        var parentWorkflow = WorkflowEngine.GetWorkflow(workflow.ParentWorkflowId, Workflows, WorkflowOrphans);
+        if (parentWorkflow != null){
+            switch(workflow.ParentAction){
+                case "success":
+                    parentWorkflow.OnSuccess = workflow.WorkflowId;
                     break;
 
-                case "saved":
-                    if (WorkflowData == null) {
-                        WorkflowData = new List<DataObjects.Workflow>();
-                    }
+                case "failure":
+                    parentWorkflow.OnFailure = workflow.WorkflowId;
+                    break;
 
-                    var wfItem = Helpers.DeserializeObject<DataObjects.WorkflowProcessing>(update.ObjectAsString);
-                    if (wfItem != null && Workflows.Any(x => x.WorkflowId == wfItem.WorkflowId)) {
-                        var wf = WorkflowData.FirstOrDefault(x => x.WorkflowId == wfItem.WorkflowId);
-                        if (wf != null) {
-                            wf.State = wfItem.State;
-                            wf.Result = wfItem.Result;
-                            wf.Success = wfItem.Success;
-                            wf.WorkCompleted = wfItem.WorkCompleted;
-                            wf.WorkScheduled = wfItem.WorkScheduled;
-                            wf.WorkStarted = wfItem.WorkStarted;
-                        } else {
-                            WorkflowData.Add(new DataObjects.Workflow {
-                                ActionResponse = wfItem.ActionResponse,
-                                Added = wfItem.Added,
-                                AddedBy = wfItem.AddedBy,
-                                Deleted = wfItem.Deleted,
-                                DeletedAt = wfItem.DeletedAt,
-                                Enabled = wfItem.Enabled,
-                                ParentItemId = wfItem.ParentItemId,
-                                LastModified = wfItem.LastModified,
-                                LastModifiedBy = wfItem.LastModifiedBy,
-                                Name = wfItem.Name,
-                                OnComplete = wfItem.OnComplete,
-                                OnFailure = wfItem.OnFailure,
-                                OnSuccess = wfItem.OnSuccess,
-                                ParentAction = wfItem.ParentAction,
-                                ParentWorkflowId = wfItem.ParentWorkflowId,
-                                Result = wfItem.Result,
-                                Rule = wfItem.Rule,
-                                State = wfItem.State,
-                                Success = wfItem.Success,
-                                TenantId = wfItem.TenantId,
-                                Type = wfItem.Type,
-                                WorkCompleted = wfItem.WorkCompleted,
-                                WorkflowId = wfItem.WorkflowId,
-                                WorkScheduled = wfItem.WorkScheduled,
-                                WorkStarted = wfItem.WorkStarted,
-                                WorkflowType = wfItem.WorkflowType,
-                            });
-                        }
-
-                        renderUpdates = true;
-                    }
+                case "complete":
+                    parentWorkflow.OnComplete = workflow.WorkflowId;
                     break;
             }
+        }
 
-            if (renderUpdates) {
-                await RenderWorkflowDiagramFromData();
+        await WorkflowDelegateUpdate();
+
+        await RenderWorkflowDiagramFromData();
+    }
+
+    protected async Task WorkflowsHideMoveButtonsOnChildren(string workflowId){
+        var workflow = WorkflowEngine.GetWorkflow(workflowId, Workflows, WorkflowOrphans);
+
+        if (workflow != null){
+            if (workflow.OnSuccess != null){
+                await Helpers.HideElementById(workflow.OnSuccess.Value.ToString() + "-move-success");
+                await Helpers.HideElementById(workflow.OnSuccess.Value.ToString() + "-move-complete");
+                await Helpers.HideElementById(workflow.OnSuccess.Value.ToString() + "-move-failure");
+                await WorkflowsHideMoveButtonsOnChildren(workflow.OnSuccess.Value.ToString());
+            }
+
+            if (workflow.OnComplete != null)
+            {
+                await Helpers.HideElementById(workflow.OnComplete.Value.ToString() + "-move-success");
+                await Helpers.HideElementById(workflow.OnComplete.Value.ToString() + "-move-complete");
+                await Helpers.HideElementById(workflow.OnComplete.Value.ToString() + "-move-failure");
+                await WorkflowsHideMoveButtonsOnChildren(workflow.OnComplete.Value.ToString());
+            }
+
+            if (workflow.OnFailure != null){
+                await Helpers.HideElementById(workflow.OnFailure.Value.ToString() + "-move-success");
+                await Helpers.HideElementById(workflow.OnFailure.Value.ToString() + "-move-complete");
+                await Helpers.HideElementById(workflow.OnFailure.Value.ToString() + "-move-failure");
+                await WorkflowsHideMoveButtonsOnChildren(workflow.OnFailure.Value.ToString());
             }
         }
     }

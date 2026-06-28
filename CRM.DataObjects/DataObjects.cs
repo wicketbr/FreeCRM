@@ -109,8 +109,10 @@ public partial class DataObjects
         public string CultureCode { get; set; } = "en-US";
         public List<OptionPair> CultureCodes { get; set; } = new List<OptionPair>();
         public Language DefaultLanguage { get; set; } = new Language();
+        public string? FixedReplyEmailAddress { get; set; }
         public List<Language> Languages { get; set; } = new List<Language>();
         public bool LoggedIn { get; set; }
+        public string? PathToChromiumBrowser { get; set; }
         public List<Plugins.Plugin> Plugins { get; set; } = new List<Plugins.Plugin>();
         public DateOnly Released { get; set; } = DateOnly.FromDateTime(DateTime.Now);
         public List<string>? ServerReferences { get; set; }

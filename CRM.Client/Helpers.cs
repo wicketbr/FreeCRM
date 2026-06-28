@@ -3714,6 +3714,17 @@ public static partial class Helpers
     }
 
     /// <summary>
+    /// Hides an element by id name using jsInterop.
+    /// </summary>
+    /// <param name="className">The id of the element.</param>
+    public static async Task HideElementById(string? element)
+    {
+        if (!String.IsNullOrWhiteSpace(element)) {
+            await jsRuntime.InvokeVoidAsync("HideElementById", element);
+        }
+    }
+
+    /// <summary>
     /// Hides any menus that are showing.
     /// </summary>
     public static async Task HideMenus()
@@ -4024,6 +4035,12 @@ public static partial class Helpers
                 { "fa:fa-solid fa-users",                        new List<string> { "ActiveUsers", "AppointmentTypeMeeting", "EditUserGroup", "NewUserGroup", "UserGroups" }},
                 { "fa:fa-solid fa-users-rectangle",              new List<string> { "AddNewDepartmentGroup", "DepartmentGroups", "EditDepartmentGroup" }},
                 { "fa:fa-solid fa-xmark",                        new List<string> { "Cancel", "Close", "CloseDialog", "Hide" }},
+
+                // {{ModuleItemStart:Workflows}}
+                { "fa:fa-solid fa-paste",                        new List<string> { "WorkflowPaste" }},
+                { "fa:fa-solid fa-sitemap x1",                   new List<string> { "Workflow", "Workflows" }},
+                { "fa:fa-solid fa-trash x1",                     new List<string> { "RemoveWorkflowOrphans" }},
+                // {{ModuleItemEnd:Workflows}}
             };
 
             return icons;
@@ -6233,6 +6250,18 @@ public static partial class Helpers
     {
         if (!String.IsNullOrWhiteSpace(className)) {
             await jsRuntime.InvokeVoidAsync("ShowElementByClass", className, display);
+        }
+    }
+
+    /// <summary>
+    /// Shows an element by id name using jsInterop.
+    /// </summary>
+    /// <param name="className">The id of the element.</param>
+    /// <param name="display">Optional override of the default "block" display type.</param>
+    public static async Task ShowElementById(string? element, string display = "block")
+    {
+        if (!String.IsNullOrWhiteSpace(element)) {
+            await jsRuntime.InvokeVoidAsync("ShowElementById", element, display);
         }
     }
 

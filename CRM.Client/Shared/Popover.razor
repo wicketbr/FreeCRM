@@ -1,0 +1,75 @@
+﻿@implements IDisposable
+@using Humanizer
+@inject BlazorDataModel Model
+@if (IncludeButton) {
+    <button type="button" class="btn btn-outline-secondary" tabindex="-1" @ref="_element" @onclick="ShowTooltip">
+        <i class="tooltip-item">@((MarkupString)_icon)</i>
+    </button>
+} else {
+    <Tooltip Icon="@Icon" TipText="@Text" Options="DefaultOptions" />
+}
+@code {
+    [Parameter] public string Icon { get; set; } = Helpers.Icon("Info", true);
+    [Parameter] public bool IncludeButton { get; set; } = true;
+    /// <summary>
+    /// Option to set the location ("Top", "Bottom", "Left", or "Right" - defaults to "Left")
+    /// </summary>
+    [Parameter] public string Location { get; set; } = "Right";
+    [Parameter] public string Text { get; set; } = "";
+    [Parameter] public string Title { get; set; } = "";
+
+    protected ElementReference _element;
+    protected string _icon = "";
+
+    public void Dispose() { }
+
+    protected override void OnInitialized()
+    {
+        if (!String.IsNullOrWhiteSpace(Icon)) {
+            _icon = Icon;
+        } else {
+            _icon = "<i class=\"icon fa-solid fa-circle-info\"></i>";
+        }
+    }
+
+    protected TooltipOptions DefaultOptions {
+        get {
+            TooltipOptions options = new TooltipOptions {
+                    Duration = 0,
+                    CssClass = "tooltip-text",
+                    Position = TooltipPosition.Right,
+                };
+
+            if (!String.IsNullOrWhiteSpace(Location)) {
+                switch (Location.ToLower()) {
+                    case "bottom":
+                        options.Position = TooltipPosition.Bottom;
+                        break;
+
+                    case "left":
+                        options.Position = TooltipPosition.Left;
+                        break;
+
+                    case "right":
+                        options.Position = TooltipPosition.Right;
+                        break;
+
+                    case "top":
+                        options.Position = TooltipPosition.Top;
+                        break;
+                }
+            }
+
+            return options;
+        }
+    }
+
+    protected void ShowTooltip()
+    {
+        if (!String.IsNullOrWhiteSpace(Text)) {
+            
+
+            Helpers.Tooltip(_element, Text, DefaultOptions);
+        }
+    }
+}

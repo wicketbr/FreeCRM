@@ -1,0 +1,81 @@
+﻿@page "/WorkflowsTest"
+@page "/{TenantCode}/WorkflowsTest"
+@implements IDisposable
+@inject BlazorDataModel Model
+@using BlazorSortableList
+
+<h1>Workflow Testing</h1>
+
+<WorkflowViewer 
+        DataItemId="_dataItemId"
+        ParentItemId="_parentItemId"
+        @bind-Workflows="_workflows"
+        @bind-WorkflowOrphans="_orphans"
+        InDialog="false"
+        EditMode="true" />
+
+@if (_workflows.Any()) {
+    <h2>Workflows</h2>
+    <div class="mb-2">
+        <AutoGrowText 
+                Class="form-control"
+                Value="@Helpers.FormatJson(Helpers.SerializeObject(_workflows))" />
+    </div>
+}
+
+@if (_orphans.Any()) {
+    <h2>Workflow Orphans</h2>
+    <div class="mb-2">
+        <AutoGrowText
+                Class="form-control"
+                Value="@Helpers.FormatJson(Helpers.SerializeObject(_orphans))" />
+    </div>
+}
+
+@code {
+    [Parameter] public string? TenantCode { get; set; }
+
+    protected bool _loadedData = false;
+    protected string _pageName = "workflows";
+
+    protected Guid _dataItemId = Guid.NewGuid();
+    protected Guid _parentItemId = Guid.NewGuid();
+    protected List<DataObjects.Workflow> _workflows = new List<DataObjects.Workflow>();
+    protected List<DataObjects.Workflow> _orphans = new List<DataObjects.Workflow>();
+
+    public void Dispose()
+    {
+        Model.OnChange -= OnDataModelUpdated;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) {
+            Model.TenantCodeFromUrl = TenantCode;
+        }
+
+        if (Model.Loaded) {
+            if (Model.LoggedIn) {
+                if (!_loadedData) {
+                    _loadedData = true;
+                    await Helpers.ValidateUrl(TenantCode, true);
+                }
+            } else {
+                Helpers.NavigateToLogin();
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model.OnChange += OnDataModelUpdated;
+        Model.View = _pageName;
+    }
+
+    protected void OnDataModelUpdated()
+    {
+        if (Model.View == _pageName) {
+            StateHasChanged();
+        }
+    }
+}

@@ -1483,3 +1483,122 @@ th.one-percent,
 td.one-percent {
     width:1%;
 }
+
+/* {{ModuleItemStart:Workflows}} */
+.wf-start {
+    min-width: 70px;
+    min-height: 70px;
+    line-height: 70px;
+}
+
+.wf-start.wf-start-empty {
+	min-width:150px;
+	min-height:120px;
+	padding-top:15px;
+	line-height: 30px;
+    text-align:center;
+}
+
+.wf-canvas {
+    border: solid 1px #888;
+    text-align: center;
+    min-height: calc(100vh - 500px);
+}
+
+.mermaid {
+    height: auto !important; /* Allows the parent container to grow */
+    overflow: visible;
+}
+
+.wf-canvas.editor {
+    /*background-color:#aaa;*/
+    background: url(../Images/grid.png) repeat;
+}
+
+.wf-canvas textarea {
+    width:100%;
+    height:100px;
+    font-size:0.8em;
+    font-family: monospace;
+    overflow-y:hidden;
+}
+
+.wf-canvas svg * {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}
+
+.wf-canvas .state {
+    /*height: 350px;
+    width: 350px;*/
+    /*overflow-y:auto;*/
+    /*scrollbar-gutter: stable;*/
+}
+
+.mermaid svg {
+    width: 100%;
+    height: auto !important; /* Overrides Mermaid's default fixed height */
+    max-width: 100%;
+    max-height: none !important;
+}
+
+.workflow-item {
+    min-width:300px;
+    max-width:300px;
+    width:300px;
+    text-wrap: wrap;
+    /*width:100%;*/
+}
+
+.workflow-item h1 {
+    font-size:1.2em;
+    margin-bottom:.2em;
+}
+
+.workflow-item h2 {
+    font-size:1.1em;
+    margin-bottom:0;
+}
+
+.workflow-item h2.state {
+    text-align:center;
+    border-bottom: dashed 2px #fff;
+    margin-bottom: .2em;
+    padding-bottom: .2em;
+}
+
+.workflow-item h3 {
+    font-size:1.05em;
+    margin-bottom:.2em;
+}
+
+.workflow-item.data-view {
+    
+}
+
+#workflow-graph .node{
+    min-width:300px;
+}
+
+#workflow-graph .node .label {
+    text-align: left !important;
+}
+
+.wf-canvas span.badge {
+    color: #fff !important;
+}
+
+.wf-canvas .btn-group > .btn {
+    font-size: .7em !important;
+}
+
+#workflow-graph .edgeLabel {
+    background-color:transparent !important;
+}
+
+.workflow-badge {
+    border:solid 2px #fff;
+}
+/* {{ModuleItemEnd:Workflows}} */
