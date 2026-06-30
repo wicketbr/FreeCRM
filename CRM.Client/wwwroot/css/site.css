@@ -1549,7 +1549,6 @@ td.one-percent {
     max-width:300px;
     width:300px;
     text-wrap: wrap;
-    /*width:100%;*/
 }
 
 .workflow-item h1 {
@@ -1564,9 +1563,10 @@ td.one-percent {
 
 .workflow-item h2.state {
     text-align:center;
-    border-bottom: dashed 2px #fff;
-    margin-bottom: .2em;
-    padding-bottom: .2em;
+    background:#333;
+    border: solid 1px #000;
+    padding: .2em 0;
+    margin: .4em 0 .1em 0;
 }
 
 .workflow-item h3 {
@@ -1575,7 +1575,14 @@ td.one-percent {
 }
 
 .workflow-item.data-view {
-    
+    min-width:400px;
+    max-width:400px;
+    width:400px;
+}
+
+.workflow-item .state-data {
+    font-size:0.7em;
+    font-family: monospace;
 }
 
 #workflow-graph .node{

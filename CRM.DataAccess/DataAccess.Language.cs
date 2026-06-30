@@ -346,6 +346,7 @@ public partial class DataAccess
             { "WorkflowStart", "Start" },
             { "WorkflowStarted", "Started" },
             { "WorkflowState", "State" },
+            { "WorkflowStateData", "State Data" },
             { "WorkflowSuccess", "Success" },
             { "WorkflowSuccessTip", "Add a Workflow that runs if this Workflow succeeds." },
             { "WorkflowType", "Type" },

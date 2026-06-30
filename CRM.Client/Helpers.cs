@@ -442,6 +442,11 @@ public static partial class Helpers
         return output;
     }
 
+    public static async Task ClearDotNetHelperButtonHandlers()
+    {
+        await jsRuntime.InvokeVoidAsync("ClearDotNetHelperButtonHandlers");
+    }
+
     /// <summary>
     /// Clears the value for a local storage item.
     /// </summary>
@@ -7252,6 +7257,7 @@ public static partial class Helpers
     (
         Guid ParentItemId,
         Guid DataItemId,
+        Delegate OnDialogClosed,
         string WorkflowType,
         List<DataObjects.Workflow> Workflows,
         List<DataObjects.Workflow> WorkflowOrphans,
@@ -7263,6 +7269,7 @@ public static partial class Helpers
         parameters.Add("InDialog", true);
         parameters.Add("ParentItemId", ParentItemId);
         parameters.Add("DataItemId", DataItemId);
+        parameters.Add("OnDialogClosed", OnDialogClosed);
         parameters.Add("WorkflowType", WorkflowType);
         parameters.Add("Workflows", Workflows);
         parameters.Add("WorkflowOrphans", WorkflowOrphans);
@@ -7279,9 +7286,9 @@ public static partial class Helpers
 
         await DialogService.OpenAsync<WorkflowViewer>(Text("WorkflowProcessStatus"), parameters, new Radzen.DialogOptions() {
             AutoFocusFirstElement = false,
-            CloseDialogOnOverlayClick = true,
+            CloseDialogOnOverlayClick = false,
+            ShowClose = false,
             Width = "98%",
-            //Height = "calc(100vh - 100px)",
             Top = _dialogTop,
         });
     }

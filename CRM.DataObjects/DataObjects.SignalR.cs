@@ -43,6 +43,7 @@ public partial class DataObjects
         public const string UserPreferences = "UserPreferences";
         // {{ModuleItemStart:Workflows}}
         public const string Workflow = "Workflow";
+        public const string WorkflowData = "WorkflowData";
         public const string WorkflowProcessing = "WorkflowProcessing";
         // {{ModuleItemEnd:Workflows}}
     }

@@ -562,28 +562,32 @@ public static class WorkflowEngine
 
                     if (workflow.State != null) {
                         output.Append("<div class='state'>");
-                        output.Append("  <h2 class='state'>" + Helpers.Text("WorkflowState") + "</h2>");
+                        output.Append("  <h2 class='state'>" + Helpers.Text("WorkflowStateData") + "</h2>");
 
                         if (workflow.State.CustomFieldValues != null && workflow.State.CustomFieldValues.Count > 0) {
                             output.Append("  <h3>" + Helpers.Text("WorkflowCustomFieldValues") + "</h3>");
-                            output.Append("  <ul>");
+                            output.Append("  <div class='state-data'>");
+                            output.Append("    <ul>");
 
                             foreach (var customFieldValue in workflow.State.CustomFieldValues) {
-                                output.Append("  <li>" + customFieldValue.Key + ": " + customFieldValue.Value + "</li>");
+                                output.Append("      <li>" + customFieldValue.Key + ": " + customFieldValue.Value + "</li>");
                             }
 
-                            output.Append("  </ul>");
+                            output.Append("    </ul>");
+                            output.Append("  </div>");
                         }
 
                         if (workflow.State.QueryStringValues != null && workflow.State.QueryStringValues.Count > 0) {
                             output.Append("  <h3>" + Helpers.Text("WorkflowQuerystringValues") + "</h3>");
-                            output.Append("  <ul>");
+                            output.Append("  <div class='state-data'>");
+                            output.Append("    <ul>");
 
                             foreach (var qsValue in workflow.State.QueryStringValues) {
-                                output.Append("  <li>" + qsValue.Key + ": " + qsValue.Value + "</li>");
+                                output.Append("      <li>" + qsValue.Key + ": " + qsValue.Value + "</li>");
                             }
 
-                            output.Append("  </ul>");
+                            output.Append("    </ul>");
+                            output.Append("  </div>");
                         }
 
                         if (workflow.State.Objects != null && workflow.State.Objects.Count > 0) {
