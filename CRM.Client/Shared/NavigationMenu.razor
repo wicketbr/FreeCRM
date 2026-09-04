@@ -24,140 +24,173 @@
                 </button>
                 <div class="navbar-collapse collapse" id="navBarToggler">
                     <ul class="navbar-nav me-auto">
-                        @if (Model.LoggedIn) {
-                            foreach (var item in Helpers.MenuItems) {
-                                var itemClass = "nav-link";
+                        @{
+                            bool useNewMenus = false;
+                            if (useNewMenus) {
+                                // Started testing the new nested menus created by Daniel Pepka.
+                                // However, for now the code is not running as this still has some testing to go.
+                                var menuItems = new List<DataObjects.MenuItem>();
 
-                                if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
-                                    itemClass += " active";
+                                if (Model.LoggedIn) {
+                                    menuItems.AddRange(Helpers.MenuItems.ToList());
+
+                                    if (Helpers.MenuItemsAdmin.Any()) {
+                                        menuItems.Add(new DataObjects.MenuItem { 
+                                            Title = Helpers.Text("Admin"),
+                                            Icon = "Admin",
+                                            SortOrder = 999999,
+                                            Children = Helpers.MenuItemsAdmin,
+                                            PageNames = Helpers.MenuItemPageNames(Helpers.MenuItemsAdmin),
+                                        });
+                                    }
+                                } else if (Model.Loaded) {
+                                    menuItems.Add(new DataObjects.MenuItem { 
+                                        Title = Helpers.Text("Login"),
+                                        Icon = "Login",
+                                        url = Helpers.BuildUrl("Login"),
+                                        PageNames = new List<string> { "login" },
+                                    });
                                 }
 
-                                if (item.AppAdminOnly) {
-                                    itemClass += " app-admin-only";
-                                }
+                                foreach (var menuItem in menuItems) {
+                                    var itemClass = "nav-link";
+                                    var menuItemPageNames = Helpers.MenuItemPageNames(menuItem);
 
-                                if (item.Children != null && item.Children.Any()) {
-                                    string currentUrl = Helpers.CurrentUrl.ToLower();
-                                    // At this point only a single level of child items are supports.
-                                    // So, any children added to child objects are ignored.
-                                    // There is no built-in support in Bootstrap for nested submenus.
-                                    // Once a good accessible solution is found that support will be added.
-                                    <li class="nav-item dropdown">
-                                        <a class="@itemClass dropdown-toggle"
-                                           data-bs-toggle="dropdown"
-                                           href="#"
-                                           role="button"
-                                           aria-expanded="false">
-                                            @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                                <Icon Name="@item.Icon" />
-                                            }
-                                            <span class="icon-text">
-                                                @((MarkupString)item.Title)
-                                            </span>
-                                        </a>
-                                        <ul class="dropdown-menu">
-                                            @foreach (var child in item.Children.OrderBy(x => x.SortOrder).ThenBy(x => x.Title)) {
-                                                if (child.OnClick != null) {
-                                                    string href = !String.IsNullOrWhiteSpace(child.AriaLabel) ? child.AriaLabel :
-                                                        !String.IsNullOrWhiteSpace(child.Title) ? child.Title : Guid.NewGuid().ToString();
-                                                    <li>
-                                                        <a class="dropdown-item"
-                                                           href="javascript:void('@href.Replace("'", "")');"
-                                                           title="@child.TooltipTitle"
-                                                           aria-label="@child.AriaLabel"
-                                                           @onclick="@(() => child.OnClick.DynamicInvoke())">
-                                                            @if (!String.IsNullOrWhiteSpace(child.Icon)) {
-                                                                <Icon Name="@child.Icon" />
-                                                            }
-                                                            <span class="icon-text">
-                                                                @((MarkupString)child.Title)
-                                                            </span>
-                                                        </a>
-                                                    </li>
-                                                } else {
-                                                    string dropDownItemClass = "dropdown-item";
-                                                    if (child.url.ToLower() == currentUrl) {
-                                                        dropDownItemClass += " active";
+                                    if (menuItemPageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                                        itemClass += " active";
+                                    }
+
+                                    if (menuItem.AppAdminOnly) {
+                                        itemClass += " app-admin-only";
+                                    }
+
+                                    if (menuItem.Children != null && menuItem.Children.Any()) {
+                                        <NavbarMenu
+                                                AriaLabel="@menuItem.AriaLabel"
+                                                Title="@menuItem.TooltipTitle"
+                                                ToggleClass="@itemClass"
+                                                MenuText="@menuItem.Title"
+                                                Icon="@menuItem.Icon"
+                                                ShowSearch="false"
+                                                Value="menuItem.Children"/>
+                                    } else {
+                                        <li class="nav-item">
+                                            @if (menuItem.OnClick != null) {
+                                                string href = !String.IsNullOrWhiteSpace(menuItem.AriaLabel) ? menuItem.AriaLabel :
+                                                    !String.IsNullOrWhiteSpace(menuItem.Title) ? menuItem.Title : Guid.NewGuid().ToString();
+
+                                                <a class="@itemClass"
+                                                        href="javascript:void('@href.Replace("'", "")');"
+                                                        title="@menuItem.TooltipTitle"
+                                                        aria-label="@menuItem.AriaLabel"
+                                                        @onclick="@(() => menuItem.OnClick.DynamicInvoke())">
+                                                    @if (!String.IsNullOrWhiteSpace(menuItem.Icon)) {
+                                                        <Icon Name="@menuItem.Icon" />
                                                     }
-
-                                                    <li>
-                                                        <a class="@dropDownItemClass"
-                                                           href="@child.url"
-                                                           title="@child.TooltipTitle"
-                                                           aria-label="@child.AriaLabel">
-                                                            @if (!String.IsNullOrWhiteSpace(child.Icon)) {
-                                                                <Icon Name="@child.Icon" />
-                                                            }
-                                                            <span class="icon-text">
-                                                                @((MarkupString)child.Title)
-                                                            </span>
-                                                        </a>
-                                                    </li>
-                                                }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)menuItem.Title)
+                                                    </span>
+                                                </a>
+                                            } else {
+                                                <a class="@itemClass"
+                                                        title="@menuItem.TooltipTitle"
+                                                        aria-label="@menuItem.AriaLabel"
+                                                        href="@menuItem.url">
+                                                    @if (!String.IsNullOrWhiteSpace(menuItem.Icon)) {
+                                                        <Icon Name="@menuItem.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)menuItem.Title)
+                                                    </span>
+                                                </a>
                                             }
-                                        </ul>
-                                    </li>
-                                } else {
-                                    <li class="nav-item">
-                                        @if (item.OnClick != null) {
-                                            string href = !String.IsNullOrWhiteSpace(item.AriaLabel) ? item.AriaLabel :
-                                                !String.IsNullOrWhiteSpace(item.Title) ? item.Title : Guid.NewGuid().ToString();
-
-                                            <a class="@itemClass"
-                                               href="javascript:void('@href.Replace("'", "")');"
-                                               title="@item.TooltipTitle"
-                                               aria-label="@item.AriaLabel"
-                                               @onclick="@(() => item.OnClick.DynamicInvoke())">
-                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                                    <Icon Name="@item.Icon" />
-                                                }
-                                                <span class="icon-text">
-                                                    @((MarkupString)item.Title)
-                                                </span>
-                                            </a>
-                                        } else {
-                                            <a class="@itemClass"
-                                               title="@item.TooltipTitle"
-                                               aria-label="@item.AriaLabel"
-                                               href="@item.url">
-                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
-                                                    <Icon Name="@item.Icon" />
-                                                }
-                                                <span class="icon-text">
-                                                    @((MarkupString)item.Title)
-                                                </span>
-                                            </a>
-                                        }
-                                    </li>
+                                        </li>
+                                    }
                                 }
-                            }
+                            } else {
+                                if (Model.LoggedIn) {
+                                    foreach (var item in Helpers.MenuItems) {
+                                        var itemClass = "nav-link";
 
-                            @if (Helpers.MenuItemsAdmin.Any()) {
-                                <li class="nav-item dropdown">
-                                    <a class="@(Helpers.AdminView ? "nav-link dropdown-toggle active" : "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <Language Tag="Admin" IncludeIcon="true" />
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                        @foreach (var item in Helpers.MenuItemsAdmin) {
-                                            var itemClass = "dropdown-item";
+                                        if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                                            itemClass += " active";
+                                        }
 
-                                            if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
-                                                itemClass += " active";
-                                            }
+                                        if (item.AppAdminOnly) {
+                                            itemClass += " app-admin-only";
+                                        }
 
-                                            if (item.AppAdminOnly) {
-                                                itemClass += " app-admin-only";
-                                            }
+                                        if (item.Children != null && item.Children.Any()) {
+                                            string currentUrl = Helpers.CurrentUrl.ToLower();
+                                            // At this point only a single level of child items are supports.
+                                            // So, any children added to child objects are ignored.
+                                            // There is no built-in support in Bootstrap for nested submenus.
+                                            // Once a good accessible solution is found that support will be added.
+                                            <li class="nav-item dropdown">
+                                                <a class="@itemClass dropdown-toggle"
+                                                        data-bs-toggle="dropdown"
+                                                        href="#"
+                                                        role="button"
+                                                        aria-expanded="false">
+                                                    @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                        <Icon Name="@item.Icon" />
+                                                    }
+                                                    <span class="icon-text">
+                                                        @((MarkupString)item.Title)
+                                                    </span>
+                                                </a>
+                                                <ul class="dropdown-menu">
+                                                    @foreach (var child in item.Children.OrderBy(x => x.SortOrder).ThenBy(x => x.Title)) {
+                                                        if (child.OnClick != null) {
+                                                            string href = !String.IsNullOrWhiteSpace(child.AriaLabel) ? child.AriaLabel :
+                                                                !String.IsNullOrWhiteSpace(child.Title) ? child.Title : Guid.NewGuid().ToString();
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                        href="javascript:void('@href.Replace("'", "")');"
+                                                                        title="@child.TooltipTitle"
+                                                                        aria-label="@child.AriaLabel"
+                                                                        @onclick="@(() => child.OnClick.DynamicInvoke())">
+                                                                    @if (!String.IsNullOrWhiteSpace(child.Icon)) {
+                                                                        <Icon Name="@child.Icon" />
+                                                                    }
+                                                                    <span class="icon-text">
+                                                                        @((MarkupString)child.Title)
+                                                                    </span>
+                                                                </a>
+                                                            </li>
+                                                        } else {
+                                                            string dropDownItemClass = "dropdown-item";
+                                                            if (child.url.ToLower() == currentUrl) {
+                                                                dropDownItemClass += " active";
+                                                            }
 
-                                            <li>
+                                                            <li>
+                                                                <a class="@dropDownItemClass"
+                                                                        href="@child.url"
+                                                                        title="@child.TooltipTitle"
+                                                                        aria-label="@child.AriaLabel">
+                                                                    @if (!String.IsNullOrWhiteSpace(child.Icon)) {
+                                                                        <Icon Name="@child.Icon" />
+                                                                    }
+                                                                    <span class="icon-text">
+                                                                        @((MarkupString)child.Title)
+                                                                    </span>
+                                                                </a>
+                                                            </li>
+                                                        }
+                                                    }
+                                                </ul>
+                                            </li>
+                                        } else {
+                                            <li class="nav-item">
                                                 @if (item.OnClick != null) {
                                                     string href = !String.IsNullOrWhiteSpace(item.AriaLabel) ? item.AriaLabel :
                                                         !String.IsNullOrWhiteSpace(item.Title) ? item.Title : Guid.NewGuid().ToString();
 
                                                     <a class="@itemClass"
+                                                            href="javascript:void('@href.Replace("'", "")');"
                                                             title="@item.TooltipTitle"
                                                             aria-label="@item.AriaLabel"
-                                                            href="javascript:void('@href.Replace("'", "")');"
                                                             @onclick="@(() => item.OnClick.DynamicInvoke())">
                                                         @if (!String.IsNullOrWhiteSpace(item.Icon)) {
                                                             <Icon Name="@item.Icon" />
@@ -181,15 +214,68 @@
                                                 }
                                             </li>
                                         }
-                                    </ul>
-                                </li>
+                                    }
+
+                                    @if (Helpers.MenuItemsAdmin.Any()) {
+                                        <li class="nav-item dropdown">
+                                            <a class="@(Helpers.AdminView ? "nav-link dropdown-toggle active" : "nav-link dropdown-toggle")" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <Language Tag="Admin" IncludeIcon="true" />
+                                            </a>
+                                            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                @foreach (var item in Helpers.MenuItemsAdmin) {
+                                                    var itemClass = "dropdown-item";
+
+                                                    if (item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)) {
+                                                        itemClass += " active";
+                                                    }
+
+                                                    if (item.AppAdminOnly) {
+                                                        itemClass += " app-admin-only";
+                                                    }
+
+                                                    <li>
+                                                        @if (item.OnClick != null) {
+                                                            string href = !String.IsNullOrWhiteSpace(item.AriaLabel) ? item.AriaLabel :
+                                                                !String.IsNullOrWhiteSpace(item.Title) ? item.Title : Guid.NewGuid().ToString();
+
+                                                            <a class="@itemClass"
+                                                                    title="@item.TooltipTitle"
+                                                                    aria-label="@item.AriaLabel"
+                                                                    href="javascript:void('@href.Replace("'", "")');"
+                                                                    @onclick="@(() => item.OnClick.DynamicInvoke())">
+                                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                                    <Icon Name="@item.Icon" />
+                                                                }
+                                                                <span class="icon-text">
+                                                                    @((MarkupString)item.Title)
+                                                                </span>
+                                                            </a>
+                                                        } else {
+                                                            <a class="@itemClass"
+                                                                    title="@item.TooltipTitle"
+                                                                    aria-label="@item.AriaLabel"
+                                                                    href="@item.url">
+                                                                @if (!String.IsNullOrWhiteSpace(item.Icon)) {
+                                                                    <Icon Name="@item.Icon" />
+                                                                }
+                                                                <span class="icon-text">
+                                                                    @((MarkupString)item.Title)
+                                                                </span>
+                                                            </a>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </li>
+                                    }
+                                } else if (Model.Loaded) {
+                                    <li class="nav-item">
+                                        <a class="nav-link @(Model.View == "login" ? "active" : "")" href="@Helpers.BuildUrl("Login")">
+                                            <Language Tag="Login" IncludeIcon="true" />
+                                        </a>
+                                    </li>
+                                }
                             }
-                        } else if (Model.Loaded) {
-                            <li class="nav-item">
-                                <a class="nav-link @(Model.View == "login" ? "active" : "")" href="@Helpers.BuildUrl("Login")">
-                                    <Language Tag="Login" IncludeIcon="true" />
-                                </a>
-                            </li>
                         }
                     </ul>
                     <form class="d-flex">

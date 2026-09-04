@@ -1634,3 +1634,12 @@ g.edgeLabel span,
   font-size: 12px;
   color: #334155;
 }
+
+@media (min-width: 992px) {
+    .navbar-menu-nested {
+        max-height: 70vh;
+        overflow: auto;
+        min-width: 20rem;
+        max-width: min(92vw, 40rem);
+    }
+}

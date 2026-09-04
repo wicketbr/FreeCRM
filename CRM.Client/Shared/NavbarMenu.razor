@@ -1,0 +1,422 @@
+﻿@implements IDisposable
+@inject BlazorDataModel Model
+@inject IJSRuntime jsRuntime
+
+@*
+    NavbarMenu
+    ==========
+
+    A navbar dropdown menu built from the framework's own DataObjects.MenuItem
+    objects, with Children nested to any depth. It renders one
+    <li class="nav-item dropdown"> and is meant to sit inside a Bootstrap
+    <ul class="navbar-nav">. NavigationMenu.razor uses it for every application
+    menu that has children and for the Admin menu.
+
+    Typical use:
+
+        <NavbarMenu MenuText="@item.Title" Icon="@item.Icon" Value="@item.Children" />
+
+    Optional extras:
+
+        ShowSearch="true"              a search box that filters the tree as you type
+        ToggleClass="nav-link active"  the class on the toggle link (default "nav-link")
+        Sort="false"                   keep the items in the order given
+        AlignEnd="true"                right-align the panel for a menu near the right edge
+        DropUp="true"                  open upward, for a navbar at the bottom of the page
+
+    How it works:
+
+      - Bootstrap's dropdown JavaScript is NOT used, only its CSS classes. The
+        component holds its own state (_open, _expanded, _filter), so opening,
+        expanding a branch and filtering are all ordinary Blazor re-renders.
+      - Closing on an outside click is a transparent backdrop rendered behind
+        the panel while it is open. The arrow keys, Home/End and Escape come
+        from the small collocated NavbarMenu.razor.js, which only moves focus
+        and clicks the same buttons a mouse user would.
+      - An item with Children renders as a branch (a button that expands its
+        children in place). An item with an OnClick renders as a link that
+        invokes it. Any other item renders as a link to its url.
+      - Collapsed branches are not rendered at all, so nothing hidden is
+        exposed to assistive technology. Every rendered row is a real button
+        or link in the normal tab order.
+
+    See NavbarMenu.md for the full parameter list and keyboard map.
+*@
+
+<style>
+    /* The only CSS of our own. A nested tree needs its own scroll and a sensible
+           width in the expanded navbar so it stays on screen. In the collapsed
+           (hamburger) view Bootstrap makes the panel static flow content and the
+           page scrolls instead, so nothing is constrained there. 992px matches
+           Bootstrap's navbar-expand-lg breakpoint. */
+    @@media (min-width: 992px) {
+        .navbar-menu-nested {
+            max-height: 70vh;
+            overflow: auto;
+            min-width: 20rem;
+            max-width: min(92vw, 40rem);
+        }
+    }
+</style>
+
+@* The nav-item. Bootstrap's .dropdown opens the panel below the toggle; .dropup
+   opens it above and flips the caret, which is what you want for a navbar at
+   the bottom of the page (DropUp="true"). Class lets the caller add anything
+   else. The @ref hands the element to NavbarMenu.razor.js for keyboard handling. *@
+<li class="nav-item @(DropUp ? "dropup" : "dropdown") @Class" @ref="_root" aria-label="@AriaLabel" title="@Title">
+    @* The toggle. ToggleClass is the caller's class list (eg: "nav-link active"
+       when the menu contains the current page); "dropdown-toggle" adds the
+       caret and "show" while open matches what Bootstrap's own JS would set.
+       aria-expanded/aria-controls tell assistive tech what the toggle does.
+       preventDefault stops the href="#" from jumping the page to the top. *@
+    <a class="@ToggleClass dropdown-toggle @(_open ? "show" : "")" href="#" role="button"
+       aria-expanded="@(_open ? "true" : "false")" aria-controls="@_panelId"
+       @onclick="TogglePanel" @onclick:preventDefault>
+        @* Icon is an Icon component name, the same as everywhere else in FreeCRM.
+           The icon-text span is the site.css class that spaces text from its icon;
+           together they are the same markup the Language component renders. *@
+        @if (!String.IsNullOrWhiteSpace(Icon)) {
+            <Icon Name="@Icon" />
+        }
+        <span class="icon-text">
+            @((MarkupString)MenuText)
+        </span>
+    </a>
+
+    @* Outside-click backdrop, only while the panel is open. It covers the whole
+       viewport at z-index -1, which inside the navbar's stacking context (the
+       fixed-top navbar) puts it behind the navbar's own links (so they stay
+       clickable) but above the page, so a click anywhere else closes the menu. *@
+    @if (_open) {
+        <div class="position-fixed top-0 bottom-0 start-0 end-0 z-n1" @onclick="Reset"></div>
+    }
+
+    @* The panel. Bootstrap's .dropdown-menu is display:none until it also has
+       .show. navbar-menu-nested (our one CSS rule) is added only when the items
+       have their own children, so a flat menu looks exactly like a stock one.
+       AlignEnd adds dropdown-menu-end so the panel hangs from the toggle's right
+       edge instead of its left. MenuClass/MenuStyle are passed straight through. *@
+    <div id="@_panelId" class="dropdown-menu @(_open ? "show" : "") @(_nested ? "navbar-menu-nested" : "") @(AlignEnd ? "dropdown-menu-end" : "") @MenuClass" style="@MenuStyle">
+        @* Optional search box (ShowSearch="true"). Typing sets _filter and the
+           tree below re-renders with only the matching rows, branches open.
+           The label is visually hidden but still read by screen readers. The
+           box is bound to the raw text (not trimmed) so a space the user types
+           is not taken back out of the box on the next render. *@
+        @if (ShowSearch) {
+            <div class="px-3 pb-2">
+                <label class="visually-hidden" for="@_searchId">@SearchLabel</label>
+                <input type="search" class="form-control form-control-sm" id="@_searchId"
+                       placeholder="@SearchPlaceholder" autocomplete="off"
+                       value="@_filter" @oninput="@(e => SetFilter(e.Value?.ToString()))" />
+            </div>
+
+            @* Shown when a search is active and nothing in the tree matches it. *@
+            @if (_filtering && !Value.Any(TreeMatches)) {
+                <span class="dropdown-item-text text-secondary">@NoMatchesText</span>
+            }
+        }
+
+        @* The tree. A real list so a screen reader announces "list, N items" and
+           each row's position; role="list" is spelled out because list-unstyled
+           (list-style: none) makes WebKit drop the list semantics otherwise. *@
+        <ul class="list-unstyled mb-0" role="list">
+            @RenderRows(Value, "", false)
+        </ul>
+    </div>
+</li>
+
+@code {
+    /// <summary>
+    /// Right-aligns the panel to its toggle (dropdown-menu-end) for a menu near
+    /// the right edge of the window.
+    /// </summary>
+    [Parameter] public bool AlignEnd { get; set; }
+
+    /// <summary>
+    /// An optional AriaLabel to be used for the top level item.
+    /// </summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+    /// <summary>
+    /// Extra CSS classes for the nav-item.
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// Opens the panel upward (dropup) for a navbar at the bottom of the page.
+    /// </summary>
+    [Parameter] public bool DropUp { get; set; }
+
+    /// <summary>
+    /// An optional Icon name shown before the MenuText on the toggle.
+    /// </summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>
+    /// Optional stable prefix for the generated element ids (panel, search box and
+    /// expanded branches). A unique prefix is generated when not supplied.
+    /// </summary>
+    [Parameter] public string Id { get; set; } = String.Empty;
+
+    /// <summary>
+    /// Extra CSS classes for the dropdown panel.
+    /// </summary>
+    [Parameter] public string? MenuClass { get; set; }
+
+    /// <summary>
+    /// Inline style for the dropdown panel.
+    /// </summary>
+    [Parameter] public string? MenuStyle { get; set; }
+
+    /// <summary>
+    /// The text on the dropdown toggle.
+    /// </summary>
+    [Parameter] public string MenuText { get; set; } = String.Empty;
+
+    /// <summary>
+    /// Shown when the search matches nothing.
+    /// </summary>
+    [Parameter] public string NoMatchesText { get; set; } = "No matches";
+
+    /// <summary>
+    /// The search box's visually hidden label.
+    /// </summary>
+    [Parameter] public string SearchLabel { get; set; } = "Search";
+
+    /// <summary>
+    /// Placeholder text for the search box.
+    /// </summary>
+    [Parameter] public string SearchPlaceholder { get; set; } = "Search";
+
+    /// <summary>
+    /// Shows a search box at the top of the panel that filters the tree.
+    /// </summary>
+    [Parameter] public bool ShowSearch { get; set; }
+
+    /// <summary>
+    /// Sorts every level by SortOrder then Title (defaults to true).
+    /// </summary>
+    [Parameter] public bool Sort { get; set; } = true;
+
+    /// <summary>
+    /// An optional title for the top-level element.
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// The class on the toggle link before "dropdown-toggle" (eg: "nav-link active").
+    /// </summary>
+    [Parameter] public string ToggleClass { get; set; } = "nav-link";
+
+    /// <summary>
+    /// The menu items. Children can be nested to any depth. An item with an OnClick
+    /// invokes it; otherwise the item links to its url.
+    /// </summary>
+    [Parameter] public List<DataObjects.MenuItem> Value { get; set; } = new List<DataObjects.MenuItem>();
+
+    // Shared by every NavbarMenu on the page so that only one panel is open at a
+    // time: opening one raises this, and every other open instance closes itself.
+    private static event Action<NavbarMenu>? AnyOpened;
+
+    // Paths ("0", "0-2", "0-2-1") of the branches the user has expanded. Keyed by
+    // position rather than by item so the state survives Helpers.MenuItems
+    // rebuilding new MenuItem instances on every render.
+    protected HashSet<string> _expanded = new HashSet<string>();
+    // _filter is the search box text as typed; _filtering is true when it has any
+    // non-whitespace content, which is what turns the pruning in RenderRows on.
+    protected string _filter = String.Empty;
+    protected bool _filtering = false;
+    protected string _idPrefix = String.Empty;
+    protected bool _nested = false;
+    protected bool _open = false;
+    protected string _panelId = String.Empty;
+    protected ElementReference _root;
+    protected string _searchId = String.Empty;
+    protected IJSObjectReference? jsModule;
+
+    public void Dispose() {
+        AnyOpened -= OnAnyOpened;
+    }
+
+    // Loads the collocated JS module once and hands it the nav-item element.
+    // That module only adds keyboard navigation; everything else is C#. The li
+    // is always rendered (only its panel's contents change), so the one
+    // listener attached here lasts for the life of the component.
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            jsModule = await jsRuntime.InvokeAsync<IJSObjectReference>("import", "./Shared/NavbarMenu.razor.js");
+            await jsModule.InvokeVoidAsync("Init", _root);
+        }
+    }
+
+    protected override void OnInitialized() {
+        // Element ids are needed for aria-controls and the search label. A caller
+        // can pass Id for predictable ids; otherwise a unique prefix is generated.
+        _idPrefix = !String.IsNullOrWhiteSpace(Id) ? Id : "navbar-menu-" + Guid.NewGuid().ToString().Replace("-", "");
+        _panelId = _idPrefix + "-panel";
+        _searchId = _idPrefix + "-search";
+
+        AnyOpened += OnAnyOpened;
+    }
+
+    protected override void OnParametersSet() {
+        // A flat list gets the stock dropdown look; only a tree with sub-items
+        // gets the navbar-menu-nested sizing.
+        _nested = Value.Any(x => x.Children != null && x.Children.Any());
+    }
+
+    /// <summary>
+    /// Closes the panel, clears the search and collapses every branch.
+    /// </summary>
+    public void Reset() {
+        _open = false;
+        _filter = String.Empty;
+        _filtering = false;
+        _expanded.Clear();
+        StateHasChanged();
+    }
+
+    // Renders one level of the tree and recurses into expanded branches.
+    //
+    //   path      the position prefix used to build a stable key for each row
+    //   forceShow true when an ancestor matched the search, so this whole
+    //             subtree is shown regardless of its own text
+    //
+    // While searching, a row renders when its own title matches, when any
+    // descendant matches (the branch renders open so the hit is visible), or
+    // when an ancestor matched (forceShow).
+    protected RenderFragment RenderRows(List<DataObjects.MenuItem> items, string path, bool forceShow) => __builder => {
+        // Sort="false" keeps the caller's order (the Admin menu is pre-sorted by Helpers).
+        var ordered = Sort ? items.OrderBy(x => x.SortOrder).ThenBy(x => x.Title).ToList() : items;
+
+        for (int i = 0; i < ordered.Count; i++) {
+            var item = ordered[i];
+            string itemPath = path + i.ToString();
+
+            // app-admin-only is the site.css class that marks app-admin items.
+            string itemClass = item.AppAdminOnly ? "app-admin-only" : "";
+
+            // Searching: skip rows that neither match nor contain a match.
+            if (_filtering && !forceShow && !TreeMatches(item)) {
+                continue;
+            }
+
+            if (item.Children != null && item.Children.Any()) {
+                // A branch: a dropdown-item styled button with Bootstrap's caret.
+                // Its children render in a nested list only while expanded, and
+                // every branch is forced open while a search is active.
+                // aria-controls is only set while that list exists; pointing it at
+                // an id that is not in the DOM is an accessibility violation.
+                string bodyId = _idPrefix + "-" + itemPath;
+                bool expanded = _filtering || _expanded.Contains(itemPath);
+
+                @* Bootstrap's .dropup flips the caret of the .dropdown-toggle inside it,
+                   which is how an open branch shows an up-caret without CSS of ours. *@
+                <li class="@(expanded ? "dropup" : "")">
+                    <button type="button" class="dropdown-item dropdown-toggle @itemClass"
+                            aria-expanded="@(expanded ? "true" : "false")" aria-controls="@(expanded ? bodyId : null)"
+                            title="@item.TooltipTitle" aria-label="@item.AriaLabel"
+                            @onclick="@(() => ToggleBranch(itemPath))">
+                        @RowContent(item)
+                    </button>
+
+                    @* ps-3 indents each level. Once this branch's own title matches
+                       the search, everything under it is shown (forceShow). *@
+                    @if (expanded) {
+                        <ul id="@bodyId" class="list-unstyled mb-0 ps-3" role="list">
+                            @RenderRows(item.Children, itemPath + "-", forceShow || TitleMatches(item))
+                        </ul>
+                    }
+                </li>
+            } else if (item.OnClick != null) {
+                @* An action item: invokes the MenuItem's OnClick delegate instead of
+                   navigating. href="#" keeps it a real, focusable link; preventDefault
+                   stops the page jumping to the top. *@
+                <li>
+                    <a class="dropdown-item @itemClass" href="#"
+                       title="@item.TooltipTitle" aria-label="@item.AriaLabel"
+                       @onclick="@(() => ItemClicked(item))" @onclick:preventDefault>
+                        @RowContent(item)
+                    </a>
+                </li>
+            } else {
+                // A link item. It is "active" when its PageNames contain the current
+                // view (the Admin menu convention) or its url is the current url
+                // (the general one) - the same two rules the old markup used.
+                bool active = item.PageNames.Contains(Model.View, StringComparer.CurrentCultureIgnoreCase)
+                    || item.url.ToLower() == Helpers.CurrentUrl.ToLower();
+
+                @* Blazor navigation does not reload the page, so the panel is closed
+                   explicitly on click; the href still does the actual navigation. *@
+                <li>
+                    <a class="dropdown-item @(active ? "active" : "") @itemClass" href="@item.url"
+                       title="@item.TooltipTitle" aria-label="@item.AriaLabel"
+                       aria-current="@(active ? "page" : null)"
+                       @onclick="Reset">
+                        @RowContent(item)
+                    </a>
+                </li>
+            }
+        }
+    };
+
+    // The inside of every row: the item's optional Icon followed by its Title,
+    // the same markup the Language component produces with IncludeIcon.
+    protected RenderFragment RowContent(DataObjects.MenuItem item) => __builder => {
+        if (!String.IsNullOrWhiteSpace(item.Icon)) {
+            <Icon Name="@item.Icon" />
+        }
+        <span class="icon-text">
+            @((MarkupString)item.Title)
+        </span>
+    };
+
+    // Toggle click: close if open, otherwise open and tell the other menus.
+    protected void TogglePanel() {
+        if (_open) {
+            Reset();
+        } else {
+            _open = true;
+            AnyOpened?.Invoke(this);
+        }
+    }
+
+    // Another NavbarMenu opened: close this one if it is open. InvokeAsync because
+    // the event may be raised from a different component's render context.
+    protected void OnAnyOpened(NavbarMenu sender) {
+        if (!ReferenceEquals(sender, this) && _open) {
+            InvokeAsync(Reset);
+        }
+    }
+
+    // Branch click: flip the expanded state of that path.
+    protected void ToggleBranch(string path) {
+        if (!_expanded.Remove(path)) {
+            _expanded.Add(path);
+        }
+    }
+
+    // Action item click: run the MenuItem's OnClick, then close the panel.
+    protected void ItemClicked(DataObjects.MenuItem item) {
+        item.OnClick?.DynamicInvoke();
+        Reset();
+    }
+
+    // Search box input. Setting these two fields is all it takes; the next render
+    // prunes the tree through RenderRows.
+    protected void SetFilter(string? value) {
+        _filter = value ?? String.Empty;
+        _filtering = !String.IsNullOrWhiteSpace(_filter);
+    }
+
+    // Case-insensitive "contains" on the item's own title, ignoring surrounding
+    // whitespace in the search text.
+    protected bool TitleMatches(DataObjects.MenuItem item) {
+        return _filtering && item.Title.IndexOf(_filter.Trim(), StringComparison.CurrentCultureIgnoreCase) >= 0;
+    }
+
+    // True when the item or anything beneath it matches the search.
+    protected bool TreeMatches(DataObjects.MenuItem item) {
+        return TitleMatches(item) || (item.Children != null && item.Children.Any(TreeMatches));
+    }
+}

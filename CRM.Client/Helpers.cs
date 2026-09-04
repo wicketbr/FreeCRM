@@ -4617,6 +4617,42 @@ public static partial class Helpers
         return output;
     }
 
+    public static List<string> MenuItemPageNames(DataObjects.MenuItem menuItem)
+    {
+        var output = menuItem.PageNames;
+
+        if (menuItem.Children != null && menuItem.Children.Any()) {
+            foreach (var child in menuItem.Children) {
+                var childPageNames = MenuItemPageNames(child);
+                if (childPageNames.Any()) {
+                    output.AddRange(childPageNames);
+                }
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Gets all of the page names for a menu item and any child pages.
+    /// </summary>
+    /// <param name="menuItem">The MenuItem object</param>
+    /// <returns>A List of string of all the pagenames</returns>
+    public static List<string> MenuItemPageNames(List<DataObjects.MenuItem> menuItems)
+    {
+        List<string> output = new List<string>();
+
+        foreach (var item in menuItems) {
+            output.AddRange(item.PageNames);
+
+            if (item.Children != null && item.Children.Any()) {
+                output.AddRange(MenuItemPageNames(item.Children));
+            }
+        }
+
+        return output;
+    }
+
     /// <summary>
     /// The collection of menu items used for the navigation menu.
     /// </summary>
@@ -4658,30 +4694,37 @@ public static partial class Helpers
                 Children = new List<DataObjects.MenuItem> {
                     new DataObjects.MenuItem {
                         Title = "Double-Click",
+                        PageNames = new List<string> { "DoubleClick" },
                         url = Helpers.BuildUrl("DoubleClick"),
                     },
                     new DataObjects.MenuItem {
                         Title = "Dynamic Blazor Components",
+                        PageNames = new List<string> { "DynamicComponent" },
                         url = Helpers.BuildUrl("DynamicComponent"),
                     },
                     new DataObjects.MenuItem {
                         Title = "HTML Editor",
+                        PageNames = new List<string> { "HtmlEditor" },
                         url = Helpers.BuildUrl("HtmlEditor"),
                     },
                     new DataObjects.MenuItem {
                         Title = "Monaco Code Editor",
+                        PageNames = new List<string> { "Monaco" },
                         url = Helpers.BuildUrl("Monaco"),
                     },
                     new DataObjects.MenuItem {
                         Title = "Plugin Testing",
+                        PageNames = new List<string> { "Plugins" },
                         url = Helpers.BuildUrl("Plugins"),
                     },
                     new DataObjects.MenuItem {
                         Title = "SortableList",
+                        PageNames = new List<string> { "SortTest" },
                         url = Helpers.BuildUrl("SortTest"),
                     },
                     new DataObjects.MenuItem {
                         Title = "Timer",
+                        PageNames = new List<string> { "TimerTest" },
                         url = Helpers.BuildUrl("TimerTest"),
                     },
                 },
@@ -4690,6 +4733,7 @@ public static partial class Helpers
             // {{ModuleItemStart:Workflows}}
             testPages.Children.Add(new DataObjects.MenuItem { 
                 Title = "Workflows",
+                PageNames = new List<string> { "WorkflowsTest" },
                 url = Helpers.BuildUrl("WorkflowsTest"),
             });
             // {{ModuleItemEnd:Workflows}}
