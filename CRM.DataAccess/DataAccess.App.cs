@@ -15,7 +15,7 @@ public partial class DataAccess
     private int _accountLockoutMinutes = 10; // The number of minutes an account is locked out after reaching the maximum number of bad login attempts.
     private string _appName = "freeCRM"; // The name of the application.
     private string _copyright = "Company Name"; // The copyright name used in the application.
-    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("9/4/2026")); // The date this version of your application was released.
+    private DateOnly _released = DateOnly.FromDateTime(Convert.ToDateTime("9/15/2026")); // The date this version of your application was released.
     private bool _tokenAutoRenew = true; // If true, a new token will be sent to the client to keep the token automatically renewed.
     private int _tokenDays = 7; // The number of days a JWT token is valid for. This is used when encoding JWT tokens.
     private bool _useMigrations = false; // Indicates if the app uses data migrations. If false, you will manage your own database schema updates.
@@ -206,7 +206,7 @@ public partial class DataAccess
                 }
             }
         } catch (Exception ex) {
-            output.Messages.Add("An Error Occurred in DeleteUserApp");
+            output.Messages.Add("An Error Occurred in DeleteRecordsApp");
             output.Messages.AddRange(RecurseException(ex));
         }
 
@@ -265,61 +265,6 @@ public partial class DataAccess
         var output = blazorDataModelLoader;
 
         // Update any app-specific data model properties here.
-
-        return output;
-    }
-
-    /// <summary>
-    /// This method is called to add any app-specific deleted record counts to the output.
-    /// </summary>
-    private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp
-    (
-        Guid TenantId,
-        DataObjects.DeletedRecordCounts deletedRecordCounts
-    ){
-        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
-
-        var output = deletedRecordCounts;
-
-        // Do any lookups for your app-specific deleted record counts here and add them to the output.
-        // output.MyCount = await data.MyTable.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
-
-        return output;
-    }
-
-    /// <summary>
-    /// This method is called to add any app-specific filter columns to the filter output.
-    /// </summary>
-    /// <param name="Type">The filter type (eg: Users, Invoices, etc.)</param>
-    /// <param name="Position">The position in the column orders (see calling code for details.)</param>
-    /// <param name="CurrentUser">The current user object, if one exists</param>
-    /// <returns>A list of FilterColumn objects</returns>
-    private List<DataObjects.FilterColumn> GetFilterColumnsApp
-    (
-        string Type,
-        string Position,
-        DataObjects.Language Language,
-        DataObjects.User? CurrentUser = null
-    ){
-        var output = new List<DataObjects.FilterColumn>();
-        // Add any app-specific filter columns here.
-        // Example:
-        // if (Type.ToLower() == "users" && Position.ToLower() == "username") {
-        //     output.Add(new DataObjects.FilterColumn { Name = "MyColumn", Type = "string", Title = "My Column", Placeholder = "My Column", Width = 150 });
-        // }
-        return output;
-    }
-
-    /// <summary>
-    /// This method is called to add any app-specific deleted records to the output.
-    /// </summary>
-    private async Task<DataObjects.DeletedRecords> GetDeletedRecordsApp(Guid TenantId, DataObjects.DeletedRecords deletedRecords)
-    {
-        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
-
-        var output = deletedRecords;
-
-        // Do any lookups for your app-specific deleted records here and add them to the output.
 
         return output;
     }
@@ -521,6 +466,61 @@ public partial class DataAccess
                 return;
             }
         } catch { }
+    }
+
+    /// <summary>
+    /// This method is called to add any app-specific deleted record counts to the output.
+    /// </summary>
+    private async Task<DataObjects.DeletedRecordCounts> GetDeletedRecordCountsApp
+    (
+        Guid TenantId,
+        DataObjects.DeletedRecordCounts deletedRecordCounts
+    ){
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = deletedRecordCounts;
+
+        // Do any lookups for your app-specific deleted record counts here and add them to the output.
+        // output.MyCount = await data.MyTable.CountAsync(x => x.TenantId == TenantId && x.Deleted == true);
+
+        return output;
+    }
+
+    /// <summary>
+    /// This method is called to add any app-specific deleted records to the output.
+    /// </summary>
+    private async Task<DataObjects.DeletedRecords> GetDeletedRecordsApp(Guid TenantId, DataObjects.DeletedRecords deletedRecords)
+    {
+        await Task.Delay(0); // Simulate a delay since this method has to be async. This can be removed once you implement your await logic.
+
+        var output = deletedRecords;
+
+        // Do any lookups for your app-specific deleted records here and add them to the output.
+
+        return output;
+    }
+
+    /// <summary>
+    /// This method is called to add any app-specific filter columns to the filter output.
+    /// </summary>
+    /// <param name="Type">The filter type (eg: Users, Invoices, etc.)</param>
+    /// <param name="Position">The position in the column orders (see calling code for details.)</param>
+    /// <param name="CurrentUser">The current user object, if one exists</param>
+    /// <returns>A list of FilterColumn objects</returns>
+    private List<DataObjects.FilterColumn> GetFilterColumnsApp
+    (
+        string Type,
+        string Position,
+        DataObjects.Language Language,
+        DataObjects.User? CurrentUser = null
+    ){
+        var output = new List<DataObjects.FilterColumn>();
+        // Add any app-specific filter columns here.
+        // Example:
+        // if (Type.ToLower() == "users" && Position.ToLower() == "username") {
+        //     output.Add(new DataObjects.FilterColumn { Name = "MyColumn", Type = "string", Title = "My Column", Placeholder = "My Column", Width = 150 });
+        // }
+        return output;
     }
 
     /// <summary>

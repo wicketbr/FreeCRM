@@ -632,9 +632,9 @@ public static partial class Helpers
     /// Copies the value to the clipboard.
     /// </summary>
     /// <param name="value">The value to copy to the clipboard.</param>
-    public static async Task CopyToClipboard(string value, bool showCopiedToClipboardMessage = false)
+    public static async Task CopyToClipboard(string? value, bool showCopiedToClipboardMessage = false)
     {
-        if (jsRuntime != null) {
+        if (!String.IsNullOrWhiteSpace(value) && jsRuntime != null) {
             await jsRuntime.InvokeVoidAsync("CopyToClipboard", value);
 
             if (showCopiedToClipboardMessage) {
