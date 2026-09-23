@@ -235,6 +235,14 @@ body.dark {
     color-scheme: dark;
 }
 
+[data-bs-theme=dark] .btn-outline-secondary {
+  --bs-btn-color: #adb5bd;
+  --bs-btn-border-color: #adb5bd;
+  --bs-btn-hover-bg: #adb5bd;
+  --bs-btn-hover-border-color: #adb5bd;
+  --bs-btn-hover-color: #000;
+}
+
 
 
 
