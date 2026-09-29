@@ -514,6 +514,42 @@ public partial class DataAccess
         return output;
     }
 
+    private Guid DecodeUserIdFromTokenValue(string? TokenValue)
+    {
+        Guid output = Guid.Empty;
+
+        try {
+            if (!String.IsNullOrWhiteSpace(TokenValue)) {
+                // The UserId is now encrypted in the format of Guid|Expiration
+                // so validate that the token contains a Guid and that it hasn't expired.
+                var decrypted = Decrypt(CompressedByteArrayStringToFullString(TokenValue));
+
+                if (!String.IsNullOrWhiteSpace(decrypted)) {
+                    if (decrypted.Contains("|")) {
+                        var parts = decrypted.Split('|');
+
+                        if (parts.Length > 1) {
+                            var userId = parts[0];
+                            var expires = parts[1];
+
+                            if (userId.IsGuid() && expires.IsNumeric()) {
+                                long expireFileTimeUtc = Convert.ToInt64(expires);
+                                DateTime dFileTimeUtc = DateTime.FromFileTimeUtc(expireFileTimeUtc);
+
+                                // If the date is still in the future return the UserId Guid.
+                                if (dFileTimeUtc >= DateTime.UtcNow) {
+                                    output = new Guid(userId);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch { }
+
+        return output;
+    }
+
     private string DefaultReplyToAddress {
         get {
             string output = String.Empty;
@@ -935,6 +971,16 @@ public partial class DataAccess
         }
 
         return output;
+    }
+
+    private string EncodeUserIdAndExpiration(Guid UserId, DateTime Expires)
+    {
+        // The user token now stores an encrypted value of Guid|Expires.
+        var toEncrypt = UserId.ToString() + "|" + Expires.ToFileTimeUtc().ToString();
+
+        string output = CompressByteArrayString(Encrypt(toEncrypt));
+        return output;
+
     }
 
     public string? FixedReplyEmailAddress {

@@ -880,8 +880,8 @@ public partial class DataAccess
                     if (decrypted != null && decrypted.Any()) {
                         if (decrypted.ContainsKey("UserId")) {
                             try {
-                                string guid = decrypted["UserId"] + String.Empty;
-                                UserId = new Guid(guid);
+                                string encodedValue = decrypted["UserId"] + String.Empty;
+                                UserId = DecodeUserIdFromTokenValue(encodedValue);
                             } catch { }
                         }
 
@@ -938,8 +938,8 @@ public partial class DataAccess
 
             if (decrypted.ContainsKey("UserId")) {
                 try {
-                    string guid = decrypted["UserId"] + String.Empty;
-                    UserId = new Guid(guid);
+                    string encodedValue = decrypted["UserId"] + String.Empty;
+                    UserId = DecodeUserIdFromTokenValue(encodedValue);
                 } catch { }
             }
 
@@ -1761,7 +1761,7 @@ public partial class DataAccess
     {
         // jwtencode
         Dictionary<string, object> Payload = new Dictionary<string, object> {
-            { "UserId", UserId }
+            { "UserId", EncodeUserIdAndExpiration(UserId, DateTime.Now.AddDays(_tokenDays)) }
         };
 
         if (sudoLogin) {
