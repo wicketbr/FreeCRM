@@ -1598,11 +1598,15 @@ public static partial class Helpers
             document.LoadHtml(output);
 
             var links = document.DocumentNode.SelectNodes("//a");
-            foreach (var link in links) {
-                if (link.Attributes["target"] != null) {
-                    link.Attributes["target"].Value = "_blank";
-                } else {
-                    link.Attributes.Add("target", "blank");
+            if (links != null) {
+                foreach (var link in links) {
+                    link.SetAttributeValue("target", "_blank");
+
+                    //if (link.Attributes["target"] != null) {
+                    //    link.Attributes["target"].Value = "_blank";
+                    //} else {
+                    //    link.Attributes.Add("target", "blank");
+                    //}
                 }
             }
 
