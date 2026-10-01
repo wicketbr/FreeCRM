@@ -1759,7 +1759,6 @@ public partial class DataAccess
 
     public string GetUserToken(Guid TenantId, Guid UserId, string fingerprint = "", bool sudoLogin = false)
     {
-        // jwtencode
         Dictionary<string, object> Payload = new Dictionary<string, object> {
             { "UserId", EncodeUserIdAndExpiration(UserId, DateTime.Now.AddDays(_tokenDays)) }
         };
