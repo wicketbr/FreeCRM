@@ -70,7 +70,16 @@
     <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js?v=" + appVersion)"></script>
     <script src="@(applicationUrl + "_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js?v=" + appVersion)"></script>
     <Modules_App Module="bodymiddle" />
-    <script src="_framework/blazor.web.js"></script>
+    @* Started by hand to restore the runtime's download throttle and retry, which Blazor turns off; without them one failed download leaves a blank page.
+       See https://learn.microsoft.com/aspnet/core/blazor/fundamentals/startup#configure-the-net-webassembly-runtime and the options in dotnet.d.ts at https://github.com/dotnet/runtime/blob/main/src/mono/browser/runtime/dotnet.d.ts *@
+    <script src="_framework/blazor.web.js" autostart="false"></script>
+    <script>
+        Blazor.start({
+            webAssembly: {
+                configureRuntime: dotnet => dotnet.withConfig({ maxParallelDownloads: 8, enableDownloadRetry: true })
+            }
+        });
+    </script>
 
     <script type="text/javascript">
         let configuredMonacoCustomTheme = false;
