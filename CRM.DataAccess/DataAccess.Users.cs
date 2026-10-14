@@ -198,8 +198,10 @@ public partial class DataAccess
                     await data.Database.ExecuteSqlRawAsync("UPDATE Settings SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     data.Settings.RemoveRange(data.Settings.Where(x => x.UserId == UserId));
 
+                    // {{ModuleItemStart:Tags}}
                     await data.Database.ExecuteSqlRawAsync("UPDATE Tags SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE Tags SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
+                    // {{ModuleItemEnd:Tags}}
 
                     await data.Database.ExecuteSqlRawAsync("UPDATE Tenants SET LastModifiedBy={0} WHERE LastModifiedBy={1}", displayName, UserId.ToString());
                     await data.Database.ExecuteSqlRawAsync("UPDATE Tenants SET AddedBy={0} WHERE AddedBy={1}", displayName, UserId.ToString());
