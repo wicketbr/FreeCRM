@@ -15,11 +15,17 @@ public partial class Tag
 
     public bool Enabled { get; set; }
 
+    // {{ModuleItemStart:Appointments}}
     public bool UseInAppointments { get; set; }
+    // {{ModuleItemEnd:Appointments}}
 
+    // {{ModuleItemStart:EmailTemplates}}
     public bool UseInEmailTemplates { get; set; }
+    // {{ModuleItemEnd:EmailTemplates}}
 
+    // {{ModuleItemStart:Services}}
     public bool UseInServices { get; set; }
+    // {{ModuleItemEnd:Services}}
 
     public DateTime Added { get; set; }
 

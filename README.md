@@ -3,6 +3,16 @@
 An open-source CRM solution built in C# Blazor WebAssembly using .NET 10. You can use this project as-is,
 or customize it to fit your needs. Or, just grab code that you need to use in your project.
 
+## Database Setup & Default Admin Login
+
+The application is configured to use a local SQL Server database by default.
+You can change this in the appsettings.json file.
+Assuming your have SQL Server installed and your local account has permission to create databases,
+a new database will be created and you will be able to login with a username and password of 'admin'.
+
+If you update your connection string to point to a different server, you will need
+to make sure the user specified for the connection has permissions to modify the database schema.
+
 ## Utilities
 
 The previous utilities "Remove Modules from FreeCRM.exe", "Rename FreeCRM.exe", and

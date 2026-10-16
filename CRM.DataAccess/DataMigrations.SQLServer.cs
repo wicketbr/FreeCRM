@@ -395,9 +395,15 @@ public partial class DataMigrations
                     [Name] [nvarchar](200) NOT NULL,
                     [Style] [nvarchar](max) NULL,
                     [Enabled] [bit] NOT NULL,
+                    -- {{ModuleItemStart:Appointments}}
                     [UseInAppointments] [bit] NOT NULL,
+                    -- {{ModuleItemEnd:Appointments}}
+                    -- {{ModuleItemStart:EmailTemplates}}
                     [UseInEmailTemplates] [bit] NOT NULL,
+                    -- {{ModuleItemEnd:EmailTemplates}}
+                    -- {{ModuleItemStart:Services}}
                     [UseInServices] [bit] NOT NULL,
+                    -- {{ModuleItemEnd:Services}}
                     [Added] [datetime] NOT NULL,
                     [AddedBy] [nvarchar](100) NULL,
                     [LastModified] [datetime] NOT NULL,

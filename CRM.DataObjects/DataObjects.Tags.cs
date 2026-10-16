@@ -22,9 +22,15 @@ public partial class DataObjects
         public string? Name { get; set; }
         public string? Style { get; set; }
         public bool Enabled { get; set; }
+        // {{ModuleItemStart:Appointments}}
         public bool UseInAppointments { get; set; }
+        // {{ModuleItemEnd:Appointments}}
+        // {{ModuleItemStart:EmailTemplates}}
         public bool UseInEmailTemplates { get; set; }
+        // {{ModuleItemEnd:EmailTemplates}}
+        // {{ModuleItemStart:Services}}
         public bool UseInServices { get; set; }
+        // {{ModuleItemEnd:Services}}
         public DateTime Added { get; set; }
         public string? AddedBy { get; set; }
         public DateTime LastModified { get; set; }

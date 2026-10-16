@@ -256,9 +256,15 @@ public partial class DataAccess
             { "TagSelectColor", "Select a Color" },
             { "TagStyle", "Style" },
             { "TagStyleInfo", "Enter any HTML style info without the style name (eg: background-color:red; color:#fff;)" },
+            // {{ModuleItemStart:Appointments}}
             { "TagUseInAppointments", "Use in Appointments" },
+            // {{ModuleItemEnd:Appointments}}
+            // {{ModuleItemStart:EmailTemplates}}
             { "TagUseInEmailTemplates", "Use in Email Templates" },
+            // {{ModuleItemEnd:EmailTemplates}}
+            // {{ModuleItemStart:Services}}
             { "TagUseInServices", "Use in Services" },
+            // {{ModuleItemEnd:Services}}
             // {{ModuleItemEnd:Tags}}
 
             // UDF Labels

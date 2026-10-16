@@ -85,9 +85,15 @@ public partial class DataAccess
                 Name = rec.Name,
                 Style = rec.Style,
                 Enabled = rec.Enabled,
+                // {{ModuleItemStart:Appointments}}
                 UseInAppointments = rec.UseInAppointments,
+                // {{ModuleItemEnd:Appointments}}
+                // {{ModuleItemStart:EmailTemplates}}
                 UseInEmailTemplates = rec.UseInEmailTemplates,
+                // {{ModuleItemEnd:EmailTemplates}}
+                // {{ModuleItemStart:Services}}
                 UseInServices = rec.UseInServices,
+                // {{ModuleItemEnd:Services}}
                 Added = rec.Added,
                 AddedBy = LastModifiedDisplayName(rec.AddedBy),
                 LastModified = rec.LastModified,
@@ -123,9 +129,15 @@ public partial class DataAccess
                     Name = rec.Name,
                     Style = rec.Style,
                     Enabled = rec.Enabled,
+                    // {{ModuleItemStart:Appointments}}
                     UseInAppointments = rec.UseInAppointments,
+                    // {{ModuleItemEnd:Appointments}}
+                    // {{ModuleItemStart:EmailTemplates}}
                     UseInEmailTemplates = rec.UseInEmailTemplates,
+                    // {{ModuleItemEnd:EmailTemplates}}
+                    // {{ModuleItemStart:Services}}
                     UseInServices = rec.UseInServices,
+                    // {{ModuleItemEnd:Services}}
                     Added = rec.Added,
                     AddedBy = LastModifiedDisplayName(rec.AddedBy),
                     LastModified = rec.LastModified,
@@ -222,9 +234,15 @@ public partial class DataAccess
         rec.Name = output.Name;
         rec.Style = output.Style;
         rec.Enabled = output.Enabled;
+        // {{ModuleItemStart:Appointments}}
         rec.UseInAppointments = output.UseInAppointments;
+        // {{ModuleItemEnd:Appointments}}
+        // {{ModuleItemStart:EmailTemplates}}
         rec.UseInEmailTemplates = output.UseInEmailTemplates;
+        // {{ModuleItemEnd:EmailTemplates}}
+        // {{ModuleItemStart:Services}}
         rec.UseInServices = output.UseInServices;
+        // {{ModuleItemEnd:Services}}
         rec.LastModified = now;
         rec.LastModifiedBy = CurrentUserIdString(CurrentUser);
 
