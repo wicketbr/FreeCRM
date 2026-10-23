@@ -135,8 +135,8 @@ public partial class DataAccess
                             if (accountUnlockDate > DateTime.UtcNow) {
                                 // Still locked out.
                                 output.ActionResponse.Messages.Add("Account locked out for " + _accountLockoutMinutes.ToString() +
-                                    " minutes at " + lastLockoutDate.ToString() + " due to too many failed login attempts. " + Environment.NewLine +
-                                    "Please try again after " + accountUnlockDate.ToString() + " when the account unlocks.");
+                                    " minutes at " + lastLockoutDate.ToString() + " (UTC) due to too many failed login attempts. " + Environment.NewLine +
+                                    "Please try again after the account unlocks.");
 
                                 return output;
                             }
@@ -181,7 +181,7 @@ public partial class DataAccess
                         
                         return output;
                     } else if (!sudoLogin) {
-                        await SetUserLockout(GuidValue(authenticate.TenantId), user.Email);
+                        await SetUserLockout(user.UserId);
                     }
                 }
             }
@@ -190,9 +190,9 @@ public partial class DataAccess
         return output;
     }
 
-    private async Task SetUserLockout(Guid TenantId, string Username)
+    private async Task SetUserLockout(Guid UserId)
     {
-        var rec = await data.Users.FirstOrDefaultAsync(x => x.TenantId == TenantId && x.Username == Username);
+        var rec = await data.Users.FirstOrDefaultAsync(x => x.UserId == UserId);
         if (rec != null) {
             int currentAttempts = rec.FailedLoginAttempts.HasValue ? (int)rec.FailedLoginAttempts : 0;
             currentAttempts += 1;
