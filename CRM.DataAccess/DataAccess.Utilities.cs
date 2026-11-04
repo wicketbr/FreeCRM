@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using CsvHelper;
 
 namespace CRM;
 
@@ -1809,10 +1810,10 @@ public partial class DataAccess
         string output = String.Empty;
 
         if (o != null && o.Any()) {
-            using (var writer = new StringWriter()) {
-                using (var csv = new CsvHelper.CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture)) {
+            using (var streamWriter = new StringWriter()) {
+                using (var csv = CsvWriter.Create(streamWriter, new CsvWriterOptions { FormatProvider = new System.Globalization.CultureInfo("en-US") })) {
                     csv.WriteRecords(o);
-                    output = writer.ToString();
+                    output = streamWriter.ToString();
                 }
             }
         }

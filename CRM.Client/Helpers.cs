@@ -15,6 +15,7 @@ using CRM.Client.Pages.Settings.Tags;
 // {{ModuleItemEnd:Tags}}
 using CRM.Client.Pages.Settings.Users;
 using CRM.Client.Shared;
+using CsvHelper;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -2160,7 +2161,7 @@ public static partial class Helpers
 
         using (var memoryStream = new MemoryStream()) {
             using (var streamWriter = new StreamWriter(memoryStream)) {
-                using (var csvWriter = new CsvHelper.CsvWriter(streamWriter, culture: new System.Globalization.CultureInfo("en-US"))) {
+                using (var csvWriter = CsvWriter.Create(streamWriter, new CsvWriterOptions { FormatProvider = new CultureInfo("en-US") })) {
                     csvWriter.WriteRecords(records);
                     streamWriter.Flush();
                     output = memoryStream.ToArray();
@@ -2182,13 +2183,12 @@ public static partial class Helpers
         List<T> output = new List<T>();
 
         if (!String.IsNullOrWhiteSpace(csvData)) {
-            var textReader = new StringReader(csvData);
+            var options = new CsvReaderOptions { 
+                FormatProvider = new CultureInfo("en-US"),
+                SkipEmptyLines = true,
+            };
 
-            var config = new CsvHelper.Configuration.CsvConfiguration(new CultureInfo("en-US"));
-            config.IgnoreBlankLines = true;
-            config.MissingFieldFound = null;
-
-            using (var csvReader = new CsvHelper.CsvReader(textReader, config)) {
+            using (var csvReader = CsvReader.FromText(csvData, options)) {
                 var records = csvReader.GetRecords<T>();
                 if (records != null) {
                     output = records.ToList();
