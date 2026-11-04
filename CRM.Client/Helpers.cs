@@ -2159,12 +2159,27 @@ public static partial class Helpers
     {
         byte[]? output = null;
 
-        using (var memoryStream = new MemoryStream()) {
-            using (var streamWriter = new StreamWriter(memoryStream)) {
-                using (var csvWriter = CsvWriter.Create(streamWriter, new CsvWriterOptions { FormatProvider = new CultureInfo("en-US") })) {
-                    csvWriter.WriteRecords(records);
-                    streamWriter.Flush();
-                    output = memoryStream.ToArray();
+        if (records != null) {
+            var properties = typeof(T)
+                .GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+                .ToArray();
+
+            using (var memoryStream = new MemoryStream()) {
+                using (TextWriter streamWriter = new StreamWriter(memoryStream)) {
+                    using (var csvWriter = CsvWriter.Create(streamWriter)) {
+                        csvWriter.WriteHeader(properties.Select(p => p.Name).ToArray());
+
+                        foreach (var record in records) {
+                            foreach (var property in properties) {
+                                csvWriter.WriteField(property.GetValue(record));
+                            }
+                            csvWriter.EndRecord();
+                        }
+
+                        csvWriter.Flush();
+                        output = memoryStream.ToArray();
+                    }
                 }
             }
         }

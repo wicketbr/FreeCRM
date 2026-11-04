@@ -1805,15 +1805,29 @@ public partial class DataAccess
         return new List<string> { message };
     }
 
-    private string ObjectToCSV(object[] o)
+    private string ObjectToCSV<T>(IEnumerable<T>? records)
     {
         string output = String.Empty;
 
-        if (o != null && o.Any()) {
+        if (records != null) {
+            var properties = typeof(T)
+                .GetProperties(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public)
+                .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
+                .ToArray();
+
             using (var streamWriter = new StringWriter()) {
-                using (var csv = CsvWriter.Create(streamWriter, new CsvWriterOptions { FormatProvider = new System.Globalization.CultureInfo("en-US") })) {
-                    csv.WriteRecords(o);
-                    output = streamWriter.ToString();
+                using (var csvWriter = CsvWriter.Create(streamWriter)) {
+                    csvWriter.WriteHeader(properties.Select(p => p.Name).ToArray());
+
+                    foreach (var record in records) {
+                        foreach (var property in properties) {
+                            csvWriter.WriteField(property.GetValue(record));
+                        }
+                        csvWriter.EndRecord();
+                    }
+
+                    csvWriter.Flush();
+                    output += streamWriter.ToString();
                 }
             }
         }
