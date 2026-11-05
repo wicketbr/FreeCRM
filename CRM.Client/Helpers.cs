@@ -15,7 +15,6 @@ using CRM.Client.Pages.Settings.Tags;
 // {{ModuleItemEnd:Tags}}
 using CRM.Client.Pages.Settings.Users;
 using CRM.Client.Shared;
-using CsvHelper;
 using Humanizer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
@@ -2167,7 +2166,7 @@ public static partial class Helpers
 
             using (var memoryStream = new MemoryStream()) {
                 using (TextWriter streamWriter = new StreamWriter(memoryStream)) {
-                    using (var csvWriter = CsvWriter.Create(streamWriter)) {
+                    using (var csvWriter = CsvHelper.CsvWriter.Create(streamWriter)) {
                         csvWriter.WriteHeader(properties.Select(p => p.Name).ToArray());
 
                         foreach (var record in records) {
@@ -2198,12 +2197,12 @@ public static partial class Helpers
         List<T> output = new List<T>();
 
         if (!String.IsNullOrWhiteSpace(csvData)) {
-            var options = new CsvReaderOptions { 
+            var options = new CsvHelper.CsvReaderOptions { 
                 FormatProvider = new CultureInfo("en-US"),
                 SkipEmptyLines = true,
             };
 
-            using (var csvReader = CsvReader.FromText(csvData, options)) {
+            using (var csvReader = CsvHelper.CsvReader.FromText(csvData, options)) {
                 var records = csvReader.GetRecords<T>();
                 if (records != null) {
                     output = records.ToList();

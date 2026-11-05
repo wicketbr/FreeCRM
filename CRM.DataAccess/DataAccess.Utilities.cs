@@ -2,7 +2,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using CsvHelper;
 
 namespace CRM;
 
@@ -1816,7 +1815,7 @@ public partial class DataAccess
                 .ToArray();
 
             using (var streamWriter = new StringWriter()) {
-                using (var csvWriter = CsvWriter.Create(streamWriter)) {
+                using (var csvWriter = CsvHelper.CsvWriter.Create(streamWriter)) {
                     csvWriter.WriteHeader(properties.Select(p => p.Name).ToArray());
 
                     foreach (var record in records) {
