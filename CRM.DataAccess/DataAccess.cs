@@ -73,9 +73,9 @@ public partial class DataAccess: IDisposable, IDataAccess
                 // SQLite for now as the Microsoft library has a dependency still on the deprecated
                 // SQLitePCLRaw.lib.e_sqlite3 package which has known vulnerabilities.
                 // 
-                //case "sqlite":
-                //    optionsBuilder.UseSqlite(_connectionString);
-                //    break;
+                case "sqlite":
+                    optionsBuilder.UseSqlite(_connectionString);
+                    break;
 
                 case "sqlserver":
                 default:
